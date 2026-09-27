@@ -5,7 +5,12 @@ from math import isfinite
 
 from ..sandbox.geometry.vector import Vec3
 from ..sandbox.perception.sensor_suite import SensorSuite
+from ..sandbox.track.model import TrackWorld
+from ..sandbox.vehicle import VehicleState
 
+_LOCAL_RIGHT = Vec3(1.0, 0.0, 0.0)
+_LOCAL_UP = Vec3(0.0, 1.0, 0.0)
+_LOCAL_FORWARD = Vec3(0.0, 0.0, 1.0)
 _FIXED_FEATURE_NAMES = (
     "velocity_local_x",
     "velocity_local_y",
@@ -17,6 +22,10 @@ _FIXED_FEATURE_NAMES = (
     "target_available",
     "grounded",
 )
+
+
+def _clamp(value: float, lower: float, upper: float) -> float:
+    return max(lower, min(value, upper))
 
 
 def _validate_positive_scale(value: float, name: str) -> None:
@@ -58,3 +67,34 @@ class ObservationEncoder:
     @property
     def size(self) -> int:
         return len(self.feature_names)
+
+    def encode(
+        self,
+        track: TrackWorld,
+        vehicle: VehicleState,
+        target: NavigationTarget | None,
+    ) -> tuple[float, ...]:
+        readings = self.config.sensor_suite.sense(track, vehicle)
+        sensor_features = tuple(
+            _clamp(reading.distance / spec.max_distance, 0.0, 1.0)
+            for spec, reading in zip(self.config.sensor_suite.rangefinders, readings, strict=True)
+        )
+        right = vehicle.orientation.rotate(_LOCAL_RIGHT)
+        up = vehicle.orientation.rotate(_LOCAL_UP)
+        forward = vehicle.orientation.rotate(_LOCAL_FORWARD)
+        velocity_features = (
+            _clamp(vehicle.velocity.dot(right) / self.config.velocity_scale, -1.0, 1.0),
+            _clamp(vehicle.velocity.dot(up) / self.config.velocity_scale, -1.0, 1.0),
+            _clamp(vehicle.velocity.dot(forward) / self.config.velocity_scale, -1.0, 1.0),
+        )
+
+        return (
+            *sensor_features,
+            *velocity_features,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        )
