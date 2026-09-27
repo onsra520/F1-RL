@@ -1,3 +1,12 @@
 ﻿from .core import RewardContribution, RewardResult, RewardTerm, RewardTransition
+from .terms import CollisionPenalty, TargetProgressReward, TimePenalty
 
-__all__ = ["RewardContribution", "RewardResult", "RewardTerm", "RewardTransition"]
+__all__ = [
+    "CollisionPenalty",
+    "RewardContribution",
+    "RewardResult",
+    "RewardTerm",
+    "RewardTransition",
+    "TargetProgressReward",
+    "TimePenalty",
+]
