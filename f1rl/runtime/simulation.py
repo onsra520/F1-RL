@@ -5,8 +5,8 @@ from math import isfinite
 
 from ..sandbox.track.model import TrackWorld
 from ..sandbox.track.query import TrackQuery
-from ..sandbox.vehicle import VehicleParameters
-from ..sandbox.world import WorldEvent, WorldState
+from ..sandbox.vehicle import VehicleControl, VehicleParameters
+from ..sandbox.world import WorldEvent, WorldState, step_world
 
 
 def _finite_number(value: object, name: str) -> float:
@@ -79,6 +79,30 @@ class Simulation:
     @property
     def snapshot(self) -> SimulationSnapshot:
         return self._snapshot
+
+    def step(self, control: VehicleControl) -> SimulationSnapshot:
+        current = self._state
+        result = step_world(
+            self._track,
+            current.world,
+            control,
+            self._parameters,
+            self._config.fixed_dt,
+            self._config.max_surface_distance,
+        )
+        next_tick = current.tick + 1
+        elapsed_time = next_tick * self._config.fixed_dt
+        next_state = SimulationState(next_tick, elapsed_time, result.state)
+        next_snapshot = SimulationSnapshot(
+            next_tick,
+            elapsed_time,
+            result.state,
+            result.query,
+            result.events,
+        )
+        self._state = next_state
+        self._snapshot = next_snapshot
+        return next_snapshot
 
     def reset(self) -> SimulationSnapshot:
         self._state = SimulationState(0, 0.0, self._initial_state)
