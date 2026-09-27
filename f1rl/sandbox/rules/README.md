@@ -2,12 +2,15 @@
 
 ## Purpose
 
-Race rules derived from sandbox state.
+Race rules derived from sandbox state and domain events.
 
-## Planned files
+## Implemented
 
-- `collision.py` — collision detection/result handling at the domain-rule level.
+- `scoring.py` — immutable game/demo score aggregation from `ScorePickupCollected` events.
+
+## Planned
+
+- `collision.py` — higher-fidelity collision detection/result handling beyond V1 reference-point blocking.
 - `timing.py` — elapsed time and lap/session timing.
-- `scoring.py` — game/demo score derived from race events.
 
 RL rewards are intentionally separate under `f1rl.learning.rewards`.
