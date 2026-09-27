@@ -7,6 +7,7 @@ from ..surface import SurfaceContact
 from ..vehicle import VehicleControl, VehicleParameters, VehicleState
 from .air_dynamics import compute_air_motion
 from .ground_dynamics import compute_ground_motion
+from .modifiers import MotionModifiers
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,9 +21,10 @@ def compute_motion(
     control: VehicleControl,
     parameters: VehicleParameters,
     contact: SurfaceContact | None,
+    modifiers: MotionModifiers | None = None,
 ) -> MotionDerivatives:
     if contact is None:
-        motion = compute_air_motion(state, control, parameters)
+        motion = compute_air_motion(state, control, parameters, modifiers)
     else:
-        motion = compute_ground_motion(state, control, parameters, contact)
+        motion = compute_ground_motion(state, control, parameters, contact, modifiers)
     return MotionDerivatives(motion.linear_acceleration, motion.angular_velocity)

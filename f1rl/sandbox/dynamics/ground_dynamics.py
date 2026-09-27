@@ -6,7 +6,7 @@ from math import tan
 from ..geometry.vector import Vec3
 from ..surface import SurfaceContact
 from ..vehicle import VehicleControl, VehicleParameters, VehicleState
-
+from .modifiers import MotionModifiers
 
 LOCAL_FORWARD = Vec3(0.0, 0.0, 1.0)
 
@@ -22,7 +22,9 @@ def compute_ground_motion(
     control: VehicleControl,
     parameters: VehicleParameters,
     contact: SurfaceContact,
+    modifiers: MotionModifiers | None = None,
 ) -> GroundMotion:
+    modifiers = modifiers or MotionModifiers()
     tangent_velocity = state.velocity.reject_from(contact.normal)
     forward = state.orientation.rotate(LOCAL_FORWARD).reject_from(contact.normal)
     if forward.magnitude <= 1e-12:
@@ -36,7 +38,8 @@ def compute_ground_motion(
     longitudinal = (
         control.throttle * parameters.max_acceleration
         - control.brake * parameters.max_braking
-        - parameters.rolling_drag * forward_speed
+        - parameters.rolling_drag * modifiers.rolling_drag_multiplier * forward_speed
+        + modifiers.longitudinal_acceleration_bonus
     )
     if forward_speed >= parameters.max_ground_speed and longitudinal > 0.0:
         longitudinal = 0.0
