@@ -1,4 +1,4 @@
-﻿# `f1rl.learning`
+# `f1rl.learning`
 
 ## Purpose
 

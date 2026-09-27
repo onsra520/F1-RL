@@ -1,5 +1,6 @@
-﻿from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError
 from math import inf, nan
+from typing import get_type_hints
 
 import pytest
 
@@ -9,6 +10,7 @@ from f1rl.sandbox.geometry.vector import Vec3
 from f1rl.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
 from f1rl.sandbox.track.state import ScorePickupCollected
 from f1rl.sandbox.vehicle import VehicleState
+from f1rl.sandbox.world import WorldEvent
 
 
 def vehicle(x: float = 0.0, y: float = 0.3, z: float = 0.0) -> VehicleState:
@@ -66,3 +68,7 @@ def test_reward_result_validates_shape_and_is_frozen() -> None:
         RewardResult(inf, ())
     with pytest.raises(ValueError):
         RewardResult(0.0, [contribution])  # type: ignore[arg-type]
+
+
+def test_reward_transition_events_annotation_matches_world_event_contract() -> None:
+    assert get_type_hints(RewardTransition)["events"] == tuple[WorldEvent, ...]

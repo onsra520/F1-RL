@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isfinite
@@ -8,6 +8,7 @@ from ...sandbox.geometry.vector import Vec3
 from ...sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
 from ...sandbox.track.state import ScorePickupCollected
 from ...sandbox.vehicle import VehicleState
+from ...sandbox.world import WorldEvent
 
 _ALLOWED_EVENTS = (ObstacleHit, CheckpointEntered, FinishLineEntered, ScorePickupCollected)
 
@@ -23,7 +24,7 @@ class RewardTransition:
     previous_vehicle: VehicleState
     next_vehicle: VehicleState
     target_position: Vec3 | None
-    events: tuple[object, ...]
+    events: tuple[WorldEvent, ...]
     dt: float
 
     def __post_init__(self) -> None:

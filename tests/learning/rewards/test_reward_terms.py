@@ -1,4 +1,4 @@
-﻿from math import inf, nan
+from math import copysign, inf, nan
 
 import pytest
 
@@ -63,3 +63,15 @@ def test_time_penalty_scales_by_seconds() -> None:
     assert term.evaluate(transition(Vec3(0,0,0), Vec3(0,0,0), dt=0.1)).value == pytest.approx(-0.01)
     assert term.evaluate(transition(Vec3(0,0,0), Vec3(0,0,0), dt=0.05)).value == pytest.approx(-0.005)
     assert TimePenalty(0.0).evaluate(transition(Vec3(0,0,0), Vec3(0,0,0))).value == 0.0
+
+
+def test_disabled_terms_return_positive_zero_for_stable_diagnostics() -> None:
+    moving_away = transition(Vec3(0,0,0), Vec3(-1,0,0), Vec3(10,0,0))
+    with_hit = transition(Vec3(0,0,0), Vec3(0,0,0), events=(ObstacleHit("wall"),))
+    values = (
+        TargetProgressReward(0.0).evaluate(moving_away).value,
+        CollisionPenalty(0.0).evaluate(with_hit).value,
+        TimePenalty(0.0).evaluate(transition(Vec3(0,0,0), Vec3(0,0,0))).value,
+    )
+    assert values == (0.0, 0.0, 0.0)
+    assert all(copysign(1.0, value) == 1.0 for value in values)

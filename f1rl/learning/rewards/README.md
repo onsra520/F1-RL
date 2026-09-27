@@ -1,4 +1,4 @@
-﻿# `f1rl.learning.rewards`
+# `f1rl.learning.rewards`
 
 ## Purpose
 

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isfinite
@@ -26,6 +26,8 @@ class TargetProgressReward:
         return "target_progress"
 
     def evaluate(self, transition: RewardTransition) -> RewardContribution:
+        if self.weight_per_meter == 0.0:
+            return RewardContribution(self.name, 0.0)
         target = transition.target_position
         if target is None:
             return RewardContribution(self.name, 0.0)
@@ -46,6 +48,8 @@ class CollisionPenalty:
         return "collision"
 
     def evaluate(self, transition: RewardTransition) -> RewardContribution:
+        if self.penalty == 0.0:
+            return RewardContribution(self.name, 0.0)
         hit = any(isinstance(event, ObstacleHit) for event in transition.events)
         return RewardContribution(self.name, -self.penalty if hit else 0.0)
 
@@ -62,4 +66,6 @@ class TimePenalty:
         return "time"
 
     def evaluate(self, transition: RewardTransition) -> RewardContribution:
+        if self.penalty_per_second == 0.0:
+            return RewardContribution(self.name, 0.0)
         return RewardContribution(self.name, -self.penalty_per_second * transition.dt)

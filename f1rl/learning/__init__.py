@@ -1,4 +1,4 @@
-﻿from .action import (
+from .action import (
     ACTION_HIGH,
     ACTION_LOW,
     ACTION_NAMES,
