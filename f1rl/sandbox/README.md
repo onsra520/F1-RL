@@ -6,8 +6,7 @@ The source of truth for the simulated racing world. This layer owns deterministi
 
 ## Planned files
 
-- `world.py` — aggregate simulation state, surface queries, and world stepping.
-- `track.py` — 3D track geometry, drivable surfaces, ramps, and navigable boundaries.
+- `world.py` — aggregate simulation state and world stepping.
 - `surface.py` — presentation-neutral surface/contact values shared by track and physics.
 - `vehicle.py` — 3D vehicle state, controls, dimensions, and physical limits.
 
@@ -15,9 +14,10 @@ The source of truth for the simulated racing world. This layer owns deterministi
 
 - `geometry/` — renderer-independent `Vec3` and quaternion math values.
 - `dynamics/` — grounded/airborne vehicle motion and deterministic integration.
+- `track/` — finite road surfaces, spatial volumes, aggregate world queries, and collectible state.
 - `perception/` — local sensing of the world.
-- `entities/` — obstacles, zones, checkpoints, and finish-line objects.
-- `rules/` — collision, timing, and race scoring rules.
+- `entities/` — solid obstacles, trigger zones, checkpoints, finish lines, and collectibles.
+- `rules/` — collision response, timing, and game/demo scoring rules.
 
 ## Boundary
 
