@@ -1,14 +1,20 @@
-# `f1rl.learning.rewards`
+﻿# `f1rl.learning.rewards`
 
 ## Purpose
 
-Composable reward shaping for reinforcement learning experiments.
+Deterministic, composable reward shaping for reinforcement-learning experiments.
 
-## Planned files
+## V1 contract
 
-- `progress.py` — rewards progress toward the active checkpoint/goal.
-- `safety.py` — collision and unsafe-proximity penalties.
-- `racing.py` — speed, timing, racing-line, boost, and race-specific incentives.
-- `composer.py` — combines configured reward terms into the final scalar reward and exposes per-term diagnostics.
+- `core.py` defines `RewardTransition`, contribution/result DTOs, `RewardTerm`, and `RewardComposer`.
+- `terms.py` defines `TargetProgressReward`, `CollisionPenalty`, and `TimePenalty`.
+- One transition uses the navigation target active before the step for both before/after distance measurements.
+- Progress uses signed 3D Euclidean distance change.
+- Collision is penalized once per transition even when overlapping obstacles emit several hits.
+- Time pressure scales by elapsed seconds.
+- Composer output preserves declaration order and exposes an inspectable contribution breakdown.
+- Reward values are not clipped or normalized in this semantic layer.
 
-Reward code must consume observable/domain state without mutating the sandbox.
+Game score remains separate from RL reward. Score pickups, checkpoint-entry, and finish-line events create no implicit V1 reward. Valid checkpoint/lap progression and terminal finish semantics belong to a future route-progress/episode layer.
+
+Production reward code depends only on sandbox domain/event types plus the Python standard library; it does not own simulation stepping or depend on Gymnasium, NumPy, PyTorch, or PPO.

@@ -1,4 +1,4 @@
-# `f1rl.learning`
+﻿# `f1rl.learning`
 
 ## Purpose
 
@@ -6,29 +6,23 @@ Reinforcement-learning layer built on top of the sandbox.
 
 ## Current baseline
 
-`observation.py` provides deterministic local-frame observation encoding:
+`observation.py` provides deterministic local-frame observation encoding with declared-order rangefinders, local velocity, explicit vehicle-relative navigation target features, target availability, and grounded state. Observation size is always `sensor_count + 9`.
 
-- rangefinder distances are normalized in exact `SensorSuite` declaration order;
-- vehicle linear velocity is projected into local right/up/forward axes and scaled/clamped;
-- an explicit `NavigationTarget | None` supplies vehicle-relative target direction and distance;
-- `target_available` distinguishes no target from standing exactly on a target;
-- grounded is emitted as an exact `0.0`/`1.0` flag;
-- observation size is always `sensor_count + 9` and matches stable `feature_names` metadata.
+`action.py` provides the strict V1 two-dimensional policy-action contract: `("steering", "throttle")`, bounds `(-1.0, 0.0)` to `(1.0, 1.0)`, fail-fast validation, exact mapping with no remap/clamp, and `brake == 0.0`.
 
-`action.py` provides the strict V1 policy-action contract:
+`rewards/` provides deterministic transition rewards:
 
-- action order is exactly `("steering", "throttle")`;
-- bounds are exactly `(-1.0, 0.0)` to `(1.0, 1.0)`;
-- invalid, non-finite, boolean, and out-of-range values fail fast;
-- mapping copies steering/throttle exactly with no clamp or remap;
-- every mapped `VehicleControl` has `brake == 0.0`.
+- `TargetProgressReward` measures signed 3D distance progress toward one fixed pre-step target;
+- `CollisionPenalty` applies at most once per transition;
+- `TimePenalty` scales by elapsed seconds;
+- `RewardComposer` preserves term order and returns an inspectable per-term breakdown.
 
-Both layers return pure-Python values and remain framework-agnostic. They do not choose route progress, calculate rewards, own simulation stepping, or depend on NumPy/Gymnasium/PyTorch/PPO.
+These layers remain pure-Python and framework-agnostic. Game score is not RL reward, and checkpoint/finish entry events have no implicit reward because validated route-progress and terminal episode semantics do not exist yet.
 
 ## Next layers
 
-- `gym_environment.py` — future Gymnasium adapter around observation, action, simulation, and reward contracts.
-- `rewards/` — composable RL reward terms, kept separate from game score.
-- `algorithms/` / `training/` / `evaluation/` — PPO integration, training orchestration, and generalization metrics.
+- explicit route-progress / episode semantics: authoritative next checkpoint, ordered completion, lap state, valid finish, termination/truncation;
+- `gym_environment.py`: compose observation, action, simulation, route progress, reward, reset, and episode semantics;
+- `algorithms/` / `training/` / `evaluation/`: PPO integration, training orchestration, reward-shaping ablation, and generalization metrics.
 
-Route-progress/next-checkpoint selection remains a separate authority that supplies the current `NavigationTarget`. Policy-controlled braking is also a separate future action-contract change; V1 remains two-dimensional with brake fixed off. Sandbox remains reusable without importing the learning package.
+Sandbox remains reusable without importing the learning package. Policy-controlled braking remains a separate future action-contract change.
