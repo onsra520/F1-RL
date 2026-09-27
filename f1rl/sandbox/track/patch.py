@@ -42,7 +42,10 @@ class PlanarSurfacePatch:
 
         offset = position - self.origin
         signed_distance = offset.dot(self.normal)
-        if abs(signed_distance) > max_distance + _TOLERANCE:
+        if max_distance == 0.0:
+            if signed_distance != 0.0:
+                return None
+        elif abs(signed_distance) > max_distance + _TOLERANCE:
             return None
 
         projected = position - self.normal * signed_distance

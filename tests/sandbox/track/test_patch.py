@@ -71,3 +71,9 @@ def test_patch_sampling_is_deterministic() -> None:
     point = Vec3(0.5, 0.1, -2.0)
 
     assert patch.sample(point, 0.1) == patch.sample(point, 0.1)
+
+
+def test_zero_max_distance_rejects_any_plane_separation() -> None:
+    patch = flat_patch()
+
+    assert patch.sample(Vec3(0.0, 1e-12, 0.0), max_distance=0.0) is None
