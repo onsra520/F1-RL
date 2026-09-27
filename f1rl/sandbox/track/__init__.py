@@ -1,0 +1,1 @@
+"""Track-world spatial model."""
