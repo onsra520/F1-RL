@@ -88,13 +88,30 @@ class ObservationEncoder:
             _clamp(vehicle.velocity.dot(forward) / self.config.velocity_scale, -1.0, 1.0),
         )
 
+        if target is None:
+            target_direction = (0.0, 0.0, 0.0)
+            target_distance = 0.0
+            target_available = 0.0
+        else:
+            delta = target.position - vehicle.position
+            distance = delta.magnitude
+            if distance == 0.0:
+                target_direction = (0.0, 0.0, 0.0)
+            else:
+                direction = delta / distance
+                target_direction = (
+                    _clamp(direction.dot(right), -1.0, 1.0),
+                    _clamp(direction.dot(up), -1.0, 1.0),
+                    _clamp(direction.dot(forward), -1.0, 1.0),
+                )
+            target_distance = _clamp(distance / self.config.target_distance_scale, 0.0, 1.0)
+            target_available = 1.0
+
         return (
             *sensor_features,
             *velocity_features,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
+            *target_direction,
+            target_distance,
+            target_available,
+            1.0 if vehicle.grounded else 0.0,
         )
