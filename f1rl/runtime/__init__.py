@@ -1,3 +1,3 @@
-from .simulation import SimulationConfig, SimulationSnapshot, SimulationState
+from .simulation import Simulation, SimulationConfig, SimulationSnapshot, SimulationState
 
-__all__ = ["SimulationConfig", "SimulationSnapshot", "SimulationState"]
+__all__ = ["Simulation", "SimulationConfig", "SimulationSnapshot", "SimulationState"]

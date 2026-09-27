@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isfinite
 
+from ..sandbox.track.model import TrackWorld
 from ..sandbox.track.query import TrackQuery
+from ..sandbox.vehicle import VehicleParameters
 from ..sandbox.world import WorldEvent, WorldState
 
 
@@ -48,3 +50,45 @@ class SimulationSnapshot:
     world: WorldState
     query: TrackQuery
     events: tuple[WorldEvent, ...]
+
+
+class Simulation:
+    __slots__ = (
+        "_track",
+        "_initial_state",
+        "_parameters",
+        "_config",
+        "_state",
+        "_snapshot",
+    )
+
+    def __init__(
+        self,
+        track: TrackWorld,
+        initial_state: WorldState,
+        parameters: VehicleParameters,
+        config: SimulationConfig,
+    ) -> None:
+        self._track = track
+        self._initial_state = initial_state
+        self._parameters = parameters
+        self._config = config
+        self._state = SimulationState(0, 0.0, initial_state)
+        self._snapshot = self._snapshot_for(initial_state)
+
+    @property
+    def snapshot(self) -> SimulationSnapshot:
+        return self._snapshot
+
+    def reset(self) -> SimulationSnapshot:
+        self._state = SimulationState(0, 0.0, self._initial_state)
+        self._snapshot = self._snapshot_for(self._initial_state)
+        return self._snapshot
+
+    def _snapshot_for(self, world: WorldState) -> SimulationSnapshot:
+        query = self._track.query_point(
+            world.vehicle.position,
+            self._config.max_surface_distance,
+            world.track,
+        )
+        return SimulationSnapshot(0, 0.0, world, query, ())
