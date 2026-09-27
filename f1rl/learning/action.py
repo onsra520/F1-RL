@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isfinite
 
+from ..sandbox.vehicle import VehicleControl
+
 ACTION_NAMES = ("steering", "throttle")
 ACTION_LOW = (-1.0, 0.0)
 ACTION_HIGH = (1.0, 1.0)
@@ -24,3 +26,9 @@ class PolicyAction:
     def __post_init__(self) -> None:
         _validate_value(self.steering, "steering", -1.0, 1.0)
         _validate_value(self.throttle, "throttle", 0.0, 1.0)
+
+
+def map_policy_action(action: PolicyAction) -> VehicleControl:
+    if not isinstance(action, PolicyAction):
+        raise ValueError("action must be a PolicyAction")
+    return VehicleControl(action.steering, action.throttle, 0.0)

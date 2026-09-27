@@ -1,4 +1,11 @@
-from .action import ACTION_HIGH, ACTION_LOW, ACTION_NAMES, ACTION_SIZE, PolicyAction
+from .action import (
+    ACTION_HIGH,
+    ACTION_LOW,
+    ACTION_NAMES,
+    ACTION_SIZE,
+    PolicyAction,
+    map_policy_action,
+)
 from .observation import NavigationTarget, ObservationConfig, ObservationEncoder
 
 __all__ = [
@@ -10,4 +17,5 @@ __all__ = [
     "ObservationConfig",
     "ObservationEncoder",
     "PolicyAction",
+    "map_policy_action",
 ]
