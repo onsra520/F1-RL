@@ -51,3 +51,6 @@ artifacts/evaluations/*
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Git worktrees
+.worktrees/
