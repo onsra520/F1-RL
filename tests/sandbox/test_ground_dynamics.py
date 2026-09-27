@@ -59,3 +59,18 @@ def test_slope_projects_forward_motion_up_ramp_and_gravity_down_ramp() -> None:
 def test_ground_motion_is_deterministic() -> None:
     args = (state(Vec3(0.0, 0.0, 12.0)), VehicleControl(0.25, 0.4, 0.1), parameters(), flat_contact())
     assert compute_ground_motion(*args) == compute_ground_motion(*args)
+
+
+def test_ground_motion_handles_forward_parallel_to_surface_normal() -> None:
+    vertical = Quaternion.from_axis_angle(Vec3(1.0, 0.0, 0.0), -pi / 2.0)
+    unusual_state = VehicleState(
+        Vec3(0.0, 0.3, 0.0),
+        Vec3(0.0, 0.0, 0.0),
+        vertical,
+        Vec3(0.0, 0.0, 0.0),
+        True,
+    )
+
+    motion = compute_ground_motion(unusual_state, VehicleControl(0.0, 1.0, 0.0), parameters(), flat_contact())
+
+    assert motion.linear_acceleration.magnitude > 0.0

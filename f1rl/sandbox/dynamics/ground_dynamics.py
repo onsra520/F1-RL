@@ -23,8 +23,14 @@ def compute_ground_motion(
     parameters: VehicleParameters,
     contact: SurfaceContact,
 ) -> GroundMotion:
-    forward = state.orientation.rotate(LOCAL_FORWARD).reject_from(contact.normal).normalized()
     tangent_velocity = state.velocity.reject_from(contact.normal)
+    forward = state.orientation.rotate(LOCAL_FORWARD).reject_from(contact.normal)
+    if forward.magnitude <= 1e-12:
+        forward = tangent_velocity
+    if forward.magnitude <= 1e-12:
+        reference = Vec3(0.0, 0.0, 1.0) if abs(contact.normal.z) < 0.9 else Vec3(1.0, 0.0, 0.0)
+        forward = reference.reject_from(contact.normal)
+    forward = forward.normalized()
     forward_speed = max(0.0, tangent_velocity.dot(forward))
 
     longitudinal = (

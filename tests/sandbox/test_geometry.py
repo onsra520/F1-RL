@@ -79,3 +79,21 @@ def test_quaternion_rejects_zero_norm_or_zero_axis() -> None:
         Quaternion(0.0, 0.0, 0.0, 0.0).normalized()
     with pytest.raises(ValueError):
         Quaternion.from_axis_angle(Vec3(0.0, 0.0, 0.0), pi / 2.0)
+
+
+def test_geometry_rejects_non_finite_components() -> None:
+    with pytest.raises(ValueError):
+        Vec3(float("nan"), 0.0, 0.0)
+    with pytest.raises(ValueError):
+        Vec3(0.0, float("inf"), 0.0)
+    with pytest.raises(ValueError):
+        Quaternion(float("nan"), 0.0, 0.0, 1.0)
+
+
+def test_quaternion_rejects_left_handed_basis() -> None:
+    with pytest.raises(ValueError):
+        Quaternion.from_basis(
+            Vec3(1.0, 0.0, 0.0),
+            Vec3(0.0, 1.0, 0.0),
+            Vec3(0.0, 0.0, -1.0),
+        )

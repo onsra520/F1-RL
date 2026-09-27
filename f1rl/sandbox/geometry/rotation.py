@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import cos, isclose, sin, sqrt
+from math import cos, isclose, isfinite, sin, sqrt
 
 from .vector import Vec3
 
@@ -14,6 +14,8 @@ class Quaternion:
     z: float
 
     def __post_init__(self) -> None:
+        if not all(isfinite(value) for value in (self.w, self.x, self.y, self.z)):
+            raise ValueError("quaternion components must be finite")
         norm = sqrt(self.w * self.w + self.x * self.x + self.y * self.y + self.z * self.z)
         if norm == 0.0:
             raise ValueError("quaternion norm must be non-zero")
@@ -59,8 +61,14 @@ class Quaternion:
         r = right.normalized()
         u = up.normalized()
         f = forward.normalized()
-        if not (isclose(r.dot(u), 0.0, abs_tol=1e-9) and isclose(r.dot(f), 0.0, abs_tol=1e-9) and isclose(u.dot(f), 0.0, abs_tol=1e-9)):
+        if not (
+            isclose(r.dot(u), 0.0, abs_tol=1e-9)
+            and isclose(r.dot(f), 0.0, abs_tol=1e-9)
+            and isclose(u.dot(f), 0.0, abs_tol=1e-9)
+        ):
             raise ValueError("basis vectors must be orthogonal")
+        if not isclose(r.cross(u).dot(f), 1.0, abs_tol=1e-9):
+            raise ValueError("basis vectors must be right-handed")
 
         m00, m01, m02 = r.x, u.x, f.x
         m10, m11, m12 = r.y, u.y, f.y

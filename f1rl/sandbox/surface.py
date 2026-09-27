@@ -1,4 +1,4 @@
-﻿from dataclasses import dataclass
+from dataclasses import dataclass
 from math import isclose
 
 from .geometry.vector import Vec3

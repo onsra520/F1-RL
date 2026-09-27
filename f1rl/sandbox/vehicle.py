@@ -1,7 +1,7 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
-from math import pi
+from math import isfinite, pi
 
 from .geometry.rotation import Quaternion
 from .geometry.vector import Vec3
@@ -48,6 +48,19 @@ class VehicleParameters:
     gravity: float
 
     def __post_init__(self) -> None:
+        values = (
+            self.wheelbase,
+            self.ride_height,
+            self.max_steering_angle,
+            self.max_acceleration,
+            self.max_braking,
+            self.rolling_drag,
+            self.air_drag,
+            self.max_ground_speed,
+            self.gravity,
+        )
+        if not all(isfinite(value) for value in values):
+            raise ValueError("vehicle parameters must be finite")
         if self.wheelbase <= 0.0:
             raise ValueError("wheelbase must be positive")
         if self.ride_height <= 0.0:
@@ -56,6 +69,12 @@ class VehicleParameters:
             raise ValueError("gravity must be positive")
         if not 0.0 <= self.max_steering_angle < pi / 2.0:
             raise ValueError("max_steering_angle must be in [0, pi/2)")
-        for name in ("max_acceleration", "max_braking", "rolling_drag", "air_drag", "max_ground_speed"):
+        for name in (
+            "max_acceleration",
+            "max_braking",
+            "rolling_drag",
+            "air_drag",
+            "max_ground_speed",
+        ):
             if getattr(self, name) < 0.0:
                 raise ValueError(f"{name} must be non-negative")

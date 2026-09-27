@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import sqrt
+from math import isfinite, sqrt
 
 
 @dataclass(frozen=True, slots=True)
@@ -9,6 +9,10 @@ class Vec3:
     x: float
     y: float
     z: float
+
+    def __post_init__(self) -> None:
+        if not all(isfinite(value) for value in (self.x, self.y, self.z)):
+            raise ValueError("Vec3 components must be finite")
 
     def __add__(self, other: Vec3) -> Vec3:
         return Vec3(self.x + other.x, self.y + other.y, self.z + other.z)

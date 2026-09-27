@@ -65,3 +65,10 @@ def test_vehicle_parameters_reject_invalid_limits() -> None:
         valid_parameters(max_steering_angle=-0.01)
     with pytest.raises(ValueError):
         valid_parameters(max_steering_angle=pi / 2.0)
+
+
+def test_vehicle_parameters_reject_non_finite_values() -> None:
+    with pytest.raises(ValueError):
+        valid_parameters(max_acceleration=float("nan"))
+    with pytest.raises(ValueError):
+        valid_parameters(gravity=float("inf"))
