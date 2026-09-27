@@ -33,8 +33,7 @@ class RewardTransition:
             raise ValueError("target_position must be Vec3 or None")
         if not isinstance(self.events, tuple) or not all(isinstance(event, _ALLOWED_EVENTS) for event in self.events):
             raise ValueError("events must be a tuple of current WorldEvent variants")
-        dt = _finite_number(self.dt, "dt")
-        if dt <= 0.0:
+        if _finite_number(self.dt, "dt") <= 0.0:
             raise ValueError("dt must be strictly positive")
 
 
@@ -65,3 +64,35 @@ class RewardTerm(Protocol):
     def name(self) -> str: ...
 
     def evaluate(self, transition: RewardTransition) -> RewardContribution: ...
+
+
+@dataclass(frozen=True, slots=True)
+class RewardComposer:
+    terms: tuple[RewardTerm, ...]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.terms, tuple):
+            raise ValueError("terms must be a tuple")
+        names: list[str] = []
+        for term in self.terms:
+            name = getattr(term, "name", None)
+            evaluate = getattr(term, "evaluate", None)
+            if not isinstance(name, str) or not name.strip() or not callable(evaluate):
+                raise ValueError("each term must expose a non-empty name and callable evaluate")
+            names.append(name)
+        if len(names) != len(set(names)):
+            raise ValueError("reward term names must be unique")
+
+    def evaluate(self, transition: RewardTransition) -> RewardResult:
+        contributions: list[RewardContribution] = []
+        total = 0.0
+        for term in self.terms:
+            contribution = term.evaluate(transition)
+            if not isinstance(contribution, RewardContribution):
+                raise ValueError("reward term must return RewardContribution")
+            if contribution.name != term.name:
+                raise ValueError("reward contribution name must match term name")
+            _finite_number(contribution.value, "reward contribution value")
+            contributions.append(contribution)
+            total += contribution.value
+        return RewardResult(total, tuple(contributions))
