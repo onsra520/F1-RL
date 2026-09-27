@@ -15,13 +15,20 @@ Reinforcement-learning layer built on top of the sandbox.
 - grounded is emitted as an exact `0.0`/`1.0` flag;
 - observation size is always `sensor_count + 9` and matches stable `feature_names` metadata.
 
-The encoder returns pure-Python `tuple[float, ...]` values. It does not choose the next checkpoint, track race progress, calculate rewards, map actions, step the simulation, or depend on NumPy/Gymnasium/PyTorch.
+`action.py` provides the strict V1 policy-action contract:
+
+- action order is exactly `("steering", "throttle")`;
+- bounds are exactly `(-1.0, 0.0)` to `(1.0, 1.0)`;
+- invalid, non-finite, boolean, and out-of-range values fail fast;
+- mapping copies steering/throttle exactly with no clamp or remap;
+- every mapped `VehicleControl` has `brake == 0.0`.
+
+Both layers return pure-Python values and remain framework-agnostic. They do not choose route progress, calculate rewards, own simulation stepping, or depend on NumPy/Gymnasium/PyTorch/PPO.
 
 ## Next layers
 
-- `action.py` — deterministic mapping from policy actions into `VehicleControl`.
 - `gym_environment.py` — future Gymnasium adapter around observation, action, simulation, and reward contracts.
 - `rewards/` — composable RL reward terms, kept separate from game score.
 - `algorithms/` / `training/` / `evaluation/` — PPO integration, training orchestration, and generalization metrics.
 
-Route-progress/next-checkpoint selection remains a separate authority that supplies the current `NavigationTarget`; changing that policy must not require changing observation encoding. Sandbox remains reusable without importing the learning package.
+Route-progress/next-checkpoint selection remains a separate authority that supplies the current `NavigationTarget`. Policy-controlled braking is also a separate future action-contract change; V1 remains two-dimensional with brake fixed off. Sandbox remains reusable without importing the learning package.
