@@ -313,3 +313,57 @@ def test_bad_post_step_observation_requires_reset(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr(ObservationEncoder, "encode", original_encode)
     observation, _ = env.reset()
     assert env.observation_space.contains(observation)
+
+
+def test_learning_package_reexports_f1rl_env_without_regressing_existing_exports() -> None:
+    import f1rl.learning as learning
+    from f1rl.learning.gym_environment import F1RLEnv as DirectF1RLEnv
+
+    assert learning.F1RLEnv is DirectF1RLEnv
+    for name in (
+        "ObservationConfig",
+        "ObservationEncoder",
+        "NavigationTarget",
+        "PolicyAction",
+        "RewardTransition",
+        "RewardComposer",
+        "RaceRoute",
+        "RaceProgressState",
+        "EpisodeConfig",
+    ):
+        assert hasattr(learning, name)
+
+
+def test_framework_dependency_boundaries_remain_one_way() -> None:
+    from pathlib import Path
+
+    root = Path(__file__).parents[2]
+    lower_sources = [
+        *(root / "f1rl" / "sandbox").rglob("*.py"),
+        *(root / "f1rl" / "runtime").rglob("*.py"),
+    ]
+    lower_text = "\n".join(path.read_text(encoding="utf-8") for path in lower_sources)
+    assert "import gymnasium" not in lower_text
+    assert "from gymnasium" not in lower_text
+    assert "import numpy" not in lower_text
+    assert "from numpy" not in lower_text
+
+
+def test_gym_adapter_has_no_model_registration_or_rendering_dependencies() -> None:
+    from pathlib import Path
+
+    root = Path(__file__).parents[2]
+    source = (root / "f1rl" / "learning" / "gym_environment.py").read_text(encoding="utf-8").lower()
+
+    for forbidden in (
+        "stable_baselines3",
+        "stable-baselines3",
+        "import torch",
+        "from torch",
+        "gymnasium.register",
+        "gym.register",
+        "pygame",
+        "three.js",
+        "rgb_array",
+    ):
+        assert forbidden not in source

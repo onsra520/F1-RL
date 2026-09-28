@@ -183,3 +183,29 @@ def test_game_score_is_not_converted_into_rl_reward() -> None:
     assert info["reward_components"] == {"time": pytest.approx(-0.1)}
     assert terminated is False
     assert truncated is False
+
+
+def test_gymnasium_env_checker_accepts_environment_without_rendering() -> None:
+    from gymnasium.utils.env_checker import check_env
+
+    track = TrackWorld(finish_lines=(FinishLine("finish", _volume(Vec3(100.0, 0.0, 0.0))),))
+    env = _moving_env(track)
+
+    check_env(env, skip_render_check=True)
+
+
+def test_checker_and_repeated_resets_do_not_replace_or_mutate_bound_track() -> None:
+    from gymnasium.utils.env_checker import check_env
+
+    track = TrackWorld(finish_lines=(FinishLine("finish", _volume(Vec3(100.0, 0.0, 0.0))),))
+    env = _moving_env(track)
+    expected_track = track
+
+    check_env(env, skip_render_check=True)
+    first_observation, first_info = env.reset(seed=11)
+    second_observation, second_info = env.reset(seed=22)
+
+    assert env._track is track
+    assert env._track == expected_track
+    np.testing.assert_array_equal(first_observation, second_observation)
+    assert first_info == second_info

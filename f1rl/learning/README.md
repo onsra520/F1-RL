@@ -23,11 +23,10 @@ Reinforcement-learning layer built on top of the sandbox.
 
 Reward timing remains fixed-target: calculate the current `RewardTransition` with the pre-step route target, then advance route progress and use its returned target for the next observation. There are no checkpoint or finish bonuses.
 
-These layers remain pure-Python and framework-agnostic. Game score is not RL reward. Gymnasium is the next composition layer.
+The action, observation, reward, and episode primitives remain framework-agnostic. `gym_environment.py` is the thin Gymnasium adapter above them: one env is bound to one track, exposes NumPy `float32` spaces, composes deterministic reset/step behavior, preserves pre-step reward target timing, and keeps game score separate from RL reward.
 
 ## Next layers
 
-- `gym_environment.py`: compose observation, action, simulation, route progress, reward, reset, and episode semantics;
-- `algorithms/` / `training/` / `evaluation/`: PPO integration, training orchestration, reward-shaping ablation, and generalization metrics.
+- `algorithms/` / `training/` / `evaluation/`: PPO integration, vectorized training, policy persistence, reward-shaping ablation, and generalization metrics.
 
 Sandbox remains reusable without importing the learning package. Policy-controlled braking remains a separate future action-contract change.
