@@ -6,7 +6,17 @@ from numbers import Real
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import yaml
+
+try:
+    from stable_baselines3 import PPO
+except ImportError as error:
+    raise ImportError(
+        "PPO support requires the optional RL dependencies; install f1-rl with the `rl` extra."
+    ) from error
+
+from ..gym_environment import F1RLEnv
 
 
 def _validate_real(value: object, name: str) -> float:
@@ -43,7 +53,6 @@ class PPOConfig:
         learning_rate = _validate_real(self.learning_rate, "learning_rate")
         if learning_rate <= 0.0:
             raise ValueError("learning_rate must be positive")
-
         n_steps = _validate_int(self.n_steps, "n_steps", minimum=2)
         batch_size = _validate_int(self.batch_size, "batch_size", minimum=2)
         _validate_int(self.n_epochs, "n_epochs", minimum=1)
@@ -96,11 +105,9 @@ class PPOConfig:
         unknown_root = set(document) - {"ppo"}
         if unknown_root:
             raise ValueError(f"unknown configuration keys: {sorted(unknown_root)!r}")
-
         raw_ppo: Any = document.get("ppo", {})
         if not isinstance(raw_ppo, dict):
             raise ValueError("ppo configuration must be a mapping")
-
         allowed = {field.name for field in fields(cls)}
         unknown = set(raw_ppo) - allowed
         if unknown:
@@ -109,3 +116,71 @@ class PPOConfig:
             return cls(**raw_ppo)
         except (TypeError, ValueError) as error:
             raise ValueError("invalid PPO configuration") from error
+
+
+class PPOModel:
+    def __init__(self, model: PPO) -> None:
+        self._model = model
+
+    @classmethod
+    def create(cls, env: F1RLEnv, config: PPOConfig) -> "PPOModel":
+        if not isinstance(env, F1RLEnv):
+            raise ValueError("env must be F1RLEnv")
+        if not isinstance(config, PPOConfig):
+            raise ValueError("config must be PPOConfig")
+
+        model = PPO(
+            "MlpPolicy",
+            env,
+            learning_rate=config.learning_rate,
+            n_steps=config.n_steps,
+            batch_size=config.batch_size,
+            n_epochs=config.n_epochs,
+            gamma=config.gamma,
+            gae_lambda=config.gae_lambda,
+            clip_range=config.clip_range,
+            ent_coef=config.ent_coef,
+            vf_coef=config.vf_coef,
+            max_grad_norm=config.max_grad_norm,
+            seed=config.seed,
+            device=config.device,
+            verbose=0,
+        )
+        if config.device == "cuda" and getattr(model.device, "type", None) != "cuda":
+            raise RuntimeError("CUDA device was explicitly requested but could not be honored")
+        return cls(model)
+
+    @property
+    def num_timesteps(self) -> int:
+        return int(self._model.num_timesteps)
+
+    def predict(
+        self,
+        observation: np.ndarray,
+        *,
+        deterministic: bool = True,
+    ) -> np.ndarray:
+        if not isinstance(observation, np.ndarray):
+            raise ValueError("observation must be a numpy.ndarray")
+        if observation.shape != self._model.observation_space.shape:
+            raise ValueError("observation has unexpected shape")
+        if observation.dtype.kind not in "iuf":
+            raise ValueError("observation must contain real numeric values")
+        if not np.isfinite(observation).all():
+            raise ValueError("observation values must be finite")
+        if not isinstance(deterministic, bool):
+            raise ValueError("deterministic must be bool")
+
+        normalized = np.asarray(observation, dtype=np.float32)
+        if not self._model.observation_space.contains(normalized):
+            raise ValueError("observation is outside model observation space")
+
+        action, _ = self._model.predict(normalized, deterministic=deterministic)
+        result = np.asarray(action, dtype=np.float32)
+        if result.shape != self._model.action_space.shape:
+            raise RuntimeError("backend returned action with unexpected shape")
+        if not np.isfinite(result).all():
+            raise RuntimeError("backend returned non-finite action")
+        if not self._model.action_space.contains(result):
+            raise RuntimeError("backend returned action outside action space")
+        return result
