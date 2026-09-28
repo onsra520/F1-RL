@@ -14,7 +14,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<10"]
+rl = [
+    "stable-baselines3>=2.9,<2.10",
+    "PyYAML>=6,<7",
+]
+dev = [
+    "pytest>=8,<10",
+    "stable-baselines3>=2.9,<2.10",
+    "PyYAML>=6,<7",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
