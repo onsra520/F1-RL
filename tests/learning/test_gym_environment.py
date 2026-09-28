@@ -196,3 +196,120 @@ def test_reset_rejects_malformed_encoded_observation(
 
     with pytest.raises(ValueError):
         env.reset()
+
+
+def test_step_before_reset_is_rejected() -> None:
+    env = _env()
+
+    with pytest.raises(RuntimeError):
+        env.step(np.array([0.0, 0.0], dtype=np.float32))
+
+
+@pytest.mark.parametrize(
+    "action",
+    [
+        [0.0, 0.0],
+        np.array([0.0], dtype=np.float32),
+        np.array([0.0, 0.0, 0.0], dtype=np.float32),
+        np.array([False, True], dtype=np.bool_),
+        np.array([0.0, "x"], dtype=object),
+        np.array([np.nan, 0.0], dtype=np.float32),
+        np.array([np.inf, 0.0], dtype=np.float32),
+        np.array([-1.01, 0.0], dtype=np.float32),
+        np.array([0.0, 1.01], dtype=np.float32),
+    ],
+)
+def test_invalid_action_fails_before_simulation_mutation(action: object) -> None:
+    env = _env()
+    env.reset()
+    state_before = env._simulation.snapshot
+    progress_before = env._progress
+
+    with pytest.raises(ValueError):
+        env.step(action)
+
+    assert env._simulation.snapshot == state_before
+    assert env._progress == progress_before
+
+
+def test_sampled_action_advances_one_tick_and_returns_gym_tuple() -> None:
+    env = _env()
+    env.reset()
+
+    result = env.step(env.action_space.sample())
+
+    assert len(result) == 5
+    observation, reward, terminated, truncated, info = result
+    assert env._simulation.snapshot.tick == 1
+    assert observation.dtype == np.float32
+    assert env.observation_space.contains(observation)
+    assert isinstance(reward, float)
+    assert terminated is False
+    assert truncated is False
+    assert info["tick"] == 1
+
+
+def test_simulation_step_failure_leaves_episode_active_and_progress_unchanged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from f1rl.runtime.simulation import Simulation
+
+    env = _env()
+    env.reset()
+    progress_before = env._progress
+    original_step = Simulation.step
+    monkeypatch.setattr(Simulation, "step", lambda self, control: (_ for _ in ()).throw(RuntimeError("simulation failed")))
+
+    with pytest.raises(RuntimeError, match="simulation failed"):
+        env.step(np.array([0.0, 0.0], dtype=np.float32))
+
+    assert env._simulation.snapshot.tick == 0
+    assert env._progress == progress_before
+    monkeypatch.setattr(Simulation, "step", original_step)
+    env.step(np.array([0.0, 0.0], dtype=np.float32))
+    assert env._simulation.snapshot.tick == 1
+
+
+def test_reward_failure_after_simulation_step_requires_reset() -> None:
+    class ExplodingReward:
+        @property
+        def name(self) -> str:
+            return "explode"
+
+        def evaluate(self, transition: object) -> object:
+            raise RuntimeError("reward exploded")
+
+    env = _env(reward_composer=RewardComposer((ExplodingReward(),)))
+    env.reset()
+    progress_before = env._progress
+
+    with pytest.raises(RuntimeError, match="reward exploded"):
+        env.step(np.array([0.0, 0.0], dtype=np.float32))
+
+    assert env._simulation.snapshot.tick == 1
+    assert env._progress == progress_before
+    with pytest.raises(RuntimeError):
+        env.step(np.array([0.0, 0.0], dtype=np.float32))
+
+    observation, info = env.reset()
+    assert env._simulation.snapshot.tick == 0
+    assert env.observation_space.contains(observation)
+    assert info["tick"] == 0
+
+
+def test_bad_post_step_observation_requires_reset(monkeypatch: pytest.MonkeyPatch) -> None:
+    env = _env()
+    env.reset()
+    original_encode = ObservationEncoder.encode
+    monkeypatch.setattr(ObservationEncoder, "encode", lambda self, track, vehicle, target: (0.0,) * 10)
+
+    with pytest.raises(ValueError):
+        env.step(np.array([0.0, 0.0], dtype=np.float32))
+
+    assert env._simulation.snapshot.tick == 1
+    with pytest.raises(RuntimeError):
+        env.step(np.array([0.0, 0.0], dtype=np.float32))
+
+    monkeypatch.setattr(ObservationEncoder, "encode", original_encode)
+    observation, _ = env.reset()
+    assert env.observation_space.contains(observation)
