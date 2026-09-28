@@ -87,11 +87,12 @@ class RaceRoute:
 
 
 def _validate_route_state(route: RaceRoute, state: object) -> None:
-    try:
-        next_checkpoint_index = state.next_checkpoint_index
-        finished = state.finished
-    except AttributeError as error:
-        raise ValueError("state must provide race progress fields") from error
+    from .progress import RaceProgressState
+
+    if not isinstance(state, RaceProgressState):
+        raise ValueError("state must be RaceProgressState")
+    next_checkpoint_index = state.next_checkpoint_index
+    finished = state.finished
     if isinstance(next_checkpoint_index, bool) or not isinstance(next_checkpoint_index, int) or next_checkpoint_index < 0:
         raise ValueError("next_checkpoint_index must be a non-negative integer")
     if not isinstance(finished, bool):

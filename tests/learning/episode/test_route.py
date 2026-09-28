@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError, dataclass
 
 import pytest
 
-from f1rl.learning.episode import RaceCheckpoint, RaceFinish, RaceRoute
+from f1rl.learning.episode import RaceCheckpoint, RaceFinish, RaceProgressState, RaceRoute
 from f1rl.sandbox.entities.checkpoint import Checkpoint
 from f1rl.sandbox.entities.finish_line import FinishLine
 from f1rl.sandbox.geometry.rotation import Quaternion
@@ -119,17 +119,22 @@ def test_from_track_requires_exactly_one_finish_line(finish_lines: tuple[FinishL
 def test_target_for_selects_next_checkpoint_then_finish_then_none() -> None:
     route = _route()
 
-    assert route.target_for(_ProgressState(0, False)) == Vec3(1.0, 0.0, 0.0)
-    assert route.target_for(_ProgressState(1, False)) == Vec3(2.0, 0.0, 0.0)
-    assert route.target_for(_ProgressState(2, False)) == Vec3(3.0, 0.0, 0.0)
-    assert route.target_for(_ProgressState(2, True)) is None
+    assert route.target_for(RaceProgressState(0, False)) == Vec3(1.0, 0.0, 0.0)
+    assert route.target_for(RaceProgressState(1, False)) == Vec3(2.0, 0.0, 0.0)
+    assert route.target_for(RaceProgressState(2, False)) == Vec3(3.0, 0.0, 0.0)
+    assert route.target_for(RaceProgressState(2, True)) is None
 
 
 def test_zero_checkpoint_route_targets_finish_immediately() -> None:
     finish = RaceFinish("finish", Vec3(3.0, 0.0, 0.0))
     route = RaceRoute((), finish)
 
-    assert route.target_for(_ProgressState(0, False)) == finish.target_position
+    assert route.target_for(RaceProgressState(0, False)) == finish.target_position
+
+
+def test_target_for_requires_race_progress_state() -> None:
+    with pytest.raises(ValueError):
+        _route().target_for(_ProgressState(0, False))
 
 
 @pytest.mark.parametrize("state", [_ProgressState(3, False), _ProgressState(1, True)])
