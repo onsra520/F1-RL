@@ -209,3 +209,31 @@ def test_checker_and_repeated_resets_do_not_replace_or_mutate_bound_track() -> N
     assert env._track == expected_track
     np.testing.assert_array_equal(first_observation, second_observation)
     assert first_info == second_info
+
+
+def test_equal_environments_produce_equal_episodes_and_reset_recovery() -> None:
+    track_a = TrackWorld(finish_lines=(FinishLine("finish", _volume(Vec3(100.0, 0.0, 0.0))),))
+    track_b = TrackWorld(finish_lines=(FinishLine("finish", _volume(Vec3(100.0, 0.0, 0.0))),))
+    first = _moving_env(track_a, RewardComposer((TimePenalty(0.5),)), max_steps=2)
+    second = _moving_env(track_b, RewardComposer((TimePenalty(0.5),)), max_steps=2)
+
+    first_reset = first.reset(seed=1)
+    second_reset = second.reset(seed=999)
+    np.testing.assert_array_equal(first_reset[0], second_reset[0])
+    assert first_reset[1] == second_reset[1]
+
+    actions = (
+        np.array([0.0, 0.0], dtype=np.float32),
+        np.array([0.25, 0.75], dtype=np.float32),
+    )
+    for action in actions:
+        first_step = first.step(action.copy())
+        second_step = second.step(action.copy())
+        np.testing.assert_array_equal(first_step[0], second_step[0])
+        assert first_step[1:] == second_step[1:]
+
+    assert first_step[3] is True
+    first_after = first.reset()
+    second_after = second.reset()
+    np.testing.assert_array_equal(first_after[0], second_after[0])
+    assert first_after[1] == second_after[1]
