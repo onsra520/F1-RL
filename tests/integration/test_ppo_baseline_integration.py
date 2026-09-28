@@ -1,3 +1,8 @@
+import ast
+from pathlib import Path
+import subprocess
+import sys
+
 import numpy as np
 
 from stable_baselines3.common.env_checker import check_env
@@ -123,3 +128,146 @@ def test_real_training_save_load_prediction_and_continue_round_trip(tmp_path) ->
     before_continue = loaded.num_timesteps
     loaded.learn(8)
     assert loaded.num_timesteps >= before_continue + 8
+
+
+def _direct_imports(path: Path) -> tuple[str, ...]:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    modules: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            modules.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            modules.append(node.module)
+    return tuple(modules)
+
+
+def test_algorithm_package_exports_only_approved_ppo_surface() -> None:
+    from f1rl.learning.algorithms import PPOConfig as ExportedConfig
+    from f1rl.learning.algorithms import PPOModel as ExportedModel
+
+    assert ExportedConfig is PPOConfig
+    assert ExportedModel is PPOModel
+
+    import f1rl.learning.algorithms as algorithms
+    assert algorithms.__all__ == ["PPOConfig", "PPOModel"]
+
+
+def test_base_learning_package_does_not_reexport_optional_ppo() -> None:
+    import f1rl.learning as learning
+    assert not hasattr(learning, "PPOConfig")
+    assert not hasattr(learning, "PPOModel")
+
+
+def test_base_learning_import_does_not_require_sb3_or_torch() -> None:
+    code = r'''
+import builtins
+original = builtins.__import__
+def blocked(name, *args, **kwargs):
+    if name == "stable_baselines3" or name.startswith("stable_baselines3."):
+        raise ImportError("blocked stable_baselines3")
+    if name == "torch" or name.startswith("torch."):
+        raise ImportError("blocked torch")
+    return original(name, *args, **kwargs)
+builtins.__import__ = blocked
+import f1rl.learning
+assert not hasattr(f1rl.learning, "PPOConfig")
+assert not hasattr(f1rl.learning, "PPOModel")
+'''
+    completed = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=Path.cwd(),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+def test_only_ppo_module_owns_sb3_and_no_production_module_imports_torch() -> None:
+    sb3_owners: list[str] = []
+    torch_owners: list[str] = []
+    for path in Path("f1rl").rglob("*.py"):
+        modules = _direct_imports(path)
+        if any(module == "stable_baselines3" or module.startswith("stable_baselines3.") for module in modules):
+            sb3_owners.append(path.as_posix())
+        if any(module == "torch" or module.startswith("torch.") for module in modules):
+            torch_owners.append(path.as_posix())
+
+    assert sb3_owners == ["f1rl/learning/algorithms/ppo.py"]
+    assert torch_owners == []
+
+
+def test_lower_layers_remain_free_of_model_framework_dependencies() -> None:
+    paths = [
+        *Path("f1rl/sandbox").rglob("*.py"),
+        *Path("f1rl/runtime").rglob("*.py"),
+        Path("f1rl/learning/gym_environment.py"),
+        Path("f1rl/learning/action.py"),
+        Path("f1rl/learning/observation.py"),
+        *Path("f1rl/learning/rewards").rglob("*.py"),
+        *Path("f1rl/learning/episode").rglob("*.py"),
+    ]
+    forbidden = ("stable_baselines3", "torch")
+    offenders: list[str] = []
+    for path in paths:
+        if any(module == prefix or module.startswith(prefix + ".") for module in _direct_imports(path) for prefix in forbidden):
+            offenders.append(path.as_posix())
+    assert offenders == []
+
+
+def test_generated_policy_archive_is_ignored_and_untracked() -> None:
+    env = _smoke_env()
+    model = PPOModel.create(env, PPOConfig(n_steps=8, batch_size=4, n_epochs=1))
+    archive = Path("artifacts/policies/pytest-ppo-baseline.zip")
+    try:
+        model.save(archive)
+        ignored = subprocess.run(
+            ["git", "check-ignore", "-q", str(archive)],
+            cwd=Path.cwd(),
+            check=False,
+        )
+        status = subprocess.run(
+            ["git", "status", "--porcelain", "--", str(archive)],
+            cwd=Path.cwd(),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        tracked = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", str(archive)],
+            cwd=Path.cwd(),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert ignored.returncode == 0
+        assert status.stdout == ""
+        assert tracked.returncode != 0
+    finally:
+        archive.unlink(missing_ok=True)
+
+
+def test_algorithm_docs_describe_implemented_ppo_contract() -> None:
+    text = Path("f1rl/learning/algorithms/README.md").read_text(encoding="utf-8").lower()
+    for token in (
+        "stable-baselines3",
+        ".[rl]",
+        "ppo-baseline.yml",
+        "mlppolicy",
+        "cuda",
+        "auto",
+        "hybrid",
+        "save",
+        "load",
+        "vectorized",
+    ):
+        assert token in text
+
+
+def test_learning_docs_mark_ppo_baseline_implemented_but_future_layers_pending() -> None:
+    text = Path("f1rl/learning/README.md").read_text(encoding="utf-8").lower()
+    assert "ppo baseline" in text
+    assert "implemented" in text
+    assert "vectorized" in text
+    assert "evaluation" in text
+    assert "generalization" in text

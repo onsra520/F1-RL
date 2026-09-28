@@ -25,8 +25,16 @@ Reward timing remains fixed-target: calculate the current `RewardTransition` wit
 
 The action, observation, reward, and episode primitives remain framework-agnostic. `gym_environment.py` is the thin Gymnasium adapter above them: one env is bound to one track, exposes NumPy `float32` spaces, composes deterministic reset/step behavior, preserves pre-step reward target timing, and keeps game score separate from RL reward.
 
+`algorithms/ppo.py` now provides the implemented PPO baseline through Stable-Baselines3. `PPOConfig` can load editable defaults from `configs/training/ppo-baseline.yml`; `PPOModel` supports deterministic prediction, cumulative learning, and `.zip` save/load. Model compute may use `cpu`, `cuda`, or `auto`, while the F1-RL simulation remains CPU-side.
+
+The PPO symbols intentionally are not re-exported from `f1rl.learning`, so the base simulation/Gym package remains usable without the optional RL dependencies.
+
 ## Next layers
 
-- `algorithms/` / `training/` / `evaluation/`: PPO integration, vectorized training, policy persistence, reward-shaping ablation, and generalization metrics.
+- vectorized environment/training support;
+- multi-track sampling and repeatable training orchestration;
+- independent evaluation metrics;
+- unseen-track generalization experiments;
+- reward-shaping ablation.
 
-Sandbox remains reusable without importing the learning package. Policy-controlled braking remains a separate future action-contract change.
+Evaluation and generalization are not implied by the PPO baseline smoke pipeline. Sandbox remains reusable without importing the learning package. Policy-controlled braking remains a separate future action-contract change.
