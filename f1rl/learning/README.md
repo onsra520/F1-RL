@@ -17,11 +17,16 @@ Reinforcement-learning layer built on top of the sandbox.
 - `TimePenalty` scales by elapsed seconds;
 - `RewardComposer` preserves term order and returns an inspectable per-term breakdown.
 
-These layers remain pure-Python and framework-agnostic. Game score is not RL reward, and checkpoint/finish entry events have no implicit reward because validated route-progress and terminal episode semantics do not exist yet.
+`episode/` defines the authoritative route target and deterministic single-lap progress. A route accepts checkpoints only in numeric authored order, and finishes only after all checkpoints are complete. Its result carries the next target; a finished route has no target.
+
+`EpisodeConfig(max_steps=...)` truncates unfinished episodes at the limit. A valid finish at that same step wins: it is terminated, never truncated.
+
+Reward timing remains fixed-target: calculate the current `RewardTransition` with the pre-step route target, then advance route progress and use its returned target for the next observation. There are no checkpoint or finish bonuses.
+
+These layers remain pure-Python and framework-agnostic. Game score is not RL reward. Gymnasium is the next composition layer.
 
 ## Next layers
 
-- explicit route-progress / episode semantics: authoritative next checkpoint, ordered completion, lap state, valid finish, termination/truncation;
 - `gym_environment.py`: compose observation, action, simulation, route progress, reward, reset, and episode semantics;
 - `algorithms/` / `training/` / `evaluation/`: PPO integration, training orchestration, reward-shaping ablation, and generalization metrics.
 
