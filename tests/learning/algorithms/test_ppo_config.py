@@ -82,8 +82,9 @@ def test_unsupported_devices_are_rejected(device: object) -> None:
         PPOConfig(device=device)
 
 
-def test_seed_may_be_none() -> None:
+def test_seed_may_be_none_or_any_integer() -> None:
     assert PPOConfig(seed=None).seed is None
+    assert PPOConfig(seed=-1).seed == -1
 
 
 def _write_yaml(tmp_path: Path, text: str) -> Path:
@@ -111,8 +112,9 @@ def test_yaml_accepts_accelerator_device_modes(tmp_path: Path, device: str) -> N
     assert PPOConfig.from_yaml(path).device == device
 
 
-def test_empty_root_mapping_uses_defaults(tmp_path: Path) -> None:
-    assert PPOConfig.from_yaml(_write_yaml(tmp_path, "{}\n")) == PPOConfig()
+def test_yaml_requires_ppo_root_mapping(tmp_path: Path) -> None:
+    with pytest.raises(ValueError):
+        PPOConfig.from_yaml(_write_yaml(tmp_path, "{}\n"))
 
 
 @pytest.mark.parametrize(

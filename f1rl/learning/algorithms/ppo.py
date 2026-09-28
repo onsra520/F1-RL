@@ -81,8 +81,8 @@ class PPOConfig:
         if max_grad_norm <= 0.0:
             raise ValueError("max_grad_norm must be positive")
 
-        if self.seed is not None:
-            _validate_int(self.seed, "seed", minimum=0)
+        if self.seed is not None and (isinstance(self.seed, bool) or not isinstance(self.seed, int)):
+            raise ValueError("seed must be None or an integer")
         if self.device not in {"cpu", "cuda", "auto"}:
             raise ValueError('device must be one of "cpu", "cuda", or "auto"')
 
@@ -105,7 +105,9 @@ class PPOConfig:
         unknown_root = set(document) - {"ppo"}
         if unknown_root:
             raise ValueError(f"unknown configuration keys: {sorted(unknown_root)!r}")
-        raw_ppo: Any = document.get("ppo", {})
+        if set(document) != {"ppo"}:
+            raise ValueError("configuration root must contain exactly one ppo mapping")
+        raw_ppo: Any = document["ppo"]
         if not isinstance(raw_ppo, dict):
             raise ValueError("ppo configuration must be a mapping")
         allowed = {field.name for field in fields(cls)}
