@@ -184,3 +184,57 @@ class PPOModel:
         if not self._model.action_space.contains(result):
             raise RuntimeError("backend returned action outside action space")
         return result
+
+    def learn(self, total_timesteps: int) -> "PPOModel":
+        if isinstance(total_timesteps, bool) or not isinstance(total_timesteps, int):
+            raise ValueError("total_timesteps must be a positive integer")
+        if total_timesteps <= 0:
+            raise ValueError("total_timesteps must be a positive integer")
+        if self._model.get_env() is None:
+            raise RuntimeError("an environment is required to continue learning")
+        self._model.learn(
+            total_timesteps=total_timesteps,
+            reset_num_timesteps=False,
+        )
+        return self
+
+    @staticmethod
+    def _archive_path(path: str | Path) -> Path:
+        if not isinstance(path, (str, Path)):
+            raise ValueError("path must be a string or Path")
+        if isinstance(path, str) and not path.strip():
+            raise ValueError("path must not be blank")
+        archive = Path(path)
+        if not str(archive).lower().endswith(".zip"):
+            archive = Path(str(archive) + ".zip")
+        return archive
+
+    def save(self, path: str | Path) -> Path:
+        archive = self._archive_path(path)
+        if not archive.parent.is_dir():
+            raise ValueError("model archive parent directory must exist")
+        if archive.exists() and archive.is_dir():
+            raise ValueError("model archive destination must not be a directory")
+        self._model.save(str(archive))
+        return archive
+
+    @classmethod
+    def load(
+        cls,
+        path: str | Path,
+        *,
+        env: F1RLEnv | None = None,
+        device: str = "cpu",
+    ) -> "PPOModel":
+        archive = cls._archive_path(path)
+        if not archive.is_file():
+            raise ValueError("model archive must exist as a file")
+        if env is not None and not isinstance(env, F1RLEnv):
+            raise ValueError("env must be F1RLEnv or None")
+        if device not in {"cpu", "cuda", "auto"}:
+            raise ValueError('device must be one of "cpu", "cuda", or "auto"')
+
+        model = PPO.load(str(archive), env=env, device=device)
+        if device == "cuda" and getattr(model.device, "type", None) != "cuda":
+            raise RuntimeError("CUDA device was explicitly requested but could not be honored")
+        return cls(model)

@@ -80,3 +80,46 @@ def test_real_env_is_sb3_compatible_and_accepts_predicted_action() -> None:
     assert truncated is False
     assert info["tick"] == 1
     assert np.isfinite(next_observation).all()
+
+
+def test_short_real_learning_is_cumulative() -> None:
+    env = _smoke_env()
+    model = PPOModel.create(
+        env,
+        PPOConfig(n_steps=8, batch_size=4, n_epochs=1, seed=0, device="cpu"),
+    )
+
+    assert model.learn(8) is model
+    first = model.num_timesteps
+    assert first >= 8
+
+    model.learn(8)
+    second = model.num_timesteps
+    assert second >= first + 8
+
+
+def test_real_training_save_load_prediction_and_continue_round_trip(tmp_path) -> None:
+    env = _smoke_env()
+    config = PPOConfig(n_steps=8, batch_size=4, n_epochs=1, seed=0, device="cpu")
+    model = PPOModel.create(env, config)
+    model.learn(8)
+    observation, _ = env.reset(seed=0)
+    action_before = model.predict(observation, deterministic=True)
+
+    archive = model.save(tmp_path / "ppo-smoke")
+    fresh_env = _smoke_env()
+    loaded = PPOModel.load(archive, env=fresh_env, device="cpu")
+    action_after = loaded.predict(observation, deterministic=True)
+
+    np.testing.assert_allclose(action_after, action_before, rtol=1e-6, atol=1e-7)
+    fresh_observation, _ = fresh_env.reset(seed=0)
+    assert np.allclose(fresh_observation, observation)
+    next_observation, reward, terminated, truncated, _ = fresh_env.step(action_after)
+    assert fresh_env.observation_space.contains(next_observation)
+    assert isinstance(reward, float)
+    assert terminated is False
+    assert truncated is False
+
+    before_continue = loaded.num_timesteps
+    loaded.learn(8)
+    assert loaded.num_timesteps >= before_continue + 8

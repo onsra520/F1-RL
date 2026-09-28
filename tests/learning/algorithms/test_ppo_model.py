@@ -184,3 +184,132 @@ def test_predict_returns_valid_float32_action() -> None:
     assert action.dtype == np.float32
     assert np.isfinite(action).all()
     assert env.action_space.contains(action)
+
+
+@pytest.mark.parametrize("total_timesteps", [True, False, 0, -1, 1.5, "8", None])
+def test_learn_rejects_invalid_total_timesteps_before_backend(total_timesteps: object) -> None:
+    class Backend:
+        num_timesteps = 0
+
+        def get_env(self) -> object:
+            return object()
+
+        def learn(self, *args: object, **kwargs: object) -> object:
+            raise AssertionError("backend learn must not be called")
+
+    model = PPOModel(Backend())
+    with pytest.raises(ValueError):
+        model.learn(total_timesteps)
+
+
+def test_learn_uses_cumulative_backend_semantics() -> None:
+    class Backend:
+        num_timesteps = 3
+
+        def __init__(self) -> None:
+            self.calls: list[tuple[int, bool]] = []
+
+        def get_env(self) -> object:
+            return object()
+
+        def learn(self, *, total_timesteps: int, reset_num_timesteps: bool) -> None:
+            self.calls.append((total_timesteps, reset_num_timesteps))
+            self.num_timesteps += total_timesteps
+
+    backend = Backend()
+    model = PPOModel(backend)
+
+    assert model.learn(5) is model
+    assert backend.calls == [(5, False)]
+    assert model.num_timesteps == 8
+
+
+def test_save_normalizes_zip_suffix_and_returns_archive(tmp_path) -> None:
+    model = PPOModel.create(_env(), _config())
+    destination = tmp_path / "policy.bin"
+
+    saved = model.save(destination)
+
+    assert saved == tmp_path / "policy.bin.zip"
+    assert saved.is_file()
+
+
+@pytest.mark.parametrize("path", ["", "   ", 123, None, object()])
+def test_save_rejects_invalid_path_values(path: object) -> None:
+    model = PPOModel.create(_env(), _config())
+    with pytest.raises(ValueError):
+        model.save(path)
+
+
+def test_save_rejects_missing_parent(tmp_path) -> None:
+    model = PPOModel.create(_env(), _config())
+    with pytest.raises(ValueError):
+        model.save(tmp_path / "missing" / "policy")
+
+
+def test_save_rejects_directory_destination(tmp_path) -> None:
+    model = PPOModel.create(_env(), _config())
+    directory = tmp_path / "policy.zip"
+    directory.mkdir()
+    with pytest.raises(ValueError):
+        model.save(directory)
+
+
+@pytest.mark.parametrize("path", ["", "   ", 123, None, object()])
+def test_load_rejects_invalid_path_values(path: object) -> None:
+    with pytest.raises(ValueError):
+        PPOModel.load(path)
+
+
+def test_load_rejects_missing_archive(tmp_path) -> None:
+    with pytest.raises(ValueError):
+        PPOModel.load(tmp_path / "missing-policy")
+
+
+def test_load_rejects_invalid_env_type(tmp_path) -> None:
+    model = PPOModel.create(_env(), _config())
+    path = model.save(tmp_path / "policy")
+    with pytest.raises(ValueError):
+        PPOModel.load(path, env=object())
+
+
+@pytest.mark.parametrize("device", ["", "gpu", "CUDA", 1, None])
+def test_load_rejects_invalid_device(device: object, tmp_path) -> None:
+    model = PPOModel.create(_env(), _config())
+    path = model.save(tmp_path / "policy")
+    with pytest.raises(ValueError):
+        PPOModel.load(path, device=device)
+
+
+def test_inference_only_load_predicts_but_cannot_learn(tmp_path) -> None:
+    env = _env()
+    model = PPOModel.create(env, _config())
+    observation, _ = env.reset()
+    path = model.save(tmp_path / "policy")
+
+    loaded = PPOModel.load(path, env=None, device="cpu")
+    action = loaded.predict(observation)
+
+    assert env.action_space.contains(action)
+    with pytest.raises(RuntimeError, match="environment"):
+        loaded.learn(8)
+
+
+def test_load_cuda_must_not_silently_fall_back(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    import f1rl.learning.algorithms.ppo as ppo_module
+
+    archive = tmp_path / "policy.zip"
+    archive.write_bytes(b"placeholder")
+
+    class FakeLoaded:
+        device = type("Device", (), {"type": "cpu"})()
+        num_timesteps = 0
+
+    class FakePPO:
+        @classmethod
+        def load(cls, *args: object, **kwargs: object) -> FakeLoaded:
+            return FakeLoaded()
+
+    monkeypatch.setattr(ppo_module, "PPO", FakePPO)
+    with pytest.raises(RuntimeError, match="CUDA"):
+        PPOModel.load(archive, device="cuda")
