@@ -70,17 +70,15 @@ def test_guarded_subproc_vector_smoke_script() -> None:
 
 def test_guarded_multi_track_subproc_smoke_script() -> None:
     helper = Path("tests/integration/helpers/subproc_multi_track_smoke.py")
-    env = os.environ.copy()
-    env["PYTHONPATH"] = os.pathsep.join(
-        [str(Path.cwd()), env["PYTHONPATH"]] if env.get("PYTHONPATH") else [str(Path.cwd())]
-    )
+    child_env = os.environ.copy()
+    child_env.pop("PYTHONPATH", None)
     completed = subprocess.run(
         [sys.executable, str(helper)],
         capture_output=True,
         text=True,
         timeout=30,
         check=False,
-        env=env,
+        env=child_env,
     )
     assert completed.returncode == 0, completed.stderr
     payload = json.loads(completed.stdout.strip().splitlines()[-1])
@@ -244,3 +242,6 @@ def test_learning_docs_mark_vectorized_ppo_implemented_and_future_layers_pending
     assert "evaluation" in text
     assert "multi-track sampling is implemented" in text
     assert "unseen-track generalization experiments" in text
+
+
+\n

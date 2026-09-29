@@ -1,6 +1,12 @@
 import json
+from pathlib import Path
+import sys
 
 import numpy as np
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from f1rl.learning.training.config import VectorEnvConfig
 from f1rl.learning.training.vector_env import make_multi_track_vector_env
@@ -40,3 +46,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+\n
