@@ -1,3 +1,8 @@
+import json
+from pathlib import Path
+import subprocess
+import sys
+
 import numpy as np
 
 from f1rl.learning.training.config import VectorEnvConfig
@@ -40,3 +45,61 @@ def test_real_vectorized_ppo_training_save_load_and_continue(tmp_path) -> None:
     finally:
         first_vector.close()
         second_vector.close()
+
+
+def test_guarded_subproc_vector_smoke_script() -> None:
+    helper = Path("tests/integration/helpers/subproc_vector_smoke.py")
+    completed = subprocess.run(
+        [sys.executable, str(helper)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout.strip().splitlines()[-1])
+    assert payload["backend"] == "subproc"
+    assert payload["n_envs"] == 2
+    assert payload["reset_shape"] == [2, 9]
+    assert payload["reward_shape"] == [2]
+    assert payload["done_shape"] == [2]
+    assert payload["closed"] is True
+
+
+def _run_benchmark(backend: str, n_envs: int) -> dict[str, object]:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/benchmark_vector_envs.py",
+            "--backend",
+            backend,
+            "--n-envs",
+            str(n_envs),
+            "--transitions",
+            "4",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    return json.loads(completed.stdout.strip().splitlines()[-1])
+
+
+def test_vector_benchmark_cli_reports_positive_diagnostics_for_dummy() -> None:
+    payload = _run_benchmark("dummy", 1)
+    assert payload["backend"] == "dummy"
+    assert payload["n_envs"] == 1
+    assert payload["transitions"] >= 4
+    assert payload["elapsed_seconds"] > 0.0
+    assert payload["transitions_per_second"] > 0.0
+
+
+def test_vector_benchmark_cli_reports_positive_diagnostics_for_subproc() -> None:
+    payload = _run_benchmark("subproc", 2)
+    assert payload["backend"] == "subproc"
+    assert payload["n_envs"] == 2
+    assert payload["transitions"] >= 4
+    assert payload["elapsed_seconds"] > 0.0
+    assert payload["transitions_per_second"] > 0.0
