@@ -1,5 +1,6 @@
 import ast
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -8,7 +9,7 @@ import numpy as np
 
 from f1rl.learning.training.config import VectorEnvConfig
 from f1rl.learning.training.vector_env import make_vector_env
-from tests.learning.training.test_vector_env import _factory
+from tests.learning.training.test_vector_env import _factory, _scenario_set
 
 
 def test_real_dummy_vector_env_reset_step_smoke() -> None:
@@ -65,6 +66,52 @@ def test_guarded_subproc_vector_smoke_script() -> None:
     assert payload["reward_shape"] == [2]
     assert payload["done_shape"] == [2]
     assert payload["closed"] is True
+
+
+def test_guarded_multi_track_subproc_smoke_script() -> None:
+    helper = Path("tests/integration/helpers/subproc_multi_track_smoke.py")
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.pathsep.join(
+        [str(Path.cwd()), env["PYTHONPATH"]] if env.get("PYTHONPATH") else [str(Path.cwd())]
+    )
+    completed = subprocess.run(
+        [sys.executable, str(helper)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+        env=env,
+    )
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout.strip().splitlines()[-1])
+    assert payload["backend"] == "subproc"
+    assert payload["n_envs"] == 2
+    assert payload["reset_shape"] == [2, 9]
+    assert payload["reward_shape"] == [2]
+    assert payload["done_shape"] == [2]
+    assert len(payload["track_ids"]) == 2
+    assert all(isinstance(track_id, str) for track_id in payload["track_ids"])
+    assert payload["closed"] is True
+
+
+def test_real_multi_track_ppo_training_smoke() -> None:
+    from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
+    from f1rl.learning.training.vector_env import make_multi_track_vector_env
+
+    vector = make_multi_track_vector_env(
+        _scenario_set(),
+        VectorEnvConfig(n_envs=2),
+        sampling_seed=123,
+    )
+    try:
+        model = PPOModel.create(
+            vector,
+            PPOConfig(n_steps=4, batch_size=4, n_epochs=1, device="cpu"),
+        )
+        assert model.learn(8) is model
+        assert model.num_timesteps >= 8
+    finally:
+        vector.close()
 
 
 def _run_benchmark(backend: str, n_envs: int) -> dict[str, object]:
