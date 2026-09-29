@@ -159,8 +159,11 @@ def test_training_package_exports_exact_optional_surface() -> None:
 
     assert training.__all__ == (
         "F1RLEnvFactory",
+        "TrainingScenario",
+        "TrainingScenarioSet",
         "VectorEnvConfig",
         "VectorTrainingConfig",
+        "make_multi_track_vector_env",
         "make_vector_env",
     )
     for name in training.__all__:
@@ -198,6 +201,11 @@ def test_vector_production_dependency_boundaries_are_exact() -> None:
     assert "stable_baselines3" not in _direct_imports(
         Path("f1rl/learning/training/env_factory.py")
     )
+    assert all(
+        not module.startswith("f1rl.learning")
+        for path in (*Path("f1rl/sandbox").rglob("*.py"), *Path("f1rl/runtime").rglob("*.py"))
+        for module in _direct_imports(path)
+    )
 
 
 def test_training_docs_describe_vectorized_contract() -> None:
@@ -211,6 +219,10 @@ def test_training_docs_describe_vectorized_contract() -> None:
         "vectorized-ppo.yml",
         "close()",
         "diagnostic",
+        "sampling_seed",
+        "track_id",
+        "canonical",
+        "non-track",
     ):
         assert token in text
 
@@ -229,3 +241,5 @@ def test_learning_docs_mark_vectorized_ppo_implemented_and_future_layers_pending
     assert "multi-track" in text
     assert "training orchestration" in text
     assert "evaluation" in text
+    assert "multi-track sampling is implemented" in text
+    assert "unseen-track generalization experiments" in text
