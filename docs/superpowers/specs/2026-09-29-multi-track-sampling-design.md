@@ -8,7 +8,7 @@
 
 ## Goal
 
-Train one PPO policy with vector slots that sample from an explicit finite set of authored training scenarios. The resulting infrastructure must make it possible to train against a distribution of tracks while preserving the existing deterministic simulation, Gym, reward, observation, and PPO contracts.
+Train one PPO policy with vector slots that sample from an explicit finite set of authored training scenarios. The resulting infrastructure must make it possible to train against a distribution of tracks while preserving one shared non-track simulation, Gym, reward, observation, and PPO contract.
 
 The milestone establishes training-scenario identity and deterministic, isolated per-rank selection. It does not measure policy quality or unseen-track generalization.
 
@@ -66,11 +66,29 @@ No new YAML configuration is introduced. The existing project has no trainer/orc
 
 `TrainingScenarioSet` requires a tuple containing at least one scenario. It rejects duplicate `track_id` values. Declaration order is preserved and is the sampling population order.
 
-Every scenario must expose an action space and observation space compatible with every other scenario. Compatibility means the Gym spaces have the same concrete type, shape, dtype, and bounds; both the action and observation spaces are checked. This is required because one SB3 `VecEnv` and one PPO policy bind to exactly one action space and one observation space.
+Every scenario in one set must share exactly the same non-track environment contract:
 
-The current `F1RLEnv` action space is uniform, but it is still checked rather than assumed. Different track geometry and initial world state are permitted. Observation encoders may differ only when their resulting spaces are compatible.
+- `vehicle_parameters`;
+- `simulation_config`;
+- `observation_encoder`, including sensor-suite direction/order semantics and normalization scales;
+- `reward_composer`;
+- `episode_config`.
+
+Only `TrackWorld`, its track-dependent `initial_state`, and `track_id` may vary between scenarios. This milestone is controlled track sampling, not domain, reward, observation, or episode randomization.
+
+Every scenario must also expose an action space and observation space compatible with every other scenario. Compatibility means the Gym spaces have the same concrete type, shape, dtype, and bounds; both the action and observation spaces are checked. This is an additional defensive invariant because one SB3 `VecEnv` and one PPO policy bind to exactly one action space and one observation space. Matching Gym spaces alone is not sufficient to establish the shared semantic contract above.
+
+The current `F1RLEnv` action space is uniform, but it is still checked rather than assumed. Different track geometry and initial world state are permitted; observation encoders may not differ within one scenario set.
 
 `track_id` is training metadata. It is never appended to, encoded into, or otherwise used to alter the policy observation.
+
+## Pre-reset space availability
+
+`DummyVecEnv` and `SubprocVecEnv` inspect an environment's `action_space` and `observation_space` while constructing vector slots, before the first episode reset. `TrainingScenarioSet` therefore validates compatibility and establishes canonical action and observation spaces during set construction.
+
+The sampled wrapper exposes those canonical spaces immediately when it is constructed. It does not consume its sampler or select a scenario in its constructor. The first draw occurs only when `reset()` starts the first episode; there is no hidden episode zero.
+
+If scenario-set construction creates temporary `F1RLEnv` instances to derive or validate spaces, every such temporary environment is closed before construction returns or raises. Those temporary instances never become active episode environments.
 
 ## Reset-time sampling lifecycle
 
@@ -85,7 +103,9 @@ On every wrapper `reset()`:
 2. It calls that scenario's `factory.create()` to create a **new** `F1RLEnv`.
 3. It resets the new inner environment and returns its observation plus reset info augmented with `"track_id"`.
 
-An inner environment is never mutated to exchange tracks. A sampled episode always receives a newly constructed fixed-track `F1RLEnv`; the prior inner environment is closed before it is discarded. The wrapper delegates `step()` only to its active inner environment.
+An inner environment is never mutated to exchange tracks. Before constructing a new sampled episode, the wrapper closes and clears any prior active inner environment. A sampled episode then receives a newly constructed fixed-track `F1RLEnv`. The wrapper delegates `step()` only to its active inner environment.
+
+The wrapper's `close()` closes its current active inner environment when one exists. If creating or resetting a newly sampled inner environment raises, the wrapper closes that partially created new environment, clears its active-environment reference, and propagates the exception. It must not silently reuse a stale previous environment after that failed reset. These rules make episode replacement safe for future resource-bearing environments and spawned subprocess cleanup.
 
 On `step()`, the wrapper adds `info["track_id"]` for the scenario that produced that transition. It does this before returning a terminal transition. Thus SB3 receives the terminal transition and its correct track ID before it adds `terminal_observation` and invokes the wrapper's next `reset()`. The later reset selects and reports the next episode's ID separately.
 
@@ -129,7 +149,7 @@ Later validation and unseen-test splitting may add separate scenario-set constru
 In scope:
 
 - immutable scenario and training-pool representation;
-- strict ID and compatible action/observation-space validation;
+- strict ID, shared non-track contract, and compatible action/observation-space validation;
 - deterministic rank-isolated reset-time sampling;
 - track identity in Gym info only;
 - DummyVecEnv and Windows-spawn SubprocVecEnv construction;
@@ -138,7 +158,7 @@ In scope:
 
 Out of scope:
 
-- changes to sandbox, runtime, `F1RLEnv`, observation encoding, reward shaping, or PPO hyperparameters;
+- changes to sandbox, runtime, `F1RLEnv`, observation encoding, reward shaping, PPO hyperparameters, or domain randomization;
 - procedural generation, track-editor/persistence work, curriculum learning, and adaptive difficulty;
 - evaluation/generalization scoring, train/validation/test reports, or policy-quality claims;
 - trainer services, callbacks, checkpoint scheduling, TensorBoard/W&B, and scaling claims.
@@ -147,11 +167,13 @@ Out of scope:
 
 Implementation must use test-first tasks and prove the following without asserting policy quality:
 
-- empty pools, duplicate IDs, invalid fields, and incompatible action or observation spaces are rejected;
+- empty pools, duplicate IDs, invalid fields, incompatible action or observation spaces, and differences in any shared non-track contract field are rejected;
+- the wrapper exposes canonical action and observation spaces before its first reset, and construction does not consume a scenario draw;
 - a fixed `sampling_seed` produces the same sequence; known differing seeds can produce different sequences;
 - every rank uses an isolated sequence, and resetting one rank does not advance another;
 - `reset(seed=...)` does not change the scenario-selection sequence owned by `sampling_seed`;
 - each reset creates a fresh, fixed-track inner `F1RLEnv` and never swaps an existing one;
+- replacing or closing a wrapper closes its active inner environment; a failed inner creation/reset closes the partial environment, leaves no stale active environment, and propagates the error;
 - step and terminal-transition info identify the scenario that actually produced the transition;
 - track ID remains absent from policy observations;
 - same authored inputs retain deterministic transition behavior;
