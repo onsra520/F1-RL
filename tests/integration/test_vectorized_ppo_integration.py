@@ -87,6 +87,7 @@ def test_guarded_multi_track_subproc_smoke_script() -> None:
     assert payload["backend"] == "subproc"
     assert payload["n_envs"] == 2
     assert payload["reset_shape"] == [2, 9]
+    assert payload["step_shape"] == [2, 9]
     assert payload["reward_shape"] == [2]
     assert payload["done_shape"] == [2]
     assert len(payload["track_ids"]) == 2

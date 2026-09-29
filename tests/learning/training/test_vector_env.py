@@ -318,3 +318,50 @@ def test_sampled_wrapper_closes_partial_env_and_clears_after_reset_failure(
     assert created[1] in closed
     with pytest.raises(RuntimeError, match=r"reset\(\) must be called"):
         wrapper.step(np.zeros(2, dtype=np.float32))
+
+
+def test_sampled_wrapper_clears_previous_env_when_factory_creation_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scenarios = _scenario_set()
+    created: list[F1RLEnv] = []
+    closed: list[F1RLEnv] = []
+    original_create = F1RLEnvFactory.create
+    original_close = F1RLEnv.close
+    factory_error = RuntimeError("scenario creation failed")
+    create_count = 0
+    wrapper = vector_env._SampledF1RLEnv(scenarios, 123, 0)
+
+    def create(factory: F1RLEnvFactory) -> F1RLEnv:
+        nonlocal create_count
+        create_count += 1
+        if create_count == 2:
+            assert created[0] in closed
+            assert wrapper._active_env is None
+            raise factory_error
+        env = original_create(factory)
+        created.append(env)
+        return env
+
+    def close(env: F1RLEnv) -> None:
+        closed.append(env)
+        original_close(env)
+
+    monkeypatch.setattr(F1RLEnvFactory, "create", create)
+    monkeypatch.setattr(F1RLEnv, "close", close)
+    wrapper.reset()
+
+    with pytest.raises(RuntimeError) as exc_info:
+        wrapper.reset()
+
+    assert exc_info.value is factory_error
+    assert wrapper._active_env is None
+    assert wrapper._current_scenario is None
+    assert created[0] in closed
+    with pytest.raises(RuntimeError, match=r"reset\(\) must be called"):
+        wrapper.step(np.zeros(2, dtype=np.float32))
+
+    wrapper.reset()
+    assert wrapper._active_env is created[1]
+    assert wrapper._current_scenario is not None
+    wrapper.close()
