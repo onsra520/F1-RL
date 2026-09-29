@@ -31,3 +31,9 @@ CUDA is a hybrid mode: F1-RL simulation, sensors, rewards, and Gym environment s
 Training is cumulative across `learn()` calls. `save()` and `load()` use Stable-Baselines3 `.zip` archives; generated policies belong under ignored artifact directories such as `artifacts/policies/` or `artifacts/checkpoints/`.
 
 Vectorized environments, multi-track sampling, training orchestration, callbacks, evaluation, and generalization experiments remain later milestones.
+
+## Vectorized training boundary
+
+`PPOModel.create()` and environment-bound `load()` accept either one concrete `F1RLEnv` or an SB3 `VecEnv`. Rollout validation uses `n_steps * num_envs`, so vector-valid batch sizes are checked only when a model is bound to an environment.
+
+Public `PPOModel.predict()` deliberately remains a **single-observation** API: one observation produces one action. Vectorized training does not make batched inference part of the F1-RL adapter contract.

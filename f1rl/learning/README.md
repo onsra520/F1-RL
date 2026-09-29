@@ -29,9 +29,10 @@ The action, observation, reward, and episode primitives remain framework-agnosti
 
 The PPO symbols intentionally are not re-exported from `f1rl.learning`, so the base simulation/Gym package remains usable without the optional RL dependencies.
 
+Vectorized PPO training is now **implemented** above the baseline adapter. `f1rl.learning.training` creates same-track `DummyVecEnv` or Windows-safe spawned `SubprocVecEnv` instances from fresh `F1RLEnvFactory` slots, while rollout-size validation remains in `PPOModel` at environment binding time.
+
 ## Next layers
 
-- vectorized environment/training support;
 - multi-track sampling and repeatable training orchestration;
 - independent evaluation metrics;
 - unseen-track generalization experiments;

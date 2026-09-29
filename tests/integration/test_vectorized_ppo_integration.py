@@ -1,3 +1,4 @@
+import ast
 import json
 from pathlib import Path
 import subprocess
@@ -103,3 +104,81 @@ def test_vector_benchmark_cli_reports_positive_diagnostics_for_subproc() -> None
     assert payload["transitions"] >= 4
     assert payload["elapsed_seconds"] > 0.0
     assert payload["transitions_per_second"] > 0.0
+
+
+def test_training_package_exports_exact_optional_surface() -> None:
+    import f1rl.learning as learning
+    import f1rl.learning.training as training
+
+    assert training.__all__ == (
+        "F1RLEnvFactory",
+        "VectorEnvConfig",
+        "VectorTrainingConfig",
+        "make_vector_env",
+    )
+    for name in training.__all__:
+        assert getattr(training, name) is not None
+        assert not hasattr(learning, name)
+    assert not hasattr(training, "_RankedEnvFactory")
+
+
+def _direct_imports(path: Path) -> set[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    modules: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            modules.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            modules.add(node.module)
+    return modules
+
+
+def test_vector_production_dependency_boundaries_are_exact() -> None:
+    sb3_owners: list[str] = []
+    torch_owners: list[str] = []
+    for path in Path("f1rl").rglob("*.py"):
+        modules = _direct_imports(path)
+        if any(module == "stable_baselines3" or module.startswith("stable_baselines3.") for module in modules):
+            sb3_owners.append(path.as_posix())
+        if any(module == "torch" or module.startswith("torch.") for module in modules):
+            torch_owners.append(path.as_posix())
+
+    assert sorted(sb3_owners) == [
+        "f1rl/learning/algorithms/ppo.py",
+        "f1rl/learning/training/vector_env.py",
+    ]
+    assert torch_owners == []
+    assert "stable_baselines3" not in _direct_imports(
+        Path("f1rl/learning/training/env_factory.py")
+    )
+
+
+def test_training_docs_describe_vectorized_contract() -> None:
+    text = Path("f1rl/learning/training/README.md").read_text(encoding="utf-8").lower()
+    for token in (
+        "same-track",
+        "dummy",
+        "subproc",
+        "spawn",
+        "__main__",
+        "vectorized-ppo.yml",
+        "close()",
+        "diagnostic",
+    ):
+        assert token in text
+
+
+def test_algorithm_docs_describe_single_and_vector_training_contract() -> None:
+    text = Path("f1rl/learning/algorithms/README.md").read_text(encoding="utf-8").lower()
+    assert "f1rlenv" in text
+    assert "vecenv" in text
+    assert "single-observation" in text
+
+
+def test_learning_docs_mark_vectorized_ppo_implemented_and_future_layers_pending() -> None:
+    text = Path("f1rl/learning/README.md").read_text(encoding="utf-8").lower()
+    assert "vectorized ppo" in text
+    assert "implemented" in text
+    assert "multi-track" in text
+    assert "training orchestration" in text
+    assert "evaluation" in text
