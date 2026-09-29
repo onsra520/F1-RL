@@ -64,11 +64,9 @@ def test_ppo_config_rejects_invalid_field_values(field: str, value: object) -> N
         PPOConfig(**kwargs)
 
 
-def test_batch_size_must_fit_and_divide_rollout() -> None:
-    with pytest.raises(ValueError):
-        PPOConfig(n_steps=8, batch_size=16)
-    with pytest.raises(ValueError):
-        PPOConfig(n_steps=8, batch_size=3)
+def test_batch_size_constraints_are_deferred_until_environment_binding() -> None:
+    assert PPOConfig(n_steps=8, batch_size=16).batch_size == 16
+    assert PPOConfig(n_steps=8, batch_size=3).batch_size == 3
 
 
 @pytest.mark.parametrize("device", ["cpu", "cuda", "auto"])

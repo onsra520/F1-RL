@@ -313,3 +313,79 @@ def test_load_cuda_must_not_silently_fall_back(monkeypatch: pytest.MonkeyPatch, 
     monkeypatch.setattr(ppo_module, "PPO", FakePPO)
     with pytest.raises(RuntimeError, match="CUDA"):
         PPOModel.load(archive, device="cuda")
+
+
+def test_single_env_binding_rejects_oversized_or_nondivisible_batch() -> None:
+    oversized = PPOConfig(n_steps=8, batch_size=16, n_epochs=1)
+    nondivisible = PPOConfig(n_steps=8, batch_size=3, n_epochs=1)
+
+    with pytest.raises(ValueError):
+        PPOModel.create(_env(), oversized)
+    with pytest.raises(ValueError):
+        PPOModel.create(_env(), nondivisible)
+
+
+def test_vector_env_binding_uses_total_rollout_size() -> None:
+    from stable_baselines3.common.vec_env import DummyVecEnv
+
+    vector = DummyVecEnv([_env, _env, _env, _env])
+    try:
+        model = PPOModel.create(
+            vector,
+            PPOConfig(n_steps=8, batch_size=16, n_epochs=1),
+        )
+        assert model._model.n_envs == 4
+        assert model._model.batch_size == 16
+    finally:
+        vector.close()
+
+
+def test_vector_env_binding_rejects_oversized_or_nondivisible_batch() -> None:
+    from stable_baselines3.common.vec_env import DummyVecEnv
+
+    vector = DummyVecEnv([_env, _env])
+    try:
+        with pytest.raises(ValueError):
+            PPOModel.create(
+                vector,
+                PPOConfig(n_steps=8, batch_size=32, n_epochs=1),
+            )
+        with pytest.raises(ValueError):
+            PPOModel.create(
+                vector,
+                PPOConfig(n_steps=8, batch_size=6, n_epochs=1),
+            )
+    finally:
+        vector.close()
+
+
+def test_predict_still_rejects_batched_observation() -> None:
+    env = _env()
+    model = PPOModel.create(env, _config())
+    observation, _ = env.reset()
+    batched = np.stack([observation, observation])
+    with pytest.raises(ValueError):
+        model.predict(batched)
+
+
+def test_load_validates_bound_vector_env_rollout_size(tmp_path) -> None:
+    from stable_baselines3.common.vec_env import DummyVecEnv
+
+    source_env = DummyVecEnv([_env, _env])
+    target_env = DummyVecEnv([_env])
+    try:
+        model = PPOModel.create(
+            source_env,
+            PPOConfig(n_steps=6, batch_size=4, n_epochs=1),
+        )
+        archive = model.save(tmp_path / "vector-policy")
+        loaded = PPOModel.load(archive, env=source_env, device="cpu")
+        assert loaded._model.n_envs == 2
+        with pytest.raises(ValueError):
+            PPOModel.load(archive, env=target_env, device="cpu")
+
+        inference_only = PPOModel.load(archive, env=None, device="cpu")
+        assert inference_only._model.get_env() is None
+    finally:
+        source_env.close()
+        target_env.close()

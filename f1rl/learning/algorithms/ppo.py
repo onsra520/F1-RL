@@ -11,6 +11,7 @@ import yaml
 
 try:
     from stable_baselines3 import PPO
+    from stable_baselines3.common.vec_env import VecEnv
 except ImportError as error:
     raise ImportError(
         "PPO support requires the optional RL dependencies; install f1-rl with the `rl` extra."
@@ -56,11 +57,6 @@ class PPOConfig:
         n_steps = _validate_int(self.n_steps, "n_steps", minimum=2)
         batch_size = _validate_int(self.batch_size, "batch_size", minimum=2)
         _validate_int(self.n_epochs, "n_epochs", minimum=1)
-        if batch_size > n_steps:
-            raise ValueError("batch_size must be <= n_steps")
-        if n_steps % batch_size != 0:
-            raise ValueError("batch_size must divide n_steps exactly")
-
         gamma = _validate_real(self.gamma, "gamma")
         gae_lambda = _validate_real(self.gae_lambda, "gae_lambda")
         if not 0.0 <= gamma <= 1.0:
@@ -120,16 +116,34 @@ class PPOConfig:
             raise ValueError("invalid PPO configuration") from error
 
 
+PPOTrainingEnv = F1RLEnv | VecEnv
+
+
+def _validate_rollout_size(env: PPOTrainingEnv, n_steps: int, batch_size: int) -> None:
+    if isinstance(env, F1RLEnv):
+        num_envs = 1
+    elif isinstance(env, VecEnv):
+        num_envs = env.num_envs
+    else:
+        raise ValueError("env must be F1RLEnv or VecEnv")
+    rollout_size = n_steps * num_envs
+    if batch_size > rollout_size:
+        raise ValueError("batch_size must be <= n_steps * num_envs")
+    if rollout_size % batch_size != 0:
+        raise ValueError("batch_size must divide n_steps * num_envs exactly")
+
+
 class PPOModel:
     def __init__(self, model: PPO) -> None:
         self._model = model
 
     @classmethod
-    def create(cls, env: F1RLEnv, config: PPOConfig) -> "PPOModel":
-        if not isinstance(env, F1RLEnv):
-            raise ValueError("env must be F1RLEnv")
+    def create(cls, env: PPOTrainingEnv, config: PPOConfig) -> "PPOModel":
+        if not isinstance(env, (F1RLEnv, VecEnv)):
+            raise ValueError("env must be F1RLEnv or VecEnv")
         if not isinstance(config, PPOConfig):
             raise ValueError("config must be PPOConfig")
+        _validate_rollout_size(env, config.n_steps, config.batch_size)
 
         model = PPO(
             "MlpPolicy",
@@ -225,18 +239,20 @@ class PPOModel:
         cls,
         path: str | Path,
         *,
-        env: F1RLEnv | None = None,
+        env: PPOTrainingEnv | None = None,
         device: str = "cpu",
     ) -> "PPOModel":
         archive = cls._archive_path(path)
         if not archive.is_file():
             raise ValueError("model archive must exist as a file")
-        if env is not None and not isinstance(env, F1RLEnv):
-            raise ValueError("env must be F1RLEnv or None")
+        if env is not None and not isinstance(env, (F1RLEnv, VecEnv)):
+            raise ValueError("env must be F1RLEnv, VecEnv, or None")
         if device not in {"cpu", "cuda", "auto"}:
             raise ValueError('device must be one of "cpu", "cuda", or "auto"')
 
         model = PPO.load(str(archive), env=env, device=device)
+        if env is not None:
+            _validate_rollout_size(env, int(model.n_steps), int(model.batch_size))
         if device == "cuda" and getattr(model.device, "type", None) != "cuda":
             raise RuntimeError("CUDA device was explicitly requested but could not be honored")
         return cls(model)
