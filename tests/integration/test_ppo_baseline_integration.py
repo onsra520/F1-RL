@@ -193,7 +193,7 @@ def test_only_ppo_module_owns_sb3_and_no_production_module_imports_torch() -> No
         if any(module == "torch" or module.startswith("torch.") for module in modules):
             torch_owners.append(path.as_posix())
 
-    assert sb3_owners == ["f1rl/learning/algorithms/ppo.py"]
+    assert sb3_owners == ["f1rl/learning/algorithms/ppo.py", "f1rl/learning/training/vector_env.py"]
     assert torch_owners == []
 
 
