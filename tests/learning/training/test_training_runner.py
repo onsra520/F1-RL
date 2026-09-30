@@ -414,6 +414,7 @@ def test_state_update_failure_marks_failed_and_preserves_checkpoint_file(
     state = json.loads((run_directory / "state.json").read_text(encoding="utf-8"))
     assert state["status"] == "failed"
     assert state["actual_total_timesteps"] == 25_008
+    assert state["latest_checkpoint"] == "checkpoints/ppo-singletrack-seed42-step25008.zip"
     assert state["final_model"] is None
     assert vector.closed is True
 
@@ -456,3 +457,32 @@ def test_training_error_remains_primary_when_cleanup_also_fails(
 
     assert caught.value is training_error
     assert vector.close_calls == 1
+
+def test_initial_state_write_failure_retries_failed_snapshot_before_propagating(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class SentinelError(RuntimeError):
+        pass
+
+    original_write_state = runner_module._write_state
+    writer = FailingStateWriter(original_write_state, fail_on_call=1, error=SentinelError("initial state failure"))
+    monkeypatch.setattr(runner_module, "_write_state", writer)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+    monkeypatch.setattr(
+        runner_module,
+        "make_vector_env",
+        lambda *args: (_ for _ in ()).throw(AssertionError("env must not be created")),
+    )
+
+    root = tmp_path / "runs"
+    with pytest.raises(SentinelError, match="initial state failure"):
+        TrainingRunner(_config(root)).run_single(make_factory())
+
+    run_directory = next(root.iterdir())
+    state_path = run_directory / "state.json"
+    assert state_path.is_file()
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    assert state["status"] == "failed"
+    assert state["actual_total_timesteps"] == 0
+    assert state["final_model"] is None

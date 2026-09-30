@@ -154,15 +154,22 @@ def _prepare_run(
         final_model_path=run_directory / f"{artifact_stem}-final-model.zip",
         artifact_stem=artifact_stem,
     )
-    _write_state(
-        artifacts.state_path,
-        _initial_state(
-            config,
-            run_id=run_id,
-            mode=mode,
-            training_track_ids=training_track_ids,
-        ),
+    initial_state = _initial_state(
+        config,
+        run_id=run_id,
+        mode=mode,
+        training_track_ids=training_track_ids,
     )
+    try:
+        _write_state(artifacts.state_path, initial_state)
+    except Exception:
+        failed_state = dict(initial_state)
+        failed_state["status"] = "failed"
+        try:
+            _write_state(artifacts.state_path, failed_state)
+        except Exception:
+            pass
+        raise
     return artifacts
 
 
@@ -293,13 +300,18 @@ class TrainingRunner:
                     actual_timesteps = model.num_timesteps
                 except Exception:
                     actual_timesteps = 0
-            try:
-                _update_state(
+            failure_updates: dict[str, object] = {
+                "status": "failed",
+                "actual_total_timesteps": actual_timesteps,
+                "final_model": None,
+            }
+            if checkpoint_paths:
+                failure_updates["latest_checkpoint"] = _relative_artifact_path(
                     artifacts,
-                    status="failed",
-                    actual_total_timesteps=actual_timesteps,
-                    final_model=None,
+                    checkpoint_paths[-1],
                 )
+            try:
+                _update_state(artifacts, **failure_updates)
             except Exception:
                 pass
             raise
