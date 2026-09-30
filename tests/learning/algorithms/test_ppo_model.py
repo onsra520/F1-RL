@@ -389,3 +389,65 @@ def test_load_validates_bound_vector_env_rollout_size(tmp_path) -> None:
     finally:
         source_env.close()
         target_env.close()
+
+
+def test_learn_progress_hook_reports_actual_cumulative_timesteps() -> None:
+    env = _env()
+    model = PPOModel.create(
+        env,
+        PPOConfig(n_steps=4, batch_size=4, n_epochs=1, device="cpu"),
+    )
+    observed: list[int] = []
+    try:
+        assert model.learn(4) is model
+        before = model.num_timesteps
+        assert model.learn(4, progress_hook=observed.append) is model
+        assert observed
+        assert observed == sorted(observed)
+        assert observed[0] > before
+        assert observed[-1] == model.num_timesteps
+    finally:
+        env.close()
+
+
+def test_learn_none_progress_hook_preserves_existing_behavior() -> None:
+    env = _env()
+    model = PPOModel.create(
+        env,
+        PPOConfig(n_steps=4, batch_size=4, n_epochs=1, device="cpu"),
+    )
+    try:
+        assert model.learn(4, progress_hook=None) is model
+        assert model.num_timesteps >= 4
+    finally:
+        env.close()
+
+
+def test_learn_progress_hook_exception_propagates_unchanged() -> None:
+    class SentinelError(RuntimeError):
+        pass
+
+    env = _env()
+    model = PPOModel.create(
+        env,
+        PPOConfig(n_steps=4, batch_size=4, n_epochs=1, device="cpu"),
+    )
+    observed: list[int] = []
+
+    def fail(step: int) -> None:
+        observed.append(step)
+        raise SentinelError("stop")
+
+    try:
+        with pytest.raises(SentinelError, match="stop"):
+            model.learn(4, progress_hook=fail)
+        assert observed
+        assert observed[-1] == model.num_timesteps
+    finally:
+        env.close()
+
+
+def test_learn_rejects_non_callable_progress_hook() -> None:
+    model = PPOModel.create(_env(), PPOConfig(n_steps=4, batch_size=4, n_epochs=1))
+    with pytest.raises(ValueError):
+        model.learn(4, progress_hook=object())  # type: ignore[arg-type]

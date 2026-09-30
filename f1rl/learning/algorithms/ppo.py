@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, fields
 from math import isfinite
 from numbers import Real
@@ -11,6 +12,7 @@ import yaml
 
 try:
     from stable_baselines3 import PPO
+    from stable_baselines3.common.callbacks import BaseCallback
     from stable_baselines3.common.vec_env import VecEnv
 except ImportError as error:
     raise ImportError(
@@ -18,6 +20,16 @@ except ImportError as error:
     ) from error
 
 from ..gym_environment import F1RLEnv
+
+
+class _ProgressHookCallback(BaseCallback):
+    def __init__(self, hook: Callable[[int], None]) -> None:
+        super().__init__(verbose=0)
+        self._hook = hook
+
+    def _on_step(self) -> bool:
+        self._hook(int(self.model.num_timesteps))
+        return True
 
 
 def _validate_real(value: object, name: str) -> float:
@@ -201,17 +213,28 @@ class PPOModel:
             raise RuntimeError("backend returned action outside action space")
         return result
 
-    def learn(self, total_timesteps: int) -> "PPOModel":
+    def learn(
+        self,
+        total_timesteps: int,
+        *,
+        progress_hook: Callable[[int], None] | None = None,
+    ) -> "PPOModel":
         if isinstance(total_timesteps, bool) or not isinstance(total_timesteps, int):
             raise ValueError("total_timesteps must be a positive integer")
         if total_timesteps <= 0:
             raise ValueError("total_timesteps must be a positive integer")
+        if progress_hook is not None and not callable(progress_hook):
+            raise ValueError("progress_hook must be callable or None")
         if self._model.get_env() is None:
             raise RuntimeError("an environment is required to continue learning")
-        self._model.learn(
-            total_timesteps=total_timesteps,
-            reset_num_timesteps=False,
-        )
+
+        kwargs: dict[str, object] = {
+            "total_timesteps": total_timesteps,
+            "reset_num_timesteps": False,
+        }
+        if progress_hook is not None:
+            kwargs["callback"] = _ProgressHookCallback(progress_hook)
+        self._model.learn(**kwargs)
         return self
 
     @staticmethod
