@@ -19,17 +19,25 @@ from f1rl.learning.training.runner import (
     _prepare_run,
 )
 
-from tests.learning.training.mocks.mock_factories import make_factory
+from tests.learning.training.mocks.mock_factories import make_factory, make_scenario_set
+from tests.learning.training.mocks.mock_io import FailingStateWriter
 from tests.learning.training.mocks.mock_ppo import MockPPOModel
 from tests.learning.training.mocks.mock_vec_env import MockVecEnv
 
 
-def _config(root: Path, *, seed: int | None = 42, sampling_seed: int = 123) -> TrainingRunConfig:
+def _config(
+    root: Path,
+    *,
+    seed: int | None = 42,
+    sampling_seed: int = 123,
+    total_timesteps: int = 50_000,
+    checkpoint_every_steps: int | None = 25_000,
+) -> TrainingRunConfig:
     return TrainingRunConfig(
         ppo=PPOConfig(seed=seed),
         vector_env=VectorEnvConfig(n_envs=2),
-        total_timesteps=50_000,
-        checkpoint_every_steps=25_000,
+        total_timesteps=total_timesteps,
+        checkpoint_every_steps=checkpoint_every_steps,
         sampling_seed=sampling_seed,
         artifacts_root=root,
     )
@@ -279,3 +287,172 @@ def test_run_single_rejects_non_factory_before_creating_artifacts(tmp_path: Path
         runner.run_single(object())  # type: ignore[arg-type]
 
     assert not root.exists()
+
+
+def test_run_multi_derives_track_ids_and_uses_both_seeds(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    MockPPOModel.reset()
+    vector = MockVecEnv()
+    scenarios = make_scenario_set()
+    calls: list[tuple[object, VectorEnvConfig, int]] = []
+
+    def build_multi(actual_scenarios: object, config: VectorEnvConfig, sampling_seed: int) -> MockVecEnv:
+        calls.append((actual_scenarios, config, sampling_seed))
+        return vector
+
+    monkeypatch.setattr(runner_module, "make_multi_track_vector_env", build_multi, raising=False)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+
+    config = _config(tmp_path / "runs", seed=42, sampling_seed=123)
+    result = TrainingRunner(config).run_multi(scenarios)
+
+    assert calls == [(scenarios, config.vector_env, 123)]
+    assert result.run_id == "2026-09-30_010500_ppo-multitrack-seed42-sample123"
+    assert all("seed42-sample123" in path.name for path in (*result.checkpoint_paths, result.final_model_path))
+    state = json.loads((result.run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["sampling_seed"] == 123
+    assert state["training_tracks"] == ["alpha", "beta", "gamma"]
+
+def test_run_multi_coalesces_crossed_thresholds_at_actual_step(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    MockPPOModel.reset()
+    MockPPOModel.progress_points = (51_200, 61_440)
+    vector = MockVecEnv()
+    monkeypatch.setattr(runner_module, "make_multi_track_vector_env", lambda *args: vector, raising=False)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+
+    result = TrainingRunner(
+        _config(tmp_path / "runs", total_timesteps=60_000, checkpoint_every_steps=25_000)
+    ).run_multi(make_scenario_set())
+
+    assert [path.name for path in result.checkpoint_paths] == [
+        "ppo-multitrack-seed42-sample123-step51200.zip"
+    ]
+    model = MockPPOModel.instances[-1]
+    assert model.save_calls == [result.checkpoint_paths[0], result.final_model_path]
+    state = json.loads((result.run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["latest_checkpoint"] == "checkpoints/ppo-multitrack-seed42-sample123-step51200.zip"
+    assert state["actual_total_timesteps"] == 61_440
+
+def test_run_failure_marks_state_failed_and_closes_env(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    MockPPOModel.reset()
+    error = RuntimeError("learn failure")
+    MockPPOModel.learn_error = error
+    vector = MockVecEnv()
+    monkeypatch.setattr(runner_module, "make_vector_env", lambda *args: vector)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+
+    root = tmp_path / "runs"
+    with pytest.raises(RuntimeError) as caught:
+        TrainingRunner(_config(root)).run_single(make_factory())
+
+    assert caught.value is error
+    run_directory = next(root.iterdir())
+    state = json.loads((run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["status"] == "failed"
+    assert state["actual_total_timesteps"] == 0
+    assert state["final_model"] is None
+    assert vector.closed is True
+
+def test_checkpoint_save_failure_keeps_latest_state_truthful(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    MockPPOModel.reset()
+    MockPPOModel.save_error_at_call = 1
+    vector = MockVecEnv()
+    monkeypatch.setattr(runner_module, "make_vector_env", lambda *args: vector)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+
+    root = tmp_path / "runs"
+    with pytest.raises(RuntimeError, match="mock save failure"):
+        TrainingRunner(_config(root)).run_single(make_factory())
+
+    run_directory = next(root.iterdir())
+    state = json.loads((run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["status"] == "failed"
+    assert state["actual_total_timesteps"] == 25_008
+    assert state["latest_checkpoint"] is None
+    assert state["final_model"] is None
+    assert list((run_directory / "checkpoints").glob("*.zip")) == []
+    assert vector.closed is True
+
+def test_state_update_failure_marks_failed_and_preserves_checkpoint_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class SentinelError(RuntimeError):
+        pass
+
+    MockPPOModel.reset()
+    vector = MockVecEnv()
+    original_write_state = runner_module._write_state
+    writer = FailingStateWriter(original_write_state, fail_on_call=2, error=SentinelError("state failure"))
+    monkeypatch.setattr(runner_module, "make_vector_env", lambda *args: vector)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_write_state", writer)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+
+    root = tmp_path / "runs"
+    with pytest.raises(SentinelError, match="state failure"):
+        TrainingRunner(_config(root)).run_single(make_factory())
+
+    run_directory = next(root.iterdir())
+    checkpoints = list((run_directory / "checkpoints").glob("*.zip"))
+    assert [path.name for path in checkpoints] == ["ppo-singletrack-seed42-step25008.zip"]
+    state = json.loads((run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["status"] == "failed"
+    assert state["actual_total_timesteps"] == 25_008
+    assert state["final_model"] is None
+    assert vector.closed is True
+
+def test_cleanup_failure_after_success_propagates_but_keeps_completed_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    MockPPOModel.reset()
+    vector = MockVecEnv(close_error=RuntimeError("close failure"))
+    monkeypatch.setattr(runner_module, "make_vector_env", lambda *args: vector)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+
+    root = tmp_path / "runs"
+    with pytest.raises(RuntimeError, match="close failure"):
+        TrainingRunner(_config(root)).run_single(make_factory())
+
+    run_directory = next(root.iterdir())
+    state = json.loads((run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["status"] == "completed"
+    assert state["final_model"] == "ppo-singletrack-seed42-final-model.zip"
+    assert (run_directory / state["final_model"]).is_file()
+    assert vector.close_calls == 1
+
+
+def test_training_error_remains_primary_when_cleanup_also_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    MockPPOModel.reset()
+    training_error = RuntimeError("training failure")
+    MockPPOModel.learn_error = training_error
+    vector = MockVecEnv(close_error=RuntimeError("close failure"))
+    monkeypatch.setattr(runner_module, "make_vector_env", lambda *args: vector)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+
+    with pytest.raises(RuntimeError) as caught:
+        TrainingRunner(_config(tmp_path / "runs")).run_single(make_factory())
+
+    assert caught.value is training_error
+    assert vector.close_calls == 1

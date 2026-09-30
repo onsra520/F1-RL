@@ -9,8 +9,8 @@ from typing import Literal
 
 from ..algorithms.ppo import PPOModel
 from .config import TrainingRunConfig
-from .env_factory import F1RLEnvFactory
-from .vector_env import make_vector_env
+from .env_factory import F1RLEnvFactory, TrainingScenarioSet
+from .vector_env import make_multi_track_vector_env, make_vector_env
 
 TrainingMode = Literal["singletrack", "multitrack"]
 
@@ -205,6 +205,19 @@ class TrainingRunner:
             build_env=lambda: make_vector_env(factory, self._config.vector_env),
         )
 
+    def run_multi(self, scenarios: TrainingScenarioSet) -> TrainingRunResult:
+        if not isinstance(scenarios, TrainingScenarioSet):
+            raise ValueError("scenarios must be TrainingScenarioSet")
+        return self._run(
+            mode="multitrack",
+            training_track_ids=tuple(scenario.track_id for scenario in scenarios.scenarios),
+            build_env=lambda: make_multi_track_vector_env(
+                scenarios,
+                self._config.vector_env,
+                self._config.sampling_seed,
+            ),
+        )
+
     def _run(
         self,
         *,
@@ -225,6 +238,8 @@ class TrainingRunner:
         next_threshold_index = 0
         checkpoint_paths: list[Path] = []
         env: object | None = None
+        model: PPOModel | None = None
+        primary_error: Exception | None = None
 
         try:
             env = build_env()
@@ -270,6 +285,28 @@ class TrainingRunner:
                 requested_total_timesteps=self._config.total_timesteps,
                 actual_total_timesteps=actual_total_timesteps,
             )
+        except Exception as error:
+            primary_error = error
+            actual_timesteps = 0
+            if model is not None:
+                try:
+                    actual_timesteps = model.num_timesteps
+                except Exception:
+                    actual_timesteps = 0
+            try:
+                _update_state(
+                    artifacts,
+                    status="failed",
+                    actual_total_timesteps=actual_timesteps,
+                    final_model=None,
+                )
+            except Exception:
+                pass
+            raise
         finally:
             if env is not None:
-                env.close()  # type: ignore[attr-defined]
+                try:
+                    env.close()  # type: ignore[attr-defined]
+                except Exception:
+                    if primary_error is None:
+                        raise
