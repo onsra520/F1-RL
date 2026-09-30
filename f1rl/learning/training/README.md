@@ -25,6 +25,14 @@ The wrapper exposes canonical spaces before its first reset and does not select 
 
 `sampling_seed` exclusively controls selection. Each vector rank receives an independent stream derived by SHA-256 from the seed and rank. Gym/SB3 `reset(seed=...)` does not restart or alter that stream. `track_id` appears in reset and transition `info` (including terminal transitions), never in policy observations.
 
+## Training orchestration
+
+`TrainingRunConfig.from_yaml("config.yml")` loads the root orchestration input. `TrainingRunner.run_single(factory)` and `TrainingRunner.run_multi(scenarios)` build the existing vector environments, train PPO, save configured intermediate checkpoints, and write one self-contained run under `artifacts/runs/<run-id>/`.
+
+Each run owns mutable `state.json`, a `checkpoints/` directory, and a self-describing final model archive. The state snapshot records requested and actual timesteps, resolved PPO/vector configuration, sampling metadata, latest checkpoint, and final-model path. Root `config.yml` remains immutable input.
+
+This layer is framework-only: V1 has no training CLI, resume-from-checkpoint support, evaluation metrics, held-out-track scoring, TensorBoard/W&B, HPO, curriculum, or trainer service. `artifacts/policies/` remains for deliberately selected inference/demo policies and `artifacts/evaluations/` remains for the later evaluation milestone.
+
 ## Windows subprocess rule
 
 Any executable entrypoint that constructs the `subproc` backend must use a `__main__` guard. V1 explicitly uses Windows-safe `spawn`; it does not assume Unix `fork` semantics.
@@ -35,4 +43,4 @@ Any executable entrypoint that constructs the `subproc` backend must use a `__ma
 
 `SubprocVecEnv` uses Windows-safe `spawn`; executable entrypoints must use a `__main__` guard. Captured scenarios and factories must remain serializable under spawn.
 
-Curriculum, long-running trainer orchestration, callbacks, evaluation, and generalization experiments remain later milestones.
+Long-running experiments, evaluation, unseen-track generalization, reward ablation, resume support, and experiment tooling remain later milestones.

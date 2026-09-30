@@ -158,6 +158,9 @@ def test_training_package_exports_exact_optional_surface() -> None:
 
     assert training.__all__ == (
         "F1RLEnvFactory",
+        "TrainingRunConfig",
+        "TrainingRunResult",
+        "TrainingRunner",
         "TrainingScenario",
         "TrainingScenarioSet",
         "VectorEnvConfig",
