@@ -5,10 +5,12 @@ from pathlib import Path
 
 import pytest
 
+import f1rl.learning.training.runner as runner_module
 from f1rl.learning.algorithms.ppo import PPOConfig
 from f1rl.learning.training.config import TrainingRunConfig, VectorEnvConfig
 from f1rl.learning.training.runner import (
     TrainingRunResult,
+    TrainingRunner,
     _advance_checkpoint_schedule,
     _artifact_stem,
     _build_run_id,
@@ -16,6 +18,10 @@ from f1rl.learning.training.runner import (
     _checkpoint_thresholds,
     _prepare_run,
 )
+
+from tests.learning.training.mocks.mock_factories import make_factory
+from tests.learning.training.mocks.mock_ppo import MockPPOModel
+from tests.learning.training.mocks.mock_vec_env import MockVecEnv
 
 
 def _config(root: Path, *, seed: int | None = 42, sampling_seed: int = 123) -> TrainingRunConfig:
@@ -195,3 +201,81 @@ def test_training_run_result_is_frozen(tmp_path: Path) -> None:
     )
     with pytest.raises(FrozenInstanceError):
         result.actual_total_timesteps = 9  # type: ignore[misc]
+
+
+def test_run_single_writes_checkpoint_final_state_and_closes_vec_env(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    MockPPOModel.reset()
+    vector = MockVecEnv()
+    factory = make_factory()
+    calls: list[tuple[object, VectorEnvConfig]] = []
+
+    def build_vector(actual_factory: object, config: VectorEnvConfig) -> MockVecEnv:
+        calls.append((actual_factory, config))
+        return vector
+
+    monkeypatch.setattr(runner_module, "make_vector_env", build_vector)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+
+    config = _config(tmp_path / "runs")
+    result = TrainingRunner(config).run_single(factory)
+
+    assert calls == [(factory, config.vector_env)]
+    assert vector.closed is True
+    assert vector.close_calls == 1
+    assert result.run_id == "2026-09-30_010500_ppo-singletrack-seed42"
+    assert result.requested_total_timesteps == 50_000
+    assert result.actual_total_timesteps == 51_200
+    assert len(result.checkpoint_paths) == 1
+    checkpoint = result.checkpoint_paths[0]
+    assert checkpoint.name == "ppo-singletrack-seed42-step25008.zip"
+    assert checkpoint.is_file()
+    assert result.final_model_path.name == "ppo-singletrack-seed42-final-model.zip"
+    assert result.final_model_path.is_file()
+
+    model = MockPPOModel.instances[-1]
+    assert model.learn_calls == [50_000]
+    assert model.save_calls == [checkpoint, result.final_model_path]
+
+    state = json.loads((result.run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["status"] == "completed"
+    assert state["actual_total_timesteps"] == 51_200
+    assert state["latest_checkpoint"] == "checkpoints/ppo-singletrack-seed42-step25008.zip"
+    assert state["final_model"] == "ppo-singletrack-seed42-final-model.zip"
+    assert state["sampling_seed"] is None
+    assert state["training_tracks"] == []
+
+
+def test_run_single_seed_none_uses_seednone_and_serializable_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    MockPPOModel.reset()
+    vector = MockVecEnv()
+    monkeypatch.setattr(runner_module, "make_vector_env", lambda factory, config: vector)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+
+    result = TrainingRunner(_config(tmp_path / "runs", seed=None)).run_single(make_factory())
+    state = json.loads((result.run_directory / "state.json").read_text(encoding="utf-8"))
+
+    assert "seednone" in result.run_id
+    assert "seednone" in result.final_model_path.name
+    assert all("seednone" in path.name for path in result.checkpoint_paths)
+    assert state["ppo"]["seed"] is None
+    assert state["sampling_seed"] is None
+    assert state["training_tracks"] == []
+    json.dumps(state)
+
+
+def test_run_single_rejects_non_factory_before_creating_artifacts(tmp_path: Path) -> None:
+    root = tmp_path / "runs"
+    runner = TrainingRunner(_config(root))
+
+    with pytest.raises(ValueError):
+        runner.run_single(object())  # type: ignore[arg-type]
+
+    assert not root.exists()

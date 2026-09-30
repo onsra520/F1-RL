@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import datetime
 import json
 from pathlib import Path
 from typing import Literal
 
+from ..algorithms.ppo import PPOModel
 from .config import TrainingRunConfig
+from .env_factory import F1RLEnvFactory
+from .vector_env import make_vector_env
 
 TrainingMode = Literal["singletrack", "multitrack"]
 
@@ -160,3 +164,112 @@ def _prepare_run(
         ),
     )
     return artifacts
+
+
+def _read_state(path: Path) -> dict[str, object]:
+    document = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(document, dict):
+        raise RuntimeError("run state must be a JSON object")
+    return document
+
+
+def _update_state(
+    artifacts: _RunArtifacts,
+    **updates: object,
+) -> None:
+    state = _read_state(artifacts.state_path)
+    state.update(updates)
+    _write_state(artifacts.state_path, state)
+
+
+def _relative_artifact_path(artifacts: _RunArtifacts, path: Path) -> str:
+    return path.relative_to(artifacts.run_directory).as_posix()
+
+
+def _now() -> datetime:
+    return datetime.now()
+
+
+class TrainingRunner:
+    def __init__(self, config: TrainingRunConfig) -> None:
+        if not isinstance(config, TrainingRunConfig):
+            raise ValueError("config must be TrainingRunConfig")
+        self._config = config
+
+    def run_single(self, factory: F1RLEnvFactory) -> TrainingRunResult:
+        if not isinstance(factory, F1RLEnvFactory):
+            raise ValueError("factory must be F1RLEnvFactory")
+        return self._run(
+            mode="singletrack",
+            training_track_ids=(),
+            build_env=lambda: make_vector_env(factory, self._config.vector_env),
+        )
+
+    def _run(
+        self,
+        *,
+        mode: TrainingMode,
+        training_track_ids: tuple[str, ...],
+        build_env: Callable[[], object],
+    ) -> TrainingRunResult:
+        artifacts = _prepare_run(
+            self._config,
+            started_at=_now(),
+            mode=mode,
+            training_track_ids=training_track_ids,
+        )
+        thresholds = _checkpoint_thresholds(
+            self._config.total_timesteps,
+            self._config.checkpoint_every_steps,
+        )
+        next_threshold_index = 0
+        checkpoint_paths: list[Path] = []
+        env: object | None = None
+
+        try:
+            env = build_env()
+            model = PPOModel.create(env, self._config.ppo)  # type: ignore[arg-type]
+
+            def on_progress(actual_timesteps: int) -> None:
+                nonlocal next_threshold_index
+                due, advanced_index = _advance_checkpoint_schedule(
+                    thresholds,
+                    next_threshold_index,
+                    actual_timesteps,
+                )
+                if not due:
+                    return
+                checkpoint = model.save(
+                    _checkpoint_archive_path(artifacts, actual_timesteps)
+                )
+                checkpoint_paths.append(checkpoint)
+                next_threshold_index = advanced_index
+                _update_state(
+                    artifacts,
+                    actual_total_timesteps=actual_timesteps,
+                    latest_checkpoint=_relative_artifact_path(artifacts, checkpoint),
+                )
+
+            model.learn(
+                self._config.total_timesteps,
+                progress_hook=on_progress,
+            )
+            actual_total_timesteps = model.num_timesteps
+            final_model_path = model.save(artifacts.final_model_path)
+            _update_state(
+                artifacts,
+                status="completed",
+                actual_total_timesteps=actual_total_timesteps,
+                final_model=_relative_artifact_path(artifacts, final_model_path),
+            )
+            return TrainingRunResult(
+                run_id=artifacts.run_id,
+                run_directory=artifacts.run_directory,
+                final_model_path=final_model_path,
+                checkpoint_paths=tuple(checkpoint_paths),
+                requested_total_timesteps=self._config.total_timesteps,
+                actual_total_timesteps=actual_total_timesteps,
+            )
+        finally:
+            if env is not None:
+                env.close()  # type: ignore[attr-defined]
