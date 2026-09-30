@@ -40,6 +40,9 @@ artifacts/policies/*
 !artifacts/policies/README.md
 artifacts/evaluations/*
 !artifacts/evaluations/README.md
+!artifacts/runs/
+artifacts/runs/*
+!artifacts/runs/README.md
 
 # Editors
 .idea/
