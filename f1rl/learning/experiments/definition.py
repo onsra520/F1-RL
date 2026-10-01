@@ -4,6 +4,9 @@ from dataclasses import dataclass
 from math import isfinite, pi
 from numbers import Real
 from pathlib import Path
+from typing import Any
+
+import yaml
 
 from ...sandbox.geometry.vector import Vec3
 from ...sandbox.perception.rangefinder import RangefinderSpec
@@ -19,6 +22,18 @@ _V1_SEMANTICS = {
     "observation": "rangefinders-local-navigation-v1",
     "reward": "target-progress-collision-time-v1",
     "race": "single-lap-ordered-checkpoints-v1",
+}
+_ROOT_KEYS = {"experiment", "semantics", "environment", "training", "seeds", "tracks", "evaluation"}
+_VEHICLE_KEYS = {
+    "wheelbase",
+    "ride_height",
+    "max_steering_angle",
+    "max_acceleration",
+    "max_braking",
+    "rolling_drag",
+    "air_drag",
+    "max_ground_speed",
+    "gravity",
 }
 
 
@@ -53,6 +68,55 @@ def _validate_seed_tuple(values: object, name: str) -> None:
     for seed in values:
         if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed <= _MAX_SEED:
             raise ValueError(f"{name} seeds must be integers in [0, {_MAX_SEED}]")
+
+
+def _exact_mapping(value: object, keys: set[str], name: str) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ValueError(f"{name} must be a mapping")
+    if set(value) != keys:
+        missing = sorted(keys - set(value))
+        unknown = sorted(set(value) - keys, key=str)
+        raise ValueError(f"{name} keys must match exactly; missing={missing}, unknown={unknown}")
+    return value
+
+
+def _sequence(value: object, name: str) -> list[Any]:
+    if not isinstance(value, list):
+        raise ValueError(f"{name} must be a list")
+    return value
+
+
+def _reference(value: object, base: Path, name: str) -> Path:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{name} must be a non-blank path string")
+    path = Path(value)
+    if not path.is_absolute():
+        path = base / path
+    return path.resolve()
+
+
+def _rangefinders(value: object) -> tuple[RangefinderExperimentSpec, ...]:
+    result: list[RangefinderExperimentSpec] = []
+    for index, item in enumerate(_sequence(value, "environment.observation.rangefinders")):
+        mapping = _exact_mapping(
+            item,
+            {"id", "local_direction", "max_distance"},
+            f"environment.observation.rangefinders[{index}]",
+        )
+        direction = _sequence(
+            mapping["local_direction"],
+            f"environment.observation.rangefinders[{index}].local_direction",
+        )
+        if len(direction) != 3:
+            raise ValueError("rangefinder local_direction must contain exactly three values")
+        result.append(
+            RangefinderExperimentSpec(
+                mapping["id"],
+                tuple(direction),  # type: ignore[arg-type]
+                mapping["max_distance"],  # type: ignore[arg-type]
+            )
+        )
+    return tuple(result)
 
 
 @dataclass(frozen=True, slots=True)
@@ -268,3 +332,89 @@ class ExperimentDefinition:
         for value, expected_type, name in expected:
             if not isinstance(value, expected_type):
                 raise ValueError(f"{name} must be {expected_type.__name__}")
+
+    @classmethod
+    def from_yaml(cls, path: str | Path) -> ExperimentDefinition:
+        if not isinstance(path, (str, Path)):
+            raise ValueError("path must be str or Path")
+        config_path = Path(path)
+        if not config_path.is_file():
+            raise ValueError("experiment definition path must identify an existing file")
+        try:
+            document = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, yaml.YAMLError) as error:
+            raise ValueError("failed to load experiment definition YAML") from error
+
+        root = _exact_mapping(document, _ROOT_KEYS, "root")
+        metadata = _exact_mapping(root["experiment"], {"id", "protocol_version", "status"}, "experiment")
+        semantics = _exact_mapping(root["semantics"], set(_V1_SEMANTICS), "semantics")
+        environment = _exact_mapping(
+            root["environment"],
+            {"vehicle", "simulation", "observation", "reward", "episode"},
+            "environment",
+        )
+        vehicle = _exact_mapping(environment["vehicle"], _VEHICLE_KEYS, "environment.vehicle")
+        simulation = _exact_mapping(
+            environment["simulation"],
+            {"fixed_dt", "max_surface_distance"},
+            "environment.simulation",
+        )
+        observation = _exact_mapping(
+            environment["observation"],
+            {"velocity_scale", "target_distance_scale", "rangefinders"},
+            "environment.observation",
+        )
+        reward = _exact_mapping(
+            environment["reward"],
+            {"target_progress", "collision", "time"},
+            "environment.reward",
+        )
+        target_progress = _exact_mapping(
+            reward["target_progress"],
+            {"weight_per_meter"},
+            "environment.reward.target_progress",
+        )
+        collision = _exact_mapping(
+            reward["collision"],
+            {"penalty"},
+            "environment.reward.collision",
+        )
+        time = _exact_mapping(
+            reward["time"],
+            {"penalty_per_second"},
+            "environment.reward.time",
+        )
+        episode = _exact_mapping(environment["episode"], {"max_steps"}, "environment.episode")
+        training = _exact_mapping(root["training"], {"runtime_config", "protocol_status"}, "training")
+        seeds = _exact_mapping(root["seeds"], {"ppo", "sampling"}, "seeds")
+        tracks = _exact_mapping(root["tracks"], {"manifest"}, "tracks")
+        evaluation = _exact_mapping(root["evaluation"], {"deterministic_policy"}, "evaluation")
+        base = config_path.resolve().parent
+
+        return cls(
+            metadata=ExperimentMetadata(metadata["id"], metadata["protocol_version"], metadata["status"]),
+            semantics=ExperimentSemantics(**semantics),
+            vehicle=VehicleExperimentConfig(**vehicle),
+            simulation=SimulationExperimentConfig(**simulation),
+            observation=ObservationExperimentConfig(
+                velocity_scale=observation["velocity_scale"],
+                target_distance_scale=observation["target_distance_scale"],
+                rangefinders=_rangefinders(observation["rangefinders"]),
+            ),
+            reward=RewardExperimentConfig(
+                target_progress_weight_per_meter=target_progress["weight_per_meter"],
+                collision_penalty=collision["penalty"],
+                time_penalty_per_second=time["penalty_per_second"],
+            ),
+            episode=EpisodeExperimentConfig(episode["max_steps"]),
+            training=TrainingExperimentConfig(
+                _reference(training["runtime_config"], base, "training.runtime_config"),
+                training["protocol_status"],
+            ),
+            seeds=SeedProtocol(
+                tuple(_sequence(seeds["ppo"], "seeds.ppo")),
+                tuple(_sequence(seeds["sampling"], "seeds.sampling")),
+            ),
+            tracks=TrackExperimentConfig(_reference(tracks["manifest"], base, "tracks.manifest")),
+            evaluation=EvaluationExperimentConfig(evaluation["deterministic_policy"]),
+        )
