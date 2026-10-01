@@ -43,6 +43,8 @@ def test_training_run_config_is_frozen() -> None:
         ("sampling_seed", True),
         ("sampling_seed", 1.5),
         ("sampling_seed", "1"),
+        ("sampling_seed", -1),
+        ("sampling_seed", 2**32),
     ],
 )
 def test_training_run_config_rejects_invalid_scalar_fields(field: str, value: object) -> None:
@@ -55,16 +57,16 @@ def test_training_run_config_rejects_invalid_scalar_fields(field: str, value: ob
         TrainingRunConfig(**kwargs)
 
 
-def test_training_run_config_accepts_disabled_checkpointing_and_seed_none() -> None:
+def test_training_run_config_accepts_disabled_checkpointing_and_boundary_seeds() -> None:
     config = TrainingRunConfig(
-        ppo=PPOConfig(seed=None),
+        ppo=PPOConfig(seed=2**32 - 1),
         vector_env=VectorEnvConfig(),
         checkpoint_every_steps=None,
-        sampling_seed=-7,
+        sampling_seed=2**32 - 1,
     )
     assert config.checkpoint_every_steps is None
-    assert config.ppo.seed is None
-    assert config.sampling_seed == -7
+    assert config.ppo.seed == 2**32 - 1
+    assert config.sampling_seed == 2**32 - 1
 
 
 def test_yaml_omitted_training_fields_use_defaults_and_resolve_relative_root(tmp_path: Path) -> None:

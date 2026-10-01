@@ -21,6 +21,8 @@ except ImportError as error:
 
 from ..gym_environment import F1RLEnv
 
+MAX_SEED = 2**32 - 1
+
 
 class _ProgressHookCallback(BaseCallback):
     def __init__(self, hook: Callable[[int], None]) -> None:
@@ -89,8 +91,12 @@ class PPOConfig:
         if max_grad_norm <= 0.0:
             raise ValueError("max_grad_norm must be positive")
 
-        if self.seed is not None and (isinstance(self.seed, bool) or not isinstance(self.seed, int)):
-            raise ValueError("seed must be None or an integer")
+        if self.seed is not None and (
+            isinstance(self.seed, bool)
+            or not isinstance(self.seed, int)
+            or not 0 <= self.seed <= MAX_SEED
+        ):
+            raise ValueError(f"seed must be None or an integer in [0, {MAX_SEED}]")
         if self.device not in {"cpu", "cuda", "auto"}:
             raise ValueError('device must be one of "cpu", "cuda", or "auto"')
 

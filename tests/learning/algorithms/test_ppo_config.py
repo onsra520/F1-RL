@@ -56,6 +56,8 @@ def test_ppo_config_is_immutable() -> None:
         ("max_grad_norm", float("inf")),
         ("seed", True),
         ("seed", 1.5),
+        ("seed", -1),
+        ("seed", 2**32),
     ],
 )
 def test_ppo_config_rejects_invalid_field_values(field: str, value: object) -> None:
@@ -80,9 +82,10 @@ def test_unsupported_devices_are_rejected(device: object) -> None:
         PPOConfig(device=device)
 
 
-def test_seed_may_be_none_or_any_integer() -> None:
+def test_seed_may_be_none_or_an_unsigned_32_bit_integer() -> None:
     assert PPOConfig(seed=None).seed is None
-    assert PPOConfig(seed=-1).seed == -1
+    assert PPOConfig(seed=0).seed == 0
+    assert PPOConfig(seed=2**32 - 1).seed == 2**32 - 1
 
 
 def _write_yaml(tmp_path: Path, text: str) -> Path:

@@ -9,7 +9,7 @@ import numpy as np
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecEnv
 
 from ..gym_environment import F1RLEnv
-from .config import VectorEnvConfig
+from .config import MAX_SEED, VectorEnvConfig
 from .env_factory import F1RLEnvFactory, TrainingScenario, TrainingScenarioSet
 
 
@@ -44,8 +44,12 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
     def __init__(self, scenarios: TrainingScenarioSet, sampling_seed: int, rank: int) -> None:
         if not isinstance(scenarios, TrainingScenarioSet):
             raise ValueError("scenarios must be TrainingScenarioSet")
-        if isinstance(sampling_seed, bool) or not isinstance(sampling_seed, int):
-            raise ValueError("sampling_seed must be an integer")
+        if (
+            isinstance(sampling_seed, bool)
+            or not isinstance(sampling_seed, int)
+            or not 0 <= sampling_seed <= MAX_SEED
+        ):
+            raise ValueError(f"sampling_seed must be an integer in [0, {MAX_SEED}]")
         if isinstance(rank, bool) or not isinstance(rank, int) or rank < 0:
             raise ValueError("rank must be a non-negative integer")
         super().__init__()
@@ -132,8 +136,12 @@ def make_multi_track_vector_env(
         raise ValueError("scenarios must be TrainingScenarioSet")
     if not isinstance(config, VectorEnvConfig):
         raise ValueError("config must be VectorEnvConfig")
-    if isinstance(sampling_seed, bool) or not isinstance(sampling_seed, int):
-        raise ValueError("sampling_seed must be an integer")
+    if (
+        isinstance(sampling_seed, bool)
+        or not isinstance(sampling_seed, int)
+        or not 0 <= sampling_seed <= MAX_SEED
+    ):
+        raise ValueError(f"sampling_seed must be an integer in [0, {MAX_SEED}]")
 
     factories = [
         _RankedScenarioEnvFactory(scenarios, sampling_seed, rank)

@@ -4,6 +4,7 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import datetime
 import json
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -95,10 +96,19 @@ def _checkpoint_archive_path(
 
 
 def _write_state(path: Path, state: dict[str, object]) -> None:
-    path.write_text(
-        json.dumps(state, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    temporary_path = path.with_name(f"{path.name}.tmp")
+    try:
+        temporary_path.write_text(
+            json.dumps(state, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temporary_path, path)
+    except Exception:
+        try:
+            temporary_path.unlink()
+        except OSError:
+            pass
+        raise
 
 
 def _initial_state(
@@ -117,6 +127,7 @@ def _initial_state(
         "checkpoint_every_steps": config.checkpoint_every_steps,
         "latest_checkpoint": None,
         "final_model": None,
+        "final_model_cleanup_error": None,
         "ppo": asdict(config.ppo),
         "vector_env": asdict(config.vector_env),
         "sampling_seed": config.sampling_seed if mode == "multitrack" else None,
@@ -246,6 +257,7 @@ class TrainingRunner:
         checkpoint_paths: list[Path] = []
         env: object | None = None
         model: PPOModel | None = None
+        final_model_path: Path | None = None
         primary_error: Exception | None = None
 
         try:
@@ -294,6 +306,14 @@ class TrainingRunner:
             )
         except Exception as error:
             primary_error = error
+            final_model_cleanup_error: str | None = None
+            if final_model_path is not None:
+                try:
+                    final_model_path.unlink()
+                except Exception as cleanup_error:
+                    final_model_cleanup_error = (
+                        f"{type(cleanup_error).__name__}: {cleanup_error}"
+                    )
             actual_timesteps = 0
             if model is not None:
                 try:
@@ -304,6 +324,7 @@ class TrainingRunner:
                 "status": "failed",
                 "actual_total_timesteps": actual_timesteps,
                 "final_model": None,
+                "final_model_cleanup_error": final_model_cleanup_error,
             }
             if checkpoint_paths:
                 failure_updates["latest_checkpoint"] = _relative_artifact_path(

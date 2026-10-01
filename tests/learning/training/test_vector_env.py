@@ -235,6 +235,8 @@ def test_dummy_auto_reset_preserves_terminal_track_id_before_sampling_next_episo
         ("valid", object(), 0),
         ("valid", VectorEnvConfig(), True),
         ("valid", VectorEnvConfig(), "0"),
+        ("valid", VectorEnvConfig(), -1),
+        ("valid", VectorEnvConfig(), 2**32),
     ],
 )
 def test_make_multi_track_vector_env_rejects_invalid_inputs(

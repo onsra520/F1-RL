@@ -31,6 +31,8 @@ The wrapper exposes canonical spaces before its first reset and does not select 
 
 Each run owns mutable `state.json`, a `checkpoints/` directory, and a self-describing final model archive. The state snapshot records requested and actual timesteps, resolved PPO/vector configuration, sampling metadata, latest checkpoint, and final-model path. Root `config.yml` remains immutable input.
 
+State snapshots are written to `state.json.tmp` and atomically replaced into `state.json`, so an interrupted update leaves either the prior complete JSON or the new complete JSON. If final-model cleanup fails after a completed-state write failure, failed state records the cleanup error while leaving `final_model` unset. Checkpoint filenames record the environment interaction count when the SB3 progress callback runs during rollout collection; for example, `step25008.zip` is not a claim that PPO weights were optimized exactly through interaction 25,008.
+
 This layer is framework-only: V1 has no training CLI, resume-from-checkpoint support, evaluation metrics, held-out-track scoring, TensorBoard/W&B, HPO, curriculum, or trainer service. `artifacts/policies/` remains for deliberately selected inference/demo policies and `artifacts/evaluations/` remains for the later evaluation milestone.
 
 ## Windows subprocess rule

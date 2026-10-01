@@ -6,7 +6,7 @@ from typing import Any
 
 import yaml
 
-from ..algorithms.ppo import PPOConfig
+from ..algorithms.ppo import MAX_SEED, PPOConfig
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,8 +96,12 @@ class TrainingRunConfig:
             or self.checkpoint_every_steps <= 0
         ):
             raise ValueError("checkpoint_every_steps must be None or a positive integer")
-        if isinstance(self.sampling_seed, bool) or not isinstance(self.sampling_seed, int):
-            raise ValueError("sampling_seed must be an integer")
+        if (
+            isinstance(self.sampling_seed, bool)
+            or not isinstance(self.sampling_seed, int)
+            or not 0 <= self.sampling_seed <= MAX_SEED
+        ):
+            raise ValueError(f"sampling_seed must be an integer in [0, {MAX_SEED}]")
         if not isinstance(self.artifacts_root, Path):
             raise ValueError("artifacts_root must be Path")
 

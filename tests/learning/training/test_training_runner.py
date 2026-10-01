@@ -2,6 +2,7 @@ import json
 from dataclasses import FrozenInstanceError
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -17,6 +18,7 @@ from f1rl.learning.training.runner import (
     _checkpoint_archive_path,
     _checkpoint_thresholds,
     _prepare_run,
+    _write_state,
 )
 
 from tests.learning.training.mocks.mock_factories import make_factory, make_scenario_set
@@ -104,6 +106,7 @@ def test_prepare_single_track_run_writes_exact_initial_state(tmp_path: Path) -> 
         "checkpoint_every_steps": 25_000,
         "latest_checkpoint": None,
         "final_model": None,
+        "final_model_cleanup_error": None,
         "ppo": {
             "learning_rate": 0.0003,
             "n_steps": 256,
@@ -180,6 +183,59 @@ def test_prepare_run_rejects_artifacts_root_file_without_mutation(tmp_path: Path
         )
 
     assert root.read_text(encoding="utf-8") == "keep"
+
+
+def test_state_write_keeps_previous_json_when_atomic_replace_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    state_path = tmp_path / "state.json"
+    previous_state = {"status": "running"}
+    state_path.write_text(json.dumps(previous_state), encoding="utf-8")
+    error = OSError("replace failure")
+
+    def fail_replace(source: Path, destination: Path) -> None:
+        raise error
+
+    monkeypatch.setattr(
+        runner_module,
+        "os",
+        SimpleNamespace(replace=fail_replace),
+        raising=False,
+    )
+
+    with pytest.raises(OSError) as caught:
+        _write_state(state_path, {"status": "completed"})
+
+    assert caught.value is error
+    assert json.loads(state_path.read_text(encoding="utf-8")) == previous_state
+    assert not state_path.with_name("state.json.tmp").exists()
+
+
+def test_state_write_removes_temporary_file_when_write_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    state_path = tmp_path / "state.json"
+    previous_state = {"status": "running"}
+    state_path.write_text(json.dumps(previous_state), encoding="utf-8")
+    error = OSError("write failure")
+    original_write_text = Path.write_text
+
+    def write_partial_temporary_file(path: Path, text: str, **kwargs: object) -> int:
+        if path.name == "state.json.tmp":
+            original_write_text(path, "{", **kwargs)
+            raise error
+        return original_write_text(path, text, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", write_partial_temporary_file)
+
+    with pytest.raises(OSError) as caught:
+        _write_state(state_path, {"status": "completed"})
+
+    assert caught.value is error
+    assert json.loads(state_path.read_text(encoding="utf-8")) == previous_state
+    assert not state_path.with_name("state.json.tmp").exists()
 
 
 def test_checkpoint_archive_path_uses_actual_timestep_once(tmp_path: Path) -> None:
@@ -417,6 +473,75 @@ def test_state_update_failure_marks_failed_and_preserves_checkpoint_file(
     assert state["latest_checkpoint"] == "checkpoints/ppo-singletrack-seed42-step25008.zip"
     assert state["final_model"] is None
     assert vector.closed is True
+
+
+def test_completed_state_write_failure_removes_uncommitted_final_model(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class SentinelError(RuntimeError):
+        pass
+
+    MockPPOModel.reset()
+    MockPPOModel.progress_points = ()
+    vector = MockVecEnv()
+    error = SentinelError("completed state failure")
+    writer = FailingStateWriter(runner_module._write_state, fail_on_call=2, error=error)
+    monkeypatch.setattr(runner_module, "make_vector_env", lambda *args: vector)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_write_state", writer)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+
+    root = tmp_path / "runs"
+    with pytest.raises(SentinelError) as caught:
+        TrainingRunner(_config(root)).run_single(make_factory())
+
+    assert caught.value is error
+    run_directory = next(root.iterdir())
+    state = json.loads((run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["status"] == "failed"
+    assert state["final_model"] is None
+    assert state["final_model_cleanup_error"] is None
+    assert list(run_directory.glob("*-final-model.zip")) == []
+
+
+def test_final_model_cleanup_failure_preserves_completed_state_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class SentinelError(RuntimeError):
+        pass
+
+    MockPPOModel.reset()
+    MockPPOModel.progress_points = ()
+    vector = MockVecEnv()
+    state_error = SentinelError("completed state failure")
+    cleanup_error = PermissionError("final model cleanup failure")
+    writer = FailingStateWriter(runner_module._write_state, fail_on_call=2, error=state_error)
+    original_unlink = Path.unlink
+
+    def fail_final_model_cleanup(path: Path, *args: object, **kwargs: object) -> None:
+        if path.name.endswith("-final-model.zip"):
+            raise cleanup_error
+        original_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(runner_module, "make_vector_env", lambda *args: vector)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_write_state", writer)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+    monkeypatch.setattr(Path, "unlink", fail_final_model_cleanup)
+
+    root = tmp_path / "runs"
+    with pytest.raises(SentinelError) as caught:
+        TrainingRunner(_config(root)).run_single(make_factory())
+
+    assert caught.value is state_error
+    run_directory = next(root.iterdir())
+    state = json.loads((run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["status"] == "failed"
+    assert state["final_model"] is None
+    assert state["final_model_cleanup_error"] == "PermissionError: final model cleanup failure"
+    assert list(run_directory.glob("*-final-model.zip"))
 
 def test_cleanup_failure_after_success_propagates_but_keeps_completed_state(
     tmp_path: Path,
