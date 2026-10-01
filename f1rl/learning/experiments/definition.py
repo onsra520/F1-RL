@@ -418,3 +418,43 @@ class ExperimentDefinition:
             tracks=TrackExperimentConfig(_reference(tracks["manifest"], base, "tracks.manifest")),
             evaluation=EvaluationExperimentConfig(evaluation["deterministic_policy"]),
         )
+
+    def require_frozen(self) -> None:
+        if self.metadata.status != "frozen":
+            raise ValueError("experiment status must be frozen")
+
+        required_scalars = (
+            ("vehicle.wheelbase", self.vehicle.wheelbase),
+            ("vehicle.ride_height", self.vehicle.ride_height),
+            ("vehicle.max_steering_angle", self.vehicle.max_steering_angle),
+            ("vehicle.max_acceleration", self.vehicle.max_acceleration),
+            ("vehicle.max_braking", self.vehicle.max_braking),
+            ("vehicle.rolling_drag", self.vehicle.rolling_drag),
+            ("vehicle.air_drag", self.vehicle.air_drag),
+            ("vehicle.max_ground_speed", self.vehicle.max_ground_speed),
+            ("vehicle.gravity", self.vehicle.gravity),
+            ("simulation.fixed_dt", self.simulation.fixed_dt),
+            ("simulation.max_surface_distance", self.simulation.max_surface_distance),
+            ("observation.velocity_scale", self.observation.velocity_scale),
+            ("observation.target_distance_scale", self.observation.target_distance_scale),
+            ("reward.target_progress_weight_per_meter", self.reward.target_progress_weight_per_meter),
+            ("reward.collision_penalty", self.reward.collision_penalty),
+            ("reward.time_penalty_per_second", self.reward.time_penalty_per_second),
+            ("episode.max_steps", self.episode.max_steps),
+        )
+        unresolved = [name for name, value in required_scalars if value is None]
+        if unresolved:
+            raise ValueError(f"frozen experiment has unresolved fields: {unresolved}")
+
+        if not self.observation.rangefinders:
+            raise ValueError("frozen experiment requires at least one rangefinder")
+        if self.training.protocol_status != "frozen":
+            raise ValueError("training protocol must be frozen")
+        if len(self.seeds.ppo) != len(self.seeds.sampling) or len(self.seeds.ppo) < 3:
+            raise ValueError("frozen experiment requires at least three paired PPO and sampling seeds")
+        if not self.training.runtime_config.is_file():
+            raise ValueError("frozen experiment runtime_config must identify an existing file")
+        if not self.tracks.manifest.is_file():
+            raise ValueError("frozen experiment manifest must identify an existing file")
+        if self.evaluation.deterministic_policy is not True:
+            raise ValueError("frozen experiment requires deterministic policy evaluation")
