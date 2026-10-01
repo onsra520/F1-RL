@@ -59,7 +59,7 @@ evaluation:
 
 def _write(tmp_path: Path, text: str = VALID_DRAFT) -> Path:
     path = tmp_path / "configs" / "experiments" / "definition.yml"
-    path.parent.mkdir(parents=True)
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
     return path
 
