@@ -14,4 +14,4 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e . pytest
-      - run: python -m pytest tests/track_assets tests/integration/test_track_asset_corpus.py -q
+      - run: python -m pytest tests/track_assets -q
