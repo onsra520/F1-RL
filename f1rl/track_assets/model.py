@@ -10,6 +10,11 @@ from f1rl.sandbox.track.model import TrackWorld
 _SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 
 
+def _validate_sha256(value: object, name: str) -> None:
+    if not isinstance(value, str) or _SHA256_RE.fullmatch(value) is None:
+        raise ValueError(f"{name} must be 64 lowercase hexadecimal characters")
+
+
 @dataclass(frozen=True, slots=True)
 class SpawnPose:
     position: Vec3
@@ -40,7 +45,35 @@ class TrackAsset:
             raise ValueError("spawn must be SpawnPose")
         if not isinstance(self.world, TrackWorld):
             raise ValueError("world must be TrackWorld")
-        if not isinstance(self.world_sha256, str) or _SHA256_RE.fullmatch(self.world_sha256) is None:
-            raise ValueError("world_sha256 must be 64 lowercase hexadecimal characters")
-        if not isinstance(self.content_sha256, str) or _SHA256_RE.fullmatch(self.content_sha256) is None:
-            raise ValueError("content_sha256 must be 64 lowercase hexadecimal characters")
+        _validate_sha256(self.world_sha256, "world_sha256")
+        _validate_sha256(self.content_sha256, "content_sha256")
+
+
+@dataclass(frozen=True, slots=True)
+class TrackManifestEntry:
+    track_id: str
+    path: str
+    world_sha256: str
+    content_sha256: str
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.track_id, str) or not self.track_id.strip():
+            raise ValueError("track_id must be a non-empty string")
+        if not isinstance(self.path, str) or not self.path:
+            raise ValueError("path must be a non-empty string")
+        _validate_sha256(self.world_sha256, "world_sha256")
+        _validate_sha256(self.content_sha256, "content_sha256")
+
+
+@dataclass(frozen=True, slots=True)
+class TrackManifest:
+    schema_version: int
+    tracks: tuple[TrackManifestEntry, ...]
+
+    def __post_init__(self) -> None:
+        if isinstance(self.schema_version, bool) or self.schema_version != 1:
+            raise ValueError("schema_version must be integer 1")
+        if not isinstance(self.tracks, tuple):
+            raise ValueError("tracks must be a tuple")
+        if not all(isinstance(entry, TrackManifestEntry) for entry in self.tracks):
+            raise ValueError("tracks must contain TrackManifestEntry values")
