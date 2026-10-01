@@ -452,6 +452,10 @@ class ExperimentDefinition:
             raise ValueError("training protocol must be frozen")
         if len(self.seeds.ppo) != len(self.seeds.sampling) or len(self.seeds.ppo) < 3:
             raise ValueError("frozen experiment requires at least three paired PPO and sampling seeds")
+        if len(set(self.seeds.ppo)) != len(self.seeds.ppo):
+            raise ValueError("frozen experiment PPO seeds must be unique")
+        if len(set(self.seeds.sampling)) != len(self.seeds.sampling):
+            raise ValueError("frozen experiment sampling seeds must be unique")
         if not self.training.runtime_config.is_file():
             raise ValueError("frozen experiment runtime_config must identify an existing file")
         if not self.tracks.manifest.is_file():
