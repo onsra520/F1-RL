@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "tracks": [
+    {
+      "track_id": "straight-sprint-v1",
+      "path": "training/straight-sprint-v1.json",
+      "world_sha256": "685f273f62bdc35399d73be5db922198022ad2b549623924dbeb8171d4a4088b",
+      "content_sha256": "84adafbebb491af7bfbdaa9ef91e0c741023af2c5910c375cb3ce8d5f4e62070"
+    },
+    {
+      "track_id": "slalom-v1",
+      "path": "training/slalom-v1.json",
+      "world_sha256": "c852baf595ea2a52e8c39742bb16b580621be139055f85b61ce7815ea4c5999c",
+      "content_sha256": "064fe9c3dbe3c13fe079fd102cc3f619a839bc09c50f9e0231ebfbed3b3442e9"
+    },
+    {
+      "track_id": "right-turn-v1",
+      "path": "training/right-turn-v1.json",
+      "world_sha256": "bff817fb097504eefaacebfe9a39a0a5abaab50962b76c0b79b06d4d462ea9bb",
+      "content_sha256": "d3c3f3ea34572dba9b1040ef41e7f707a388ecc2a1d95c7295033d9aa93f2ec7"
+    },
+    {
+      "track_id": "ramp-v1",
+      "path": "training/ramp-v1.json",
+      "world_sha256": "775f795aa2763f64916e68e6a64fc763021e875c384050a974c747b6b4907978",
+      "content_sha256": "0fbf4b4633926944759c1972ecc15c6011785dc4d37d46f9d62c4c7d3a12c9b4"
+    },
+    {
+      "track_id": "left-turn-v1",
+      "path": "evaluation/left-turn-v1.json",
+      "world_sha256": "8f15c373ee8bac229877a0bd43535a9f360d770a96a2716c5e50e0a20acb53e8",
+      "content_sha256": "d5f358df1350dc5eb712263b763850dc03fb013921fa86805df789c8dfeebdf2"
+    },
+    {
+      "track_id": "offset-slalom-v1",
+      "path": "evaluation/offset-slalom-v1.json",
+      "world_sha256": "7d5663401a639b05e4b57c94d8349592427766865d2f3afbd26dd97f44c2cab1",
+      "content_sha256": "a2375bc0227c7a398b7d4bd74990d432291181c581673bacef20f088f4ffdf59"
+    }
+  ]
+}
