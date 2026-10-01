@@ -15,6 +15,11 @@ def _validate_sha256(value: object, name: str) -> None:
         raise ValueError(f"{name} must be 64 lowercase hexadecimal characters")
 
 
+def _validate_schema_version(value: object) -> None:
+    if isinstance(value, bool) or not isinstance(value, int) or value != 1:
+        raise ValueError("schema_version must be integer 1")
+
+
 @dataclass(frozen=True, slots=True)
 class SpawnPose:
     position: Vec3
@@ -37,8 +42,7 @@ class TrackAsset:
     content_sha256: str
 
     def __post_init__(self) -> None:
-        if isinstance(self.schema_version, bool) or self.schema_version != 1:
-            raise ValueError("schema_version must be integer 1")
+        _validate_schema_version(self.schema_version)
         if not isinstance(self.track_id, str) or not self.track_id.strip():
             raise ValueError("track_id must be a non-empty string")
         if not isinstance(self.spawn, SpawnPose):
@@ -71,8 +75,7 @@ class TrackManifest:
     tracks: tuple[TrackManifestEntry, ...]
 
     def __post_init__(self) -> None:
-        if isinstance(self.schema_version, bool) or self.schema_version != 1:
-            raise ValueError("schema_version must be integer 1")
+        _validate_schema_version(self.schema_version)
         if not isinstance(self.tracks, tuple):
             raise ValueError("tracks must be a tuple")
         if not all(isinstance(entry, TrackManifestEntry) for entry in self.tracks):
