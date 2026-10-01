@@ -14,4 +14,13 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e . pytest
+      - name: Print candidate semantic hashes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from f1rl.track_assets import load_track_asset
+          for path in sorted(list(Path('assets/tracks/training').glob('*.json')) + list(Path('assets/tracks/evaluation').glob('*.json'))):
+              asset = load_track_asset(path)
+              print(f'HASH {asset.track_id} {asset.world_sha256} {asset.content_sha256}')
+          PY
       - run: python -m pytest tests/track_assets tests/integration/test_track_asset_corpus.py -q
