@@ -1,0 +1,21 @@
+name: WP1A Focused CI
+
+on:
+  push:
+    branches:
+      - models/ppo-baseline
+
+jobs:
+  experiments:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install focused dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest "PyYAML>=6,<7"
+      - name: Experiment tests
+        run: python -m pytest tests/learning/experiments -q
