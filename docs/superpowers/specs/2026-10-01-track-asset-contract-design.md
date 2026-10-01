@@ -1,26 +1,26 @@
 # Track Asset Contract Design
 
 **Status:** Written specification for review  
-**Base branch:** `models/ppo-baseline`  
-**Base implementation milestone:** WP1A verified
+**Branch:** `models/ppo-baseline`  
+**Prerequisite:** WP1A verified
 
 ## 1. Goal
 
-WP2 makes racing tracks portable, reproducible project assets instead of Python-only object construction.
+WP2 turns racing tracks from Python-only construction into portable, reproducible project assets.
 
-A track asset must be able to answer:
+A loaded asset must provide:
 
-- what world geometry and entities define this track;
-- where the vehicle starts;
-- whether two differently named files contain the same world geometry;
-- whether the exact same track content and spawn were used later in an experiment;
-- whether a manifest entry still matches the file on disk.
+- validated `TrackWorld` geometry/entities;
+- one explicit vehicle spawn pose;
+- a stable fingerprint for world geometry/entities;
+- a stable fingerprint for world + spawn content;
+- manifest integrity checks that detect asset drift.
 
-WP2 must preserve the existing deterministic sandbox and must not move experiment, training, reward, observation, or provenance configuration into track files.
+WP2 must not move experiment, physics, observation, reward, training, evaluation-split, or provenance configuration into track files.
 
-## 2. Architectural boundary
+## 2. Architecture
 
-Persistence is a new adapter above the sandbox:
+Persistence is an adapter above the sandbox:
 
 ```text
 assets/tracks/*.json
@@ -29,34 +29,26 @@ assets/tracks/*.json
 f1rl/track_assets/
         |
         v
-f1rl.sandbox.TrackWorld / WorldState
+f1rl.sandbox TrackWorld / WorldState
         |
         +--> learning/training
         +--> evaluation
         +--> API/editor later
 ```
 
-The production dependency direction is:
+Production dependency direction:
 
 ```text
 track_assets -> sandbox
-learning     -> track_assets (when asset-backed scenarios are introduced)
+learning     -> track_assets when asset-backed scenarios are introduced
 sandbox      -X-> track_assets
 ```
 
-`f1rl/track_assets` must not directly import:
+`f1rl.track_assets` must not import `f1rl.learning`, `f1rl.runtime`, Gymnasium, Stable-Baselines3, PyTorch, FastAPI, or frontend/editor code.
 
-- `f1rl.learning`;
-- `f1rl.runtime`;
-- Gymnasium;
-- Stable-Baselines3;
-- PyTorch;
-- FastAPI;
-- frontend/editor code.
+The sandbox remains the deterministic domain core and never learns about JSON, manifests, filesystems, or hashing.
 
-The sandbox remains the deterministic domain core and does not know JSON, manifests, filesystems, or asset hashing.
-
-## 3. Proposed module layout
+## 3. Module layout
 
 ```text
 f1rl/track_assets/
@@ -70,19 +62,17 @@ f1rl/track_assets/
 
 Responsibilities:
 
-- `model.py` — immutable asset DTOs such as `TrackAsset` and `SpawnPose`.
-- `loader.py` — strict UTF-8 JSON parsing and construction of sandbox domain objects.
-- `canonical.py` — semantic canonicalization and SHA-256 fingerprints.
-- `manifest.py` — strict manifest loading and integrity verification.
-- `initial_state.py` — deterministic mutable-state derivation from an immutable asset.
+- `model.py` — immutable `TrackAsset`, `SpawnPose`, manifest DTOs as appropriate;
+- `loader.py` — strict UTF-8 JSON parsing and sandbox object construction;
+- `canonical.py` — semantic canonicalization and SHA-256 fingerprints;
+- `manifest.py` — strict manifest loading and referenced-file integrity verification;
+- `initial_state.py` — deterministic mutable-state derivation from asset spawn.
 
-This is a small adapter package, not a generic serialization framework.
+This is a small project adapter, not a generic serialization framework.
 
 ## 4. Track JSON schema v1
 
-Canonical project track files use JSON.
-
-Example shape:
+Canonical project tracks use JSON:
 
 ```json
 {
@@ -102,31 +92,23 @@ Example shape:
 }
 ```
 
-All root keys are required in schema v1. Unknown keys are rejected.
+All root keys are required. Unknown keys are rejected. `schema_version` must be integer `1`, with booleans rejected as integers. `track_id` must be a non-empty string.
 
-`schema_version` must be integer `1`; booleans are not integers for validation purposes.
+`track_id` is asset identity only and is excluded from both semantic fingerprints.
 
-`track_id` is a non-empty string. It is an external asset identity and is not part of geometry/content fingerprints.
-
-## 5. Spawn pose
+## 5. Spawn contract
 
 `spawn.position` is the exact initial `VehicleState.position` reference-point position.
 
-`spawn.orientation` is a quaternion encoded as:
+`spawn.orientation` is a quaternion in `[w, x, y, z]` order. Loading constructs the existing sandbox `Quaternion`, which validates finiteness/non-zero norm and normalizes it.
 
-```text
-[w, x, y, z]
-```
+The loader does not snap position to a surface or apply vehicle ride height. Authored pose remains explicit data.
 
-The loader constructs the existing sandbox `Quaternion`, which normalizes valid non-zero input.
+Track JSON never stores velocity, angular velocity, grounded state, score, collected pickups, or active interaction state.
 
-The asset does not store velocity, angular velocity, grounded state, score, collected pickups, or active interaction state.
+## 6. Geometry/entity representation
 
-The loader does not silently snap spawn position to a surface or apply vehicle ride height. Authored spawn pose remains explicit data.
-
-## 6. Surface representation
-
-Each `surfaces` item maps directly to `PlanarSurfacePatch`:
+Each surface maps directly to `PlanarSurfacePatch`:
 
 ```json
 {
@@ -139,18 +121,7 @@ Each `surfaces` item maps directly to `PlanarSurfacePatch`:
 }
 ```
 
-The existing domain constructor remains authoritative for:
-
-- non-empty IDs;
-- unit `forward` and `normal` vectors;
-- orthogonality;
-- positive finite width/length.
-
-The persistence adapter performs structural/type validation and then reuses domain validation rather than maintaining a second physics-validation rule set.
-
-## 7. Volume representation
-
-Volume-backed entities use `OrientedBoxVolume` encoded as:
+Volume-backed entities share:
 
 ```json
 {
@@ -160,113 +131,62 @@ Volume-backed entities use `OrientedBoxVolume` encoded as:
 }
 ```
 
-The existing `OrientedBoxVolume` constructor remains authoritative for positive half-extents and quaternion behavior.
+Entity-specific fields are:
 
-## 8. Entity schemas
+- `Obstacle`: `id`, `volume`;
+- `BoostPad`: `id`, `volume`, `acceleration_bonus`;
+- `SlowZone`: `id`, `volume`, `drag_multiplier`;
+- `Checkpoint`: `id`, `volume`, `order`;
+- `FinishLine`: `id`, `volume`;
+- `ScorePickup`: `id`, `volume`, `points`.
 
-### Obstacle
+Every mapping is strict: all required keys present, no unknown keys.
 
-```json
-{
-  "id": "obstacle-1",
-  "volume": { "center": [0, 1, 10], "half_extents": [1, 1, 1], "orientation": [1, 0, 0, 0] }
-}
-```
+The adapter validates structure/types, then existing sandbox constructors remain authoritative for domain semantics such as unit/orthogonal surface vectors, positive extents, entity numeric constraints, and world-wide ID uniqueness.
 
-### Boost pad
+## 7. Forbidden track-file concerns
 
-Adds:
-
-```text
-acceleration_bonus
-```
-
-and maps to the existing `BoostPad` domain type.
-
-### Slow zone
-
-Adds:
-
-```text
-drag_multiplier
-```
-
-and maps to the existing `SlowZone` domain type.
-
-### Checkpoint
-
-Adds:
-
-```text
-order
-```
-
-and maps to the existing `Checkpoint` domain type.
-
-### Finish line
-
-Contains only `id` plus `volume`.
-
-### Score pickup
-
-Adds:
-
-```text
-points
-```
-
-and maps to the existing `ScorePickup` domain type.
-
-Every entity mapping is strict: required keys must be present and unknown keys are rejected.
-
-## 9. Data deliberately forbidden from track files
-
-Track assets do not contain experiment-owned or mutable runtime state.
-
-Forbidden concerns include:
+Track files must not contain:
 
 ```text
 VehicleParameters
-SimulationConfig/fixed_dt/max_surface_distance
+fixed_dt / max_surface_distance
 sensor/rangefinder configuration
 observation scaling
-reward composition or weights
+reward configuration
 episode max_steps
-PPO or vector-environment configuration
+PPO/vector-environment configuration
 training budget
-training/evaluation split designation
+scientific train/held-out designation
 runtime provenance
-velocity
-angular_velocity
+velocity / angular_velocity
 grounded
 score
 collected pickup IDs
-active checkpoint IDs
-active finish-line IDs
+active checkpoint/finish IDs
 ```
 
-This prevents track-dependent experimental confounds.
+Only world geometry/entities and spawn pose vary per asset.
 
-## 10. Strict JSON parsing
+## 8. Strict JSON parsing
 
-`load_track_asset(path)` reads UTF-8 JSON and rejects malformed or ambiguous input before domain construction.
+`load_track_asset(path)` reads UTF-8 JSON and rejects ambiguous/malformed data before domain construction.
 
-The parser must reject:
+It must reject:
 
-- duplicate JSON object keys;
-- `NaN`;
-- `Infinity` / `-Infinity`;
+- duplicate keys at every JSON object nesting level;
+- `NaN`, `Infinity`, and `-Infinity`;
 - booleans where numeric values are expected;
 - missing required keys;
 - unknown keys;
 - malformed vector/quaternion lengths;
 - unsupported schema versions.
 
-No hidden defaults fill omitted research-relevant or geometry-relevant fields.
+No omitted field receives a hidden geometry or runtime default.
 
-JSON array order for entity collections is not semantically meaningful; IDs determine canonical ordering.
+Entity collection input order is non-semantic; IDs determine canonical order.
 
-## 11. `TrackAsset` contract
+## 9. TrackAsset contract
 
 Conceptual immutable DTO:
 
@@ -281,92 +201,73 @@ class TrackAsset:
     content_sha256: str
 ```
 
-`TrackWorld` continues to canonical-sort each entity category by `id` and enforce ID uniqueness across categories.
+Hashes are computed from validated semantic objects and never trusted from source track JSON.
 
-The hashes are calculated from canonical semantic payloads, never trusted from the source track JSON.
-
-## 12. Dual fingerprint design
-
-WP2 defines two separate SHA-256 fingerprints.
+## 10. Dual semantic fingerprints
 
 ### `world_sha256`
 
-Identifies world geometry/entities only.
+Represents world geometry/entities only.
 
-It excludes:
+Excluded:
 
 - `track_id`;
 - spawn pose;
 - JSON whitespace;
-- JSON object-key order;
-- input entity-array order.
+- source object-key order;
+- source entity-array order.
 
-Purpose:
-
-> detect the same circuit/world even when a file is copied, renamed, reformatted, reordered, or assigned another `track_id`/spawn.
-
-This is the fingerprint WP3 can use for geometry leakage detection.
+Purpose: identify the same circuit/world even if copied, renamed, reformatted, reordered, or assigned another spawn. WP3 can therefore detect geometry leakage even after track renaming.
 
 ### `content_sha256`
 
-Identifies:
+Represents canonical world + canonical spawn pose, while still excluding `track_id` and source formatting.
+
+Purpose: identify the exact semantic world/spawn input later recorded by WP6 provenance.
+
+Changing only spawn changes `content_sha256`, not `world_sha256`.
+
+## 11. Hash-domain versioning
+
+Raw JSON bytes are never hashed.
+
+Canonical preimages are domain-separated:
 
 ```text
-canonical world
-+
-canonical spawn pose
+world_sha256:
+  {"hash_schema":"f1rl-track-world-v1", ...canonical world...}
+
+content_sha256:
+  {"hash_schema":"f1rl-track-content-v1", ...canonical world..., "spawn":...}
 ```
 
-It still excludes `track_id` and source-file formatting.
+Source-file `schema_version` and hash-schema version are separate concepts.
 
-Purpose:
+A later file schema may retain the same semantic fingerprints when it resolves to the same canonical representation. A change in fingerprint semantics requires a new hash-schema identifier.
 
-> distinguish the exact semantic track+spawn content used by an experiment while allowing asset identity/name changes without changing the content identity.
-
-WP6 can later record both fingerprints in provenance.
-
-## 13. Hash-domain versioning
-
-Raw JSON bytes are never hashed directly.
-
-The canonical preimages are domain-separated and versioned.
-
-Conceptually:
-
-```text
-world_sha256   = SHA256(canonical JSON of {"hash_schema": "f1rl-track-world-v1", ...world...})
-content_sha256 = SHA256(canonical JSON of {"hash_schema": "f1rl-track-content-v1", ...world..., "spawn": ...})
-```
-
-The hash schema is distinct from the source-file `schema_version`.
-
-A future file schema may preserve the same semantic hash if it resolves to the same canonical v1 world/content representation. A future change to fingerprint semantics requires a new hash-schema identifier.
-
-## 14. Canonicalization rules
+## 12. Canonicalization rules
 
 Before hashing:
 
-1. all sandbox/entity DTOs are already validated;
-2. entity arrays are sorted by `id`;
-3. mapping keys are serialized with deterministic sorted ordering;
-4. vectors serialize in fixed component order `[x, y, z]`;
-5. quaternions serialize in fixed component order `[w, x, y, z]`;
+1. all semantic objects have passed validation;
+2. each entity category is sorted by `id`;
+3. mapping keys serialize in deterministic sorted order;
+4. vector component order is `[x, y, z]`;
+5. quaternion component order is `[w, x, y, z]`;
 6. quaternions are normalized;
-7. equivalent quaternion signs `q` and `-q` canonicalize to one representation;
-8. quaternion sign is selected so the first non-zero component in `(w, x, y, z)` is positive;
-9. negative zero canonicalizes to positive zero;
-10. non-finite numbers are impossible because they are rejected before hashing;
-11. canonical JSON uses UTF-8, no insignificant whitespace, and stable key ordering.
+7. equivalent `q` and `-q` canonicalize to one sign: the first non-zero component in `(w, x, y, z)` is positive;
+8. negative zero canonicalizes to positive zero;
+9. all continuous numeric fields canonicalize to finite floating-point values before JSON serialization, so semantically equal source values such as `1` and `1.0` hash identically;
+10. discrete fields (`schema_version`, checkpoint `order`, pickup `points`) remain integers;
+11. canonical JSON is UTF-8, stable-key ordered, and contains no insignificant whitespace.
 
-Canonicalization is based on validated semantic objects, not the original textual spelling of numbers.
+Canonicalization uses validated semantic values, not original textual numeric spelling.
 
-The implementation must include regression vectors that pin these rules so future refactors cannot silently change hashes.
+Tests must pin known hash regression vectors so refactors cannot silently alter fingerprint semantics.
 
-## 15. Deterministic initial mutable state
+## 13. Deterministic initial mutable state
 
-A track file owns only spawn pose. Mutable initial state is derived canonically.
-
-Conceptual API:
+Track data owns only spawn pose. Mutable initial state is derived:
 
 ```python
 build_initial_world_state(
@@ -376,22 +277,22 @@ build_initial_world_state(
 ) -> WorldState
 ```
 
-The builder accepts the scalar `max_surface_distance` instead of importing `SimulationConfig`, preserving `track_assets -> sandbox` dependency direction.
+The function takes the scalar distance rather than importing `SimulationConfig`, preserving `track_assets -> sandbox` direction.
 
-Derived values are:
+Derived state:
 
 ```text
-position          = asset.spawn.position
-orientation       = asset.spawn.orientation
-velocity          = Vec3(0, 0, 0)
-angular_velocity  = Vec3(0, 0, 0)
-score             = 0
-collected pickups = empty
+position           = asset.spawn.position
+orientation        = asset.spawn.orientation
+velocity           = Vec3(0, 0, 0)
+angular_velocity   = Vec3(0, 0, 0)
+score              = 0
+collected pickups  = empty
 active checkpoints = empty
 active finish lines = empty
 ```
 
-Initial `grounded` is derived as:
+Initial grounded state is:
 
 ```python
 asset.world.surface_at(
@@ -400,25 +301,21 @@ asset.world.surface_at(
 ) is not None
 ```
 
-The builder validates `max_surface_distance` as a finite non-negative numeric value and rejects booleans.
+`max_surface_distance` must be finite, non-negative, numeric, and not boolean.
 
-The builder does not mutate or snap spawn pose.
+The builder does not snap/mutate spawn pose. Grounded derivation exists so the initial observation agrees with the same surface-query semantics used by simulation.
 
-This keeps initial observation grounded-state consistent with the same surface-query semantics used by simulation while preventing authored tracks from choosing arbitrary mutable state.
+## 14. Race-validity boundary
 
-## 16. Race validity boundary
+Generic `track_assets` may load a valid `TrackWorld` that is not a valid RL race course. Therefore production `track_assets` does not import `learning`.
 
-The generic asset loader may construct a valid `TrackWorld` that is not a valid racing episode world. For example, generic domain data can contain zero finish lines even though the RL race route requires exactly one finish.
-
-`f1rl.track_assets` therefore does **not** import `f1rl.learning.episode.RaceRoute`.
-
-Race-ready validation happens at the learning/integration layer by calling the existing:
+Race-ready validation stays at the learning/integration layer using existing:
 
 ```python
 RaceRoute.from_track(asset.world)
 ```
 
-That existing contract remains authoritative for:
+That contract remains authoritative for:
 
 - exactly one finish line;
 - checkpoint orders contiguous from zero;
@@ -426,17 +323,17 @@ That existing contract remains authoritative for:
 - finish/checkpoint ID separation;
 - zero checkpoints being valid.
 
-WP2 corpus integration tests must prove every candidate research track is race-ready through that existing API without creating a production dependency from `track_assets` to `learning`.
+WP2 candidate-corpus integration tests call this existing API without creating `track_assets -> learning` production dependency.
 
-## 17. Manifest schema v1
+## 15. Manifest schema v1
 
-Canonical manifest path:
+Canonical path:
 
 ```text
 assets/tracks/manifest.json
 ```
 
-Example:
+Shape:
 
 ```json
 {
@@ -452,43 +349,34 @@ Example:
 }
 ```
 
-Manifest v1 is an asset registry, not the scientific train/held-out split contract.
+The manifest is an asset registry, not the scientific train/held-out split contract. Existing `training/`, `evaluation/`, and `demo/` directory names remain organizational until WP3 freezes research split semantics.
 
-Directory names such as `training/` and `evaluation/` remain organizational until WP3 freezes split semantics.
+## 16. Manifest path/integrity rules
 
-## 18. Manifest path rules
+Manifest paths:
 
-Manifest track paths:
+- are non-empty relative paths;
+- resolve relative to the manifest directory;
+- must remain inside that directory after normalization;
+- must refer to files;
+- cannot be absolute or escape via traversal.
 
-- must be relative paths;
-- must not be empty;
-- must not resolve outside the manifest directory;
-- must point to files;
-- resolve relative to the manifest file itself.
+`load_track_manifest(path)` requires:
 
-Absolute paths and traversal outside `assets/tracks` via entries such as `../..` are rejected.
-
-This preserves repository portability and prevents the manifest from becoming a generic filesystem indirection layer.
-
-## 19. Manifest integrity checks
-
-`load_track_manifest(path)` validates structural correctness and verifies each referenced file.
-
-It must require:
-
+- strict manifest JSON keys/schema;
 - unique manifest `track_id` values;
 - unique normalized relative paths;
-- valid lowercase 64-character SHA-256 values;
-- referenced file exists;
-- loaded asset `track_id` matches manifest entry;
-- loaded `world_sha256` matches manifest entry;
-- loaded `content_sha256` matches manifest entry.
+- lowercase 64-character SHA-256 values;
+- referenced file existence;
+- loaded asset ID equals manifest ID;
+- computed `world_sha256` equals manifest value;
+- computed `content_sha256` equals manifest value.
 
-Any mismatch is an error; hashes are never silently regenerated into the checked-in manifest during loading.
+Any mismatch fails. Loading never rewrites hashes or mutates the manifest.
 
-A separate explicit developer utility may later generate/update manifest entries, but transparent mutation is out of scope for WP2.
+Automatic manifest-generation/update tooling is not required by WP2.
 
-## 20. Public API
+## 17. Public API
 
 Expected public surface:
 
@@ -504,13 +392,13 @@ from f1rl.track_assets import (
 )
 ```
 
-Exact internal helper names may differ in the implementation plan, but production consumers must not need to know JSON parsing/canonicalization internals.
+Internal parser/canonicalization helpers remain private.
 
-## 21. Scenario construction relationship
+## 18. Scenario construction
 
 WP2 does not redesign `F1RLEnvFactory`.
 
-Later integration resolves the experiment-owned configuration and combines it with the asset:
+Later integration combines experiment-owned config with the asset:
 
 ```python
 asset = load_track_asset(track_path)
@@ -532,201 +420,155 @@ factory = F1RLEnvFactory(
 
 The asset contributes only world/spawn information.
 
-## 22. WP2A — asset infrastructure
+## 19. WP2A — asset infrastructure
 
 WP2A implements:
 
 - immutable asset DTOs;
-- strict JSON loader;
+- strict loader;
 - sandbox object construction;
-- canonicalization;
-- dual hashes;
-- manifest model/loader/integrity verification;
+- canonicalization and dual hashes;
+- manifest model/loader/integrity checks;
 - deterministic initial-state builder;
-- focused documentation and tests.
+- documentation and focused tests.
 
-WP2A does not invent actual research-track geometry merely to exercise the loader. Tests use dedicated test fixtures.
+WP2A tests use dedicated fixtures. It does not invent research tracks merely to test parsing.
 
-## 23. WP2B — candidate track corpus
+## 20. WP2B — candidate track corpus
 
-WP2B authors the actual project track assets needed to establish representative geometry scale.
-
-Expected repository shape:
+WP2B authors actual candidate project tracks to establish representative geometry scale:
 
 ```text
 assets/tracks/
 ├── manifest.json
-├── training/
-│   └── *.json
-├── evaluation/
-│   └── *.json
-└── demo/
-    └── *.json
+├── training/*.json
+├── evaluation/*.json
+└── demo/*.json
 ```
 
-The current research direction is approximately four candidate training-side tracks plus two candidate evaluation-side tracks, but WP2 does not scientifically freeze that split.
+Current research direction is approximately four candidate training-side tracks and two candidate evaluation-side tracks. WP2 does not scientifically freeze that split.
 
-WP2B must ensure:
+Every checked-in research candidate must:
 
-- every checked-in track loads through the production loader;
-- manifest hashes match;
-- every research candidate is race-ready through `RaceRoute.from_track`;
-- authored dimensions establish enough evidence for WP1B to choose sensor ranges, observation scales, reward weights, and episode horizon.
+- load through production `load_track_asset`;
+- match its manifest fingerprints;
+- pass `RaceRoute.from_track`;
+- provide enough real dimensional evidence for WP1B to choose environment/sensor/reward/episode numeric values.
 
-## 24. Relationship with WP1B
+## 21. Relationship to later work
 
-WP1A deliberately left vehicle/simulation/sensor/reward/episode numeric values unresolved.
+### WP1B
 
-After WP2B establishes real track scale, WP1B can justify and freeze:
+Uses WP2B geometry scale to justify/freeze vehicle values, simulation timestep/surface distance, sensor layout/ranges, observation scales, reward weights, and episode horizon. Those values never enter track JSON.
 
-- vehicle numeric parameters;
-- fixed simulation timestep and surface-query distance;
-- sensor count/directions/ranges;
-- observation normalization scales;
-- reward weights;
-- episode horizon.
+### WP3
 
-WP2 must not set those values inside track data.
+Owns scientific split/leakage validation. It can enforce disjoint track IDs and disjoint `world_sha256` values between training and held-out sets. Using a world hash that excludes `track_id` prevents rename-based leakage.
 
-## 25. Relationship with WP3
+### WP6
 
-WP3 owns scientific split and leakage rules.
+Records `track_id`, `world_sha256`, and `content_sha256` as actual run provenance. WP2 computes stable identities; WP6 records what ran.
 
-It may use WP2 fingerprints to enforce:
+## 22. Error behavior
 
-```text
-training track IDs ∩ held-out track IDs = empty
-training world hashes ∩ held-out world hashes = empty
-```
+Invalid schema/content raises clear `ValueError` messages identifying the failing field/path. Missing/unreadable paths use normal filesystem errors unless the implementation plan finds a narrow reason for one project-owned exception.
 
-Using `world_sha256` rather than a hash containing `track_id` prevents a copied/renamed circuit from bypassing the leakage guard.
+WP2 does not create a broad error hierarchy.
 
-WP3 also verifies shared non-track experiment configuration. WP2 does not.
-
-## 26. Relationship with WP6
-
-WP6 runtime provenance can record:
-
-```text
-track_id
-world_sha256
-content_sha256
-```
-
-WP2 computes stable semantic fingerprints; WP6 records the actual inputs used by a run.
-
-## 27. Error behavior
-
-Public load/build APIs fail fast with `ValueError` for invalid schema/content and propagate appropriate filesystem errors for missing/unreadable paths unless the implementation plan defines one narrow project-owned exception type.
-
-Error messages should identify the failing field/path sufficiently for authored track debugging.
-
-WP2 does not introduce a broad error hierarchy.
-
-## 28. Testing requirements
-
-WP2 implementation follows TDD and keeps mocks/test doubles in dedicated test code only.
-
-Focused tests must cover at least:
+## 23. Required tests
 
 ### Parser/schema
 
-- valid complete track loads;
-- duplicate JSON keys rejected;
-- unknown root/nested keys rejected;
-- missing required keys rejected;
+- valid complete asset loads;
+- duplicate keys at any nesting level rejected;
+- unknown/missing keys rejected;
 - unsupported schema rejected;
 - bool-as-number rejected;
-- `NaN`/infinity rejected;
+- non-finite values rejected;
 - wrong vector/quaternion lengths rejected.
 
 ### Domain construction
 
-- all seven `TrackWorld` categories round-trip into correct domain types;
-- domain ID uniqueness remains authoritative;
-- invalid unit/orthogonality/extents/entity numeric rules propagate as validation failures.
+- all seven `TrackWorld` categories build correct sandbox types;
+- existing world-wide ID uniqueness remains authoritative;
+- invalid unit/orthogonality/extents/entity values fail.
 
 ### Canonicalization/hashing
 
-- source whitespace does not change hashes;
-- JSON object-key order does not change hashes;
-- input entity-array order does not change hashes;
-- equivalent `q` and `-q` do not change hashes;
-- negative zero does not change hashes;
-- changing only `track_id` changes neither hash;
-- changing only spawn changes `content_sha256` but not `world_sha256`;
-- changing geometry/entity content changes both hashes;
-- fixed regression vectors pin known hashes for canonical fixtures.
+- whitespace/key/entity input order does not affect hashes;
+- source `1` vs `1.0` for continuous fields does not affect hashes;
+- `q` vs `-q` does not affect hashes;
+- negative zero does not affect hashes;
+- track-ID-only change affects neither hash;
+- spawn-only change affects only content hash;
+- geometry/entity change affects both hashes;
+- known canonical fixtures have pinned expected hashes.
 
 ### Initial state
 
-- velocity/angular velocity are zero;
-- score and all mutable sets are empty;
-- spawn pose is preserved;
+- spawn preserved;
+- velocity/angular velocity zero;
+- score/mutable sets empty;
 - grounded derives from surface query;
-- no surface yields `grounded=False`;
-- invalid `max_surface_distance` rejected.
+- no surface gives `grounded=False`;
+- invalid max-surface-distance rejected.
 
 ### Manifest
 
-- relative paths resolve from manifest directory;
+- paths resolve relative to manifest;
 - absolute/out-of-root paths rejected;
 - duplicate IDs/paths rejected;
 - malformed hashes rejected;
-- ID mismatch detected;
-- world/content hash tampering detected.
+- ID mismatch and hash tampering detected.
 
 ### Integration/boundaries
 
 - candidate research tracks are race-ready via `RaceRoute.from_track`;
 - `sandbox` does not import `track_assets`;
-- `track_assets` does not import `learning`, `runtime`, SB3, Torch, Gymnasium, or API/frontend code;
-- existing SB3-owner invariant remains exactly two production files;
-- existing production Torch-import invariant remains zero;
-- existing suite remains green.
+- `track_assets` does not import `learning`, `runtime`, Gymnasium, SB3, Torch, API, or frontend code;
+- SB3 production owner invariant remains exactly two files;
+- production Torch imports remain zero;
+- existing suite stays green.
 
-## 29. Non-goals
+## 24. Non-goals
 
 WP2 does not implement:
 
-- track editor UI;
-- arbitrary mesh/curve/spline track formats;
-- binary asset format;
+- editor UI;
+- arbitrary mesh/spline formats;
+- binary/database/network asset storage;
 - schema migration engine;
-- database storage;
-- network loading;
-- experiment train/held-out split logic;
+- save/export authoring API unless later needed by the editor;
 - automatic manifest mutation;
+- scientific split enforcement;
 - sensor/reward/physics tuning;
 - evaluation metrics;
-- training or policy evaluation;
-- runtime provenance capture.
+- policy training/evaluation;
+- runtime provenance collection.
 
-## 30. Acceptance criteria
+## 25. Acceptance criteria
 
 WP2 is complete when:
 
-1. track assets are strict portable JSON files;
-2. production loader creates validated existing sandbox domain objects;
-3. no mutable initial runtime state is authorable except spawn pose;
-4. canonical initial state is derived deterministically;
-5. semantic `world_sha256` and `content_sha256` are stable and meaningfully distinct;
-6. renamed/reformatted/reordered identical worlds retain the same world fingerprint;
-7. manifest integrity detects file/content drift;
-8. real candidate track assets exist and load through the production path;
-9. research candidate tracks pass existing race-route validity;
-10. sandbox and RL dependency boundaries remain intact;
-11. WP2 supplies enough real geometry scale for WP1B without silently freezing WP3 split semantics.
+1. strict portable JSON assets construct validated sandbox domain objects;
+2. only world/entities + spawn are authorable per track;
+3. mutable initial state is canonical and deterministic;
+4. `world_sha256` and `content_sha256` are stable, versioned semantic identities;
+5. rename/reformat/reorder cannot disguise the same world geometry;
+6. manifest integrity detects content drift/tampering;
+7. real candidate track assets exist and pass production load + race-route validation;
+8. sandbox/RL dependency boundaries remain intact;
+9. real geometry scale is available for WP1B;
+10. WP3 split semantics remain deliberately unfrozen.
 
-## 31. Planned sequence after WP2 approval
+## 26. Sequence after approval
 
 ```text
 WP2 written spec
 → WP2 implementation plan
-→ WP2A TDD implementation
-→ WP2A verification/review
-→ WP2B candidate track corpus
-→ WP2 full verification/review
+→ WP2A TDD implementation + verification
+→ WP2B candidate track corpus + verification
+→ WP2 full review
 → WP1B environment numeric freeze
 → WP3 train/held-out split contract
 ```
