@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "track_id": "offset-slalom-v1",
+  "spawn": {"position": [0, 0, 4], "orientation": [1, 0, 0, 0]},
+  "surfaces": [
+    {"id": "road-main", "origin": [0, 0, 70], "forward": [0, 0, 1], "normal": [0, 1, 0], "width": 16, "length": 140}
+  ],
+  "obstacles": [
+    {"id": "obstacle-0", "volume": {"center": [-4.5, 1, 45], "half_extents": [2, 1, 2], "orientation": [1, 0, 0, 0]}},
+    {"id": "obstacle-1", "volume": {"center": [4.5, 1, 72], "half_extents": [2, 1, 2], "orientation": [1, 0, 0, 0]}},
+    {"id": "obstacle-2", "volume": {"center": [-4, 1, 100], "half_extents": [2, 1, 2], "orientation": [1, 0, 0, 0]}},
+    {"id": "obstacle-3", "volume": {"center": [4, 1, 116], "half_extents": [2, 1, 2], "orientation": [1, 0, 0, 0]}}
+  ],
+  "boost_pads": [],
+  "slow_zones": [],
+  "checkpoints": [
+    {"id": "checkpoint-0", "volume": {"center": [4, 0, 28], "half_extents": [2, 2, 1.5], "orientation": [1, 0, 0, 0]}, "order": 0},
+    {"id": "checkpoint-1", "volume": {"center": [-4, 0, 62], "half_extents": [2, 2, 1.5], "orientation": [1, 0, 0, 0]}, "order": 1},
+    {"id": "checkpoint-2", "volume": {"center": [2.5, 0, 98], "half_extents": [2, 2, 1.5], "orientation": [1, 0, 0, 0]}, "order": 2},
+    {"id": "checkpoint-3", "volume": {"center": [-3.5, 0, 124], "half_extents": [2, 2, 1.5], "orientation": [1, 0, 0, 0]}, "order": 3}
+  ],
+  "finish_lines": [
+    {"id": "finish", "volume": {"center": [0, 0, 134], "half_extents": [8, 2, 1], "orientation": [1, 0, 0, 0]}}
+  ],
+  "score_pickups": []
+}

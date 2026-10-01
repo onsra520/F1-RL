@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "track_id": "right-turn-v1",
+  "spawn": {"position": [0, 0, 4], "orientation": [1, 0, 0, 0]},
+  "surfaces": [
+    {"id": "road-entry", "origin": [0, 0, 35], "forward": [0, 0, 1], "normal": [0, 1, 0], "width": 12, "length": 70},
+    {"id": "road-exit", "origin": [35, 0, 70], "forward": [1, 0, 0], "normal": [0, 1, 0], "width": 12, "length": 70}
+  ],
+  "obstacles": [],
+  "boost_pads": [],
+  "slow_zones": [],
+  "checkpoints": [
+    {"id": "checkpoint-0", "volume": {"center": [0, 0, 35], "half_extents": [6, 2, 1], "orientation": [1, 0, 0, 0]}, "order": 0},
+    {"id": "checkpoint-1", "volume": {"center": [20, 0, 70], "half_extents": [1, 2, 6], "orientation": [1, 0, 0, 0]}, "order": 1}
+  ],
+  "finish_lines": [
+    {"id": "finish", "volume": {"center": [64, 0, 70], "half_extents": [1, 2, 6], "orientation": [1, 0, 0, 0]}}
+  ],
+  "score_pickups": []
+}
