@@ -1,22 +1,62 @@
-name: WP1B temporary focused verification
+name: WP1B final self-cleaning verification
 
 on:
   push:
     branches:
       - models/ppo-baseline
 
+permissions:
+  contents: write
+
 jobs:
-  focused:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install focused dependencies
+
+      - name: Remove temporary verifier and move branch to exact final HEAD
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm .github/workflows/wp1b-temp.yml
+          git add .github/workflows/wp1b-temp.yml
+          git commit -m "chore(ci): remove temporary WP1B verification"
+          git push origin HEAD:models/ppo-baseline
+          echo "FINAL_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Install CPU verification dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e . PyYAML pytest
-      - name: Run experiment tests
-        run: python -m pytest tests/learning/experiments -q
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
+          python -m pip install -e ".[dev]"
+
+      - name: Verify WP2 assets and runtime config are untouched
+        run: |
+          git diff --exit-code 7aafb5f9eb57a07898b05b68aeeb50897b6e94da...HEAD -- assets/tracks
+          git diff --exit-code 7aafb5f9eb57a07898b05b68aeeb50897b6e94da...HEAD -- config.yml
+
+      - name: Run focused WP1B and boundary tests
+        run: |
+          python -m pytest tests/learning/experiments tests/track_assets/test_boundaries.py tests/integration/test_track_asset_corpus.py -q
+
+      - name: Run learning and orchestration regressions
+        run: |
+          python -m pytest tests/learning tests/integration/test_training_orchestration_integration.py -q
+
+      - name: Run full suite
+        run: python -m pytest -q
+
+      - name: Run static and dependency checks
+        run: |
+          python -m compileall -q f1rl scripts
+          python -m pip check
+          git diff --check 30e724b35cddb197ed2cd76f0dd943ebaad8c995...HEAD
+          test ! -e .github/workflows/wp1b-temp.yml
+          test -z "$(git status --porcelain)"
+          echo "Verified exact final HEAD: $FINAL_SHA"
