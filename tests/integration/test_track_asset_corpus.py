@@ -3,10 +3,12 @@ import math
 from pathlib import Path
 
 from f1rl.learning.episode.route import RaceRoute
+from f1rl.learning.experiments import ExperimentDefinition, resolve_track_split
 from f1rl.track_assets import load_track_asset, load_track_manifest
 
 
 TRACK_ROOT = Path("assets/tracks")
+PROFILE = Path("configs/experiments/ppo-generalization-v1.yml")
 EXPECTED = {
     "straight-sprint-v1": "training/straight-sprint-v1.json",
     "slalom-v1": "training/slalom-v1.json",
@@ -54,6 +56,25 @@ def test_all_candidate_assets_load_match_manifest_and_are_race_ready():
 
     assert len(world_hashes) == 6
     assert len(content_hashes) == 6
+
+
+def test_canonical_experiment_resolves_approved_four_plus_two_split():
+    definition = ExperimentDefinition.from_yaml(PROFILE)
+    split = resolve_track_split(definition.tracks)
+
+    assert tuple(entry.track_id for entry in split.training) == (
+        "straight-sprint-v1",
+        "slalom-v1",
+        "right-turn-v1",
+        "ramp-v1",
+    )
+    assert tuple(entry.track_id for entry in split.heldout) == (
+        "left-turn-v1",
+        "offset-slalom-v1",
+    )
+    selected = (*split.training, *split.heldout)
+    assert len({entry.track_id for entry in selected}) == 6
+    assert len({entry.world_sha256 for entry in selected}) == 6
 
 
 def test_candidate_geometry_establishes_wp1b_scale_envelope():
