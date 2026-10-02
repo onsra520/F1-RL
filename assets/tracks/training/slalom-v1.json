@@ -11,7 +11,9 @@
     {"id": "obstacle-2", "volume": {"center": [3.5, 1, 85], "half_extents": [2, 1, 2], "orientation": [1, 0, 0, 0]}},
     {"id": "obstacle-3", "volume": {"center": [-3.5, 1, 100], "half_extents": [2, 1, 2], "orientation": [1, 0, 0, 0]}}
   ],
-  "boost_pads": [],
+  "boost_pads": [
+    {"id": "boost-0", "volume": {"center": [0, 1, 36], "half_extents": [7, 1, 4], "orientation": [1, 0, 0, 0]}, "acceleration_bonus": 3.0}
+  ],
   "slow_zones": [],
   "checkpoints": [
     {"id": "checkpoint-0", "volume": {"center": [-3, 0, 30], "half_extents": [2, 2, 1.5], "orientation": [1, 0, 0, 0]}, "order": 0},

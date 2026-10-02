@@ -8,7 +8,9 @@
   ],
   "obstacles": [],
   "boost_pads": [],
-  "slow_zones": [],
+  "slow_zones": [
+    {"id": "slow-0", "volume": {"center": [0, 1, 50], "half_extents": [6, 1, 8], "orientation": [1, 0, 0, 0]}, "drag_multiplier": 2.0}
+  ],
   "checkpoints": [
     {"id": "checkpoint-0", "volume": {"center": [0, 0, 35], "half_extents": [6, 2, 1], "orientation": [1, 0, 0, 0]}, "order": 0},
     {"id": "checkpoint-1", "volume": {"center": [-20, 0, 70], "half_extents": [1, 2, 6], "orientation": [1, 0, 0, 0]}, "order": 1}

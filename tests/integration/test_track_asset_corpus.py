@@ -4,6 +4,8 @@ from pathlib import Path
 
 from f1rl.learning.episode.route import RaceRoute
 from f1rl.learning.experiments import ExperimentDefinition, resolve_track_split
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
 from f1rl.track_assets import load_track_asset, load_track_manifest
 
 
@@ -56,6 +58,64 @@ def test_all_candidate_assets_load_match_manifest_and_are_race_ready():
 
     assert len(world_hashes) == 6
     assert len(content_hashes) == 6
+
+
+def test_canonical_assets_pin_expected_track_mechanics_and_unchanged_hashes():
+    manifest = load_track_manifest(TRACK_ROOT / "manifest.json")
+    entries = {entry.track_id: entry for entry in manifest.tracks}
+    assets = {
+        track_id: load_track_asset(TRACK_ROOT / entry.path)
+        for track_id, entry in entries.items()
+    }
+
+    slalom = assets["slalom-v1"].world
+    assert len(slalom.boost_pads) == 1
+    boost = slalom.boost_pads[0]
+    assert boost.id == "boost-0"
+    assert boost.volume.center == Vec3(0.0, 1.0, 36.0)
+    assert boost.volume.half_extents == Vec3(7.0, 1.0, 4.0)
+    assert boost.volume.orientation == Quaternion.identity()
+    assert boost.acceleration_bonus == 3.0
+    assert slalom.slow_zones == ()
+
+    offset = assets["offset-slalom-v1"].world
+    assert len(offset.boost_pads) == 1
+    boost = offset.boost_pads[0]
+    assert boost.id == "boost-0"
+    assert boost.volume.center == Vec3(0.0, 1.0, 36.0)
+    assert boost.volume.half_extents == Vec3(8.0, 1.0, 4.0)
+    assert boost.volume.orientation == Quaternion.identity()
+    assert boost.acceleration_bonus == 3.0
+    assert offset.slow_zones == ()
+
+    for track_id in ("right-turn-v1", "left-turn-v1"):
+        world = assets[track_id].world
+        assert world.boost_pads == ()
+        assert len(world.slow_zones) == 1
+        slow = world.slow_zones[0]
+        assert slow.id == "slow-0"
+        assert slow.volume.center == Vec3(0.0, 1.0, 50.0)
+        assert slow.volume.half_extents == Vec3(6.0, 1.0, 8.0)
+        assert slow.volume.orientation == Quaternion.identity()
+        assert slow.drag_multiplier == 2.0
+
+    for track_id in ("straight-sprint-v1", "ramp-v1"):
+        world = assets[track_id].world
+        assert world.boost_pads == ()
+        assert world.slow_zones == ()
+
+    assert entries["straight-sprint-v1"].world_sha256 == (
+        "685f273f62bdc35399d73be5db922198022ad2b549623924dbeb8171d4a4088b"
+    )
+    assert entries["straight-sprint-v1"].content_sha256 == (
+        "84adafbebb491af7bfbdaa9ef91e0c741023af2c5910c375cb3ce8d5f4e62070"
+    )
+    assert entries["ramp-v1"].world_sha256 == (
+        "775f795aa2763f64916e68e6a64fc763021e875c384050a974c747b6b4907978"
+    )
+    assert entries["ramp-v1"].content_sha256 == (
+        "0fbf4b4633926944759c1972ecc15c6011785dc4d37d46f9d62c4c7d3a12c9b4"
+    )
 
 
 def test_canonical_experiment_resolves_approved_four_plus_two_split():

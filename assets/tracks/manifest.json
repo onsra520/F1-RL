@@ -10,14 +10,14 @@
     {
       "track_id": "slalom-v1",
       "path": "training/slalom-v1.json",
-      "world_sha256": "c852baf595ea2a52e8c39742bb16b580621be139055f85b61ce7815ea4c5999c",
-      "content_sha256": "064fe9c3dbe3c13fe079fd102cc3f619a839bc09c50f9e0231ebfbed3b3442e9"
+      "world_sha256": "6071829f2eb790ada04c5e59b22efb205e3a20d59fbe670e68fb78ed3eb304e0",
+      "content_sha256": "b621866c3680d70d182c46400afd96ef140d659eb655dd1324e20c78f5f9eec7"
     },
     {
       "track_id": "right-turn-v1",
       "path": "training/right-turn-v1.json",
-      "world_sha256": "bff817fb097504eefaacebfe9a39a0a5abaab50962b76c0b79b06d4d462ea9bb",
-      "content_sha256": "d3c3f3ea34572dba9b1040ef41e7f707a388ecc2a1d95c7295033d9aa93f2ec7"
+      "world_sha256": "d79133bc9a0599f9b056c7eb78658446631f564f038bc4afa91f3325fd4f9fd2",
+      "content_sha256": "0e1ca07dacfa37877d4d14cc8f64ac9a205b05b0de8110b15908403d7b551530"
     },
     {
       "track_id": "ramp-v1",
@@ -28,14 +28,14 @@
     {
       "track_id": "left-turn-v1",
       "path": "evaluation/left-turn-v1.json",
-      "world_sha256": "8f15c373ee8bac229877a0bd43535a9f360d770a96a2716c5e50e0a20acb53e8",
-      "content_sha256": "d5f358df1350dc5eb712263b763850dc03fb013921fa86805df789c8dfeebdf2"
+      "world_sha256": "4a613e8c851a9940395f81c54857c9b94f903cb893e29401b0457bebe8a10adf",
+      "content_sha256": "bd0bcad1adb9c21a3f3f2f32128469414dda53f8aa5ca7898071b0d16e0f2e66"
     },
     {
       "track_id": "offset-slalom-v1",
       "path": "evaluation/offset-slalom-v1.json",
-      "world_sha256": "7d5663401a639b05e4b57c94d8349592427766865d2f3afbd26dd97f44c2cab1",
-      "content_sha256": "a2375bc0227c7a398b7d4bd74990d432291181c581673bacef20f088f4ffdf59"
+      "world_sha256": "32d903e81880ea290c840fd210ca2c43579004135acf36d58c49bd73d6c91346",
+      "content_sha256": "e10fb9b303e8573e89f9399a6de4ef4e3ec0340d2e6c2e149d70d101d7286d9d"
     }
   ]
 }
