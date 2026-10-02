@@ -103,6 +103,59 @@ def _ids(items) -> tuple[str, ...]:
     return tuple(item.id for item in items)
 
 
+def test_telemetry_is_info_only_and_preserves_canonical_policy_contract() -> None:
+    env = _canonical_env(
+        "training/slalom-v1.json",
+        position=Vec3(0.0, 0.5, 36.0),
+        velocity=Vec3(0.0, 0.0, 5.0),
+        grounded=True,
+    )
+
+    observation, reset_info = env.reset()
+
+    assert observation.shape == (16,)
+    assert observation.dtype == np.float32
+    np.testing.assert_array_equal(
+        env.action_space.low,
+        np.array([-1.0, 0.0], dtype=np.float32),
+    )
+    np.testing.assert_array_equal(
+        env.action_space.high,
+        np.array([1.0, 1.0], dtype=np.float32),
+    )
+    assert set(reset_info) == {
+        "tick",
+        "elapsed_time",
+        "next_checkpoint_index",
+        "finished",
+        "completed_checkpoint_id",
+        "finished_now",
+        "game_score",
+        "reward_components",
+        "telemetry",
+    }
+    assert len(reset_info["telemetry"]) == 7
+    assert not any(
+        name in env._observation_encoder.feature_names
+        for name in (
+            "vehicle_position",
+            "obstacle_hit_ids",
+            "applied_boost_pad_ids",
+            "applied_slow_zone_ids",
+            "track_id",
+        )
+    )
+
+    next_observation, reward, _, _, info = env.step(
+        np.array([0.0, 0.0], dtype=np.float32)
+    )
+
+    assert next_observation.shape == (16,)
+    assert next_observation.dtype == np.float32
+    assert reward == sum(info["reward_components"].values())
+    assert len(info["telemetry"]) == 7
+
+
 def test_grounded_canonical_boost_and_slow_are_reported_as_applied() -> None:
     boost_env = _canonical_env(
         "training/slalom-v1.json",
