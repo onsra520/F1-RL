@@ -154,7 +154,30 @@ def test_reset_returns_declared_observation_and_zero_step_info() -> None:
         "finished_now": False,
         "game_score": 7,
         "reward_components": {},
+        "telemetry": {
+            "vehicle_position": (0.0, 0.0, 0.0),
+            "vehicle_velocity": (0.0, 0.0, 0.0),
+            "vehicle_speed": 0.0,
+            "grounded": False,
+            "obstacle_hit_ids": (),
+            "applied_boost_pad_ids": (),
+            "applied_slow_zone_ids": (),
+        },
     }
+    telemetry = info["telemetry"]
+    assert set(telemetry) == {
+        "vehicle_position",
+        "vehicle_velocity",
+        "vehicle_speed",
+        "grounded",
+        "obstacle_hit_ids",
+        "applied_boost_pad_ids",
+        "applied_slow_zone_ids",
+    }
+    assert all(type(value) is float for value in telemetry["vehicle_position"])
+    assert all(type(value) is float for value in telemetry["vehicle_velocity"])
+    assert type(telemetry["vehicle_speed"]) is float
+    assert type(telemetry["grounded"]) is bool
 
 
 def test_reset_is_deterministic_across_repeated_calls_and_seeds() -> None:
@@ -247,6 +270,33 @@ def test_sampled_action_advances_one_tick_and_returns_gym_tuple() -> None:
     assert terminated is False
     assert truncated is False
     assert info["tick"] == 1
+
+
+def test_step_telemetry_matches_accepted_post_step_vehicle_state() -> None:
+    env = _env()
+    env.reset()
+
+    _, _, _, _, info = env.step(np.array([0.0, 0.0], dtype=np.float32))
+    vehicle = env._simulation.snapshot.world.vehicle
+    telemetry = info["telemetry"]
+
+    assert telemetry["vehicle_position"] == (
+        float(vehicle.position.x),
+        float(vehicle.position.y),
+        float(vehicle.position.z),
+    )
+    assert telemetry["vehicle_velocity"] == (
+        float(vehicle.velocity.x),
+        float(vehicle.velocity.y),
+        float(vehicle.velocity.z),
+    )
+    assert telemetry["vehicle_speed"] == float(vehicle.speed)
+    vx, vy, vz = telemetry["vehicle_velocity"]
+    assert telemetry["vehicle_speed"] == pytest.approx((vx * vx + vy * vy + vz * vz) ** 0.5)
+    assert telemetry["grounded"] is vehicle.grounded
+    assert telemetry["obstacle_hit_ids"] == ()
+    assert telemetry["applied_boost_pad_ids"] == ()
+    assert telemetry["applied_slow_zone_ids"] == ()
 
 
 def test_simulation_step_failure_leaves_episode_active_and_progress_unchanged(

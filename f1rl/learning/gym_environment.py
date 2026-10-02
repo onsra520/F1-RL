@@ -23,6 +23,28 @@ from .observation import NavigationTarget, ObservationEncoder
 from .rewards import RewardComposer, RewardResult, RewardTransition
 
 
+def _vec3_tuple(value: Vec3) -> tuple[float, float, float]:
+    return (float(value.x), float(value.y), float(value.z))
+
+
+def _vehicle_telemetry(
+    vehicle: VehicleState,
+    *,
+    obstacle_hit_ids: tuple[str, ...] = (),
+    applied_boost_pad_ids: tuple[str, ...] = (),
+    applied_slow_zone_ids: tuple[str, ...] = (),
+) -> dict[str, object]:
+    return {
+        "vehicle_position": _vec3_tuple(vehicle.position),
+        "vehicle_velocity": _vec3_tuple(vehicle.velocity),
+        "vehicle_speed": float(vehicle.speed),
+        "grounded": vehicle.grounded,
+        "obstacle_hit_ids": obstacle_hit_ids,
+        "applied_boost_pad_ids": applied_boost_pad_ids,
+        "applied_slow_zone_ids": applied_slow_zone_ids,
+    }
+
+
 class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
     metadata = {"render_modes": []}
     render_mode = None
@@ -138,6 +160,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             "finished_now": False,
             "game_score": snapshot.world.score.points,
             "reward_components": {},
+            "telemetry": _vehicle_telemetry(snapshot.world.vehicle),
         }
 
     def step(
@@ -222,4 +245,5 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 contribution.name: float(contribution.value)
                 for contribution in reward_result.contributions
             },
+            "telemetry": _vehicle_telemetry(snapshot.world.vehicle),
         }
