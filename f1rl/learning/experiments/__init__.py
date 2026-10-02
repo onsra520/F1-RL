@@ -13,6 +13,7 @@ from .definition import (
     TrainingExperimentConfig,
     VehicleExperimentConfig,
 )
+from .split import ResolvedTrackSplit, resolve_track_split
 
 __all__ = (
     "EpisodeExperimentConfig",
@@ -23,9 +24,11 @@ __all__ = (
     "ObservationExperimentConfig",
     "RangefinderExperimentSpec",
     "RewardExperimentConfig",
+    "ResolvedTrackSplit",
     "SeedProtocol",
     "SimulationExperimentConfig",
     "TrackExperimentConfig",
     "TrainingExperimentConfig",
     "VehicleExperimentConfig",
+    "resolve_track_split",
 )
