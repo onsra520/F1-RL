@@ -70,6 +70,14 @@ seeds:
 
 tracks:
   manifest: ../../assets/tracks/manifest.json
+  training_ids:
+    - straight-sprint-v1
+    - slalom-v1
+    - right-turn-v1
+    - ramp-v1
+  heldout_ids:
+    - left-turn-v1
+    - offset-slalom-v1
 
 evaluation:
   deterministic_policy: true

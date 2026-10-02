@@ -48,7 +48,7 @@ def _frozen(tmp_path: Path) -> ExperimentDefinition:
         episode=EpisodeExperimentConfig(100),
         training=TrainingExperimentConfig(runtime_config, "frozen"),
         seeds=SeedProtocol((101, 202, 303), (1101, 1202, 1303)),
-        tracks=TrackExperimentConfig(manifest),
+        tracks=TrackExperimentConfig(manifest, ("train-a",), ("heldout-a",)),
         evaluation=EvaluationExperimentConfig(True),
     )
 

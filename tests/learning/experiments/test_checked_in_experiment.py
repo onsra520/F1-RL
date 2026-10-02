@@ -33,6 +33,16 @@ def test_checked_in_generalization_profile_is_explicit_draft() -> None:
     assert definition.training.runtime_config == Path("config.yml").resolve()
     assert definition.training.protocol_status == "pilot_owned"
     assert definition.tracks.manifest == Path("assets/tracks/manifest.json").resolve()
+    assert definition.tracks.training_ids == (
+        "straight-sprint-v1",
+        "slalom-v1",
+        "right-turn-v1",
+        "ramp-v1",
+    )
+    assert definition.tracks.heldout_ids == (
+        "left-turn-v1",
+        "offset-slalom-v1",
+    )
     assert definition.evaluation.deterministic_policy is True
 
 

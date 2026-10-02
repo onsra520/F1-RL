@@ -42,7 +42,11 @@ def _definition() -> ExperimentDefinition:
         episode=EpisodeExperimentConfig(),
         training=TrainingExperimentConfig(Path("config.yml"), "pilot_owned"),
         seeds=SeedProtocol((), ()),
-        tracks=TrackExperimentConfig(Path("assets/tracks/manifest.json")),
+        tracks=TrackExperimentConfig(
+            Path("assets/tracks/manifest.json"),
+            ("train-a",),
+            ("heldout-a",),
+        ),
         evaluation=EvaluationExperimentConfig(True),
     )
 
@@ -149,6 +153,35 @@ def test_seed_protocol_accepts_empty_draft_and_uint32_boundaries() -> None:
         (0, 2**32 - 1),
         (1, 2),
     )
+
+
+def test_track_split_contract_requires_non_empty_disjoint_unique_id_tuples() -> None:
+    manifest = Path("assets/tracks/manifest.json")
+    config = TrackExperimentConfig(
+        manifest,
+        ("train-a", "train-b"),
+        ("heldout-a",),
+    )
+    assert config.training_ids == ("train-a", "train-b")
+    assert config.heldout_ids == ("heldout-a",)
+
+    invalid_partitions = (
+        ((), ("heldout-a",)),
+        (("train-a",), ()),
+        (("",), ("heldout-a",)),
+        (("   ",), ("heldout-a",)),
+        (("train-a", "train-a"), ("heldout-a",)),
+        (("train-a",), ("heldout-a", "heldout-a")),
+        (("same",), ("same",)),
+    )
+    for training_ids, heldout_ids in invalid_partitions:
+        with pytest.raises(ValueError):
+            TrackExperimentConfig(manifest, training_ids, heldout_ids)
+
+    with pytest.raises(ValueError):
+        TrackExperimentConfig(manifest, ["train-a"], ("heldout-a",))  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        TrackExperimentConfig(manifest, ("train-a",), ["heldout-a"])  # type: ignore[arg-type]
 
 
 def test_definition_rejects_wrong_section_types() -> None:

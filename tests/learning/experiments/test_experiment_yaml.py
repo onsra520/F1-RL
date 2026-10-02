@@ -52,6 +52,11 @@ seeds:
   sampling: []
 tracks:
   manifest: ../../assets/tracks/manifest.json
+  training_ids:
+    - train-b
+    - train-a
+  heldout_ids:
+    - heldout-a
 evaluation:
   deterministic_policy: true
 """
@@ -78,6 +83,8 @@ def test_valid_draft_yaml_loads_and_resolves_relative_references(tmp_path: Path)
     assert definition.seeds.sampling == ()
     assert definition.training.runtime_config == (path.parent / "../../config.yml").resolve()
     assert definition.tracks.manifest == (path.parent / "../../assets/tracks/manifest.json").resolve()
+    assert definition.tracks.training_ids == ("train-b", "train-a")
+    assert definition.tracks.heldout_ids == ("heldout-a",)
 
 
 def test_loading_does_not_change_current_working_directory(tmp_path: Path) -> None:
@@ -151,6 +158,38 @@ def test_invalid_seed_yaml_is_rejected(tmp_path: Path) -> None:
         text = VALID_DRAFT.replace("  ppo: []", replacement)
         with pytest.raises(ValueError):
             ExperimentDefinition.from_yaml(_write(tmp_path, text))
+
+
+def test_track_split_yaml_requires_exact_list_fields_and_valid_membership(tmp_path: Path) -> None:
+    missing = VALID_DRAFT.replace("  heldout_ids:\n    - heldout-a\n", "")
+    with pytest.raises(ValueError):
+        ExperimentDefinition.from_yaml(_write(tmp_path, missing))
+
+    unknown = VALID_DRAFT.replace(
+        "  heldout_ids:\n    - heldout-a\n",
+        "  heldout_ids:\n    - heldout-a\n  role: research\n",
+    )
+    with pytest.raises(ValueError):
+        ExperimentDefinition.from_yaml(_write(tmp_path, unknown))
+
+    non_list = VALID_DRAFT.replace(
+        "  training_ids:\n    - train-b\n    - train-a\n",
+        "  training_ids: train-a\n",
+    )
+    with pytest.raises(ValueError):
+        ExperimentDefinition.from_yaml(_write(tmp_path, non_list))
+
+    blank = VALID_DRAFT.replace("    - train-a", '    - "   "')
+    with pytest.raises(ValueError):
+        ExperimentDefinition.from_yaml(_write(tmp_path, blank))
+
+    duplicate = VALID_DRAFT.replace("    - train-a", "    - train-b")
+    with pytest.raises(ValueError):
+        ExperimentDefinition.from_yaml(_write(tmp_path, duplicate))
+
+    overlap = VALID_DRAFT.replace("    - heldout-a", "    - train-a")
+    with pytest.raises(ValueError):
+        ExperimentDefinition.from_yaml(_write(tmp_path, overlap))
 
 
 def test_input_path_must_identify_an_existing_yaml_file(tmp_path: Path) -> None:

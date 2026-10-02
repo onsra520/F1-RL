@@ -286,10 +286,24 @@ class SeedProtocol:
 @dataclass(frozen=True, slots=True)
 class TrackExperimentConfig:
     manifest: Path
+    training_ids: tuple[str, ...]
+    heldout_ids: tuple[str, ...]
 
     def __post_init__(self) -> None:
         if not isinstance(self.manifest, Path):
             raise ValueError("manifest must be Path")
+        for name, values in (
+            ("training_ids", self.training_ids),
+            ("heldout_ids", self.heldout_ids),
+        ):
+            if not isinstance(values, tuple) or not values:
+                raise ValueError(f"{name} must be a non-empty tuple")
+            if not all(isinstance(track_id, str) and track_id.strip() for track_id in values):
+                raise ValueError(f"{name} must contain non-blank string IDs")
+            if len(values) != len(set(values)):
+                raise ValueError(f"{name} values must be unique")
+        if set(self.training_ids) & set(self.heldout_ids):
+            raise ValueError("training_ids and heldout_ids must be disjoint")
 
 
 @dataclass(frozen=True, slots=True)
@@ -387,7 +401,11 @@ class ExperimentDefinition:
         episode = _exact_mapping(environment["episode"], {"max_steps"}, "environment.episode")
         training = _exact_mapping(root["training"], {"runtime_config", "protocol_status"}, "training")
         seeds = _exact_mapping(root["seeds"], {"ppo", "sampling"}, "seeds")
-        tracks = _exact_mapping(root["tracks"], {"manifest"}, "tracks")
+        tracks = _exact_mapping(
+            root["tracks"],
+            {"manifest", "training_ids", "heldout_ids"},
+            "tracks",
+        )
         evaluation = _exact_mapping(root["evaluation"], {"deterministic_policy"}, "evaluation")
         base = config_path.resolve().parent
 
@@ -415,7 +433,11 @@ class ExperimentDefinition:
                 tuple(_sequence(seeds["ppo"], "seeds.ppo")),
                 tuple(_sequence(seeds["sampling"], "seeds.sampling")),
             ),
-            tracks=TrackExperimentConfig(_reference(tracks["manifest"], base, "tracks.manifest")),
+            tracks=TrackExperimentConfig(
+                _reference(tracks["manifest"], base, "tracks.manifest"),
+                tuple(_sequence(tracks["training_ids"], "tracks.training_ids")),
+                tuple(_sequence(tracks["heldout_ids"], "tracks.heldout_ids")),
+            ),
             evaluation=EvaluationExperimentConfig(evaluation["deterministic_policy"]),
         )
 
