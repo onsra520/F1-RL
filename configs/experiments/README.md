@@ -4,10 +4,12 @@ This directory contains canonical scientific experiment definitions. These files
 
 ## `ppo-generalization-v1.yml`
 
-`ppo-generalization-v1.yml` is intentionally checked in as a **draft** during WP1A. Research-critical environment numbers remain explicit `null` values, the rangefinder suite is empty, and seed arrays are empty. No value from tests or benchmarks is promoted into the research protocol merely because it already exists in the repository.
+`ppo-generalization-v1.yml` remains an explicit **draft** experiment, but WP1B has now pinned its environment protocol. Vehicle dynamics, simulation timestep/surface-query distance, the seven-rangefinder declaration, observation scales, reward weights, and episode horizon are resolved to the reviewed protocol-v1 values.
 
-The draft references root `config.yml` as the current development/runtime training configuration and `assets/tracks/manifest.json` as the future WP2 track manifest. A draft may reference the not-yet-created manifest; it is not runnable as a frozen experiment.
+The experiment is intentionally **not** whole-protocol frozen yet. Root `config.yml` remains the current development/runtime training reference, `training.protocol_status` remains `pilot_owned`, and the PPO/sampling seed arrays remain empty. WP7 owns pilot calibration and the final training profile; the later scientific freeze also requires an explicit replicate-seed protocol before `ExperimentDefinition.require_frozen()` may pass.
 
-WP2 defines authored track data and representative geometry scale. WP1B then resolves vehicle, simulation, observation/sensor, reward, and episode values. WP7 pilots training-only choices and freezes the final training profile. Only after all research-critical inputs are resolved may the definition change to `status: frozen` and pass `ExperimentDefinition.require_frozen()`.
+The track reference points at the concrete WP2 manifest in `assets/tracks/manifest.json`. The current `training/` and `evaluation/` asset directory names are organizational only; WP3 owns the scientific train/held-out split and leakage guards.
 
-Once frozen, materially changing physics, sensors, reward, episode horizon, final training protocol, track split, or evaluation semantics requires a new protocol version rather than silently editing v1 after held-out results are observed.
+The WP1B environment values are protocol material. Changing vehicle/simulation values, sensor count/order/directions/ranges, observation scales, reward weights, or episode horizon requires explicit protocol review and, once the baseline is frozen or used for held-out results, a new protocol version rather than silently editing v1.
+
+No value is inherited from tests merely because a similar fixture exists: the WP1B values are justified by the implemented dynamics and the authored WP2 corpus scale.

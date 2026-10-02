@@ -86,7 +86,33 @@ def test_checked_in_profile_pins_wp1b_environment_protocol() -> None:
     assert definition.seeds.sampling == ()
 
 
-def test_checked_in_draft_cannot_be_mistaken_for_frozen_protocol() -> None:
+def test_checked_in_environment_is_resolved_but_whole_experiment_is_still_draft() -> None:
     definition = ExperimentDefinition.from_yaml(PROFILE)
-    with pytest.raises(ValueError):
+
+    resolved_scalars = (
+        definition.vehicle.wheelbase,
+        definition.vehicle.ride_height,
+        definition.vehicle.max_steering_angle,
+        definition.vehicle.max_acceleration,
+        definition.vehicle.max_braking,
+        definition.vehicle.rolling_drag,
+        definition.vehicle.air_drag,
+        definition.vehicle.max_ground_speed,
+        definition.vehicle.gravity,
+        definition.simulation.fixed_dt,
+        definition.simulation.max_surface_distance,
+        definition.observation.velocity_scale,
+        definition.observation.target_distance_scale,
+        definition.reward.target_progress_weight_per_meter,
+        definition.reward.collision_penalty,
+        definition.reward.time_penalty_per_second,
+        definition.episode.max_steps,
+    )
+    assert all(value is not None for value in resolved_scalars)
+    assert len(definition.observation.rangefinders) == 7
+    assert definition.metadata.status == "draft"
+    assert definition.training.protocol_status == "pilot_owned"
+    assert definition.seeds.ppo == ()
+    assert definition.seeds.sampling == ()
+    with pytest.raises(ValueError, match="experiment status must be frozen"):
         definition.require_frozen()
