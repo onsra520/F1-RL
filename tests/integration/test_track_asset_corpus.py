@@ -6,6 +6,7 @@ from f1rl.learning.episode.route import RaceRoute
 from f1rl.learning.experiments import ExperimentDefinition, resolve_track_split
 from f1rl.sandbox.geometry.rotation import Quaternion
 from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.track.state import TrackState
 from f1rl.track_assets import load_track_asset, load_track_manifest
 
 
@@ -135,6 +136,63 @@ def test_canonical_experiment_resolves_approved_four_plus_two_split():
     selected = (*split.training, *split.heldout)
     assert len({entry.track_id for entry in selected}) == 6
     assert len({entry.world_sha256 for entry in selected}) == 6
+
+
+def test_canonical_modifier_volumes_are_grounded_reachable_and_separated():
+    manifest = load_track_manifest(TRACK_ROOT / "manifest.json")
+    assets = {
+        entry.track_id: load_track_asset(TRACK_ROOT / entry.path)
+        for entry in manifest.tracks
+    }
+    state = TrackState(frozenset())
+
+    for track_id in ("slalom-v1", "offset-slalom-v1"):
+        world = assets[track_id].world
+        boost = world.boost_pads[0]
+        vehicle_point = Vec3(boost.volume.center.x, 0.5, boost.volume.center.z)
+        query = world.query_point(vehicle_point, 0.75, state)
+        assert query.contact is not None
+        assert query.boost_pads == (boost,)
+        boost_max_z = boost.volume.center.z + boost.volume.half_extents.z
+        first_obstacle_min_z = min(
+            obstacle.volume.center.z - obstacle.volume.half_extents.z
+            for obstacle in world.obstacles
+        )
+        finish_min_z = min(
+            finish.volume.center.z - finish.volume.half_extents.z
+            for finish in world.finish_lines
+        )
+        assert boost_max_z < first_obstacle_min_z
+        assert boost_max_z < finish_min_z
+        RaceRoute.from_track(world)
+
+    for track_id in ("right-turn-v1", "left-turn-v1"):
+        world = assets[track_id].world
+        slow = world.slow_zones[0]
+        vehicle_point = Vec3(slow.volume.center.x, 0.5, slow.volume.center.z)
+        query = world.query_point(vehicle_point, 0.75, state)
+        assert query.contact is not None
+        assert query.slow_zones == (slow,)
+        slow_min_z = slow.volume.center.z - slow.volume.half_extents.z
+        slow_max_z = slow.volume.center.z + slow.volume.half_extents.z
+        first_checkpoint_max_z = (
+            world.checkpoints[0].volume.center.z
+            + world.checkpoints[0].volume.half_extents.z
+        )
+        second_checkpoint_min_z = (
+            world.checkpoints[1].volume.center.z
+            - world.checkpoints[1].volume.half_extents.z
+        )
+        entry = next(surface for surface in world.surfaces if surface.id == "road-entry")
+        entry_end_z = entry.origin.z + entry.length / 2.0
+        assert first_checkpoint_max_z < slow_min_z
+        assert slow_max_z < second_checkpoint_min_z
+        assert slow_max_z < entry_end_z
+        assert all(
+            not slow.volume.contains(finish.volume.center)
+            for finish in world.finish_lines
+        )
+        RaceRoute.from_track(world)
 
 
 def test_candidate_geometry_establishes_wp1b_scale_envelope():
