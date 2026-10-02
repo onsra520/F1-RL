@@ -482,5 +482,9 @@ class ExperimentDefinition:
             raise ValueError("frozen experiment runtime_config must identify an existing file")
         if not self.tracks.manifest.is_file():
             raise ValueError("frozen experiment manifest must identify an existing file")
+
+        from .split import resolve_track_split
+
+        resolve_track_split(self.tracks)
         if self.evaluation.deterministic_policy is not True:
             raise ValueError("frozen experiment requires deterministic policy evaluation")

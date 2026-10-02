@@ -8,7 +8,9 @@ This directory contains canonical scientific experiment definitions. These files
 
 The experiment is intentionally **not** whole-protocol frozen yet. Root `config.yml` remains the current development/runtime training reference, `training.protocol_status` remains `pilot_owned`, and the PPO/sampling seed arrays remain empty. WP7 owns pilot calibration and the final training profile; the later scientific freeze also requires an explicit replicate-seed protocol before `ExperimentDefinition.require_frozen()` may pass.
 
-The track reference points at the concrete WP2 manifest in `assets/tracks/manifest.json`. The current `training/` and `evaluation/` asset directory names are organizational only; WP3 owns the scientific train/held-out split and leakage guards.
+The track reference points at the concrete WP2 manifest in `assets/tracks/manifest.json`. WP3 now pins the scientific split directly in this experiment YAML: four training IDs (`straight-sprint-v1`, `slalom-v1`, `right-turn-v1`, `ramp-v1`) and two held-out IDs (`left-turn-v1`, `offset-slalom-v1`). The `training/` and `evaluation/` asset directory names remain organizational only; experiment membership is authoritative and is verified against manifest IDs plus `world_sha256` leakage guards.
+
+WP7 pilot/calibration and any PPO/vector/backend/budget or reward/sensor/environment tuning may use training IDs only. Held-out outcomes are reserved for the final generalization evaluation. If held-out results motivate a material protocol change, that change belongs to a new protocol version with a fresh baseline rather than a silent edit to v1.
 
 The WP1B environment values are protocol material. Changing vehicle/simulation values, sensor count/order/directions/ranges, observation scales, reward weights, or episode horizon requires explicit protocol review and, once the baseline is frozen or used for held-out results, a new protocol version rather than silently editing v1.
 

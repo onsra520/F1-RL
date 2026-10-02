@@ -1,4 +1,5 @@
 from dataclasses import replace
+import json
 from pathlib import Path
 
 import pytest
@@ -18,13 +19,62 @@ from f1rl.learning.experiments import (
     TrainingExperimentConfig,
     VehicleExperimentConfig,
 )
+from f1rl.track_assets import load_track_asset
+
+
+def _track(track_id: str, surface_id: str | None, spawn_x: float = 0.0) -> dict:
+    surfaces = []
+    if surface_id is not None:
+        surfaces.append(
+            {
+                "id": surface_id,
+                "origin": [0.0, 0.0, 0.0],
+                "forward": [0.0, 0.0, 1.0],
+                "normal": [0.0, 1.0, 0.0],
+                "width": 10.0,
+                "length": 20.0,
+            }
+        )
+    return {
+        "schema_version": 1,
+        "track_id": track_id,
+        "spawn": {"position": [spawn_x, 0.0, 0.0], "orientation": [1.0, 0.0, 0.0, 0.0]},
+        "surfaces": surfaces,
+        "obstacles": [],
+        "boost_pads": [],
+        "slow_zones": [],
+        "checkpoints": [],
+        "finish_lines": [],
+        "score_pickups": [],
+    }
+
+
+def _write_manifest(tmp_path: Path, *, duplicate_world: bool = False) -> Path:
+    entries = []
+    for track_id, surface_id, spawn_x in (
+        ("train-a", None if duplicate_world else "train-surface", 0.0),
+        ("heldout-a", None if duplicate_world else "heldout-surface", 5.0),
+    ):
+        path = tmp_path / f"{track_id}.json"
+        path.write_text(json.dumps(_track(track_id, surface_id, spawn_x)), encoding="utf-8")
+        asset = load_track_asset(path)
+        entries.append(
+            {
+                "track_id": track_id,
+                "path": path.name,
+                "world_sha256": asset.world_sha256,
+                "content_sha256": asset.content_sha256,
+            }
+        )
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({"schema_version": 1, "tracks": entries}), encoding="utf-8")
+    return manifest
 
 
 def _complete(tmp_path: Path) -> ExperimentDefinition:
     runtime_config = tmp_path / "config.yml"
     runtime_config.write_text("training: {}\n", encoding="utf-8")
-    manifest = tmp_path / "manifest.json"
-    manifest.write_text("{}\n", encoding="utf-8")
+    manifest = _write_manifest(tmp_path)
     return ExperimentDefinition(
         metadata=ExperimentMetadata("fixture-experiment", 1, "frozen"),
         semantics=ExperimentSemantics(
@@ -54,6 +104,23 @@ def _complete(tmp_path: Path) -> ExperimentDefinition:
 
 def test_complete_frozen_experiment_passes_readiness_gate(tmp_path: Path) -> None:
     assert _complete(tmp_path).require_frozen() is None
+
+
+def test_frozen_readiness_rejects_split_id_missing_from_manifest(tmp_path: Path) -> None:
+    definition = _complete(tmp_path)
+    definition = replace(
+        definition,
+        tracks=replace(definition.tracks, heldout_ids=("missing",)),
+    )
+    with pytest.raises(ValueError, match="missing|manifest"):
+        definition.require_frozen()
+
+
+def test_frozen_readiness_rejects_duplicate_world_geometry(tmp_path: Path) -> None:
+    definition = _complete(tmp_path)
+    _write_manifest(tmp_path, duplicate_world=True)
+    with pytest.raises(ValueError, match="world_sha256|geometry|world hash"):
+        definition.require_frozen()
 
 
 def test_draft_status_is_not_frozen_ready(tmp_path: Path) -> None:
