@@ -83,6 +83,32 @@ def _factory(definition: ExperimentDefinition, entry, shared) -> F1RLEnvFactory:
     )
 
 
+def _mechanic_classes(entry) -> set[str]:
+    world = load_track_asset(TRACK_ROOT / entry.path).world
+    mechanics: set[str] = set()
+    if world.obstacles:
+        mechanics.add("obstacle")
+    if world.boost_pads:
+        mechanics.add("boost")
+    if world.slow_zones:
+        mechanics.add("slow")
+    if any(abs(surface.forward.y) > 1e-12 for surface in world.surfaces):
+        mechanics.add("elevation")
+    return mechanics
+
+
+def test_heldout_mechanics_are_known_from_training_while_geometry_remains_split() -> None:
+    definition = ExperimentDefinition.from_yaml(PROFILE)
+    split = resolve_track_split(definition.tracks)
+
+    training_mechanics = set().union(*(_mechanic_classes(entry) for entry in split.training))
+    heldout_mechanics = set().union(*(_mechanic_classes(entry) for entry in split.heldout))
+
+    assert training_mechanics == {"obstacle", "boost", "slow", "elevation"}
+    assert heldout_mechanics == {"obstacle", "boost", "slow"}
+    assert heldout_mechanics <= training_mechanics
+
+
 def test_canonical_split_initial_states_are_fair_and_grounded() -> None:
     definition = ExperimentDefinition.from_yaml(PROFILE)
     split = resolve_track_split(definition.tracks)
