@@ -23,6 +23,17 @@ from f1rl.sandbox.vehicle import VehicleParameters, VehicleState
 from f1rl.sandbox.world import WorldState
 
 
+TELEMETRY_KEYS = {
+    "vehicle_position",
+    "vehicle_velocity",
+    "vehicle_speed",
+    "grounded",
+    "obstacle_hit_ids",
+    "applied_boost_pad_ids",
+    "applied_slow_zone_ids",
+}
+
+
 def _factory(*, finish_z: float = 100.0, max_steps: int = 100) -> F1RLEnvFactory:
     road = PlanarSurfacePatch(
         "road", Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 1.0),
@@ -89,6 +100,8 @@ def test_dummy_reset_and_step_have_expected_batched_shapes() -> None:
         observations = vector.reset()
         assert observations.shape == (4, 9)
         assert observations.dtype == np.float32
+        assert len(vector.reset_infos) == 4
+        assert all(set(info["telemetry"]) == TELEMETRY_KEYS for info in vector.reset_infos)
         actions = np.zeros((4, 2), dtype=np.float32)
         next_obs, rewards, dones, infos = vector.step(actions)
         assert next_obs.shape == (4, 9)
@@ -96,6 +109,7 @@ def test_dummy_reset_and_step_have_expected_batched_shapes() -> None:
         assert rewards.shape == (4,)
         assert dones.shape == (4,)
         assert len(infos) == 4
+        assert all(set(info["telemetry"]) == TELEMETRY_KEYS for info in infos)
         np.testing.assert_array_equal(next_obs[0], next_obs[1])
         assert rewards[0] == rewards[1]
         assert dones[0] == dones[1]
@@ -169,6 +183,34 @@ def test_sampled_wrapper_uses_stable_rank_seed_and_does_not_sample_at_constructi
         wrapper.close()
 
 
+def test_sampled_wrapper_preserves_nested_telemetry_alongside_track_id() -> None:
+    wrapper = vector_env._SampledF1RLEnv(_scenario_set(), 123, 0)
+    try:
+        _, reset_info = wrapper.reset()
+        active = wrapper._active_env
+        assert active is not None
+        assert set(reset_info["telemetry"]) == TELEMETRY_KEYS
+        assert reset_info["track_id"] == wrapper._current_scenario.track_id
+        vehicle = active._simulation.snapshot.world.vehicle
+        assert reset_info["telemetry"]["vehicle_position"] == (
+            float(vehicle.position.x),
+            float(vehicle.position.y),
+            float(vehicle.position.z),
+        )
+
+        _, _, _, _, step_info = wrapper.step(np.array([0.0, 1.0], dtype=np.float32))
+        assert set(step_info["telemetry"]) == TELEMETRY_KEYS
+        assert step_info["track_id"] == wrapper._current_scenario.track_id
+        vehicle = active._simulation.snapshot.world.vehicle
+        assert step_info["telemetry"]["vehicle_position"] == (
+            float(vehicle.position.x),
+            float(vehicle.position.y),
+            float(vehicle.position.z),
+        )
+    finally:
+        wrapper.close()
+
+
 def test_sampled_wrapper_reset_seed_does_not_change_selection_stream() -> None:
     assert _sample_ids(123, 0, 8, reset_seed=True) == _sample_ids(123, 0, 8)
 
@@ -217,12 +259,19 @@ def test_dummy_auto_reset_preserves_terminal_track_id_before_sampling_next_episo
         vector_env_instance.reset()
         terminal_ids = [env._current_scenario.track_id for env in vector_env_instance.envs]
         observations, _, dones, infos = vector_env_instance.step(
-            np.zeros((2, 2), dtype=np.float32)
+            np.array([[0.0, 1.0], [0.0, 1.0]], dtype=np.float32)
         )
 
         assert dones.tolist() == [True, True]
         assert [info["track_id"] for info in infos] == terminal_ids
         assert all("terminal_observation" in info for info in infos)
+        assert all(set(info["telemetry"]) == TELEMETRY_KEYS for info in infos)
+        assert all(set(info["telemetry"]) == TELEMETRY_KEYS for info in vector_env_instance.reset_infos)
+        assert all(
+            info["telemetry"]["vehicle_position"]
+            != reset_info["telemetry"]["vehicle_position"]
+            for info, reset_info in zip(infos, vector_env_instance.reset_infos, strict=True)
+        )
         assert observations.shape == (2, 9)
     finally:
         vector_env_instance.close()
