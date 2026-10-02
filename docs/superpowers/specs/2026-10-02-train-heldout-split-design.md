@@ -1,7 +1,7 @@
 # Train/Held-Out Split and Leakage Guard Design
 
-**Status:** Written specification for review  
-**Branch:** `research/train-heldout-split`  
+**Status:** Written specification for review
+**Branch:** `research/train-heldout-split`
 **Base HEAD:** `a76d50f93a6c63478f507f4d653b683a9e9d6174`
 
 ## 1. Goal
