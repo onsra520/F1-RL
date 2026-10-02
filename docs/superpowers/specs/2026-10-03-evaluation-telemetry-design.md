@@ -1,7 +1,7 @@
 # Evaluation Telemetry Design
 
-**Status:** Written specification for review  
-**Branch:** `research/evaluation-telemetry`  
+**Status:** Written specification for review
+**Branch:** `research/evaluation-telemetry`
 **Base HEAD:** `ea8465311de4ae883b38d0cd9faaba43a5f02401`
 
 ## 1. Goal
