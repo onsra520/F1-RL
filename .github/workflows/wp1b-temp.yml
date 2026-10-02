@@ -18,5 +18,5 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e . PyYAML pytest
-      - name: Run checked-in experiment tests
-        run: python -m pytest tests/learning/experiments/test_checked_in_experiment.py -q
+      - name: Run experiment tests
+        run: python -m pytest tests/learning/experiments -q
