@@ -7,7 +7,9 @@ import numpy as np
 
 from ..runtime.simulation import Simulation, SimulationConfig, SimulationSnapshot
 from ..sandbox.geometry.vector import Vec3
+from ..sandbox.interactions.events import ObstacleHit
 from ..sandbox.track.model import TrackWorld
+from ..sandbox.track.query import TrackQuery
 from ..sandbox.vehicle import VehicleParameters, VehicleState
 from ..sandbox.world import WorldState
 from .action import PolicyAction, map_policy_action
@@ -25,6 +27,23 @@ from .rewards import RewardComposer, RewardResult, RewardTransition
 
 def _vec3_tuple(value: Vec3) -> tuple[float, float, float]:
     return (float(value.x), float(value.y), float(value.z))
+
+
+def _applied_modifier_ids(query: TrackQuery) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    if query.contact is None:
+        return (), ()
+    return (
+        tuple(item.id for item in sorted(query.boost_pads, key=lambda item: item.id)),
+        tuple(item.id for item in sorted(query.slow_zones, key=lambda item: item.id)),
+    )
+
+
+def _obstacle_hit_ids(snapshot: SimulationSnapshot) -> tuple[str, ...]:
+    return tuple(
+        event.obstacle_id
+        for event in snapshot.events
+        if isinstance(event, ObstacleHit)
+    )
 
 
 def _vehicle_telemetry(
@@ -175,6 +194,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         target_before = self._route.target_for(progress_before)
         previous_vehicle = self._simulation.snapshot.world.vehicle
         control = map_policy_action(policy_action)
+        query_before = self._simulation.snapshot.query
 
         snapshot_after = self._simulation.step(control)
         try:
@@ -201,7 +221,12 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 snapshot_after.world.vehicle,
                 progress_result.target_position,
             )
-            info = self._step_info(snapshot_after, progress_result, reward_result)
+            info = self._step_info(
+                snapshot_after,
+                progress_result,
+                reward_result,
+                query_before,
+            )
         except Exception:
             self._needs_reset = True
             raise
@@ -232,7 +257,9 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         snapshot: SimulationSnapshot,
         progress_result: RaceProgressResult,
         reward_result: RewardResult,
+        query_before: TrackQuery,
     ) -> dict[str, object]:
+        boost_ids, slow_ids = _applied_modifier_ids(query_before)
         return {
             "tick": snapshot.tick,
             "elapsed_time": snapshot.elapsed_time,
@@ -245,5 +272,10 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 contribution.name: float(contribution.value)
                 for contribution in reward_result.contributions
             },
-            "telemetry": _vehicle_telemetry(snapshot.world.vehicle),
+            "telemetry": _vehicle_telemetry(
+                snapshot.world.vehicle,
+                obstacle_hit_ids=_obstacle_hit_ids(snapshot),
+                applied_boost_pad_ids=boost_ids,
+                applied_slow_zone_ids=slow_ids,
+            ),
         }

@@ -4,7 +4,10 @@ import pytest
 from f1rl.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
 from f1rl.learning.gym_environment import F1RLEnv
 from f1rl.runtime.simulation import SimulationConfig
+from f1rl.sandbox.entities.boost_pad import BoostPad
 from f1rl.sandbox.entities.finish_line import FinishLine
+from f1rl.sandbox.entities.obstacle import Obstacle
+from f1rl.sandbox.entities.slow_zone import SlowZone
 from f1rl.sandbox.geometry.rotation import Quaternion
 from f1rl.sandbox.geometry.vector import Vec3
 from f1rl.sandbox.interactions.state import InteractionState
@@ -12,6 +15,7 @@ from f1rl.sandbox.perception.rangefinder import RangefinderSpec
 from f1rl.sandbox.perception.sensor_suite import SensorSuite
 from f1rl.sandbox.rules.scoring import ScoreState
 from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
 from f1rl.sandbox.track.state import TrackState
 from f1rl.sandbox.track.volume import OrientedBoxVolume
 from f1rl.sandbox.vehicle import VehicleParameters, VehicleState
@@ -297,6 +301,93 @@ def test_step_telemetry_matches_accepted_post_step_vehicle_state() -> None:
     assert telemetry["obstacle_hit_ids"] == ()
     assert telemetry["applied_boost_pad_ids"] == ()
     assert telemetry["applied_slow_zone_ids"] == ()
+
+
+def test_obstacle_telemetry_uses_actual_events_and_accepted_rollback_state() -> None:
+    road = PlanarSurfacePatch(
+        "road",
+        Vec3(0.0, 0.0, 50.0),
+        Vec3(0.0, 0.0, 1.0),
+        Vec3(0.0, 1.0, 0.0),
+        10.0,
+        100.0,
+    )
+    collision_volume = OrientedBoxVolume(
+        Vec3(0.0, 0.3, 0.04),
+        Vec3(1.0, 1.0, 0.02),
+        Quaternion.identity(),
+    )
+    track = TrackWorld(
+        surfaces=(road,),
+        obstacles=(
+            Obstacle("obstacle-b", collision_volume),
+            Obstacle("obstacle-a", collision_volume),
+        ),
+        finish_lines=(FinishLine("finish", _volume(Vec3(0.0, 0.3, 90.0))),),
+    )
+    initial = WorldState(
+        vehicle=VehicleState(
+            position=Vec3(0.0, 0.3, 0.0),
+            velocity=Vec3(0.0, 0.0, 0.0),
+            orientation=Quaternion.identity(),
+            angular_velocity=Vec3(0.0, 0.0, 0.0),
+            grounded=True,
+        ),
+        track=TrackState(frozenset()),
+        interactions=InteractionState(frozenset(), frozenset()),
+        score=ScoreState(),
+    )
+    env = _env(track=track, initial_state=initial)
+    env.reset()
+
+    action = np.array([0.0, 1.0], dtype=np.float32)
+    _, _, _, _, first_info = env.step(action)
+    first = first_info["telemetry"]
+
+    assert first["obstacle_hit_ids"] == ("obstacle-a", "obstacle-b")
+    assert first["vehicle_position"] == (0.0, 0.3, 0.0)
+    assert first["vehicle_velocity"] == (0.0, 0.0, 0.0)
+    assert first["vehicle_speed"] == 0.0
+
+    _, _, _, _, second_info = env.step(action)
+    assert second_info["telemetry"]["obstacle_hit_ids"] == (
+        "obstacle-a",
+        "obstacle-b",
+    )
+
+
+def test_modifier_telemetry_ids_are_deterministically_ordered() -> None:
+    road = PlanarSurfacePatch(
+        "road", Vec3(0.0, 0.0, 50.0), Vec3(0.0, 0.0, 1.0),
+        Vec3(0.0, 1.0, 0.0), 10.0, 100.0,
+    )
+    volume = OrientedBoxVolume(
+        Vec3(0.0, 0.3, 0.0),
+        Vec3(2.0, 1.0, 2.0),
+        Quaternion.identity(),
+    )
+    track = TrackWorld(
+        surfaces=(road,),
+        boost_pads=(BoostPad("boost-z", volume, 1.0), BoostPad("boost-a", volume, 2.0)),
+        slow_zones=(SlowZone("slow-z", volume, 1.1), SlowZone("slow-a", volume, 1.2)),
+        finish_lines=(FinishLine("finish", _volume(Vec3(0.0, 0.3, 90.0))),),
+    )
+    initial = WorldState(
+        VehicleState(
+            Vec3(0.0, 0.3, 0.0), Vec3(0.0, 0.0, 0.0),
+            Quaternion.identity(), Vec3(0.0, 0.0, 0.0), True,
+        ),
+        TrackState(frozenset()),
+        InteractionState(frozenset(), frozenset()),
+        ScoreState(),
+    )
+    env = _env(track=track, initial_state=initial)
+    env.reset()
+
+    _, _, _, _, info = env.step(np.array([0.0, 0.0], dtype=np.float32))
+
+    assert info["telemetry"]["applied_boost_pad_ids"] == ("boost-a", "boost-z")
+    assert info["telemetry"]["applied_slow_zone_ids"] == ("slow-a", "slow-z")
 
 
 def test_simulation_step_failure_leaves_episode_active_and_progress_unchanged(
