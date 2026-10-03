@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import isclose, isfinite
+from math import isclose, isfinite, sqrt
 from numbers import Real
+from statistics import fmean
+
+from ..episode import RaceRoute
 
 
 def _require_track_id(value: object) -> str:
@@ -216,3 +219,141 @@ class TrackEvaluationSummary:
                     minimum=0.0,
                 ),
             )
+
+
+def _position_tuple(value: object, name: str) -> tuple[float, float, float]:
+    if not isinstance(value, tuple) or len(value) != 3:
+        raise ValueError(f"{name} must be a 3-tuple")
+    return (
+        _require_real(value[0], f"{name}[0]"),
+        _require_real(value[1], f"{name}[1]"),
+        _require_real(value[2], f"{name}[2]"),
+    )
+
+
+def _route_point(value: object) -> tuple[float, float, float]:
+    return (
+        _require_real(getattr(value, "x", None), "route point x"),
+        _require_real(getattr(value, "y", None), "route point y"),
+        _require_real(getattr(value, "z", None), "route point z"),
+    )
+
+
+def _subtract(
+    left: tuple[float, float, float],
+    right: tuple[float, float, float],
+) -> tuple[float, float, float]:
+    return (
+        left[0] - right[0],
+        left[1] - right[1],
+        left[2] - right[2],
+    )
+
+
+def _dot(
+    left: tuple[float, float, float],
+    right: tuple[float, float, float],
+) -> float:
+    return left[0] * right[0] + left[1] * right[1] + left[2] * right[2]
+
+
+def _length(vector: tuple[float, float, float]) -> float:
+    return sqrt(_dot(vector, vector))
+
+
+def _normalized_route_progress(
+    route: RaceRoute,
+    *,
+    initial_position: tuple[float, float, float],
+    vehicle_position: tuple[float, float, float],
+    next_checkpoint_index: int,
+    finished: bool,
+) -> float:
+    if not isinstance(route, RaceRoute):
+        raise ValueError("route must be RaceRoute")
+    initial = _position_tuple(initial_position, "initial_position")
+    vehicle = _position_tuple(vehicle_position, "vehicle_position")
+    index = _require_int(
+        next_checkpoint_index,
+        "next_checkpoint_index",
+        minimum=0,
+    )
+    finished = _require_bool(finished, "finished")
+    if index > len(route.checkpoints):
+        raise ValueError("next_checkpoint_index exceeds checkpoint count")
+    if finished and index != len(route.checkpoints):
+        raise ValueError("finished progress must complete all checkpoints")
+
+    waypoints = (
+        initial,
+        *(_route_point(checkpoint.target_position) for checkpoint in route.checkpoints),
+        _route_point(route.finish.target_position),
+    )
+    segment_vectors = tuple(
+        _subtract(end, start)
+        for start, end in zip(waypoints[:-1], waypoints[1:], strict=True)
+    )
+    segment_lengths = tuple(_length(vector) for vector in segment_vectors)
+    total_length = sum(segment_lengths)
+    if total_length <= 0.0 or not isfinite(total_length):
+        raise ValueError("route reference length must be positive and finite")
+    if finished:
+        return 1.0
+
+    completed_length = sum(segment_lengths[:index])
+    segment_length = segment_lengths[index]
+    if segment_length == 0.0:
+        partial_length = 0.0
+    else:
+        segment_start = waypoints[index]
+        offset = _subtract(vehicle, segment_start)
+        projection = _dot(offset, segment_vectors[index]) / (segment_length * segment_length)
+        fraction = min(1.0, max(0.0, projection))
+        partial_length = fraction * segment_length
+
+    normalized = (completed_length + partial_length) / total_length
+    return min(1.0, max(0.0, normalized))
+
+
+def summarize_track(
+    episodes: tuple[EpisodeMetrics, ...],
+) -> TrackEvaluationSummary:
+    if not isinstance(episodes, tuple) or not episodes:
+        raise ValueError("episodes must be a non-empty tuple")
+    if not all(isinstance(episode, EpisodeMetrics) for episode in episodes):
+        raise ValueError("episodes must contain EpisodeMetrics values")
+
+    track_id = episodes[0].track_id
+    if any(episode.track_id != track_id for episode in episodes[1:]):
+        raise ValueError("all episodes must share the same track_id")
+
+    successes = tuple(episode for episode in episodes if episode.success)
+    return TrackEvaluationSummary(
+        track_id=track_id,
+        episode_count=len(episodes),
+        success_count=len(successes),
+        success_rate=len(successes) / len(episodes),
+        mean_final_normalized_route_progress=fmean(
+            episode.final_normalized_route_progress for episode in episodes
+        ),
+        mean_episode_return=fmean(episode.episode_return for episode in episodes),
+        mean_collision_count=fmean(episode.collision_count for episode in episodes),
+        mean_path_length=fmean(episode.path_length for episode in episodes),
+        mean_speed=fmean(episode.mean_speed for episode in episodes),
+        mean_airborne_steps=fmean(episode.airborne_steps for episode in episodes),
+        mean_boost_applied_steps=fmean(
+            episode.boost_applied_steps for episode in episodes
+        ),
+        mean_slow_zone_applied_steps=fmean(
+            episode.slow_zone_applied_steps for episode in episodes
+        ),
+        mean_completion_time_for_successes=(
+            fmean(
+                episode.completion_time
+                for episode in successes
+                if episode.completion_time is not None
+            )
+            if successes
+            else None
+        ),
+    )
