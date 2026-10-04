@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import PurePosixPath, PureWindowsPath
+import hashlib
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
 
 _SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
@@ -226,3 +227,55 @@ def _provenance_document(provenance: RunProvenance) -> dict[str, object]:
             for item in provenance.tracks
         ],
     }
+
+
+def _fingerprint_file(
+    *,
+    repository_root: Path,
+    source: Path,
+    role: str,
+) -> FileFingerprint:
+    if not isinstance(repository_root, Path):
+        raise ValueError("repository_root must be Path")
+    if not repository_root.exists() or not repository_root.is_dir():
+        raise ValueError("repository_root must be an existing directory")
+    if not isinstance(source, Path):
+        raise ValueError("source must be Path")
+    if not source.exists() or not source.is_file():
+        raise ValueError("source must be an existing file")
+
+    root = repository_root.resolve()
+    resolved_source = source.resolve()
+    try:
+        relative = resolved_source.relative_to(root)
+    except ValueError as error:
+        raise ValueError("source must resolve inside repository_root") from error
+
+    digest = hashlib.sha256(resolved_source.read_bytes()).hexdigest()
+    return FileFingerprint(role, relative.as_posix(), digest)
+
+
+def _fingerprint_canonical_files(
+    *,
+    repository_root: Path,
+    experiment_path: Path,
+    training_runtime_config: Path,
+    track_manifest: Path,
+) -> tuple[FileFingerprint, ...]:
+    return (
+        _fingerprint_file(
+            repository_root=repository_root,
+            source=experiment_path,
+            role="experiment_definition",
+        ),
+        _fingerprint_file(
+            repository_root=repository_root,
+            source=training_runtime_config,
+            role="training_runtime_config",
+        ),
+        _fingerprint_file(
+            repository_root=repository_root,
+            source=track_manifest,
+            role="track_manifest",
+        ),
+    )
