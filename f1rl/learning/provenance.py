@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 import hashlib
+from importlib import metadata
 from pathlib import Path, PurePosixPath, PureWindowsPath
+import platform
 import re
+import subprocess
 
 _SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 _GIT_SHA_RE = re.compile(r"[0-9a-f]{40}\Z")
@@ -278,4 +282,77 @@ def _fingerprint_canonical_files(
             source=track_manifest,
             role="track_manifest",
         ),
+    )
+
+
+def _run_git(repository_root: Path, *args: str) -> str:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repository_root), *args],
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        raise RuntimeError("Git command could not be executed") from error
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip()
+        raise RuntimeError(f"Git command failed: {detail or 'unknown error'}")
+    return result.stdout
+
+
+def _capture_git_provenance(repository_root: Path) -> GitProvenance:
+    if not isinstance(repository_root, Path):
+        raise ValueError("repository_root must be Path")
+    if not repository_root.exists() or not repository_root.is_dir():
+        raise ValueError("repository_root must be an existing directory")
+
+    root = repository_root.resolve()
+    commit_sha = _run_git(root, "rev-parse", "HEAD").strip()
+    status = _run_git(
+        root,
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all",
+    )
+    try:
+        return GitProvenance(commit_sha, bool(status.strip()))
+    except ValueError as error:
+        raise RuntimeError("Git HEAD/status output is invalid") from error
+
+
+def _capture_runtime_provenance(
+    version_lookup: Callable[[str], str] = metadata.version,
+) -> RuntimeProvenance:
+    if not callable(version_lookup):
+        raise ValueError("version_lookup must be callable")
+
+    packages: list[PackageVersion] = []
+    for name in _PACKAGE_NAMES:
+        try:
+            version = version_lookup(name)
+        except metadata.PackageNotFoundError as error:
+            raise RuntimeError(
+                f"required distribution version is unavailable: {name}"
+            ) from error
+        except Exception as error:
+            raise RuntimeError(
+                f"failed to resolve required distribution version: {name}"
+            ) from error
+        try:
+            packages.append(PackageVersion(name, version))
+        except ValueError as error:
+            raise RuntimeError(
+                f"invalid required distribution version: {name}"
+            ) from error
+
+    return RuntimeProvenance(
+        python_version=platform.python_version(),
+        python_implementation=platform.python_implementation(),
+        system=platform.system(),
+        release=platform.release(),
+        machine=platform.machine(),
+        packages=tuple(packages),
     )
