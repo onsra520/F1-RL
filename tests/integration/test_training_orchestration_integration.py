@@ -4,6 +4,7 @@ from pathlib import Path
 import yaml
 
 from f1rl.learning.training import TrainingRunConfig, TrainingRunner
+from tests.learning.training.mocks.mock_provenance import make_provenance
 from tests.learning.training.test_vector_env import _scenario_set
 
 
@@ -36,7 +37,13 @@ def test_real_multi_track_training_orchestration_writes_reproducible_artifacts(
     )
     config = TrainingRunConfig.from_yaml(config_path)
     scenarios = _scenario_set()
-    result = TrainingRunner(config).run_multi(scenarios)
+    provenance = make_provenance(
+        tuple(scenario.track_id for scenario in scenarios.scenarios)
+    )
+    result = TrainingRunner(
+        config,
+        provenance=provenance,
+    ).run_multi(scenarios)
 
     assert result.requested_total_timesteps == 8
     assert result.actual_total_timesteps >= 8
@@ -53,5 +60,12 @@ def test_real_multi_track_training_orchestration_writes_reproducible_artifacts(
     assert state["actual_total_timesteps"] == result.actual_total_timesteps
     assert state["training_tracks"] == [scenario.track_id for scenario in scenarios.scenarios]
     assert state["sampling_seed"] == 123
+    assert state["provenance_file"] == "provenance.json"
+    assert result.provenance_path == result.run_directory / "provenance.json"
+    assert result.provenance_path.is_file()
+    provenance_bytes = result.provenance_path.read_bytes()
+    assert provenance_bytes
+    assert json.loads(provenance_bytes.decode("utf-8"))["schema_version"] == 1
     assert result.run_directory / state["latest_checkpoint"] == checkpoint
     assert result.run_directory / state["final_model"] == result.final_model_path
+    assert result.provenance_path.read_bytes() == provenance_bytes

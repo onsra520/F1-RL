@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Literal
 
 from ..algorithms.ppo import PPOModel
+from ..provenance import RunProvenance, write_run_provenance
 from .config import TrainingRunConfig
 from .env_factory import F1RLEnvFactory, TrainingScenarioSet
 from .vector_env import make_multi_track_vector_env, make_vector_env
@@ -24,6 +25,7 @@ class TrainingRunResult:
     checkpoint_paths: tuple[Path, ...]
     requested_total_timesteps: int
     actual_total_timesteps: int
+    provenance_path: Path | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,6 +34,7 @@ class _RunArtifacts:
     run_directory: Path
     checkpoint_directory: Path
     state_path: Path
+    provenance_path: Path
     final_model_path: Path
     artifact_stem: str
 
@@ -117,6 +120,7 @@ def _initial_state(
     run_id: str,
     mode: TrainingMode,
     training_track_ids: tuple[str, ...],
+    provenance_file: str | None = None,
 ) -> dict[str, object]:
     return {
         "run_id": run_id,
@@ -132,6 +136,7 @@ def _initial_state(
         "vector_env": asdict(config.vector_env),
         "sampling_seed": config.sampling_seed if mode == "multitrack" else None,
         "training_tracks": list(training_track_ids),
+        "provenance_file": provenance_file,
     }
 
 
@@ -141,6 +146,7 @@ def _prepare_run(
     started_at: datetime,
     mode: TrainingMode,
     training_track_ids: tuple[str, ...],
+    provenance_file: str | None = None,
 ) -> _RunArtifacts:
     sampling_seed = config.sampling_seed if mode == "multitrack" else None
     artifact_stem = _artifact_stem(mode, config.ppo.seed, sampling_seed)
@@ -162,6 +168,7 @@ def _prepare_run(
         run_directory=run_directory,
         checkpoint_directory=checkpoint_directory,
         state_path=run_directory / "state.json",
+        provenance_path=run_directory / "provenance.json",
         final_model_path=run_directory / f"{artifact_stem}-final-model.zip",
         artifact_stem=artifact_stem,
     )
@@ -170,6 +177,7 @@ def _prepare_run(
         run_id=run_id,
         mode=mode,
         training_track_ids=training_track_ids,
+        provenance_file=provenance_file,
     )
     try:
         _write_state(artifacts.state_path, initial_state)
@@ -209,10 +217,18 @@ def _now() -> datetime:
 
 
 class TrainingRunner:
-    def __init__(self, config: TrainingRunConfig) -> None:
+    def __init__(
+        self,
+        config: TrainingRunConfig,
+        *,
+        provenance: RunProvenance | None = None,
+    ) -> None:
         if not isinstance(config, TrainingRunConfig):
             raise ValueError("config must be TrainingRunConfig")
+        if provenance is not None and not isinstance(provenance, RunProvenance):
+            raise ValueError("provenance must be RunProvenance or None")
         self._config = config
+        self._provenance = provenance
 
     def run_single(self, factory: F1RLEnvFactory) -> TrainingRunResult:
         if not isinstance(factory, F1RLEnvFactory):
@@ -226,9 +242,20 @@ class TrainingRunner:
     def run_multi(self, scenarios: TrainingScenarioSet) -> TrainingRunResult:
         if not isinstance(scenarios, TrainingScenarioSet):
             raise ValueError("scenarios must be TrainingScenarioSet")
+        training_track_ids = tuple(
+            scenario.track_id for scenario in scenarios.scenarios
+        )
+        if self._provenance is not None:
+            provenance_track_ids = tuple(
+                track.track_id for track in self._provenance.tracks
+            )
+            if provenance_track_ids != training_track_ids:
+                raise ValueError(
+                    "provenance track IDs must exactly match scenario track IDs"
+                )
         return self._run(
             mode="multitrack",
-            training_track_ids=tuple(scenario.track_id for scenario in scenarios.scenarios),
+            training_track_ids=training_track_ids,
             build_env=lambda: make_multi_track_vector_env(
                 scenarios,
                 self._config.vector_env,
@@ -243,11 +270,15 @@ class TrainingRunner:
         training_track_ids: tuple[str, ...],
         build_env: Callable[[], object],
     ) -> TrainingRunResult:
+        provenance_file = (
+            "provenance.json" if self._provenance is not None else None
+        )
         artifacts = _prepare_run(
             self._config,
             started_at=_now(),
             mode=mode,
             training_track_ids=training_track_ids,
+            provenance_file=provenance_file,
         )
         thresholds = _checkpoint_thresholds(
             self._config.total_timesteps,
@@ -261,6 +292,11 @@ class TrainingRunner:
         primary_error: Exception | None = None
 
         try:
+            if self._provenance is not None:
+                write_run_provenance(
+                    artifacts.provenance_path,
+                    self._provenance,
+                )
             env = build_env()
             model = PPOModel.create(env, self._config.ppo)  # type: ignore[arg-type]
 
@@ -303,6 +339,11 @@ class TrainingRunner:
                 checkpoint_paths=tuple(checkpoint_paths),
                 requested_total_timesteps=self._config.total_timesteps,
                 actual_total_timesteps=actual_total_timesteps,
+                provenance_path=(
+                    artifacts.provenance_path
+                    if self._provenance is not None
+                    else None
+                ),
             )
         except Exception as error:
             primary_error = error

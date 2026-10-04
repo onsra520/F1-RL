@@ -24,6 +24,7 @@ from f1rl.learning.training.runner import (
 from tests.learning.training.mocks.mock_factories import make_factory, make_scenario_set
 from tests.learning.training.mocks.mock_io import FailingStateWriter
 from tests.learning.training.mocks.mock_ppo import MockPPOModel
+from tests.learning.training.mocks.mock_provenance import make_provenance
 from tests.learning.training.mocks.mock_vec_env import MockVecEnv
 
 
@@ -128,6 +129,7 @@ def test_prepare_single_track_run_writes_exact_initial_state(tmp_path: Path) -> 
         },
         "sampling_seed": None,
         "training_tracks": [],
+        "provenance_file": None,
     }
 
 
@@ -611,3 +613,152 @@ def test_initial_state_write_failure_retries_failed_snapshot_before_propagating(
     assert state["status"] == "failed"
     assert state["actual_total_timesteps"] == 0
     assert state["final_model"] is None
+
+
+def test_training_runner_accepts_optional_provenance_and_rejects_wrong_type(
+    tmp_path: Path,
+) -> None:
+    config = _config(tmp_path / "runs")
+    assert isinstance(TrainingRunner(config), TrainingRunner)
+    assert isinstance(TrainingRunner(config, provenance=None), TrainingRunner)
+    with pytest.raises(ValueError, match="provenance"):
+        TrainingRunner(config, provenance=object())  # type: ignore[arg-type]
+
+
+def test_training_run_result_defaults_provenance_path_to_none(tmp_path: Path) -> None:
+    result = TrainingRunResult(
+        run_id="run",
+        run_directory=tmp_path,
+        final_model_path=tmp_path / "model.zip",
+        checkpoint_paths=(),
+        requested_total_timesteps=8,
+        actual_total_timesteps=8,
+    )
+    assert result.provenance_path is None
+
+
+def test_run_single_persists_supplied_provenance_before_env_creation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    MockPPOModel.reset()
+    vector = MockVecEnv()
+    observed: list[bool] = []
+    provenance = make_provenance(("authored-track",))
+
+    def build_vector(*args: object) -> MockVecEnv:
+        run_directory = next((tmp_path / "runs").iterdir())
+        provenance_path = run_directory / "provenance.json"
+        observed.append(provenance_path.is_file())
+        return vector
+
+    monkeypatch.setattr(runner_module, "make_vector_env", build_vector)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+
+    result = TrainingRunner(
+        _config(tmp_path / "runs"),
+        provenance=provenance,
+    ).run_single(make_factory())
+
+    assert observed == [True]
+    assert result.provenance_path == result.run_directory / "provenance.json"
+    assert result.provenance_path.is_file()
+    state = json.loads((result.run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["provenance_file"] == "provenance.json"
+    before = result.provenance_path.read_bytes()
+    assert before
+    assert result.provenance_path.read_bytes() == before
+
+
+def test_run_multi_rejects_provenance_track_order_mismatch_before_artifacts(
+    tmp_path: Path,
+) -> None:
+    scenarios = make_scenario_set()
+    actual_ids = tuple(scenario.track_id for scenario in scenarios.scenarios)
+    provenance = make_provenance(tuple(reversed(actual_ids)))
+    root = tmp_path / "runs"
+
+    with pytest.raises(ValueError, match="track IDs"):
+        TrainingRunner(
+            _config(root),
+            provenance=provenance,
+        ).run_multi(scenarios)
+
+    assert not root.exists()
+
+
+def test_run_multi_rejects_missing_or_extra_provenance_tracks_before_artifacts(
+    tmp_path: Path,
+) -> None:
+    scenarios = make_scenario_set()
+    actual_ids = tuple(scenario.track_id for scenario in scenarios.scenarios)
+    for supplied in (actual_ids[:-1], (*actual_ids, "extra")):
+        root = tmp_path / ("runs-" + str(len(supplied)))
+        with pytest.raises(ValueError, match="track IDs"):
+            TrainingRunner(
+                _config(root),
+                provenance=make_provenance(supplied),
+            ).run_multi(scenarios)
+        assert not root.exists()
+
+
+def test_provenance_write_failure_prevents_env_and_marks_state_failed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    error = OSError("provenance write failure")
+    root = tmp_path / "runs"
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+    monkeypatch.setattr(
+        runner_module,
+        "write_run_provenance",
+        lambda *args, **kwargs: (_ for _ in ()).throw(error),
+    )
+    monkeypatch.setattr(
+        runner_module,
+        "make_vector_env",
+        lambda *args: (_ for _ in ()).throw(AssertionError("env must not be created")),
+    )
+
+    with pytest.raises(OSError) as caught:
+        TrainingRunner(
+            _config(root),
+            provenance=make_provenance(("authored-track",)),
+        ).run_single(make_factory())
+
+    assert caught.value is error
+    run_directory = next(root.iterdir())
+    state = json.loads((run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["status"] == "failed"
+    assert state["provenance_file"] == "provenance.json"
+    assert not (run_directory / "provenance.json").exists()
+
+
+def test_training_failure_preserves_written_provenance_bytes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    MockPPOModel.reset()
+    MockPPOModel.learn_error = RuntimeError("learn failure")
+    vector = MockVecEnv()
+    root = tmp_path / "runs"
+    provenance = make_provenance(("authored-track",))
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+    monkeypatch.setattr(runner_module, "make_vector_env", lambda *args: vector)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+
+    with pytest.raises(RuntimeError, match="learn failure"):
+        TrainingRunner(
+            _config(root),
+            provenance=provenance,
+        ).run_single(make_factory())
+
+    run_directory = next(root.iterdir())
+    provenance_path = run_directory / "provenance.json"
+    before = provenance_path.read_bytes()
+    assert before
+    state = json.loads((run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["status"] == "failed"
+    assert state["provenance_file"] == "provenance.json"
+    assert provenance_path.read_bytes() == before
