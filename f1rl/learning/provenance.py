@@ -4,6 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import hashlib
 from importlib import metadata
+import json
 from pathlib import Path, PurePosixPath, PureWindowsPath
 import platform
 import re
@@ -472,3 +473,42 @@ def capture_run_provenance(
         runtime=_capture_runtime_provenance(),
         tracks=tuple(tracks),
     )
+
+
+def write_run_provenance(
+    path: str | Path,
+    provenance: RunProvenance,
+) -> None:
+    destination = _path_argument(path, "path")
+    if not isinstance(provenance, RunProvenance):
+        raise ValueError("provenance must be RunProvenance")
+    parent = destination.parent
+    if not parent.exists() or not parent.is_dir():
+        raise ValueError("provenance destination parent must be an existing directory")
+    if destination.exists():
+        if destination.is_dir():
+            raise ValueError("provenance destination must be a file path")
+        raise FileExistsError(f"provenance destination already exists: {destination}")
+
+    payload = (
+        json.dumps(
+            _provenance_document(provenance),
+            indent=2,
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+        + "\n"
+    ).encode("utf-8")
+
+    created = False
+    try:
+        with destination.open("xb") as handle:
+            created = True
+            handle.write(payload)
+    except Exception:
+        if created:
+            try:
+                destination.unlink()
+            except OSError:
+                pass
+        raise
