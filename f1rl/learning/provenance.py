@@ -9,6 +9,9 @@ import platform
 import re
 import subprocess
 
+from .experiments import ExperimentDefinition
+from ..track_assets import load_track_manifest
+
 _SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 _GIT_SHA_RE = re.compile(r"[0-9a-f]{40}\Z")
 _FILE_ROLES = (
@@ -355,4 +358,117 @@ def _capture_runtime_provenance(
         release=platform.release(),
         machine=platform.machine(),
         packages=tuple(packages),
+    )
+
+
+def _path_argument(value: str | Path, name: str) -> Path:
+    if not isinstance(value, (str, Path)):
+        raise ValueError(f"{name} must be str or Path")
+    if isinstance(value, str) and not value.strip():
+        raise ValueError(f"{name} must not be blank")
+    return Path(value)
+
+
+def _path_inside_repository(
+    *,
+    repository_root: Path,
+    path: Path,
+    name: str,
+    require_file: bool = True,
+) -> Path:
+    if require_file and (not path.exists() or not path.is_file()):
+        raise ValueError(f"{name} must identify an existing file")
+    resolved = path.resolve()
+    try:
+        resolved.relative_to(repository_root)
+    except ValueError as error:
+        raise ValueError(f"{name} must resolve inside repository_root") from error
+    return resolved
+
+
+def capture_run_provenance(
+    *,
+    repository_root: str | Path,
+    experiment_path: str | Path,
+    definition: ExperimentDefinition,
+    selected_track_ids: tuple[str, ...],
+) -> RunProvenance:
+    root_input = _path_argument(repository_root, "repository_root")
+    if not root_input.exists() or not root_input.is_dir():
+        raise ValueError("repository_root must identify an existing directory")
+    root = root_input.resolve()
+
+    experiment_input = _path_argument(experiment_path, "experiment_path")
+    experiment = _path_inside_repository(
+        repository_root=root,
+        path=experiment_input,
+        name="experiment_path",
+    )
+
+    if not isinstance(definition, ExperimentDefinition):
+        raise ValueError("definition must be ExperimentDefinition")
+    if (
+        not isinstance(selected_track_ids, tuple)
+        or not selected_track_ids
+        or not all(
+            isinstance(track_id, str) and track_id.strip()
+            for track_id in selected_track_ids
+        )
+        or len(selected_track_ids) != len(set(selected_track_ids))
+    ):
+        raise ValueError(
+            "selected_track_ids must be a non-empty tuple of unique non-blank strings"
+        )
+
+    reloaded = ExperimentDefinition.from_yaml(experiment)
+    if reloaded != definition:
+        raise ValueError(
+            "supplied definition does not match the experiment_path contents"
+        )
+
+    runtime_config = _path_inside_repository(
+        repository_root=root,
+        path=definition.training.runtime_config,
+        name="training runtime config",
+    )
+    manifest_path = _path_inside_repository(
+        repository_root=root,
+        path=definition.tracks.manifest,
+        name="track manifest",
+    )
+    files = _fingerprint_canonical_files(
+        repository_root=root,
+        experiment_path=experiment,
+        training_runtime_config=runtime_config,
+        track_manifest=manifest_path,
+    )
+
+    manifest = load_track_manifest(manifest_path)
+    by_id = {entry.track_id: entry for entry in manifest.tracks}
+    tracks: list[TrackProvenance] = []
+    for track_id in selected_track_ids:
+        try:
+            entry = by_id[track_id]
+        except KeyError as error:
+            raise ValueError(
+                f"selected track ID is absent from manifest: {track_id}"
+            ) from error
+        tracks.append(
+            TrackProvenance(
+                track_id=entry.track_id,
+                world_sha256=entry.world_sha256,
+                content_sha256=entry.content_sha256,
+            )
+        )
+
+    return RunProvenance(
+        schema_version=1,
+        experiment_id=definition.metadata.id,
+        protocol_version=definition.metadata.protocol_version,
+        experiment_status=definition.metadata.status,
+        training_protocol_status=definition.training.protocol_status,
+        git=_capture_git_provenance(root),
+        files=files,
+        runtime=_capture_runtime_provenance(),
+        tracks=tuple(tracks),
     )
