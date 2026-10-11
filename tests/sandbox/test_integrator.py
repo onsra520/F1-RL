@@ -57,15 +57,15 @@ def test_integrator_requires_positive_dt() -> None:
         integrate(initial, derivatives, parameters(), None, -0.1)
 
 
-def test_ground_constraint_preserves_tangential_displacement() -> None:
+def test_ground_constraint_removes_lateral_slip() -> None:
     contact = SurfaceContact(Vec3(0.0, 0.0, 0.0), Vec3(0.0, 1.0, 0.0))
     initial = state(Vec3(0.0, 0.3, 0.0), Vec3(2.0, -3.0, 4.0), True)
     derivatives = MotionDerivatives(Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 0.0))
 
     result = integrate(initial, derivatives, parameters(), contact, 1.0)
 
-    assert result.velocity == Vec3(2.0, 0.0, 4.0)
-    assert result.position == Vec3(2.0, 0.3, 4.0)
+    assert result.velocity == Vec3(0.0, 0.0, 4.0)
+    assert result.position == Vec3(0.0, 0.3, 4.0)
     assert result.grounded is True
 
 
@@ -81,21 +81,21 @@ def test_contact_loss_preserves_ramp_launch_velocity() -> None:
     assert result.grounded is False
 
 
-def test_landing_removes_only_inward_normal_velocity() -> None:
+def test_landing_removes_normal_and_lateral_ground_velocity() -> None:
     contact = SurfaceContact(Vec3(0.0, 0.0, 0.0), Vec3(0.0, 1.0, 0.0))
     initial = state(Vec3(0.0, 1.0, 0.0), Vec3(2.0, -5.0, 4.0), False)
     derivatives = MotionDerivatives(Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 0.0))
 
     result = integrate(initial, derivatives, parameters(), contact, 0.1)
 
-    assert result.velocity == Vec3(2.0, 0.0, 4.0)
-    assert result.position.x == pytest.approx(0.2)
+    assert result.velocity == Vec3(0.0, 0.0, 4.0)
+    assert result.position.x == pytest.approx(0.0)
     assert result.position.y == pytest.approx(0.3)
     assert result.position.z == pytest.approx(0.4)
     assert result.grounded is True
 
 
-def test_ground_speed_is_capped_without_changing_direction() -> None:
+def test_ground_speed_is_capped_along_vehicle_heading() -> None:
     contact = SurfaceContact(Vec3(0.0, 0.0, 0.0), Vec3(0.0, 1.0, 0.0))
     initial = state(Vec3(0.0, 0.3, 0.0), Vec3(30.0, 0.0, 40.0), True)
     derivatives = MotionDerivatives(Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 0.0))
@@ -103,7 +103,7 @@ def test_ground_speed_is_capped_without_changing_direction() -> None:
     result = integrate(initial, derivatives, parameters(max_ground_speed=25.0), contact, 0.1)
 
     assert result.speed == pytest.approx(25.0)
-    assert result.velocity.x / result.velocity.z == pytest.approx(30.0 / 40.0)
+    assert result.velocity == Vec3(0.0, 0.0, 25.0)
 
 
 def test_ground_orientation_aligns_up_axis_to_surface_normal() -> None:

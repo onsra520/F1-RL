@@ -41,21 +41,17 @@ def _surface_aligned_orientation(state: VehicleState, normal: Vec3) -> Quaternio
 
 def _constrain_ground_velocity(
     velocity: Vec3,
-    forward: Vec3,
+    previous_forward: Vec3,
+    next_forward: Vec3,
     normal: Vec3,
     max_speed: float,
 ) -> Vec3:
+    # Ground contact enforces a bicycle-model no-slip constraint. Retain only
+    # forward motion along the prior heading, then align it to the steered
+    # heading without introducing artificial speed loss on turns.
     tangent = velocity.reject_from(normal)
-    longitudinal = tangent.dot(forward)
-    if longitudinal < 0.0:
-        tangent = tangent - forward * longitudinal
-
-    speed = tangent.magnitude
-    if speed > max_speed:
-        if max_speed == 0.0:
-            return Vec3(0.0, 0.0, 0.0)
-        tangent = tangent * (max_speed / speed)
-    return tangent
+    longitudinal = min(max(tangent.dot(previous_forward), 0.0), max_speed)
+    return next_forward * longitudinal
 
 
 def integrate(
@@ -76,16 +72,18 @@ def integrate(
         return VehicleState(position, velocity, orientation, derivatives.angular_velocity, False)
 
     aligned = _surface_aligned_orientation(state, contact.normal)
-    forward = aligned.rotate(LOCAL_FORWARD)
+    previous_forward = aligned.rotate(LOCAL_FORWARD)
+    orientation = _advance_orientation(aligned, derivatives.angular_velocity, dt)
+    next_forward = orientation.rotate(LOCAL_FORWARD).reject_from(contact.normal).normalized()
     velocity = _constrain_ground_velocity(
         velocity,
-        forward,
+        previous_forward,
+        next_forward,
         contact.normal,
         parameters.max_ground_speed,
     )
     position = state.position + velocity * dt
     signed_distance = (position - contact.point).dot(contact.normal)
     position = position + contact.normal * (parameters.ride_height - signed_distance)
-    orientation = _advance_orientation(aligned, derivatives.angular_velocity, dt)
 
     return VehicleState(position, velocity, orientation, derivatives.angular_velocity, True)
