@@ -11,7 +11,7 @@
       "track_id": "slalom-v1",
       "path": "training/slalom-v1.json",
       "world_sha256": "6071829f2eb790ada04c5e59b22efb205e3a20d59fbe670e68fb78ed3eb304e0",
-      "content_sha256": "c0d6984573375303befbffb054cb1c977e934c130ba354fd58c34f67c1b8c627"
+      "content_sha256": "e2db2953259ebb465246d7d9bfaa7cedbfc2e8b82c389f4eef655a5f04cfd959"
     },
     {
       "track_id": "right-turn-v1",

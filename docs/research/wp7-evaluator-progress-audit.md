@@ -23,6 +23,6 @@ A preliminary TRAIN-only geometric sampling found:
 - Straight: 108m authored polyline, no obstacles.
 - Ramp: ~149.58m authored polyline, no obstacles.
 - Right turn: 130m authored polyline with one abrupt **90-degree** waypoint junction.
-- Slalom: ~127.96m authored polyline, **~1.15m minimum planar clearance from a waypoint segment to an obstacle box**, and **~75-degree** and **~62-degree** junctions near the finish.
+- Slalom (initial pre-repair baseline at 2026-10-11): ~127.96m authored polyline, **~1.15m minimum planar clearance**, and **~75-degree** and **~62-degree** junctions near the finish. **Superseded** by the later TRAIN-only route repair in `wp7-train-dynamic-route-audit-2026-10-11.md` (new sampled clearance ~1.94m, maximum corner ~43.4°; world geometry unchanged).
 
 These are **risk observations**, not proof of physical infeasibility or successful pilot performance. The world SHA256s remain unchanged. A durable static audit validator and physical driveability review remain necessary before training.

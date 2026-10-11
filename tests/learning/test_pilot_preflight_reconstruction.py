@@ -47,7 +47,7 @@ def test_preflight_warns_on_corners_and_slalom_clearance() -> None:
     by_track={item["track_id"]:item for item in report["route_audit"]}
     assert set(by_track)==set(TRACKS)
     assert by_track["right-turn-v1"]["maximum_heading_change_degrees"]==pytest.approx(90)
-    assert by_track["slalom-v1"]["minimum_obstacle_clearance_meters"] < 1.3
+    assert 1.8 < by_track["slalom-v1"]["minimum_obstacle_clearance_meters"] < 2.0
     assert len(report["review_blockers"])>=2
     assert any("right-turn-v1" in issue for issue in report["review_blockers"])
     assert any("slalom-v1" in issue for issue in report["review_blockers"])

@@ -24,7 +24,7 @@ The command prints a deterministic JSON object. An exit code of **2** denotes ou
 ## Geometric hazards to review (static, approximate)
 
 - Right-turn: abrupt 90-degree endpoint junction; smooth traversability under the bicycle steering model has not been demonstrated.
-- Slalom: tight final route junctions (~75 and ~62 degrees) and ~1.15m smallest sampled *centerline-to-obstacle-box* clearance. This is **not** a full-vehicle swept collision clearance.
+- Slalom (historical pre-repair baseline): tight final route junctions (~75 and ~62 degrees) and ~1.15m sampled *centerline-to-obstacle-box* clearance. **Current reconstructed TRAIN navigation** has maximum waypoint heading change ~43.4° and sampled point clearance ~1.94m (`wp7-train-dynamic-route-audit-2026-10-11.md`). This remains **not** a certified full-vehicle swept collision clearance.
 - Obstacles here are axis-aligned; preflight rejects rotated obstacle boxes rather than reporting falsely precise clearance.
 - Ramp and straight have no authored obstacle boxes. Static road sampling does not establish dynamic lap completion.
 - `lateral_limit_meters=6` and `max_consecutive_steps=10` are candidate off-track choices, **not** approved scientific constants. Corner-cutting, high-water shortcuts and ramp launch behavior require dynamic TRAIN-only tests before actual pilot.
