@@ -9,7 +9,7 @@ from f1rl.sandbox.geometry.vector import Vec3
 from f1rl.sandbox.track.model import TrackWorld
 from f1rl.sandbox.track.volume import OrientedBoxVolume
 
-from .model import SpawnPose, TrackAsset
+from .model import AuthoredNavigation, SpawnPose, TrackAsset
 
 
 def _number(value: float) -> float:
@@ -117,6 +117,7 @@ def _build_track_asset(
     track_id: str,
     spawn: SpawnPose,
     world: TrackWorld,
+    navigation: AuthoredNavigation | None = None,
 ) -> TrackAsset:
     if not isinstance(spawn, SpawnPose):
         raise ValueError("spawn must be SpawnPose")
@@ -127,18 +128,18 @@ def _build_track_asset(
     world_sha256 = _sha256(
         {"hash_schema": "f1rl-track-world-v1", "world": canonical_world}
     )
-    content_sha256 = _sha256(
-        {
-            "hash_schema": "f1rl-track-content-v1",
-            "spawn": _spawn_payload(spawn),
-            "world": canonical_world,
+    content_payload: dict[str, object] = {
+        "hash_schema": "f1rl-track-content-v2" if schema_version == 2 else "f1rl-track-content-v1",
+        "spawn": _spawn_payload(spawn),
+        "world": canonical_world,
+    }
+    if schema_version == 2:
+        if not isinstance(navigation, AuthoredNavigation):
+            raise ValueError("schema version 2 requires navigation")
+        content_payload["navigation"] = {
+            "points": [_vec3(point) for point in navigation.points],
+            "surface_ids": list(navigation.surface_ids),
+            "checkpoint_point_indices": list(navigation.checkpoint_point_indices),
         }
-    )
-    return TrackAsset(
-        schema_version,
-        track_id,
-        spawn,
-        world,
-        world_sha256,
-        content_sha256,
-    )
+    content_sha256 = _sha256(content_payload)
+    return TrackAsset(schema_version, track_id, spawn, world, world_sha256, content_sha256, navigation)

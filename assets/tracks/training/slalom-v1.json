@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "track_id": "slalom-v1",
   "spawn": {"position": [0, 0, 4], "orientation": [1, 0, 0, 0]},
   "surfaces": [
@@ -23,5 +23,22 @@
   "finish_lines": [
     {"id": "finish", "volume": {"center": [0, 0, 124], "half_extents": [7, 2, 1], "orientation": [1, 0, 0, 0]}}
   ],
-  "score_pickups": []
+  "score_pickups": [],
+  "navigation": {
+    "points": [
+      [0, 0, 4],
+      [-3, 0, 18],
+      [-3, 0, 30],
+      [-3, 0, 43],
+      [3, 0, 54],
+      [3, 0, 70],
+      [-3, 0, 80],
+      [-3, 0, 92],
+      [3, 0, 105],
+      [-3, 0, 110],
+      [0, 0, 124]
+    ],
+    "surface_ids": ["road-main", "road-main", "road-main", "road-main", "road-main", "road-main", "road-main", "road-main", "road-main", "road-main"],
+    "checkpoint_point_indices": [2, 5, 9]
+  }
 }

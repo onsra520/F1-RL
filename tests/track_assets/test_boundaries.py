@@ -6,6 +6,7 @@ import f1rl.track_assets as track_assets
 
 PRODUCTION = Path("f1rl")
 EXPECTED_PUBLIC_API = {
+    "AuthoredNavigation",
     "SpawnPose",
     "TrackAsset",
     "TrackManifest",

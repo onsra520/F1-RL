@@ -109,13 +109,13 @@ def test_canonical_assets_pin_expected_track_mechanics_and_unchanged_hashes():
         "685f273f62bdc35399d73be5db922198022ad2b549623924dbeb8171d4a4088b"
     )
     assert entries["straight-sprint-v1"].content_sha256 == (
-        "84adafbebb491af7bfbdaa9ef91e0c741023af2c5910c375cb3ce8d5f4e62070"
+        "29aecc1482be48e0d4279b8067b47d5bd44ae0b376edc2de48354c01bf1b8bed"
     )
     assert entries["ramp-v1"].world_sha256 == (
         "775f795aa2763f64916e68e6a64fc763021e875c384050a974c747b6b4907978"
     )
     assert entries["ramp-v1"].content_sha256 == (
-        "0fbf4b4633926944759c1972ecc15c6011785dc4d37d46f9d62c4c7d3a12c9b4"
+        "67a8280888e8010a2727fd113436bb237952693b8e29cebc2c3c1b8944eb7c70"
     )
 
 

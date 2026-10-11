@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "track_id": "right-turn-v1",
   "spawn": {"position": [0, 0, 4], "orientation": [1, 0, 0, 0]},
   "surfaces": [
@@ -18,5 +18,17 @@
   "finish_lines": [
     {"id": "finish", "volume": {"center": [64, 0, 70], "half_extents": [1, 2, 6], "orientation": [1, 0, 0, 0]}}
   ],
-  "score_pickups": []
+  "score_pickups": [],
+  "navigation": {
+    "points": [
+      [0, 0, 4],
+      [0, 0, 35],
+      [0, 0, 64],
+      [0, 0, 70],
+      [20, 0, 70],
+      [64, 0, 70]
+    ],
+    "surface_ids": ["road-entry", "road-entry", "road-entry", "road-exit", "road-exit"],
+    "checkpoint_point_indices": [1, 4]
+  }
 }

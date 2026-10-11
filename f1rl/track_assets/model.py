@@ -15,9 +15,10 @@ def _validate_sha256(value: object, name: str) -> None:
         raise ValueError(f"{name} must be 64 lowercase hexadecimal characters")
 
 
-def _validate_schema_version(value: object) -> None:
-    if isinstance(value, bool) or not isinstance(value, int) or value != 1:
-        raise ValueError("schema_version must be integer 1")
+def _validate_schema_version(value: object, *, allow_navigation: bool = False) -> None:
+    valid = (1, 2) if allow_navigation else (1,)
+    if isinstance(value, bool) or not isinstance(value, int) or value not in valid:
+        raise ValueError("schema_version must be an allowed integer")
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,6 +34,26 @@ class SpawnPose:
 
 
 @dataclass(frozen=True, slots=True)
+class AuthoredNavigation:
+    points: tuple[Vec3, ...]
+    surface_ids: tuple[str, ...]
+    checkpoint_point_indices: tuple[int, ...]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.points, tuple) or len(self.points) < 2 or not all(isinstance(p, Vec3) for p in self.points):
+            raise ValueError("navigation.points must be at least two Vec3 values")
+        if any((b-a).magnitude <= 1e-8 for a,b in zip(self.points,self.points[1:])):
+            raise ValueError("navigation has adjacent duplicate points")
+        if not isinstance(self.surface_ids, tuple) or len(self.surface_ids) != len(self.points)-1 or not all(isinstance(s,str) and s.strip() for s in self.surface_ids):
+            raise ValueError("navigation.surface_ids must contain exactly one surface id per segment")
+        indices=self.checkpoint_point_indices
+        if not isinstance(indices,tuple) or any(isinstance(i,bool) or not isinstance(i,int) for i in indices):
+            raise ValueError("navigation.checkpoint_point_indices must be integers")
+        if any(i<=0 or i>=len(self.points)-1 for i in indices) or tuple(sorted(set(indices))) != indices:
+            raise ValueError("navigation.checkpoint_point_indices must be strictly increasing interior indices")
+
+
+@dataclass(frozen=True, slots=True)
 class TrackAsset:
     schema_version: int
     track_id: str
@@ -40,9 +61,14 @@ class TrackAsset:
     world: TrackWorld
     world_sha256: str
     content_sha256: str
+    navigation: AuthoredNavigation | None = None
 
     def __post_init__(self) -> None:
-        _validate_schema_version(self.schema_version)
+        _validate_schema_version(self.schema_version, allow_navigation=True)
+        if self.schema_version == 1 and self.navigation is not None:
+            raise ValueError("schema version 1 cannot have navigation")
+        if self.schema_version == 2 and not isinstance(self.navigation, AuthoredNavigation):
+            raise ValueError("schema version 2 requires authored navigation")
         if not isinstance(self.track_id, str) or not self.track_id.strip():
             raise ValueError("track_id must be a non-empty string")
         if not isinstance(self.spawn, SpawnPose):

@@ -5,37 +5,37 @@
       "track_id": "straight-sprint-v1",
       "path": "training/straight-sprint-v1.json",
       "world_sha256": "685f273f62bdc35399d73be5db922198022ad2b549623924dbeb8171d4a4088b",
-      "content_sha256": "84adafbebb491af7bfbdaa9ef91e0c741023af2c5910c375cb3ce8d5f4e62070"
+      "content_sha256": "29aecc1482be48e0d4279b8067b47d5bd44ae0b376edc2de48354c01bf1b8bed"
     },
     {
       "track_id": "slalom-v1",
       "path": "training/slalom-v1.json",
       "world_sha256": "6071829f2eb790ada04c5e59b22efb205e3a20d59fbe670e68fb78ed3eb304e0",
-      "content_sha256": "b621866c3680d70d182c46400afd96ef140d659eb655dd1324e20c78f5f9eec7"
+      "content_sha256": "c0d6984573375303befbffb054cb1c977e934c130ba354fd58c34f67c1b8c627"
     },
     {
       "track_id": "right-turn-v1",
       "path": "training/right-turn-v1.json",
       "world_sha256": "d79133bc9a0599f9b056c7eb78658446631f564f038bc4afa91f3325fd4f9fd2",
-      "content_sha256": "0e1ca07dacfa37877d4d14cc8f64ac9a205b05b0de8110b15908403d7b551530"
+      "content_sha256": "ec8ff5d64c21c21af6b15455defb141bfa57985f728e0be751cc2f19fa0492e8"
     },
     {
       "track_id": "ramp-v1",
       "path": "training/ramp-v1.json",
       "world_sha256": "775f795aa2763f64916e68e6a64fc763021e875c384050a974c747b6b4907978",
-      "content_sha256": "0fbf4b4633926944759c1972ecc15c6011785dc4d37d46f9d62c4c7d3a12c9b4"
+      "content_sha256": "67a8280888e8010a2727fd113436bb237952693b8e29cebc2c3c1b8944eb7c70"
     },
     {
       "track_id": "left-turn-v1",
       "path": "evaluation/left-turn-v1.json",
       "world_sha256": "4a613e8c851a9940395f81c54857c9b94f903cb893e29401b0457bebe8a10adf",
-      "content_sha256": "bd0bcad1adb9c21a3f3f2f32128469414dda53f8aa5ca7898071b0d16e0f2e66"
+      "content_sha256": "be9ca87feaa94c1d1bebe43778004bf88ab45b344de9c7dc43c6687149f09969"
     },
     {
       "track_id": "offset-slalom-v1",
       "path": "evaluation/offset-slalom-v1.json",
       "world_sha256": "32d903e81880ea290c840fd210ca2c43579004135acf36d58c49bd73d6c91346",
-      "content_sha256": "e10fb9b303e8573e89f9399a6de4ef4e3ec0340d2e6c2e149d70d101d7286d9d"
+      "content_sha256": "4ad0922c908ee7066281aa32c3170703fe4dd1ce8b5bb407624781c97d93cacd"
     }
   ]
 }

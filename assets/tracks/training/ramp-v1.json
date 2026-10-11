@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "track_id": "ramp-v1",
   "spawn": {"position": [0, 0, 4], "orientation": [1, 0, 0, 0]},
   "surfaces": [
@@ -17,5 +17,18 @@
   "finish_lines": [
     {"id": "finish", "volume": {"center": [0, 8.350386057603925, 153], "half_extents": [6, 2, 1], "orientation": [1, 0, 0, 0]}}
   ],
-  "score_pickups": []
+  "score_pickups": [],
+  "navigation": {
+    "points": [
+      [0, 0, 4],
+      [0, 0, 40],
+      [0, 0, 50],
+      [0, 3.479327524001636, 74.75670171853926],
+      [0, 8.350386057603925, 109.41608412449422],
+      [0, 8.350386057603925, 130],
+      [0, 8.350386057603925, 153]
+    ],
+    "surface_ids": ["road-approach", "road-approach", "road-incline", "road-incline", "road-upper", "road-upper"],
+    "checkpoint_point_indices": [3, 5]
+  }
 }

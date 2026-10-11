@@ -106,8 +106,8 @@ def test_duplicate_keys_are_rejected_at_root_and_nested_levels(tmp_path):
         load_track_asset(nested)
 
 
-@pytest.mark.parametrize("schema", [True, 0, 2, "1"])
-def test_schema_version_is_strict_integer_one(tmp_path, schema):
+@pytest.mark.parametrize("schema", [True, 0, 3, "1"])
+def test_schema_version_is_restricted_to_v1_v2(tmp_path, schema):
     data = _asset_dict()
     data["schema_version"] = schema
     with pytest.raises(ValueError, match="schema_version"):

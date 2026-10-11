@@ -18,7 +18,7 @@ from f1rl.sandbox.track.patch import PlanarSurfacePatch
 from f1rl.sandbox.track.volume import OrientedBoxVolume
 
 from .canonical import _build_track_asset
-from .model import SpawnPose, TrackAsset
+from .model import AuthoredNavigation, SpawnPose, TrackAsset
 
 _ROOT_KEYS = {
     "schema_version",
@@ -209,14 +209,47 @@ def _score_pickup(data: dict[str, Any], name: str) -> ScorePickup:
     )
 
 
+
+def _load_navigation(value: Any, spawn: SpawnPose, world: TrackWorld) -> AuthoredNavigation:
+    data = _mapping(value, "navigation")
+    _exact_keys(data, {"points", "surface_ids", "checkpoint_point_indices"}, "navigation")
+    nav = AuthoredNavigation(
+        tuple(_vec3(point, f"navigation.points[{i}]") for i, point in enumerate(_array(data["points"], "navigation.points"))),
+        tuple(_text(surface_id, f"navigation.surface_ids[{i}]") for i, surface_id in enumerate(_array(data["surface_ids"], "navigation.surface_ids"))),
+        tuple(_strict_int(index, f"navigation.checkpoint_point_indices[{i}]") for i, index in enumerate(_array(data["checkpoint_point_indices"], "navigation.checkpoint_point_indices"))),
+    )
+    if (nav.points[0] - spawn.position).magnitude > 1e-6:
+        raise ValueError("navigation starting point must match spawn position")
+    if len(world.finish_lines) != 1 or (nav.points[-1] - world.finish_lines[0].volume.center).magnitude > 1e-6:
+        raise ValueError("navigation ending point must match finish center")
+    checkpoints = sorted(world.checkpoints, key=lambda item: item.order)
+    if len(nav.checkpoint_point_indices) != len(checkpoints):
+        raise ValueError("navigation must map every ordered checkpoint")
+    for index, checkpoint in zip(nav.checkpoint_point_indices, checkpoints, strict=True):
+        if (nav.points[index] - checkpoint.volume.center).magnitude > 1e-6:
+            raise ValueError("navigation checkpoint point must match ordered checkpoint center")
+
+    surfaces = {surface.id: surface for surface in world.surfaces}
+    for segment_index, surface_id in enumerate(nav.surface_ids):
+        if surface_id not in surfaces:
+            raise ValueError("navigation contains unknown surface id")
+        surface = surfaces[surface_id]
+        first, second = nav.points[segment_index:segment_index+2]
+        # Geometry validity: sample the entire straight segment within the authored
+        # planar patch, including the segment endpoints and interior samples.
+        for fraction in (0.0, 0.25, 0.5, 0.75, 1.0):
+            point = first*(1.0-fraction) + second*fraction
+            if surface.sample(point, 1e-4) is None:
+                raise ValueError("navigation segment is not grounded on its authored surface")
+    return nav
+
 def load_track_asset(path: str | Path) -> TrackAsset:
     source = Path(path)
     root = _mapping(_read_strict_json(source), "track")
-    _exact_keys(root, _ROOT_KEYS, "track")
-
     schema_version = _strict_int(root["schema_version"], "schema_version")
-    if schema_version != 1:
-        raise ValueError("schema_version must be integer 1")
+    if schema_version not in (1, 2):
+        raise ValueError("schema_version must be integer 1 or 2")
+    _exact_keys(root, _ROOT_KEYS | ({"navigation"} if schema_version == 2 else set()), "track")
     track_id = _text(root["track_id"], "track_id")
 
     spawn_data = _item(root["spawn"], {"position", "orientation"}, "spawn")
@@ -234,9 +267,15 @@ def load_track_asset(path: str | Path) -> TrackAsset:
         finish_lines=_build_many(root["finish_lines"], "finish_lines", _finish_line),
         score_pickups=_build_many(root["score_pickups"], "score_pickups", _score_pickup),
     )
+    navigation = (
+        _load_navigation(root["navigation"], spawn, world)
+        if schema_version == 2
+        else None
+    )
     return _build_track_asset(
         schema_version=schema_version,
         track_id=track_id,
         spawn=spawn,
         world=world,
+        navigation=navigation,
     )
