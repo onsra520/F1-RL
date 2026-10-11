@@ -37,6 +37,25 @@ class TargetProgressReward:
 
 
 @dataclass(frozen=True, slots=True)
+class RouteProgressReward:
+    """Positive credit only for genuinely new checkpoint-gated arc progress."""
+    weight_per_meter: float
+
+    def __post_init__(self) -> None:
+        _validate_non_negative(self.weight_per_meter, "weight_per_meter")
+
+    @property
+    def name(self) -> str:
+        return "route_progress"
+
+    def evaluate(self, transition: RewardTransition) -> RewardContribution:
+        delta = transition.route_progress_delta_meters
+        if delta is None:
+            raise ValueError("route_progress reward requires authored route delta evidence")
+        return RewardContribution(self.name, self.weight_per_meter * delta)
+
+
+@dataclass(frozen=True, slots=True)
 class CollisionPenalty:
     penalty: float
 

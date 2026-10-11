@@ -26,6 +26,7 @@ class RewardTransition:
     target_position: Vec3 | None
     events: tuple[WorldEvent, ...]
     dt: float
+    route_progress_delta_meters: float | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.previous_vehicle, VehicleState) or not isinstance(self.next_vehicle, VehicleState):
@@ -36,6 +37,10 @@ class RewardTransition:
             raise ValueError("events must be a tuple of current WorldEvent variants")
         if _finite_number(self.dt, "dt") <= 0.0:
             raise ValueError("dt must be strictly positive")
+        if self.route_progress_delta_meters is not None and _finite_number(
+            self.route_progress_delta_meters, "route_progress_delta_meters"
+        ) < 0.0:
+            raise ValueError("route_progress_delta_meters must be non-negative")
 
 
 @dataclass(frozen=True, slots=True)

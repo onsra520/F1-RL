@@ -24,7 +24,7 @@ from .episode import (
 )
 from .observation import NavigationTarget, ObservationEncoder
 from .route_navigation import AuthoredRoute
-from .rewards import RewardComposer, RewardResult, RewardTransition
+from .rewards import RewardComposer, RewardResult, RewardTransition, RouteProgressReward
 
 
 def _vec3_tuple(value: Vec3) -> tuple[float, float, float]:
@@ -119,6 +119,10 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             if not set(navigation.surface_ids).issubset({surface.id for surface in track.surfaces}):
                 raise ValueError("navigation references unknown track surface")
             self._authored_route = AuthoredRoute(navigation)
+        if self._authored_route is None and any(isinstance(term, RouteProgressReward) for term in reward_composer.terms):
+            raise ValueError("route_progress reward requires authored navigation")
+        self._max_route_distance = min((surface.width for surface in track.surfaces), default=0.0) / 2.0
+        self._route_highwater = 0.0
         self._simulation = Simulation(track, initial_state, vehicle_parameters, simulation_config)
         self._progress: RaceProgressState | None = None
         self._needs_reset = True
@@ -166,6 +170,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             raise
 
         self._progress = progress
+        self._route_highwater = 0.0
         self._needs_reset = False
         return observation, self._reset_info()
 
@@ -230,6 +235,24 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
 
         snapshot_after = self._simulation.step(control)
         try:
+            progress_result = advance_race_progress(
+                self._route,
+                progress_before,
+                snapshot_after.events,
+            )
+            next_highwater = self._route_highwater
+            route_delta = None
+            if self._authored_route is not None:
+                projection = self._authored_route.project(
+                    snapshot_after.world.vehicle.position,
+                    next_checkpoint_index=progress_result.state.next_checkpoint_index,
+                )
+                next_highwater = self._authored_route.advance_highwater(
+                    self._route_highwater,
+                    projection,
+                    max_path_distance=self._max_route_distance,
+                )
+                route_delta = next_highwater - self._route_highwater
             reward_result = self._reward_composer.evaluate(
                 RewardTransition(
                     previous_vehicle=previous_vehicle,
@@ -237,12 +260,8 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                     target_position=target_before,
                     events=snapshot_after.events,
                     dt=self._simulation_config.fixed_dt,
+                    route_progress_delta_meters=route_delta,
                 )
-            )
-            progress_result = advance_race_progress(
-                self._route,
-                progress_before,
-                snapshot_after.events,
             )
             status = episode_status(
                 progress_result.state,
@@ -259,11 +278,14 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 reward_result,
                 query_before,
             )
+            if self._authored_route is not None:
+                info["route_highwater_meters"] = next_highwater
         except Exception:
             self._needs_reset = True
             raise
 
         self._progress = progress_result.state
+        self._route_highwater = next_highwater
         self._needs_reset = status.terminated or status.truncated
         return (
             observation,
