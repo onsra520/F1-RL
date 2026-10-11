@@ -9,6 +9,7 @@ from ...runtime.simulation import SimulationConfig
 from ...sandbox.track.model import TrackWorld
 from ...sandbox.vehicle import VehicleParameters
 from ...sandbox.world import WorldState
+from ...track_assets.model import AuthoredNavigation
 from ..episode import EpisodeConfig
 from ..gym_environment import F1RLEnv
 from ..observation import ObservationEncoder
@@ -24,6 +25,7 @@ class F1RLEnvFactory:
     observation_encoder: ObservationEncoder
     reward_composer: RewardComposer
     episode_config: EpisodeConfig
+    navigation: AuthoredNavigation | None = None
 
     def __post_init__(self) -> None:
         values = (
@@ -38,6 +40,8 @@ class F1RLEnvFactory:
         for value, expected_type, name in values:
             if not isinstance(value, expected_type):
                 raise ValueError(f"{name} must be {expected_type.__name__}")
+        if self.navigation is not None and not isinstance(self.navigation, AuthoredNavigation):
+            raise ValueError("navigation must be AuthoredNavigation or None")
 
     def create(self) -> F1RLEnv:
         return F1RLEnv(
@@ -48,6 +52,7 @@ class F1RLEnvFactory:
             observation_encoder=self.observation_encoder,
             reward_composer=self.reward_composer,
             episode_config=self.episode_config,
+            navigation=self.navigation,
         )
 
 

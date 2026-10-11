@@ -11,6 +11,7 @@ from ..sandbox.interactions.events import ObstacleHit
 from ..sandbox.track.model import TrackWorld
 from ..sandbox.track.query import TrackQuery
 from ..sandbox.vehicle import VehicleParameters, VehicleState
+from ..track_assets.model import AuthoredNavigation
 from ..sandbox.world import WorldState
 from .action import PolicyAction, map_policy_action
 from .episode import (
@@ -22,6 +23,7 @@ from .episode import (
     episode_status,
 )
 from .observation import NavigationTarget, ObservationEncoder
+from .route_navigation import AuthoredRoute
 from .rewards import RewardComposer, RewardResult, RewardTransition
 
 
@@ -77,6 +79,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         observation_encoder: ObservationEncoder,
         reward_composer: RewardComposer,
         episode_config: EpisodeConfig,
+        navigation: AuthoredNavigation | None = None,
     ) -> None:
         super().__init__()
         values = (
@@ -98,6 +101,24 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         self._reward_composer = reward_composer
         self._episode_config = episode_config
         self._route = RaceRoute.from_track(track)
+        self._authored_route: AuthoredRoute | None = None
+        if navigation is not None:
+            if not isinstance(navigation, AuthoredNavigation):
+                raise ValueError("navigation must be AuthoredNavigation or None")
+            if navigation.points[0] != initial_state.vehicle.position:
+                raise ValueError("navigation start must match initial vehicle position")
+            if navigation.points[-1] != self._route.finish.target_position:
+                raise ValueError("navigation finish must match track finish")
+            if len(navigation.checkpoint_point_indices) != len(self._route.checkpoints):
+                raise ValueError("navigation checkpoint count must match track")
+            if any(
+                navigation.points[index] != checkpoint.target_position
+                for index, checkpoint in zip(navigation.checkpoint_point_indices, self._route.checkpoints, strict=True)
+            ):
+                raise ValueError("navigation checkpoints must match track order")
+            if not set(navigation.surface_ids).issubset({surface.id for surface in track.surfaces}):
+                raise ValueError("navigation references unknown track surface")
+            self._authored_route = AuthoredRoute(navigation)
         self._simulation = Simulation(track, initial_state, vehicle_parameters, simulation_config)
         self._progress: RaceProgressState | None = None
         self._needs_reset = True
@@ -136,7 +157,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
 
         snapshot = self._simulation.reset()
         progress = RaceProgressState(0, False)
-        target_position = self._route.target_for(progress)
+        target_position = self._route_target(snapshot.world.vehicle, progress)
         try:
             observation = self._encode_observation(snapshot.world.vehicle, target_position)
         except Exception:
@@ -147,6 +168,17 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         self._progress = progress
         self._needs_reset = False
         return observation, self._reset_info()
+
+    def _route_target(self, vehicle: VehicleState, progress: RaceProgressState) -> Vec3 | None:
+        if not isinstance(vehicle, VehicleState):
+            raise ValueError("vehicle must be VehicleState")
+        if self._authored_route is None:
+            return self._route.target_for(progress)
+        if progress.finished:
+            return None
+        return self._authored_route.project(
+            vehicle.position, next_checkpoint_index=progress.next_checkpoint_index
+        ).endpoint
 
     def _encode_observation(
         self,
@@ -191,8 +223,8 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             raise RuntimeError("reset() must be called before step()")
 
         policy_action = self._policy_action(action)
-        target_before = self._route.target_for(progress_before)
         previous_vehicle = self._simulation.snapshot.world.vehicle
+        target_before = self._route_target(previous_vehicle, progress_before)
         control = map_policy_action(policy_action)
         query_before = self._simulation.snapshot.query
 
@@ -219,7 +251,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             )
             observation = self._encode_observation(
                 snapshot_after.world.vehicle,
-                progress_result.target_position,
+                self._route_target(snapshot_after.world.vehicle, progress_result.state),
             )
             info = self._step_info(
                 snapshot_after,
