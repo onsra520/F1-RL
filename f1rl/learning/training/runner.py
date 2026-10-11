@@ -223,6 +223,7 @@ class TrainingRunner:
         *,
         provenance: RunProvenance | None = None,
         checkpoint_observer: Callable[[Path, int], None] | None = None,
+        final_model_observer: Callable[[Path, int], None] | None = None,
     ) -> None:
         if not isinstance(config, TrainingRunConfig):
             raise ValueError("config must be TrainingRunConfig")
@@ -230,9 +231,12 @@ class TrainingRunner:
             raise ValueError("provenance must be RunProvenance or None")
         if checkpoint_observer is not None and not callable(checkpoint_observer):
             raise ValueError("checkpoint_observer must be callable or None")
+        if final_model_observer is not None and not callable(final_model_observer):
+            raise ValueError("final_model_observer must be callable or None")
         self._config = config
         self._provenance = provenance
         self._checkpoint_observer = checkpoint_observer
+        self._final_model_observer = final_model_observer
 
     def run_single(self, factory: F1RLEnvFactory) -> TrainingRunResult:
         if not isinstance(factory, F1RLEnvFactory):
@@ -336,6 +340,10 @@ class TrainingRunner:
             )
             actual_total_timesteps = model.num_timesteps
             final_model_path = model.save(artifacts.final_model_path)
+            if self._final_model_observer is not None:
+                # Never publish "completed" before the final checkpoint
+                # passes the same authenticity/evaluation gate as intermediate ones.
+                self._final_model_observer(final_model_path, actual_total_timesteps)
             _update_state(
                 artifacts,
                 status="completed",
