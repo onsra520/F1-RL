@@ -195,3 +195,28 @@ def test_finished_mock_run_can_be_verified_after_copy_and_detects_tampering(tmp_
     report.write_text("{}",encoding="utf-8")
     with pytest.raises(ValueError,match="report sha256"):
         verify_pilot_evidence_manifest(result.run_directory)
+
+
+def test_exploratory_real_mode_uses_explicit_unreviewed_semantics(monkeypatch):
+    from f1rl.learning import pilot_milestones as module
+    monkeypatch.setattr(module,"_git_revision",lambda root:("8"*40,False))
+    recorder=module.PilotMilestoneRecorder(
+        repository_root=ROOT,candidate_path=CANDIDATE,
+        runtime_config_path=PROFILE,exploratory_mode=True,
+    )
+    assert recorder._mock is False
+    assert recorder._exploratory is True
+    assert recorder._preflight["review_blockers"]
+    assert recorder._evaluator is module.evaluate_training_checkpoint
+    with pytest.raises(ValueError,match="real checkpoint evaluator"):
+        module.PilotMilestoneRecorder(
+            repository_root=ROOT,candidate_path=CANDIDATE,
+            runtime_config_path=PROFILE,exploratory_mode=True,
+            evaluator=_mock_eval,
+        )
+    with pytest.raises(ValueError,match="mutually exclusive"):
+        module.PilotMilestoneRecorder(
+            repository_root=ROOT,candidate_path=CANDIDATE,
+            runtime_config_path=PROFILE,exploratory_mode=True,
+            mock_mode=True,evaluator=_mock_eval,
+        )

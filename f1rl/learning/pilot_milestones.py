@@ -86,7 +86,14 @@ class PilotMilestoneRecorder:
         evaluator: Callable[..., dict[str, object]] | None = None,
         episodes_per_track: int = 1,
         mock_mode: bool = False,
+        exploratory_mode: bool = False,
     ) -> None:
+        if type(exploratory_mode) is not bool:
+            raise ValueError("exploratory_mode must be bool")
+        if mock_mode and exploratory_mode:
+            raise ValueError("mock_mode and exploratory_mode are mutually exclusive")
+        if exploratory_mode and evaluator is not None:
+            raise ValueError("exploratory_mode requires the real checkpoint evaluator")
         if type(mock_mode) is not bool:
             raise ValueError("mock_mode must be bool")
         if isinstance(episodes_per_track, bool) or not isinstance(episodes_per_track, int) or episodes_per_track <= 0:
@@ -104,9 +111,12 @@ class PilotMilestoneRecorder:
             runtime_config_path=self._profile,
         )
         self._git_sha, self._initial_dirty = _git_revision(self._root)
-        if not mock_mode and (self._preflight["review_blockers"] or self._initial_dirty):
+        if not mock_mode and not exploratory_mode and self._preflight["review_blockers"]:
             raise RuntimeError("WP7 pilot review is required; refuse live evidence execution")
+        if not mock_mode and self._initial_dirty:
+            raise RuntimeError("WP7 live evaluation requires clean Git worktree")
         self._mock = mock_mode
+        self._exploratory = exploratory_mode
         self._evaluator = evaluator or evaluate_training_checkpoint
         self._episodes_per_track = episodes_per_track
         self._fingerprints = tuple(dict(item) for item in self._preflight["fingerprints"])
@@ -209,6 +219,8 @@ class PilotMilestoneRecorder:
             raise ValueError("pilot evaluation violated TRAIN-only evidence contract")
         if self._mock and evaluated.get("policy_source") != "injected_test_policy_not_scientific_evidence":
             raise ValueError("mock pilot must label evaluation as non-scientific")
+        if self._exploratory and evaluated.get("policy_source") != "ppo_archive_requires_run_provenance_review":
+            raise ValueError("exploratory pilot must load genuine PPO archive")
         summaries = evaluated.get("track_summaries")
         if (
             not isinstance(summaries, list)
@@ -220,7 +232,11 @@ class PilotMilestoneRecorder:
         model_path = archive.relative_to(run_dir).as_posix()
         report: dict[str, object] = {
             "schema_version": "wp7-recovery-pilot-milestone-v1",
-            "status": "mock_verified_not_scientific_evidence" if self._mock else "candidate_unreviewed",
+            "status": (
+                "mock_verified_not_scientific_evidence" if self._mock else
+                "exploratory_unreviewed_not_scientific" if self._exploratory else
+                "candidate_unreviewed"
+            ),
             "scientific_evidence": False,
             "git_commit": self._git_sha,
             "git_dirty_at_creation": self._initial_dirty,
@@ -244,7 +260,11 @@ class PilotMilestoneRecorder:
                 raise ValueError("pilot milestone set is incomplete")
             _write_new_json(run_dir / "evaluations" / "manifest.json", {
                 "schema_version": "wp7-recovery-pilot-manifest-v1",
-                "status": "mock_verified_not_scientific_evidence" if self._mock else "candidate_unreviewed",
+                "status": (
+                "mock_verified_not_scientific_evidence" if self._mock else
+                "exploratory_unreviewed_not_scientific" if self._exploratory else
+                "candidate_unreviewed"
+            ),
                 "scientific_evidence": False,
                 "git_commit": self._git_sha,
                 "milestones": list(self._milestones),
@@ -262,7 +282,7 @@ class PilotMilestoneRecorder:
 
 
 def verify_pilot_evidence_manifest(run_directory: str | Path) -> dict[str, object]:
-    """Read-only re-verification for a copied or archived MOCK evidence directory.
+    """Read-only re-verification for a copied or archived candidate evidence directory.
 
     This proves file identity, not scientific correctness or PPO performance.
     """
@@ -273,12 +293,15 @@ def verify_pilot_evidence_manifest(run_directory: str | Path) -> dict[str, objec
     manifest = _json_object(json.loads(manifest_path.read_text("utf-8")), "pilot evidence manifest")
     if (
         manifest.get("schema_version") != "wp7-recovery-pilot-manifest-v1"
-        or manifest.get("status") != "mock_verified_not_scientific_evidence"
+        or manifest.get("status") not in {
+            "mock_verified_not_scientific_evidence",
+            "exploratory_unreviewed_not_scientific",
+        }
         or manifest.get("scientific_evidence") is not False
         or manifest.get("heldout_rollouts") != 0
         or manifest.get("milestones") != list(PILOT_MILESTONES)
     ):
-        raise ValueError("pilot evidence manifest is not a verified mock milestone set")
+        raise ValueError("pilot evidence manifest is not a supported non-scientific milestone set")
     reports = manifest.get("reports")
     if not isinstance(reports, list) or len(reports) != len(PILOT_MILESTONES):
         raise ValueError("pilot evidence must contain eight report hashes")
@@ -299,6 +322,7 @@ def verify_pilot_evidence_manifest(run_directory: str | Path) -> dict[str, objec
             or report.get("heldout_rollouts") != 0
             or report.get("source_fingerprints") != manifest.get("source_fingerprints")
             or report.get("git_commit") != manifest.get("git_commit")
+            or report.get("status") != manifest.get("status")
         ):
             raise ValueError("pilot report contract mismatch")
         actual = report.get("actual_timesteps")
@@ -313,7 +337,11 @@ def verify_pilot_evidence_manifest(run_directory: str | Path) -> dict[str, objec
         if _hash_file(model) != report.get("checkpoint_sha256"):
             raise ValueError("pilot checkpoint sha256 mismatch")
     return {
-        "status": "verified_mock_evidence_not_scientific",
+        "status": (
+            "verified_mock_evidence_not_scientific" if
+            manifest.get("status") == "mock_verified_not_scientific_evidence" else
+            "verified_exploratory_evidence_not_scientific"
+        ),
         "verified_milestones": len(reports),
         "heldout_rollouts": 0,
         "scientific_evidence": False,
