@@ -8,6 +8,7 @@ from typing import Protocol, runtime_checkable
 import numpy as np
 
 from ..episode import RaceRoute
+from ..route_navigation import AuthoredRoute
 from ..training.env_factory import F1RLEnvFactory
 from .metrics import EpisodeMetrics, _normalized_route_progress
 
@@ -200,6 +201,7 @@ def evaluate_episode(
 
     fixed_dt = float(factory.simulation_config.fixed_dt)
     route = RaceRoute.from_track(factory.track)
+    authored_route = AuthoredRoute(factory.navigation) if factory.navigation is not None else None
     env = factory.create()
     try:
         observation, reset_info = env.reset()
@@ -222,6 +224,7 @@ def evaluate_episode(
         final_finished = False
         final_position = previous_position
         final_truncated = False
+        route_highwater = 0.0
 
         while True:
             action = policy.predict(observation, deterministic=True)
@@ -248,6 +251,25 @@ def evaluate_episode(
                 executed_steps=executed_steps,
                 fixed_dt=fixed_dt,
             )
+            if authored_route is not None:
+                step_info = _mapping(info, "step info")
+                if "route_highwater_meters" not in step_info:
+                    raise ValueError("guided evaluator requires route_highwater_meters")
+                step_highwater = _real(
+                    step_info["route_highwater_meters"],
+                    "route_highwater_meters",
+                    minimum=0.0,
+                )
+                if step_highwater + 1e-9 < route_highwater:
+                    raise ValueError("route_highwater_meters must be monotone")
+                checkpoint_cap = (
+                    authored_route.checkpoint_meters[next_checkpoint_index]
+                    if next_checkpoint_index < len(authored_route.checkpoint_meters)
+                    else authored_route.total_meters
+                )
+                if step_highwater > checkpoint_cap + 1e-9:
+                    raise ValueError("route_highwater_meters exceeds unfinished checkpoint bound")
+                route_highwater = max(route_highwater, step_highwater)
 
             names = tuple(name for name, _ in components)
             if component_names is None:
@@ -307,12 +329,16 @@ def evaluate_episode(
                 "episode reward does not match accumulated reward components"
             )
 
-        normalized_progress = _normalized_route_progress(
-            route,
-            initial_position=_reset_position(reset_info),
-            vehicle_position=final_position,
-            next_checkpoint_index=final_next_checkpoint_index,
-            finished=final_finished,
+        normalized_progress = (
+            (1.0 if final_finished else min(1.0, route_highwater / authored_route.total_meters))
+            if authored_route is not None
+            else _normalized_route_progress(
+                route,
+                initial_position=_reset_position(reset_info),
+                vehicle_position=final_position,
+                next_checkpoint_index=final_next_checkpoint_index,
+                finished=final_finished,
+            )
         )
 
         return EpisodeMetrics(
