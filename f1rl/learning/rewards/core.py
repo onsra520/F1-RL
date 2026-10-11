@@ -27,6 +27,7 @@ class RewardTransition:
     events: tuple[WorldEvent, ...]
     dt: float
     route_progress_delta_meters: float | None = None
+    off_track: bool | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.previous_vehicle, VehicleState) or not isinstance(self.next_vehicle, VehicleState):
@@ -41,6 +42,8 @@ class RewardTransition:
             self.route_progress_delta_meters, "route_progress_delta_meters"
         ) < 0.0:
             raise ValueError("route_progress_delta_meters must be non-negative")
+        if self.off_track is not None and type(self.off_track) is not bool:
+            raise ValueError("off_track must be bool or None")
 
 
 @dataclass(frozen=True, slots=True)

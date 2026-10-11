@@ -16,6 +16,7 @@ from ..sandbox.world import WorldState
 from .action import PolicyAction, map_policy_action
 from .episode import (
     EpisodeConfig,
+    EpisodeStatus,
     RaceProgressResult,
     RaceProgressState,
     RaceRoute,
@@ -23,8 +24,9 @@ from .episode import (
     episode_status,
 )
 from .observation import NavigationTarget, ObservationEncoder
+from .offtrack import OffTrackConfig, OffTrackState
 from .route_navigation import AuthoredRoute
-from .rewards import RewardComposer, RewardResult, RewardTransition, RouteProgressReward
+from .rewards import RewardComposer, RewardResult, RewardTransition, RouteProgressReward, OffTrackPenalty
 
 
 def _vec3_tuple(value: Vec3) -> tuple[float, float, float]:
@@ -80,6 +82,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         reward_composer: RewardComposer,
         episode_config: EpisodeConfig,
         navigation: AuthoredNavigation | None = None,
+        offtrack_config: OffTrackConfig | None = None,
     ) -> None:
         super().__init__()
         values = (
@@ -121,6 +124,14 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             self._authored_route = AuthoredRoute(navigation)
         if self._authored_route is None and any(isinstance(term, RouteProgressReward) for term in reward_composer.terms):
             raise ValueError("route_progress reward requires authored navigation")
+        if offtrack_config is not None and not isinstance(offtrack_config, OffTrackConfig):
+            raise ValueError("offtrack_config must be OffTrackConfig or None")
+        if offtrack_config is not None and self._authored_route is None:
+            raise ValueError("offtrack_config requires authored navigation")
+        if offtrack_config is None and any(isinstance(term, OffTrackPenalty) for term in reward_composer.terms):
+            raise ValueError("offtrack penalty requires offtrack_config")
+        self._offtrack_config = offtrack_config
+        self._offtrack_state = OffTrackState()
         self._max_route_distance = min((surface.width for surface in track.surfaces), default=0.0) / 2.0
         self._route_highwater = 0.0
         self._simulation = Simulation(track, initial_state, vehicle_parameters, simulation_config)
@@ -170,6 +181,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             raise
 
         self._progress = progress
+        self._offtrack_state = OffTrackState()
         self._route_highwater = 0.0
         self._needs_reset = False
         return observation, self._reset_info()
@@ -253,6 +265,16 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                     max_path_distance=self._max_route_distance,
                 )
                 route_delta = next_highwater - self._route_highwater
+            next_offtrack = self._offtrack_state
+            lateral_distance = None
+            if self._offtrack_config is not None:
+                assert self._authored_route is not None
+                lateral_distance = self._authored_route.horizontal_distance(
+                    snapshot_after.world.vehicle.position
+                )
+                next_offtrack = self._offtrack_state.advance(
+                    lateral_distance, self._offtrack_config
+                )
             reward_result = self._reward_composer.evaluate(
                 RewardTransition(
                     previous_vehicle=previous_vehicle,
@@ -261,6 +283,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                     events=snapshot_after.events,
                     dt=self._simulation_config.fixed_dt,
                     route_progress_delta_meters=route_delta,
+                    off_track=next_offtrack.outside if self._offtrack_config is not None else None,
                 )
             )
             status = episode_status(
@@ -268,6 +291,8 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 snapshot_after.tick,
                 self._episode_config,
             )
+            if next_offtrack.truncated and not progress_result.state.finished:
+                status = EpisodeStatus(False, True)
             observation = self._encode_observation(
                 snapshot_after.world.vehicle,
                 self._route_target(snapshot_after.world.vehicle, progress_result.state),
@@ -280,11 +305,18 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             )
             if self._authored_route is not None:
                 info["route_highwater_meters"] = next_highwater
+            if self._offtrack_config is not None:
+                info["offtrack_lateral_meters"] = lateral_distance
+                info["offtrack_consecutive_steps"] = next_offtrack.consecutive_steps
+                info["truncation_reason"] = (
+                    "offtrack" if next_offtrack.truncated and not progress_result.state.finished else None
+                )
         except Exception:
             self._needs_reset = True
             raise
 
         self._progress = progress_result.state
+        self._offtrack_state = next_offtrack
         self._route_highwater = next_highwater
         self._needs_reset = status.terminated or status.truncated
         return (

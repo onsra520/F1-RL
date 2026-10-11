@@ -7,6 +7,7 @@ from .action import (
     map_policy_action,
 )
 from .observation import NavigationTarget, ObservationConfig, ObservationEncoder
+from .offtrack import OffTrackConfig, OffTrackState
 from .episode import (
     EpisodeConfig,
     EpisodeStatus,
@@ -21,6 +22,7 @@ from .episode import (
 from .gym_environment import F1RLEnv
 from .rewards import (
     CollisionPenalty,
+    OffTrackPenalty,
     RouteProgressReward,
     RewardComposer,
     RewardContribution,
@@ -33,7 +35,7 @@ from .rewards import (
 
 __all__ = [
     "ACTION_HIGH", "ACTION_LOW", "ACTION_NAMES", "ACTION_SIZE",
-    "CollisionPenalty", "EpisodeConfig", "EpisodeStatus", "F1RLEnv", "NavigationTarget", "ObservationConfig",
+    "CollisionPenalty", "OffTrackConfig", "OffTrackState", "OffTrackPenalty", "EpisodeConfig", "EpisodeStatus", "F1RLEnv", "NavigationTarget", "ObservationConfig",
     "ObservationEncoder", "PolicyAction", "RaceCheckpoint", "RaceFinish", "RaceProgressResult",
     "RaceProgressState", "RaceRoute", "RouteProgressReward", "RewardComposer", "RewardContribution", "RewardResult",
     "RewardTerm", "RewardTransition", "TargetProgressReward", "TimePenalty",

@@ -56,6 +56,24 @@ class RouteProgressReward:
 
 
 @dataclass(frozen=True, slots=True)
+class OffTrackPenalty:
+    """Penalty once per sampled step that is outside the route corridor."""
+    penalty: float
+
+    def __post_init__(self) -> None:
+        _validate_non_negative(self.penalty, "penalty")
+
+    @property
+    def name(self) -> str:
+        return "offtrack"
+
+    def evaluate(self, transition: RewardTransition) -> RewardContribution:
+        if transition.off_track is None:
+            raise ValueError("off_track penalty requires off_track boolean evidence")
+        return RewardContribution(self.name, -self.penalty if transition.off_track else 0.0)
+
+
+@dataclass(frozen=True, slots=True)
 class CollisionPenalty:
     penalty: float
 

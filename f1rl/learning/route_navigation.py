@@ -69,6 +69,23 @@ class AuthoredRoute:
             for i in self.navigation.checkpoint_point_indices
         )
 
+    def horizontal_distance(self, position: Vec3) -> float:
+        """Minimal XZ distance across the entire authored route, ignoring flight height."""
+        if not isinstance(position, Vec3):
+            raise ValueError("position must be Vec3")
+        nearest=float("inf")
+        for start, end in zip(self.points, self.points[1:]):
+            dx=end.x-start.x
+            dz=end.z-start.z
+            squared=dx*dx+dz*dz
+            if squared <= 1e-12:
+                distance=((position.x-start.x)**2+(position.z-start.z)**2)**0.5
+            else:
+                fraction=max(0.0,min(1.0,((position.x-start.x)*dx+(position.z-start.z)*dz)/squared))
+                distance=((position.x-start.x-dx*fraction)**2+(position.z-start.z-dz*fraction)**2)**0.5
+            nearest=min(nearest,distance)
+        return nearest
+
     def project(self, position: Vec3, *, next_checkpoint_index: int) -> RouteProjection:
         if not isinstance(position, Vec3):
             raise ValueError("position must be Vec3")

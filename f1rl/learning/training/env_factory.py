@@ -13,6 +13,7 @@ from ...track_assets.model import AuthoredNavigation
 from ..episode import EpisodeConfig
 from ..gym_environment import F1RLEnv
 from ..observation import ObservationEncoder
+from ..offtrack import OffTrackConfig
 from ..rewards import RewardComposer
 
 
@@ -26,6 +27,7 @@ class F1RLEnvFactory:
     reward_composer: RewardComposer
     episode_config: EpisodeConfig
     navigation: AuthoredNavigation | None = None
+    offtrack_config: OffTrackConfig | None = None
 
     def __post_init__(self) -> None:
         values = (
@@ -42,6 +44,8 @@ class F1RLEnvFactory:
                 raise ValueError(f"{name} must be {expected_type.__name__}")
         if self.navigation is not None and not isinstance(self.navigation, AuthoredNavigation):
             raise ValueError("navigation must be AuthoredNavigation or None")
+        if self.offtrack_config is not None and not isinstance(self.offtrack_config, OffTrackConfig):
+            raise ValueError("offtrack_config must be OffTrackConfig or None")
 
     def create(self) -> F1RLEnv:
         return F1RLEnv(
@@ -53,6 +57,7 @@ class F1RLEnvFactory:
             reward_composer=self.reward_composer,
             episode_config=self.episode_config,
             navigation=self.navigation,
+            offtrack_config=self.offtrack_config,
         )
 
 
@@ -104,6 +109,7 @@ class TrainingScenarioSet:
             "observation_encoder",
             "reward_composer",
             "episode_config",
+            "offtrack_config",
         )
         for scenario in self.scenarios[1:]:
             if any(
