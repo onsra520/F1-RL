@@ -222,13 +222,17 @@ class TrainingRunner:
         config: TrainingRunConfig,
         *,
         provenance: RunProvenance | None = None,
+        checkpoint_observer: Callable[[Path, int], None] | None = None,
     ) -> None:
         if not isinstance(config, TrainingRunConfig):
             raise ValueError("config must be TrainingRunConfig")
         if provenance is not None and not isinstance(provenance, RunProvenance):
             raise ValueError("provenance must be RunProvenance or None")
+        if checkpoint_observer is not None and not callable(checkpoint_observer):
+            raise ValueError("checkpoint_observer must be callable or None")
         self._config = config
         self._provenance = provenance
+        self._checkpoint_observer = checkpoint_observer
 
     def run_single(self, factory: F1RLEnvFactory) -> TrainingRunResult:
         if not isinstance(factory, F1RLEnvFactory):
@@ -313,6 +317,12 @@ class TrainingRunner:
                     _checkpoint_archive_path(artifacts, actual_timesteps)
                 )
                 checkpoint_paths.append(checkpoint)
+                if self._checkpoint_observer is not None:
+                    # The observer sees only an already-saved checkpoint and
+                    # the *actual* timestep (which may exceed the nominal
+                    # threshold). Its failure aborts the run and preserves
+                    # the saved artifact for forensic recovery.
+                    self._checkpoint_observer(checkpoint, actual_timesteps)
                 next_threshold_index = advanced_index
                 _update_state(
                     artifacts,
