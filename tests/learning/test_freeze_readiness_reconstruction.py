@@ -202,3 +202,69 @@ def test_only_published_audits_may_change_since_original_train_commit():
     ):
         with pytest.raises(ValueError,match="changed"):
             verify_training_source_diff((path,))
+
+
+
+def fake_road_union():
+    return {
+        "schema_version":"wp7-recovery-dual-seed-right-turn-road-union-audit-v1",
+        "scientific_evidence":False,
+        "heldout_rollouts":0,
+        "audits":[{
+            "run_id":f"r{i}",
+            "source_git_revision":"commit1",
+            "source_manifest_sha256":f"manifest{i}",
+            "final_model_sha256":f"model{i}",
+            "track_id":"right-turn-v1",
+            "scientific_evidence":False,
+            "heldout_rollouts":0,
+            "success":True,
+            "road_patch_count":2,
+            "road_widths_m":[12.0,12.0],
+            "centerline_uncovered_road_path_xz_m":0.0,
+            "centerline_outside_road_sample_count":0,
+            "max_sampled_route_deviation_m":4.,
+            "upper_bound_route_deviation_between_samples_m":4.5,
+            "is_physical_body_clearance":False,
+            "is_approved_corner_cutting_threshold":False,
+        } for i in range(2)]
+    }
+
+
+def test_right_turn_road_union_linked_but_not_promoted_to_approval():
+    from f1rl.learning.freeze_readiness import validate_right_turn_road_union
+    xz=validate_linked_audits(
+        audit_type="trajectory_xz",document=fake_xz(),records=fake_records()
+    )
+    result=validate_right_turn_road_union(
+        document=fake_road_union(),records=fake_records(),xz_summaries=xz["runs"]
+    )
+    assert len(result["runs"])==2
+    assert result["runs"][0]["continuous_centerline_outside_road_m"]==0.
+    assert result["runs"][0]["route_corner_cutting_policy"]=="not_approved"
+    assert result["runs"][0]["body_footprint_policy"]=="not_registered"
+
+
+@pytest.mark.parametrize("field,value",[
+    ("run_id","r1"),
+    ("source_manifest_sha256","wrong"),
+    ("final_model_sha256","model1"),
+    ("track_id","left-turn-v1"),
+    ("centerline_uncovered_road_path_xz_m",.1),
+    ("centerline_outside_road_sample_count",1),
+    ("max_sampled_route_deviation_m",5.1),
+    ("upper_bound_route_deviation_between_samples_m",3.),
+    ("is_physical_body_clearance",True),
+    ("is_approved_corner_cutting_threshold",True),
+])
+def test_right_turn_road_union_mismatched_evidence_rejected(field,value):
+    from f1rl.learning.freeze_readiness import validate_right_turn_road_union
+    doc=fake_road_union()
+    doc["audits"][0][field]=value
+    xz=validate_linked_audits(
+        audit_type="trajectory_xz",document=fake_xz(),records=fake_records()
+    )
+    with pytest.raises(ValueError,match="road union|road-union"):
+        validate_right_turn_road_union(
+            document=doc,records=fake_records(),xz_summaries=xz["runs"]
+        )

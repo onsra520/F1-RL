@@ -21,6 +21,7 @@ from .training.config import TrainingRunConfig
 KNOWN_AUDIT_SHA256 = {
     "trajectory_xz": "0e44bcaf738f5c4eadb2f726b3a8108af64d1690f7a9fbf28ccbdabcd771d188",
     "swept_3d_proxy": "da1accdd0d0f5bdafb7e790466f8c30a6a054eb637b9c1dc6820b2114e2bfed8",
+    "right_turn_road_union": "cdf22fc26b9fdee85d82c56dea0d26c900cc5e318010d989df3fca51f1049a62",
 }
 
 AUDIT_ONLY_PATHS = frozenset({
@@ -30,12 +31,16 @@ AUDIT_ONLY_PATHS = frozenset({
     "f1rl/learning/trajectory_audit.py",
     "f1rl/learning/swept_volume_audit.py",
     "f1rl/learning/freeze_readiness.py",
+    "f1rl/learning/corridor_audit.py",
     "scripts/wp7_audit_train_trajectories.py",
     "scripts/wp7_audit_3d_swept_volume.py",
     "scripts/wp7_freeze_readiness.py",
+    "scripts/wp7_audit_right_turn_corridor.py",
     "tests/learning/test_trajectory_audit_reconstruction.py",
     "tests/learning/test_swept_volume_audit_reconstruction.py",
     "tests/learning/test_freeze_readiness_reconstruction.py",
+    "tests/learning/test_corridor_audit_reconstruction.py",
+    "docs/research/wp7-right-turn-centerline-corridor-2026-10-13.md",
 })
 
 
@@ -267,9 +272,63 @@ def validate_linked_audits(
     return {"audit_type":audit_type,"runs":summaries}
 
 
+
+def validate_right_turn_road_union(
+    *,document:dict[str,Any],records:list[dict[str,Any]],
+    xz_summaries:list[dict[str,Any]],
+)->dict[str,Any]:
+    """Link corridor diagnostics to exactly the original TRAIN models.
+
+    A verified centre-on-road finding never clears body/route policy blockers.
+    """
+    entries=document.get("audits")
+    if (document.get("schema_version")!="wp7-recovery-dual-seed-right-turn-road-union-audit-v1"
+        or document.get("scientific_evidence") is not False
+        or document.get("heldout_rollouts")!=0
+        or not isinstance(entries,list) or len(entries)!=2
+        or len(records)!=2 or len(xz_summaries)!=2):
+        raise ValueError("right-turn corridor report boundary/schema invalid")
+    summaries=[]
+    for item,record,xz in zip(entries,records,xz_summaries,strict=True):
+        if (not isinstance(item,dict)
+            or item.get("run_id")!=record["run_id"]
+            or item.get("source_git_revision")!=record["source_git_revision"]
+            or item.get("source_manifest_sha256")!=record["manifest_sha256"]
+            or item.get("final_model_sha256")!=record["model_sha256"]
+            or item.get("track_id")!="right-turn-v1"
+            or item.get("scientific_evidence") is not False
+            or item.get("heldout_rollouts")!=0
+            or item.get("success") is not True
+            or item.get("road_patch_count")!=2
+            or item.get("road_widths_m")!=[12.0,12.0]
+            or item.get("is_physical_body_clearance") is not False
+            or item.get("is_approved_corner_cutting_threshold") is not False):
+            raise ValueError("right-turn road union model/protocol identity mismatch")
+        gap=item.get("centerline_uncovered_road_path_xz_m")
+        deviation=item.get("max_sampled_route_deviation_m")
+        upper=item.get("upper_bound_route_deviation_between_samples_m")
+        if (isinstance(gap,bool) or not isinstance(gap,(int,float)) or gap!=0.
+            or item.get("centerline_outside_road_sample_count")!=0
+            or isinstance(deviation,bool) or not isinstance(deviation,(int,float))
+            or abs(deviation-xz["right_turn_max_deviation_m"])>2e-6
+            or isinstance(upper,bool) or not isinstance(upper,(int,float))
+            or upper<deviation or upper>deviation+2.0):
+            raise ValueError("right-turn road-union centreline observations drifted")
+        summaries.append({
+            "run_id":record["run_id"],
+            "continuous_centerline_outside_road_m":gap,
+            "max_sampled_route_deviation_m":deviation,
+            "between_sample_upper_bound_m":upper,
+            "route_corner_cutting_policy":"not_approved",
+            "body_footprint_policy":"not_registered",
+        })
+    return {"audit_type":"right_turn_road_union","runs":summaries}
+
+
 def build_freeze_readiness_report(
     *,repository_root:str|Path,calibration_run:str|Path,confirmation_run:str|Path,
     xz_audit_path:str|Path,swept_3d_audit_path:str|Path,
+    road_union_audit_path:str|Path,
 )->dict[str,Any]:
     root=Path(repository_root).resolve(strict=True)
     _require_clean_git(root)
@@ -301,8 +360,20 @@ def build_freeze_readiness_report(
             raise ValueError(f"{kind} independent audit SHA256 differs from previously published evidence")
         item=validate_linked_audits(audit_type=kind,document=_json(file),records=records)
         links.append({"kind":kind,"sha256":known,**item})
+    road_file=Path(road_union_audit_path).resolve(strict=True)
+    if not road_file.is_file() or _sha(road_file)!=KNOWN_AUDIT_SHA256["right_turn_road_union"]:
+        raise ValueError("right turn road-union audit SHA256 differs from published evidence")
+    road_check=validate_right_turn_road_union(
+        document=_json(road_file),records=records,
+        xz_summaries=links[0]["runs"],
+    )
+    links.append({
+        "kind":"right_turn_road_union",
+        "sha256":KNOWN_AUDIT_SHA256["right_turn_road_union"],
+        **road_check,
+    })
     return {
-        "schema_version":"wp7-recovery-freeze-readiness-v1",
+        "schema_version":"wp7-recovery-freeze-readiness-v2",
         "status":"review_required",
         "scientific_freeze_permitted":False,
         "heldout_evaluation_permitted":False,

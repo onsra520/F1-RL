@@ -24,6 +24,8 @@ def main()->int:
         default=default/"audits/dual-seed-train-trajectory-audit-v1.json")
     parser.add_argument("--swept-audit",type=Path,
         default=default/"audits/dual-seed-swept-3d-body-proxy-v1.json")
+    parser.add_argument("--road-union-audit",type=Path,
+        default=default/"audits/wp7-right-turn-centerline-corridor-v1.json")
     parser.add_argument("--output",type=Path,required=True)
     args=parser.parse_args()
     output=args.output.resolve()
@@ -35,6 +37,7 @@ def main()->int:
         repository_root=root,calibration_run=args.calibration,
         confirmation_run=args.confirmation,xz_audit_path=args.xz_audit,
         swept_3d_audit_path=args.swept_audit,
+        road_union_audit_path=args.road_union_audit,
     )
     payload=(json.dumps(report,sort_keys=True,indent=2,allow_nan=False)+"\n").encode("utf-8")
     output.parent.mkdir(parents=True,exist_ok=True)
