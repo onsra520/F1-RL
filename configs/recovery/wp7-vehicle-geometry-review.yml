@@ -1,0 +1,22 @@
+# Decision register only; NEVER a runtime vehicle-body override.
+# Original simulation collision: per-step centre point, no physical hull.
+# Prior 3D proxy profiles are only sensitivity assumptions.
+schema_version: wp7-recovery-geometry-review-v1
+status: unapproved
+baseline:
+  wheelbase_m: 3.0
+  ride_height_m: 0.5
+body:
+  length_m: null
+  width_m: null
+  height_m: null
+  local_center_xyz_m: null
+  collision_hull: null
+  tire_footprint: null
+route_corridor:
+  max_lateral_deviation_m: null
+  max_outside_road_body_distance_m: null
+  approved_design_rationale: null
+collision_decision: undecided
+training_change_authorized: false
+heldout_evaluation_authorized: false

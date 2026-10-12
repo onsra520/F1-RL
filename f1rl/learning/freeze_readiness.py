@@ -22,6 +22,7 @@ KNOWN_AUDIT_SHA256 = {
     "trajectory_xz": "0e44bcaf738f5c4eadb2f726b3a8108af64d1690f7a9fbf28ccbdabcd771d188",
     "swept_3d_proxy": "da1accdd0d0f5bdafb7e790466f8c30a6a054eb637b9c1dc6820b2114e2bfed8",
     "right_turn_road_union": "cdf22fc26b9fdee85d82c56dea0d26c900cc5e318010d989df3fca51f1049a62",
+    "stochastic_train_screen": "ce7b86c1869aa60766eb3565f343b967c5a76285cc90a22b355fc1dc367b196b",
 }
 
 AUDIT_ONLY_PATHS = frozenset({
@@ -41,6 +42,12 @@ AUDIT_ONLY_PATHS = frozenset({
     "tests/learning/test_freeze_readiness_reconstruction.py",
     "tests/learning/test_corridor_audit_reconstruction.py",
     "docs/research/wp7-right-turn-centerline-corridor-2026-10-13.md",
+    "docs/research/wp7-geometry-and-stochastic-screen-2026-10-13.md",
+    "configs/recovery/wp7-vehicle-geometry-review.yml",
+    "f1rl/learning/geometry_review.py",
+    "f1rl/learning/robustness_screen.py",
+    "scripts/wp7_screen_train_action_sensitivity.py",
+    "tests/learning/test_wp7_robustness_screen_reconstruction.py",
 })
 
 
@@ -81,7 +88,7 @@ BLOCKERS = (
     "point_only_collision_engine: existing 4/4 success uses post-step centre occupancy instead of body-aware continuous collision",
     "right_turn_corridor_not_registered: 5.511796m calibration and 4.415475m confirmation max deviation have no pre-approved corner-cutting tolerance",
     "training_time_environment_provenance_missing: both state.json provenance_file fields are null; inspection-time dependency versions cannot reconstruct history",
-    "single_deterministic_episode_per_track: no registered repeated-rollout robustness assessment",
+    "stochastic_action_screen_failed: 16-episode TRAIN sensitivity produced 12/16 Right Turn for calibration and 15/16 Slalom/Right Turn for confirmation; not environment perturbation robustness",
     "independent_backup_not_verified: audits and training archives share a local drive, off-device backup unproven",
 )
 
@@ -325,10 +332,93 @@ def validate_right_turn_road_union(
     return {"audit_type":"right_turn_road_union","runs":summaries}
 
 
+
+def validate_stochastic_train_screen(
+    *, document:dict[str,Any],records:list[dict[str,Any]],geometry_sha256:str,
+)->dict[str,Any]:
+    """Attest action-sensitivity evidence without confusing it with HELD-OUT."""
+    from .robustness_screen import (
+        EPISODES_PER_TRACK,PROTOCOL_ID,SCREEN_LOWER_BOUND,
+        one_sided_clopper_pearson_lower,seed_for,
+    )
+    screens=document.get("screens")
+    if (document.get("schema_version")!="wp7-recovery-dual-seed-action-sensitivity-v1"
+        or document.get("status")!="exploratory_not_scientific"
+        or document.get("scientific_evidence") is not False
+        or document.get("heldout_rollouts")!=0
+        or document.get("scientific_freeze_permitted") is not False
+        or document.get("heldout_evaluation_permitted") is not False
+        or document.get("geometry_review_status")!="unapproved"
+        or document.get("geometry_review_sha256")!=geometry_sha256
+        or not isinstance(screens,list) or len(screens)!=2):
+        raise ValueError("stochastic screen metadata/geometry boundary invalid")
+    summaries=[]
+    for s,r in zip(screens,records,strict=True):
+        if (not isinstance(s,dict)
+            or s.get("schema_version")!="wp7-recovery-train-stochastic-screen-v1"
+            or s.get("run_id")!=r["run_id"]
+            or s.get("model_sha256")!=r["model_sha256"]
+            or s.get("original_manifest_sha256")!=r["manifest_sha256"]
+            or s.get("original_training_git_commit")!=r["source_git_revision"]
+            or s.get("protocol_id")!=PROTOCOL_ID
+            or s.get("geometry_review_sha256")!=geometry_sha256
+            or s.get("geometry_status")!="unapproved"
+            or s.get("environment_variation")!="none_fixed_TRAIN_road_initial_state"
+            or s.get("sampling_mode")!="stochastic_ppo_policy_actions_torch_seeded_independently_per_episode"
+            or s.get("episodes_per_train_track")!=EPISODES_PER_TRACK
+            or s.get("confidence_level")!=0.95
+            or s.get("predeclared_screen_lower_bound")!=SCREEN_LOWER_BOUND
+            or s.get("scientific_evidence") is not False
+            or s.get("heldout_rollouts")!=0
+            or s.get("scientific_freeze_permitted") is not False
+            or s.get("heldout_evaluation_permitted") is not False):
+            raise ValueError("stochastic screen run identity or protocol drifted")
+        tracks=s.get("train_tracks")
+        if (not isinstance(tracks,list) or len(tracks)!=len(TRAIN_IDS)
+            or [x.get("track_id") if isinstance(x,dict) else None for x in tracks]!=list(TRAIN_IDS)):
+            raise ValueError("stochastic screen uses non-TRAIN or mismatched track identities")
+        result=[]
+        for track in tracks:
+            episodes=track.get("episodes")
+            if not isinstance(episodes,list) or len(episodes)!=EPISODES_PER_TRACK:
+                raise ValueError("stochastic screen episode count drifted")
+            for i,e in enumerate(episodes):
+                if (not isinstance(e,dict) or e.get("index")!=i
+                    or e.get("torch_action_seed")!=seed_for(run_id=r["run_id"],track_id=track["track_id"],index=i)
+                    or type(e.get("success")) is not bool):
+                    raise ValueError("stochastic screen episode identity/seed drifted")
+            success=sum(int(e["success"]) for e in episodes)
+            lower=one_sided_clopper_pearson_lower(success,EPISODES_PER_TRACK)
+            expected_pass=lower>=SCREEN_LOWER_BOUND
+            if (track.get("episode_count")!=EPISODES_PER_TRACK
+                or track.get("success_count")!=success
+                or abs(track.get("success_rate",-99)-success/EPISODES_PER_TRACK)>1e-8
+                or abs(track.get("one_sided_95pct_cp_lower",-99)-round(lower,8))>1e-8
+                or track.get("screen_lower_bound_ge_0p80") is not expected_pass):
+                raise ValueError("stochastic screen success CI or predeclared rule drifted")
+            result.append({
+                "track_id":track["track_id"],
+                "success_count":success,"trials":EPISODES_PER_TRACK,
+                "one_sided_95pct_lower":round(lower,8),
+                "screen_pass":expected_pass,
+            })
+        all_pass=all(x["screen_pass"] for x in result)
+        if s.get("all_train_track_screens_pass") is not all_pass:
+            raise ValueError("stochastic screen run-level outcome drifted")
+        summaries.append({"run_id":r["run_id"],"tracks":result,"all_screen_pass":all_pass})
+    if all(x["all_screen_pass"] for x in summaries):
+        raise ValueError("registered screen expected to flag unresolved TRAIN sensitivity")
+    return {
+        "audit_type":"stochastic_train_screen",
+        "runs":summaries,
+        "environment_generalization_established":False,
+    }
+
+
 def build_freeze_readiness_report(
     *,repository_root:str|Path,calibration_run:str|Path,confirmation_run:str|Path,
     xz_audit_path:str|Path,swept_3d_audit_path:str|Path,
-    road_union_audit_path:str|Path,
+    road_union_audit_path:str|Path, stochastic_screen_path:str|Path,
 )->dict[str,Any]:
     root=Path(repository_root).resolve(strict=True)
     _require_clean_git(root)
@@ -372,8 +462,20 @@ def build_freeze_readiness_report(
         "sha256":KNOWN_AUDIT_SHA256["right_turn_road_union"],
         **road_check,
     })
+    screen_file=Path(stochastic_screen_path).resolve(strict=True)
+    if not screen_file.is_file() or _sha(screen_file)!=KNOWN_AUDIT_SHA256["stochastic_train_screen"]:
+        raise ValueError("original stochastic TRAIN screening report SHA256 mismatch")
+    screen_check=validate_stochastic_train_screen(
+        document=_json(screen_file),records=records,
+        geometry_sha256=_sha(root/"configs/recovery/wp7-vehicle-geometry-review.yml"),
+    )
+    links.append({
+        "kind":"stochastic_train_screen",
+        "sha256":KNOWN_AUDIT_SHA256["stochastic_train_screen"],
+        **screen_check,
+    })
     return {
-        "schema_version":"wp7-recovery-freeze-readiness-v2",
+        "schema_version":"wp7-recovery-freeze-readiness-v3",
         "status":"review_required",
         "scientific_freeze_permitted":False,
         "heldout_evaluation_permitted":False,
