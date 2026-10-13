@@ -263,11 +263,12 @@ def integrate_partial_support(
             # The discretized force update is linearly interpolated to the
             # located release; its force ODE error is not certified.
             dynamic = SuspensionDynamicsState(
-                launch.position.y, launch.velocity.y,
-                initial.pitch_x_rad+(new_dynamic.pitch_x_rad-initial.pitch_x_rad)*((i+hi)/count),
-                launch.angular_velocity.x, # approximately world X: rejected if yawed
-                initial.roll_z_rad+(new_dynamic.roll_z_rad-initial.roll_z_rad)*((i+hi)/count),
-                launch.angular_velocity.z,
+                launch.position.y,
+                dynamic.heave_velocity_mps + (new_dynamic.heave_velocity_mps-dynamic.heave_velocity_mps)*hi,
+                dynamic.pitch_x_rad + (new_dynamic.pitch_x_rad-dynamic.pitch_x_rad)*hi,
+                dynamic.pitch_rate_radps + (new_dynamic.pitch_rate_radps-dynamic.pitch_rate_radps)*hi,
+                dynamic.roll_z_rad + (new_dynamic.roll_z_rad-dynamic.roll_z_rad)*hi,
+                dynamic.roll_rate_radps + (new_dynamic.roll_rate_radps-dynamic.roll_rate_radps)*hi,
             )
             air = VehicleState(launch.position,launch.velocity,launch.orientation,
                                launch.angular_velocity,False)
