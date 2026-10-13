@@ -1,0 +1,35 @@
+name: WP7 body collision v2 regression
+
+on:
+  push:
+    branches: [research/wp7-body-collision-v2]
+  pull_request:
+    branches: [audit/h01-canonical-c2-contract]
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Geometry and physics tests
+        run: python -m pytest tests/sandbox/test_body_collision.py -q
+      - name: Full regression
+        run: python -m pytest -q
+      - name: Compile
+        run: python -m compileall -q f1rl scripts
+      - name: Dependency check
+        run: python -m pip check
