@@ -143,12 +143,17 @@ def test_obstacle_between_fast_flight_endpoints_is_blocked():
         flight(released, dt=.1, obstacles=(thin,))
 
 
-def test_rotated_obstacle_is_not_assumed_clear():
+def test_rotated_obstacle_uses_conservative_world_vertical_sagitta():
     released = car(y=2., vy=0., grounded=False)
-    rotated = OrientedBoxVolume(Vec3(0., 2., 3.), Vec3(1., 1., 1.),
-                                Quaternion.from_axis_angle(Vec3(0., 1., 0.), pi/4.))
-    with pytest.raises(FlightPhysicsError, match="rotated flight obstacle"):
-        flight(released, obstacles=(rotated,))
+    rotation = Quaternion.from_axis_angle(Vec3(0., 1., 0.), pi/4.)
+    nearby = OrientedBoxVolume(
+        Vec3(0., 2., 0.), Vec3(.5,.5,.5), rotation,
+    )
+    with pytest.raises(FlightPhysicsError, match="obstacle sweep blocked"):
+        flight(released, obstacles=(nearby,))
+    far = OrientedBoxVolume(Vec3(0., 2., 10.), Vec3(.5,.5,.5), rotation)
+    safe = flight(released, obstacles=(far,))
+    assert safe.flight.phase == "airborne"
 
 
 def test_mixed_inclined_touchdown_unsupported():
