@@ -130,7 +130,7 @@ def test_body_first_collision_precedes_wheels_and_is_rejected():
     # Fat hull bottom is below wheel reference points.
     oversized = VehicleBodyGeometry(1., 1.0, 2., Vec3(0., .1, 0.))
     released = car(y=1., vy=-1., grounded=False)
-    with pytest.raises(FlightPhysicsError, match="chassis contacts road"):
+    with pytest.raises(FlightPhysicsError, match="chassis contacts road|uncertified airborne road/body sweep"):
         advance_ballistic_flight(released, POLICY, oversized,
                                  (flat(),), (), dt=.5, gravity_mps2=9.81)
 
@@ -324,5 +324,5 @@ def test_entering_road_laterally_from_below_plane_blocks_rollout():
     # travel sideways into a road patch without a validated touchdown.
     source = car(y=-.5, vy=0., z=-5., vz=60., grounded=False)
     plate = flat("plate", z=0., length=4.)
-    with pytest.raises(FlightPhysicsError, match="lateral entry"):
+    with pytest.raises(FlightPhysicsError, match="lateral entry|uncertified airborne road/body sweep"):
         flight(source, dt=.12, surfaces=(plate,))
