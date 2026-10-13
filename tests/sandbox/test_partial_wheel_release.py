@@ -248,3 +248,25 @@ def test_world_auto_departure_cannot_collect_airborne_reward():
     assert result.state.score == state.score
     assert result.state.track == state.track
     assert [e.kind for e in result.events] == ["takeoff"]
+
+
+def test_world_keeps_same_auto_policy_during_subsequent_airborne_frame():
+    from f1rl.sandbox.world import step_world
+    track, state, parameters = _world(pose(speed=15.))
+    opts = dict(
+        body_geometry=BODY,
+        independent_suspension_policy=PHYSICS,
+        ballistic_flight_policy=FLIGHT,
+        automatic_takeoff_policy=POLICY,
+    )
+    first = step_world(
+        track, state, VehicleControl(0.,0.,0.), parameters,2.9/15.,.5,**opts,
+    )
+    assert first.state.flight.phase == "airborne"
+    second = step_world(
+        track, first.state, VehicleControl(0.,0.,0.), parameters,.01,.5,**opts,
+    )
+    assert second.state.flight.phase == "airborne"
+    assert second.partial_support_telemetry is None
+    assert second.state.vehicle.position.z > first.state.vehicle.position.z
+    assert second.events == ()
