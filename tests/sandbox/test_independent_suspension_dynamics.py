@@ -207,3 +207,59 @@ def test_world_refuses_suspension_without_explicit_initial_state_or_geometry():
         step_world(*args, body_geometry=BODY, independent_suspension_policy=POLICY)
     with pytest.raises(ValueError, match="requires explicit"):
         step_world(*args, independent_suspension_policy=POLICY)
+
+
+def test_world_sweeps_body_obstacles_across_all_suspension_substeps():
+    from f1rl.sandbox.entities.obstacle import Obstacle
+    from f1rl.sandbox.interactions.events import ObstacleHit
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.track.volume import OrientedBoxVolume
+    from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters
+    from f1rl.sandbox.world import WorldState, step_world
+
+    start = replace(car(z=-2.), velocity=Vec3(0., 0., 25.))
+    barrier = Obstacle("barrier", OrientedBoxVolume(
+        Vec3(0., .3, 0.), Vec3(.5, .5, .05), Quaternion.identity(),
+    ))
+    world = WorldState(
+        start, TrackState(frozenset()),
+        InteractionState(frozenset(), frozenset()), ScoreState(),
+        suspension=SuspensionDynamicsState(.3),
+    )
+    params = VehicleParameters(2.5, .3, .6, 0., 20., 0., 0., 50., 9.81)
+    result = step_world(
+        TrackWorld(surfaces=(patch("road", 0., length=50.),), obstacles=(barrier,)),
+        world, VehicleControl(0., 0., 0.), params, .2, .5,
+        body_geometry=BODY, independent_suspension_policy=POLICY,
+    )
+    assert result.events == (ObstacleHit("barrier"),)
+    assert result.state.vehicle.position == start.position
+    assert result.state.suspension == world.suspension
+    assert result.suspension_telemetry is None
+
+
+def test_world_suspension_state_continues_across_sequential_steps():
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters
+    from f1rl.sandbox.world import WorldState, step_world
+
+    p = car()
+    state = WorldState(p, TrackState(frozenset()),
+                       InteractionState(frozenset(), frozenset()), ScoreState(),
+                       suspension=SuspensionDynamicsState(.3))
+    params = VehicleParameters(2.5, .3, .6, 0., 20., 0., 0., 0., 9.81)
+    args = (TrackWorld(surfaces=(patch("road", 0., length=8.),)),
+            VehicleControl(0., 0., 0.), params, .02, .5)
+    first = step_world(args[0], state, *args[1:],
+                       body_geometry=BODY, independent_suspension_policy=POLICY)
+    second = step_world(args[0], first.state, *args[1:],
+                        body_geometry=BODY, independent_suspension_policy=POLICY)
+    assert second.state.suspension is not None
+    assert second.state.vehicle.position.y == pytest.approx(.3)
+    assert second.suspension_telemetry is not None
