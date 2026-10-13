@@ -10,6 +10,9 @@ from .dynamics.modifiers import MotionModifiers
 from .dynamics.vehicle_dynamics import compute_motion
 from .interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
 from .road_footprint import swept_body_road_union
+from .partial_wheel_release import (
+    AutomaticTakeoffPolicy, GroundSupportStep, integrate_partial_support,
+)
 from .ballistic_flight import (
     BallisticFlightPolicy, FlightPhysicsError, FlightState,
     FlightStep, FlightTransition, authorize_takeoff, advance_ballistic_flight,
@@ -54,6 +57,7 @@ class WorldStepResult:
     events: tuple[WorldEvent, ...]
     suspension_telemetry: SuspensionDynamicsResult | None = None
     flight_telemetry: FlightStep | None = None
+    partial_support_telemetry: GroundSupportStep | None = None
 
 
 def step_world(
@@ -69,6 +73,7 @@ def step_world(
     multi_surface_policy: MultiSurfaceSuspensionPolicy | None = None,
     independent_suspension_policy: IndependentSuspensionDynamicsPolicy | None = None,
     ballistic_flight_policy: BallisticFlightPolicy | None = None,
+    automatic_takeoff_policy: AutomaticTakeoffPolicy | None = None,
 ) -> WorldStepResult:
     if ramp_support_policy is not None and (body_geometry is None or not isinstance(ramp_support_policy, PlanarRampPolicy)):
         raise ValueError('ramp_support_policy requires full-body geometry and PlanarRampPolicy')
@@ -98,9 +103,20 @@ def step_world(
             raise FlightPhysicsError("grounded flight state disagrees with vehicle")
         if state.flight.phase == "airborne" and state.vehicle.grounded:
             raise FlightPhysicsError("airborne flight state disagrees with vehicle")
+    if automatic_takeoff_policy is not None:
+        if (not isinstance(automatic_takeoff_policy, AutomaticTakeoffPolicy)
+                or ballistic_flight_policy is None
+                or independent_suspension_policy is None
+                or state.flight.phase != "grounded"):
+            raise ValueError(
+                "automatic_takeoff_policy requires grounded flight state, matching "
+                "ballistic policy and independent suspension"
+            )
     current_query = track.query_point(state.vehicle.position, max_surface_distance, state.track)
 
     flight_telemetry: FlightStep | None = None
+    partial_support_telemetry: GroundSupportStep | None = None
+    auto_released = False
     flight_events: tuple[FlightTransition, ...] = ()
     suspension_telemetry: SuspensionDynamicsResult | None = None
     suspension_override: SuspensionDynamicsState | None = None
@@ -153,9 +169,34 @@ def step_world(
         motion = compute_motion(state.vehicle, control, parameters, current_query.contact, modifiers)
         candidate = integrate(state.vehicle, motion, parameters, current_query.contact, dt)
         swept_poses = (state.vehicle, candidate)
-        if independent_suspension_policy is not None:
-            # Prescribed XZ/yaw are still from the legacy bicycle model; the
-            # grounded suspension solver owns height, pitch and roll.
+        if automatic_takeoff_policy is not None:
+            partial_support_telemetry = integrate_partial_support(
+                state.vehicle, candidate, state.suspension,
+                independent_suspension_policy, body_geometry, track.surfaces,
+                automatic_takeoff_policy, dt=dt, gravity_mps2=parameters.gravity,
+            )
+            candidate = partial_support_telemetry.vehicle
+            swept_poses = partial_support_telemetry.poses
+            if partial_support_telemetry.takeoff_at_s is not None:
+                auto_released = True
+                departure = partial_support_telemetry.takeoff_at_s
+                flight_events = (FlightTransition("takeoff", departure),)
+                remaining = partial_support_telemetry.remaining_dt_s
+                if remaining > 0.:
+                    flight_telemetry = advance_ballistic_flight(
+                        candidate, ballistic_flight_policy,
+                        body_geometry, track.surfaces,
+                        tuple(item.volume for item in track.obstacles),
+                        dt=remaining, gravity_mps2=parameters.gravity,
+                    )
+                    if flight_telemetry.vehicle.grounded:
+                        raise FlightPhysicsError(
+                            "same-tick automatic recontact lacks a registered impulse solver"
+                        )
+                    candidate = flight_telemetry.vehicle
+                    swept_poses = (*swept_poses, *flight_telemetry.poses[1:])
+        elif independent_suspension_policy is not None:
+            # Legacy XZ/yaw stay prescribed; default 4-wheel solver unchanged.
             suspension_telemetry = integrate_independent_suspension(
                 state.vehicle, candidate, state.suspension,
                 independent_suspension_policy, body_geometry, track.surfaces,
@@ -185,7 +226,7 @@ def step_world(
                 if verdict.contact:
                     body_hits.append(obstacle)
                     break
-        if flight_active and body_hits:
+        if (flight_active or auto_released) and body_hits:
             raise FlightPhysicsError(
                 "flight/substep body hit obstacle: no scored impact response registered"
             )
@@ -193,7 +234,7 @@ def step_world(
 
     accepted, obstacle_events = resolve_obstacle_block(state.vehicle, candidate, candidate_query)
     if body_geometry is not None:
-        if flight_active:
+        if flight_active or auto_released:
             # Airborne path is permitted only by explicit flight contract;
             # any touchdown and grounded remainder have separate certificates.
             road_verdict = None
@@ -238,7 +279,7 @@ def step_world(
         if obstacle_events
         else candidate_query
     )
-    if flight_active:
+    if flight_active or auto_released:
         # Legacy point-volume triggers are not a valid airborne/landing race
         # rule. Do not generate checkpoints/finish/pickups for these transitions.
         interaction_state, checkpoint_events, finish_events = state.interactions, (), ()
@@ -268,10 +309,12 @@ def step_world(
             state.suspension if obstacle_events else
             suspension_telemetry.dynamics if suspension_telemetry is not None else
             suspension_override if suspension_override is not None else
+            partial_support_telemetry.dynamics if partial_support_telemetry is not None else
             state.suspension
         ),
         flight=(
             flight_telemetry.flight if flight_telemetry is not None
+            else FlightState("airborne") if auto_released
             else state.flight
         ),
     )
@@ -286,4 +329,5 @@ def step_world(
         next_state, final_query, modifiers, events,
         suspension_telemetry if not obstacle_events else None,
         flight_telemetry,
+        partial_support_telemetry,
     )
