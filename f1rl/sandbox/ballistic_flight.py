@@ -157,7 +157,7 @@ def _landable_events(start, dt, gravity, policy, body, patches, polygons):
                                   start.velocity.y, gravity)
         if body_t is None and _intersection(body_poly, poly):
             raise FlightPhysicsError("body starts penetrating eligible road level")
-        if 0. < body_t <= dt:
+        if body_t is not None and 0. < body_t <= dt:
             body_xz = tuple((x + start.velocity.x*body_t,
                              z + start.velocity.z*body_t) for x, z in body_poly)
             if _intersection(body_xz, poly):
@@ -169,7 +169,7 @@ def _landable_events(start, dt, gravity, policy, body, patches, polygons):
                     start.position.x + local.x, start.position.z + local.z, poly
             ):
                 raise FlightPhysicsError("wheel begins under an eligible road level")
-            if 0. < t <= dt:
+            if t is not None and 0. < t <= dt:
                 wx = start.position.x + local.x + start.velocity.x*t
                 wz = start.position.z + local.z + start.velocity.z*t
                 if _within_shape(wx, wz, poly):
