@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from math import acos, hypot, isfinite, sqrt
 
 from .body_collision import VehicleBodyGeometry, sweep_body_against_obstacle
+from .dynamics.integrator import _advance_orientation
 from .geometry.rotation import Quaternion
 from .geometry.vector import Vec3
 from .multi_surface_support import (
@@ -121,8 +122,39 @@ def _flight_pose(start: VehicleState, t: float, gravity: float) -> VehicleState:
     return VehicleState(
         start.position + start.velocity*t + Vec3(0., -.5*gravity*t*t, 0.),
         start.velocity + Vec3(0., -gravity*t, 0.),
-        start.orientation, start.angular_velocity, False,
+        _advance_orientation(start.orientation, start.angular_velocity, t),
+        start.angular_velocity, False,
     )
+
+
+def _rotating_exit_certified(start, policy, body, patches, polygons, dt, gravity):
+    """Narrow but provable one-platform, outward-only rotating flight.
+
+    Each wheel's forward coordinate must already be outside the platform,
+    and its minimum forward speed must remain strictly positive. The chassis
+    must stay above the flat road over the entire interval under a bound on
+    translation, gravitational sag and rotation. Otherwise reject rather than
+    claiming a rotated-touchdown model which does not exist yet.
+    """
+    if len(patches) != 1:
+        raise FlightPhysicsError("rotating flight requires one flat exit platform")
+    patch, shape = patches[0], polygons[0]
+    forward = patch.forward
+    horizontal_speed = start.velocity.dot(forward)
+    omega = start.angular_velocity.magnitude
+    max_wheel_radius = max(w.magnitude for w in policy.contact.wheels.positions)
+    if horizontal_speed <= omega*max_wheel_radius + 1e-9:
+        raise FlightPhysicsError("rotating airborne path not monotonic away from road")
+    for local in policy.contact.wheels.positions:
+        world = start.position + start.orientation.rotate(local)
+        if (world-patch.origin).dot(forward) <= patch.length/2.:
+            raise FlightPhysicsError("rotating takeoff wheel still overlaps exit platform")
+    # Even while body overhangs the edge, this globally conservative bound
+    # guarantees that no underside point reaches the road elevation.
+    start_bottom = min(v.y for v in _body_corners(start, body))
+    y_motion = abs(start.velocity.y)*dt+.5*gravity*dt*dt+omega*body.motion_radius_m*dt
+    if start_bottom-y_motion <= patch.origin.y + 1e-9:
+        raise FlightPhysicsError("rotating airborne chassis clearance unresolved")
 
 
 def _descending_root(height: float, vertical_velocity: float, gravity: float) -> float | None:
@@ -240,9 +272,15 @@ def advance_ballistic_flight(
             or not isinstance(gravity_mps2, (int, float))
             or not isfinite(gravity_mps2) or gravity_mps2 <= 0.):
         raise ValueError("positive finite dt and gravity required")
-    if airborne.angular_velocity.magnitude > _EPS:
-        raise FlightPhysicsError("rotating airborne body unsupported until continuous attitude solver")
     patches, polygons = _flat_atlas(surfaces, policy)
+    if airborne.angular_velocity.magnitude > _EPS:
+        _rotating_exit_certified(
+            airborne, policy, body, patches, polygons, dt, gravity_mps2,
+        )
+        arc = _certify_obstacle_arc(
+            airborne, dt, gravity_mps2, body, obstacles, policy.collision_segments,
+        )
+        return FlightStep(arc[-1], FlightState("airborne"), arc, (), 0.)
     # A zero-time descending wheel contact must never be ignored simply
     # because the later quadratic descending root is t=0.
     initial_footprint = body_xz_polygon(airborne, body)
