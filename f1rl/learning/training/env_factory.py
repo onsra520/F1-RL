@@ -7,6 +7,7 @@ import numpy as np
 
 from ...runtime.simulation import SimulationConfig
 from ...sandbox.body_collision import VehicleBodyGeometry
+from ...sandbox.ramp_support import PlanarRampPolicy
 from ...sandbox.track.model import TrackWorld
 from ...sandbox.vehicle import VehicleParameters
 from ...sandbox.world import WorldState
@@ -30,6 +31,7 @@ class F1RLEnvFactory:
     navigation: AuthoredNavigation | None = None
     offtrack_config: OffTrackConfig | None = None
     body_geometry: VehicleBodyGeometry | None = None
+    ramp_support_policy: PlanarRampPolicy | None = None
 
     def __post_init__(self) -> None:
         values = (
@@ -50,6 +52,8 @@ class F1RLEnvFactory:
             raise ValueError("offtrack_config must be OffTrackConfig or None")
         if self.body_geometry is not None and not isinstance(self.body_geometry, VehicleBodyGeometry):
             raise ValueError("body_geometry must be VehicleBodyGeometry or None")
+        if self.ramp_support_policy is not None and (self.body_geometry is None or not isinstance(self.ramp_support_policy, PlanarRampPolicy)):
+            raise ValueError('ramp_support_policy requires body geometry and PlanarRampPolicy')
 
     def create(self) -> F1RLEnv:
         return F1RLEnv(
@@ -63,6 +67,7 @@ class F1RLEnvFactory:
             navigation=self.navigation,
             offtrack_config=self.offtrack_config,
             body_geometry=self.body_geometry,
+            ramp_support_policy=self.ramp_support_policy,
         )
 
 
@@ -116,6 +121,7 @@ class TrainingScenarioSet:
             "episode_config",
             "offtrack_config",
             "body_geometry",
+            "ramp_support_policy",
         )
         for scenario in self.scenarios[1:]:
             if any(
