@@ -15,9 +15,10 @@ from .body_collision import VehicleBodyGeometry, sweep_body_against_obstacle
 from .geometry.rotation import Quaternion
 from .geometry.vector import Vec3
 from .multi_surface_support import (
-    MultiSurfaceSuspensionPolicy, _atlas, _polygon, _within_shape, _body_corners,
-    _intersection, _uncovered_area, certify_multisurface_support,
+    MultiSurfaceSuspensionPolicy, _atlas, _within_shape, _body_corners,
+    _intersection, certify_multisurface_support,
 )
+from .road_footprint import _hull
 from .road_footprint import body_xz_polygon
 from .track.patch import PlanarSurfacePatch
 from .track.volume import OrientedBoxVolume
@@ -240,9 +241,38 @@ def advance_ballistic_flight(
     if airborne.angular_velocity.magnitude > _EPS:
         raise FlightPhysicsError("rotating airborne body unsupported until continuous attitude solver")
     patches, polygons = _flat_atlas(surfaces, policy)
+    # A zero-time descending wheel contact must never be ignored simply
+    # because the later quadratic descending root is t=0.
+    initial_footprint = body_xz_polygon(airborne, body)
+    initial_bottom_y = min(v.y for v in _body_corners(airborne, body))
+    wheel_offsets = tuple(airborne.orientation.rotate(w)
+                          for w in policy.contact.wheels.positions)
+    for patch, polygon in zip(patches, polygons, strict=True):
+        if _intersection(initial_footprint, polygon):
+            if initial_bottom_y < patch.origin.y - _EPS:
+                raise FlightPhysicsError("airborne chassis begins penetrating road")
+            if (initial_bottom_y <= patch.origin.y + _EPS
+                    and airborne.velocity.y <= 0.):
+                raise FlightPhysicsError("airborne chassis contacts road at start")
+        for local in wheel_offsets:
+            x, z = airborne.position.x + local.x, airborne.position.z + local.z
+            if _within_shape(x, z, polygon):
+                clearance = airborne.position.y + local.y - patch.origin.y
+                if clearance < -_EPS or (clearance <= _EPS and airborne.velocity.y <= 0.):
+                    raise FlightPhysicsError("airborne wheel begins in descending road contact")
     events = _landable_events(airborne, dt, gravity_mps2, policy, body, patches, polygons)
     first = events[0] if events else None
     end_time = min(dt, first[0]) if first else dt
+    # Conservative lateral-entry guard. A vehicle that has fallen below the
+    # road plane may not enter a road patch sideways without a wheel-first
+    # certified touchdown, even when its vertical down-crossing was outside.
+    endpoint = _flight_pose(airborne, end_time, gravity_mps2)
+    final_poly = body_xz_polygon(endpoint, body)
+    path_hull = _hull((*initial_footprint, *final_poly))
+    body_floor = min(v.y for v in _body_corners(endpoint, body))
+    for patch, polygon in zip(patches, polygons, strict=True):
+        if body_floor < patch.origin.y - _EPS and _intersection(path_hull, polygon):
+            raise FlightPhysicsError("unmodeled airborne lateral entry below road surface")
     poses = _certify_obstacle_arc(
         airborne, end_time, gravity_mps2, body, obstacles, policy.collision_segments,
     )
