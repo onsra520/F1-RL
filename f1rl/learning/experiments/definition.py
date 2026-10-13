@@ -564,6 +564,16 @@ class ExperimentDefinition:
             raise ValueError("frozen experiment requires at least one rangefinder")
         if self.training.protocol_status != "frozen":
             raise ValueError("training protocol must be frozen")
+        if self.metadata.protocol_version == 2:
+            # This cannot substitute for a reviewed/fingerprinted future
+            # release profile, but prevents mechanically promoting the
+            # original exploratory WP7 pilot or mutable root runtime config.
+            profile = self.training.runtime_config
+            if (
+                profile.name in {"config.yml", "wp7-pilot-200k.yml"}
+                or "recovery" in profile.parts
+            ):
+                raise ValueError("protocol v2 frozen requires a non-pilot final training profile")
         if len(self.seeds.ppo) != len(self.seeds.sampling) or len(self.seeds.ppo) < 3:
             raise ValueError("frozen experiment requires at least three paired PPO and sampling seeds")
         if len(set(self.seeds.ppo)) != len(self.seeds.ppo):
