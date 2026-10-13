@@ -155,7 +155,7 @@ def _landable_events(start, dt, gravity, policy, body, patches, polygons):
         # Before touchdown, the whole chassis may NOT have struck this patch.
         body_t = _descending_root(start.position.y + min_body_offset - p.origin.y,
                                   start.velocity.y, gravity)
-        if body_t is None:
+        if body_t is None and _intersection(body_poly, poly):
             raise FlightPhysicsError("body starts penetrating eligible road level")
         if 0. < body_t <= dt + _EPS:
             body_xz = tuple((x + start.velocity.x*body_t,
@@ -165,7 +165,9 @@ def _landable_events(start, dt, gravity, policy, body, patches, polygons):
         for i, local in enumerate(wheel_positions):
             t = _descending_root(start.position.y + local.y - p.origin.y,
                                  start.velocity.y, gravity)
-            if t is None:
+            if t is None and _within_shape(
+                    start.position.x + local.x, start.position.z + local.z, poly
+            ):
                 raise FlightPhysicsError("wheel begins under an eligible road level")
             if 0. < t <= dt + _EPS:
                 wx = start.position.x + local.x + start.velocity.x*t
