@@ -1,0 +1,85 @@
+# 2026-10-13 owner decisions (1B,2B,3B,4B,5A,6B,7B,8B).
+# This file is a preregistered design TARGET, not a runnable PPO profile.
+# The v2 canonical C2 protocol describes historical point-car behavior.
+# Any future full-body training requires a distinct versioned protocol.
+schema_version: 1
+status: design_locked_implementation_pending
+wp0: not_applicable
+decision_codes: [1B, 2B, 3B, 4B, 5A, 6B, 7B, 8B]
+simulation:
+  mode: full_body_3d
+  collision_semantics: swept_obb_conservative_linear_slerp_v1
+  body:
+    length_m: 4.0
+    width_m: 1.8
+    height_m: 1.2
+    # Engineering reference pose, subject to physical feasibility review:
+    # prior point-agent's state.position at 0.5m above the road;
+    # box bottom is 0.2m above the road when local_center_y=+0.3m.
+    local_center_xyz_m: [0.0, 0.3, 0.0]
+    wheelbase_m: 3.0
+    ride_height_m: 0.5
+    # Additional *provisional* engineering values, not owner-selected facts.
+    # x=+-0.75m, z=+-1.5m, y=-0.5m relative to state.position.
+    wheel_points_xyz_m:
+      front_left: [-0.75, -0.5, 1.5]
+      front_right: [0.75, -0.5, 1.5]
+      rear_left: [-0.75, -0.5, -1.5]
+      rear_right: [0.75, -0.5, -1.5]
+  suspension:
+    mode: simplified_independent_four_wheel
+    # Provisional travel limits; per-wheel geometric adjustment, not
+    # claims of measured spring force, slip or real tire dynamics.
+    max_bump_m: 0.12
+    max_droop_m: 0.12
+  airborne:
+    mode: ballistic_gravity_validated_landing
+    # Impact threshold and collision semantics pending feasibility review;
+    # DO NOT convert initial "grounded" flag into validated landing.
+    max_safe_touchdown_vertical_speed_mps: null
+    landing_collision_response: null
+driving:
+  full_body_inside_road_union_required: true
+  route_reference: authored_route_v1
+  soft_deviation_m: 2.0
+  hard_deviation_m: 4.0
+  checkpoint_finish:
+    mode: directed_center_crossing
+    continuous_sweep_required: true
+    ordered_checkpoints_required: true
+  # Hard-offroute termination and recovery semantics need scientific review.
+  hard_route_violation_semantics: null
+reliability:
+  minimum_independent_ppo_seed_pairs: 3
+  confidence_method: exact_one_sided_clopper_pearson
+  confidence_level: 0.95
+  minimum_lower_success_bound_per_train_track: 0.90
+  episodes_per_track_per_model_per_condition: 60
+  evaluation_conditions: [nominal, randomized_train]
+  # Only VALIDATED TRAIN perturbations are allowed. Sampling from these
+  # ranges does NOT automatically make an infeasible spawn a valid episode.
+  spawn_lateral_offset_m: [-0.5, 0.5]
+  spawn_heading_jitter_deg: [-5.0, 5.0]
+  perturbation_seed_protocol: null
+  feasible_spawn_filter: null
+backup:
+  provider: private_google_drive
+  require_sha256_manifest: true
+  require_independent_restore_test: true
+  private_folder_id: null
+evidence_gates:
+  geometry_feasibility: pending
+  multi_patch_road_support: pending
+  airborne_landing_validation: pending
+  continuous_triggers: pending
+  route_and_termination_review: pending
+  training_profile_and_provenance: pending
+  train_only_perturbation_validation: pending
+  independent_ppo_robustness: pending
+  private_backup_restore: pending
+  independent_scientific_review: pending
+heldout:
+  status: sealed
+  evaluation_permitted: false
+scientific_freeze_permitted: false
+wp8_permitted: false
