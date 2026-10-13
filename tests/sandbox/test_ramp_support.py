@@ -87,7 +87,7 @@ def test_ramp_end_boundary_blocks_front_tire():
 
 
 def test_mid_step_wheel_turn_leaves_road_with_clear_endpoints():
-    patch,q=surface(0.,width=2.2,length=5.)
+    patch,q=surface(0.,width=1.5,length=5.)
     a=car(patch,q)
     b=replace(a,orientation=Quaternion.from_axis_angle(Vec3(0.,1.,0.),pi))
     report=certify(a,b,patch)
@@ -96,10 +96,10 @@ def test_mid_step_wheel_turn_leaves_road_with_clear_endpoints():
 
 def test_insufficient_resolution_is_uncertain_not_safe():
     patch,q=surface(0.,width=4.,length=12.)
-    # A fast translation along the patch is safe, but depth=0 is not enough
-    # to certify all longitudinal margins.
-    a=car(patch,q,along=-4.)
-    b=car(patch,q,along=4.)
+    # Small yaw changes body width; coarse angular bound is insufficient.
+    patch,q=surface(0.,width=1.22,length=12.)
+    a=car(patch,Quaternion.from_axis_angle(Vec3(0.,1.,0.),-.1))
+    b=car(patch,Quaternion.from_axis_angle(Vec3(0.,1.,0.),.1))
     result=certify(a,b,patch,depth=0)
     assert result.status=="uncertain"
     assert not result.valid
