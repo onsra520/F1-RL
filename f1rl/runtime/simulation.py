@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from math import isfinite
 
 from ..sandbox.body_collision import VehicleBodyGeometry
+from ..sandbox.ramp_support import PlanarRampPolicy
 from ..sandbox.track.model import TrackWorld
 from ..sandbox.track.query import TrackQuery
 from ..sandbox.vehicle import VehicleControl, VehicleParameters
@@ -60,6 +61,7 @@ class Simulation:
         "_parameters",
         "_config",
         "_body_geometry",
+        "_ramp_support_policy",
         "_state",
         "_snapshot",
     )
@@ -72,6 +74,7 @@ class Simulation:
         config: SimulationConfig,
         *,
         body_geometry: VehicleBodyGeometry | None = None,
+        ramp_support_policy: PlanarRampPolicy | None = None,
     ) -> None:
         self._track = track
         self._initial_state = initial_state
@@ -79,7 +82,12 @@ class Simulation:
         self._config = config
         if body_geometry is not None and not isinstance(body_geometry, VehicleBodyGeometry):
             raise ValueError('body_geometry must be VehicleBodyGeometry or None')
+        if ramp_support_policy is not None and (
+            body_geometry is None or not isinstance(ramp_support_policy, PlanarRampPolicy)
+        ):
+            raise ValueError('ramp_support_policy requires full-body geometry and PlanarRampPolicy')
         self._body_geometry = body_geometry
+        self._ramp_support_policy = ramp_support_policy
         self._state = SimulationState(0, 0.0, initial_state)
         self._snapshot = self._snapshot_for(initial_state)
 
@@ -97,6 +105,7 @@ class Simulation:
             self._config.fixed_dt,
             self._config.max_surface_distance,
             **({"body_geometry": self._body_geometry} if self._body_geometry is not None else {}),
+            **({"ramp_support_policy": self._ramp_support_policy} if self._ramp_support_policy is not None else {}),
         )
         next_tick = current.tick + 1
         elapsed_time = next_tick * self._config.fixed_dt
