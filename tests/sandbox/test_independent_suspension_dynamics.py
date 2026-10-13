@@ -263,3 +263,30 @@ def test_world_suspension_state_continues_across_sequential_steps():
     assert second.state.suspension is not None
     assert second.state.vehicle.position.y == pytest.approx(.3)
     assert second.suspension_telemetry is not None
+
+
+def test_no_hit_obstacle_does_not_break_full_body_sweep():
+    from f1rl.sandbox.entities.obstacle import Obstacle
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.track.volume import OrientedBoxVolume
+    from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters
+    from f1rl.sandbox.world import WorldState, step_world
+
+    p = car()
+    obstacle = Obstacle("far", OrientedBoxVolume(
+        Vec3(100., 2., 100.), Vec3(1., 1., 1.), Quaternion.identity(),
+    ))
+    state = WorldState(p, TrackState(frozenset()),
+                       InteractionState(frozenset(), frozenset()), ScoreState(),
+                       suspension=SuspensionDynamicsState(.3))
+    parameters = VehicleParameters(2.5, .3, .6, 0., 20., 0., 0., 0., 9.81)
+    result = step_world(
+        TrackWorld(surfaces=(patch("road", 0., length=8.),), obstacles=(obstacle,)),
+        state, VehicleControl(0., 0., 0.), parameters, .02, .5,
+        body_geometry=BODY, independent_suspension_policy=POLICY,
+    )
+    assert result.events == ()
+    assert result.state.vehicle.position == p.position
