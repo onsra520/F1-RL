@@ -12,6 +12,11 @@ from dataclasses import dataclass
 from math import acos, atan2, cos, hypot, isfinite, sqrt
 
 from .body_collision import VehicleBodyGeometry, sweep_body_against_obstacle
+from .angular_landing_impulse import (
+    AngularLandingImpulsePolicy, ImpulseResolutionError, WheelImpulseAudit,
+    solve_one_wheel_normal_impulse,
+)
+from .rotating_touchdown import first_rotating_wheel_touchdown
 from .dynamics.integrator import _advance_orientation
 from .geometry.rotation import Quaternion
 from .geometry.vector import Vec3
@@ -22,6 +27,7 @@ from .multi_surface_support import (
 from .road_footprint import _hull
 from .road_footprint import body_xz_polygon
 from .independent_suspension_dynamics import (
+    IndependentSuspensionDynamicsPolicy,
     SuspensionDynamicsState, _horizontal_yaw, suspension_orientation,
     SuspensionResolutionError,
 )
@@ -46,10 +52,15 @@ class BallisticFlightPolicy:
     collision_segments: int = 16
     touchdown_time_epsilon_s: float = 1e-8
     max_patch_tilt_rad: float = 0.  # flat-only unless explicitly opt-in
+    angular_impulse: AngularLandingImpulsePolicy | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.contact, MultiSurfaceSuspensionPolicy):
             raise ValueError("flight requires explicit independent contact contract")
+        if self.angular_impulse is not None and not isinstance(
+            self.angular_impulse, AngularLandingImpulsePolicy
+        ):
+            raise ValueError("angular_impulse must be a registered contact policy")
         for name in ("max_touchdown_vertical_speed_mps",
                      "max_touchdown_tilt_rad", "touchdown_time_epsilon_s"):
             value = getattr(self, name)
@@ -98,6 +109,7 @@ class FlightStep:
     remaining_dt_s: float
     touchdown_speed_mps: float | None = None
     landing_suspension: SuspensionDynamicsState | None = None
+    impulse_audit: WheelImpulseAudit | None = None
 
     def __post_init__(self) -> None:
         if not self.poses or self.vehicle != self.poses[-1]:
@@ -298,11 +310,112 @@ def _stationary_landing_attitude(orientation, height):
     return state
 
 
+def _rotating_impulse_flight(
+    airborne,policy,body,patches,polygons,obstacles,dt,gravity,landing_dynamics,
+):
+    """Opt-in single wheel event; no implied multi-contact impulse acceptance."""
+    option=policy.angular_impulse
+    if option is None or landing_dynamics is None:
+        raise FlightPhysicsError("rotating touchdown requires explicit impulse inertia policy")
+    if landing_dynamics.contact != policy.contact:
+        raise FlightPhysicsError("angular impulse contact geometry mismatch")
+    if airborne.angular_velocity.magnitude > option.max_pre_angular_speed_radps:
+        raise FlightPhysicsError("airborne rotation outside impact policy")
+    if airborne.angular_velocity.magnitude*dt/policy.collision_segments > .1:
+        raise FlightPhysicsError("angular sweep resolution insufficient")
+    if any(abs(p.normal.y-1.) > 1e-9 for p in patches):
+        raise FlightPhysicsError("sloped rotating touchdown needs yaw/contact manifold solver")
+    trajectory=lambda t:_flight_pose(airborne,t,gravity)
+    try:
+        event=first_rotating_wheel_touchdown(
+            trajectory,policy.contact.wheels,(patches,polygons),dt,gravity,option,
+        )
+    except ImpulseResolutionError as exc:
+        raise FlightPhysicsError(f"rotating wheel event unresolved: {exc}") from exc
+    end_time=event.time_s if event is not None else dt
+    try:
+        certify_swept_chassis_clearance(
+            trajectory,0.,end_time,body,(patches,polygons),
+            max_subdivisions=12,gravity_mps2=gravity,
+        )
+    except SuspensionResolutionError as exc:
+        raise FlightPhysicsError(f"rotating body/road sweep unresolved: {exc}") from exc
+    poses=_certify_obstacle_arc(
+        airborne,end_time,gravity,body,obstacles,policy.collision_segments,
+    )
+    if event is None:
+        return FlightStep(poses[-1],FlightState("airborne"),poses,(),0.)
+    incoming=trajectory(end_time)
+    road=next(p for p in patches if p.id==event.patch_id)
+    if abs(road.normal.y-1.) > 1e-9:
+        raise FlightPhysicsError("rotating impulse road must be flat")
+    # A rigid-body manifold with two simultaneous wheel references requires
+    # a different solver: reject even if both fit within suspension travel.
+    for idx,local in enumerate(policy.contact.wheels.positions):
+        if idx == event.wheel_index:
+            continue
+        point=incoming.position+incoming.orientation.rotate(local)
+        if _within_shape(point.x,point.z,
+                         polygons[patches.index(road)]):
+            if abs((point-road.origin).dot(road.normal)) <= option.unique_contact_gap_m:
+                raise FlightPhysicsError("simultaneous wheel contact manifold unsupported")
+    wheel_local=policy.contact.wheels.positions[event.wheel_index]
+    wheel_world=incoming.position+incoming.orientation.rotate(wheel_local)
+    normal_velocity=(incoming.velocity+incoming.angular_velocity.cross(
+        wheel_world-incoming.position
+    )).dot(road.normal)
+    if -normal_velocity > policy.max_touchdown_vertical_speed_mps:
+        raise FlightPhysicsError("unsafe rotating wheel contact speed")
+    up=incoming.orientation.rotate(_UP)
+    tilt=acos(max(-1.,min(1.,up.dot(_UP))))
+    if tilt > policy.max_touchdown_tilt_rad:
+        raise FlightPhysicsError("rotating touchdown exceeds registered tilt")
+    try:
+        post,audit=solve_one_wheel_normal_impulse(
+            incoming,wheel_local,event.wheel_index,event.patch_id,
+            road.normal,landing_dynamics,option,
+        )
+    except ImpulseResolutionError as exc:
+        raise FlightPhysicsError(f"angular landing impulse invalid: {exc}") from exc
+    attitude=_stationary_landing_attitude(incoming.orientation,incoming.position.y)
+    yaw=_horizontal_yaw(incoming.orientation)
+    q_conj=Quaternion(yaw.w,-yaw.x,-yaw.y,-yaw.z)
+    angular_local=q_conj.rotate(post.angular_velocity)
+    if abs(angular_local.y) > option.max_ground_yaw_rate_radps:
+        raise FlightPhysicsError("post-impact yaw component beyond 3DOF ground model")
+    pitch_rate=angular_local.x
+    roll_rate=angular_local.z/cos(attitude.pitch_x_rad)
+    if (abs(pitch_rate) > option.max_post_angular_speed_radps
+            or abs(roll_rate) > option.max_post_angular_speed_radps):
+        raise FlightPhysicsError("post-impact suspension rate exceeds policy")
+    suspension=SuspensionDynamicsState(
+        post.position.y,post.velocity.y,
+        attitude.pitch_x_rad,pitch_rate,
+        attitude.roll_z_rad,roll_rate,
+    )
+    grounded=VehicleState(
+        post.position,post.velocity,post.orientation,post.angular_velocity,True,
+    )
+    support=certify_multisurface_support(
+        grounded,grounded,body,policy.contact,tuple(patches),
+    )
+    if not support.valid:
+        raise FlightPhysicsError(
+            f"post-impulse wheel/body support invalid {support.status}: {support.reason}"
+        )
+    return FlightStep(
+        grounded,FlightState("grounded"),(*poses[:-1],grounded),
+        (FlightTransition("landing",end_time,event.patch_id),),
+        max(0.,dt-end_time),-normal_velocity,suspension,audit,
+    )
+
+
 def advance_ballistic_flight(
     airborne: VehicleState, policy: BallisticFlightPolicy,
     body: VehicleBodyGeometry, surfaces: tuple[PlanarSurfacePatch, ...],
     obstacles: tuple[OrientedBoxVolume, ...], *,
     dt: float, gravity_mps2: float,
+    landing_dynamics: IndependentSuspensionDynamicsPolicy | None = None,
 ) -> FlightStep:
     """Advance exact gravity-only path, with certified early contact or rejection.
 
@@ -320,6 +433,11 @@ def advance_ballistic_flight(
             or not isfinite(gravity_mps2) or gravity_mps2 <= 0.):
         raise ValueError("positive finite dt and gravity required")
     patches, polygons = _flat_atlas(surfaces, policy)
+    if airborne.angular_velocity.magnitude > _EPS and policy.angular_impulse is not None:
+        return _rotating_impulse_flight(
+            airborne,policy,body,patches,polygons,obstacles,dt,gravity_mps2,
+            landing_dynamics,
+        )
     if airborne.angular_velocity.magnitude > _EPS:
         # The existing OBB sweep interpolates orientation via shortest-arc
         # SLERP. Rotation > pi per sweep segment could alias a full turn and
