@@ -121,7 +121,7 @@ def solve_one_wheel_normal_impulse(
 ) -> tuple[VehicleState, WheelImpulseAudit]:
     """Apply frictionless normal J at an isolated closing wheel reference.
 
-    J = -(1+e) v_contact_n / [1/m + (r×n)·I⁻¹(r×n)].
+    J = -(1+e) v_contact_n / [1/m + (r x n) * I^-1(r x n)].
 
     Uses the existing yaw-aligned pitch/roll inertia only, and rejects any
     yaw torque/spin. Velocity update conserves tangential *impulse* (zero
