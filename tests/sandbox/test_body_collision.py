@@ -157,3 +157,26 @@ def test_world_rejects_invalid_optin_type() -> None:
     with pytest.raises(ValueError,match="body_geometry"):
         step_world(TrackWorld(surfaces=(road,)),world,
             VehicleControl(0.,0.,0.),params,.1,.5,body_geometry="car")
+
+
+def test_unresolved_world_sweep_invalidates_rollout_without_fake_hit(monkeypatch) -> None:
+    import f1rl.sandbox.world as world_module
+    from f1rl.sandbox.body_collision import SweptCollisionResult
+
+    road=PlanarSurfacePatch(
+        "road",Vec3(0.,0.,0.),Vec3(0.,0.,1.),
+        Vec3(0.,1.,0.),20.,100.,
+    )
+    track=TrackWorld(surfaces=(road,),obstacles=(Obstacle("uncertain",volume(z=20.)),))
+    previous=state(y=.3)
+    world=WorldState(previous,TrackState(frozenset()),
+        InteractionState(frozenset(),frozenset()),ScoreState())
+    params=VehicleParameters(2.5,.3,.6,0.,20.,0.,0.,50.,9.81)
+    monkeypatch.setattr(
+        world_module,"sweep_body_against_obstacle",
+        lambda *args,**kwargs: SweptCollisionResult(False,True,1),
+    )
+    with pytest.raises(RuntimeError,match="rollout is invalid"):
+        step_world(track,world,VehicleControl(0.,0.,0.),params,.1,.5,body_geometry=BODY)
+    # The original WorldState remains immutable and no fictitious hit is emitted.
+    assert world.vehicle==previous
