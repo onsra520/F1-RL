@@ -23,6 +23,17 @@ _V1_SEMANTICS = {
     "reward": "target-progress-collision-time-v1",
     "race": "single-lap-ordered-checkpoints-v1",
 }
+_V2_SEMANTICS = {
+    "algorithm": "ppo",
+    "policy": "MlpPolicy",
+    "action": "steering-throttle-brake0-v1",
+    "observation": "rangefinders-local-route-navigation-v1",
+    "reward": "route-highwater-progress-collision-time-offtrack-v1",
+    "race": "single-lap-ordered-checkpoints-v1",
+    "dynamics": "ground-no-slip-air-ballistic-v1",
+    "navigation": "authored-surface-polyline-endpoint-v1",
+}
+_SEMANTICS_BY_VERSION = {1: _V1_SEMANTICS, 2: _V2_SEMANTICS}
 _ROOT_KEYS = {"experiment", "semantics", "environment", "training", "seeds", "tracks", "evaluation"}
 _VEHICLE_KEYS = {
     "wheelbase",
@@ -142,11 +153,23 @@ class ExperimentSemantics:
     observation: str
     reward: str
     race: str
+    dynamics: str | None = None
+    navigation: str | None = None
 
     def __post_init__(self) -> None:
-        for name, expected in _V1_SEMANTICS.items():
-            if getattr(self, name) != expected:
-                raise ValueError(f"{name} must be {expected!r} for protocol v1")
+        # A legacy v1 tuple and the authored-route v2 tuple are indivisible.
+        # Do not permit mixing an observation from one version with the reward
+        # from another, or quietly defaulting the v2 dynamics/navigation.
+        if not any(
+            all(getattr(self, name) == value for name, value in expected.items())
+            and all(
+                getattr(self, name) is None
+                for name in ("dynamics", "navigation")
+                if name not in expected
+            )
+            for expected in _SEMANTICS_BY_VERSION.values()
+        ):
+            raise ValueError("experiment semantics must exactly match one supported protocol version")
 
 
 @dataclass(frozen=True, slots=True)
@@ -240,14 +263,35 @@ class RewardExperimentConfig:
     target_progress_weight_per_meter: float | None = None
     collision_penalty: float | None = None
     time_penalty_per_second: float | None = None
+    route_progress_weight_per_meter: float | None = None
+    offtrack_penalty: float | None = None
 
     def __post_init__(self) -> None:
         for name in (
             "target_progress_weight_per_meter",
             "collision_penalty",
             "time_penalty_per_second",
+            "route_progress_weight_per_meter",
+            "offtrack_penalty",
         ):
             object.__setattr__(self, name, _require_non_negative_optional(getattr(self, name), name))
+
+
+@dataclass(frozen=True, slots=True)
+class OffTrackExperimentConfig:
+    lateral_limit_meters: float
+    max_consecutive_steps: int
+
+    def __post_init__(self) -> None:
+        limit = _require_positive_optional(self.lateral_limit_meters, "offtrack.lateral_limit_meters")
+        if limit is None:
+            raise ValueError("offtrack.lateral_limit_meters is required")
+        object.__setattr__(self, "lateral_limit_meters", limit)
+        if (
+            type(self.max_consecutive_steps) is not int
+            or self.max_consecutive_steps <= 0
+        ):
+            raise ValueError("offtrack.max_consecutive_steps must be a positive integer")
 
 
 @dataclass(frozen=True, slots=True)
@@ -328,6 +372,7 @@ class ExperimentDefinition:
     seeds: SeedProtocol
     tracks: TrackExperimentConfig
     evaluation: EvaluationExperimentConfig
+    offtrack: OffTrackExperimentConfig | None = None
 
     def __post_init__(self) -> None:
         expected = (
@@ -346,6 +391,25 @@ class ExperimentDefinition:
         for value, expected_type, name in expected:
             if not isinstance(value, expected_type):
                 raise ValueError(f"{name} must be {expected_type.__name__}")
+        version = self.metadata.protocol_version
+        if version not in _SEMANTICS_BY_VERSION:
+            raise ValueError("unsupported experiment protocol_version")
+        required = _SEMANTICS_BY_VERSION[version]
+        if any(getattr(self.semantics, key) != value for key, value in required.items()):
+            raise ValueError("semantics do not match experiment protocol_version")
+        if version == 1:
+            if (
+                self.offtrack is not None
+                or self.reward.route_progress_weight_per_meter is not None
+                or self.reward.offtrack_penalty is not None
+            ):
+                raise ValueError("protocol v1 must not include C2 route/offtrack fields")
+        else:
+            if (
+                not isinstance(self.offtrack, OffTrackExperimentConfig)
+                or self.reward.target_progress_weight_per_meter is not None
+            ):
+                raise ValueError("protocol v2 requires offtrack and forbids legacy target progress")
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> ExperimentDefinition:
@@ -359,9 +423,15 @@ class ExperimentDefinition:
         except (OSError, UnicodeError, yaml.YAMLError) as error:
             raise ValueError("failed to load experiment definition YAML") from error
 
-        root = _exact_mapping(document, _ROOT_KEYS, "root")
-        metadata = _exact_mapping(root["experiment"], {"id", "protocol_version", "status"}, "experiment")
-        semantics = _exact_mapping(root["semantics"], set(_V1_SEMANTICS), "semantics")
+        if not isinstance(document, dict):
+            raise ValueError("experiment definition root must be a mapping")
+        metadata = _exact_mapping(document.get("experiment"), {"id", "protocol_version", "status"}, "experiment")
+        version = metadata["protocol_version"]
+        if type(version) is not int or version not in _SEMANTICS_BY_VERSION:
+            raise ValueError("unsupported experiment protocol_version")
+        expected_root = _ROOT_KEYS | ({"offtrack"} if version == 2 else set())
+        root = _exact_mapping(document, expected_root, "root")
+        semantics = _exact_mapping(root["semantics"], set(_SEMANTICS_BY_VERSION[version]), "semantics")
         environment = _exact_mapping(
             root["environment"],
             {"vehicle", "simulation", "observation", "reward", "episode"},
@@ -378,15 +448,24 @@ class ExperimentDefinition:
             {"velocity_scale", "target_distance_scale", "rangefinders"},
             "environment.observation",
         )
+        progress_key = "route_progress" if version == 2 else "target_progress"
         reward = _exact_mapping(
             environment["reward"],
-            {"target_progress", "collision", "time"},
+            {progress_key, "collision", "time"} | ({"offtrack"} if version == 2 else set()),
             "environment.reward",
         )
-        target_progress = _exact_mapping(
-            reward["target_progress"],
+        progress = _exact_mapping(
+            reward[progress_key],
             {"weight_per_meter"},
-            "environment.reward.target_progress",
+            f"environment.reward.{progress_key}",
+        )
+        offtrack_reward = (
+            _exact_mapping(reward["offtrack"], {"penalty"}, "environment.reward.offtrack")
+            if version == 2 else None
+        )
+        offtrack = (
+            _exact_mapping(root["offtrack"], {"lateral_limit_meters", "max_consecutive_steps"}, "offtrack")
+            if version == 2 else None
         )
         collision = _exact_mapping(
             reward["collision"],
@@ -420,9 +499,11 @@ class ExperimentDefinition:
                 rangefinders=_rangefinders(observation["rangefinders"]),
             ),
             reward=RewardExperimentConfig(
-                target_progress_weight_per_meter=target_progress["weight_per_meter"],
+                target_progress_weight_per_meter=progress["weight_per_meter"] if version == 1 else None,
                 collision_penalty=collision["penalty"],
                 time_penalty_per_second=time["penalty_per_second"],
+                route_progress_weight_per_meter=progress["weight_per_meter"] if version == 2 else None,
+                offtrack_penalty=offtrack_reward["penalty"] if offtrack_reward is not None else None,
             ),
             episode=EpisodeExperimentConfig(episode["max_steps"]),
             training=TrainingExperimentConfig(
@@ -439,6 +520,7 @@ class ExperimentDefinition:
                 tuple(_sequence(tracks["heldout_ids"], "tracks.heldout_ids")),
             ),
             evaluation=EvaluationExperimentConfig(evaluation["deterministic_policy"]),
+            offtrack=OffTrackExperimentConfig(**offtrack) if offtrack is not None else None,
         )
 
     def require_frozen(self) -> None:
@@ -459,9 +541,19 @@ class ExperimentDefinition:
             ("simulation.max_surface_distance", self.simulation.max_surface_distance),
             ("observation.velocity_scale", self.observation.velocity_scale),
             ("observation.target_distance_scale", self.observation.target_distance_scale),
-            ("reward.target_progress_weight_per_meter", self.reward.target_progress_weight_per_meter),
+            (
+                "reward.progress_weight_per_meter",
+                self.reward.route_progress_weight_per_meter
+                if self.metadata.protocol_version == 2
+                else self.reward.target_progress_weight_per_meter,
+            ),
             ("reward.collision_penalty", self.reward.collision_penalty),
             ("reward.time_penalty_per_second", self.reward.time_penalty_per_second),
+            *(
+                (("reward.offtrack_penalty", self.reward.offtrack_penalty),)
+                if self.metadata.protocol_version == 2
+                else ()
+            ),
             ("episode.max_steps", self.episode.max_steps),
         )
         unresolved = [name for name, value in required_scalars if value is None]
