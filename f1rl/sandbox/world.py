@@ -136,6 +136,7 @@ def step_world(
             body_geometry, track.surfaces,
             tuple(item.volume for item in track.obstacles),
             dt=dt, gravity_mps2=parameters.gravity,
+            landing_dynamics=independent_suspension_policy,
         )
         candidate = flight_telemetry.vehicle
         flight_events += flight_telemetry.transitions
@@ -191,6 +192,7 @@ def step_world(
                         body_geometry, track.surfaces,
                         tuple(item.volume for item in track.obstacles),
                         dt=remaining, gravity_mps2=parameters.gravity,
+                        landing_dynamics=independent_suspension_policy,
                     )
                     if flight_telemetry.vehicle.grounded:
                         raise FlightPhysicsError(
