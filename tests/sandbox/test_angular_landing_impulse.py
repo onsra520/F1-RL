@@ -66,7 +66,7 @@ def test_restitution_bounds_kinetic_energy_and_relative_speed():
     after,audit=solve(source,policy=replace(POLICY,restitution=.5))
     assert audit.normal_speed_after_mps==pytest.approx(-.5*audit.normal_speed_before_mps)
     assert audit.pre_kinetic_energy_j + 1e-7 >= audit.post_kinetic_energy_j
-    elastic,eaudit=solve(source,policy=replace(POLICY,restitution=1.))
+    elastic,eaudit=solve(source,policy=replace(POLICY,restitution=1.,max_post_angular_speed_radps=10.))
     assert eaudit.pre_kinetic_energy_j==pytest.approx(eaudit.post_kinetic_energy_j,abs=1e-7)
 
 
