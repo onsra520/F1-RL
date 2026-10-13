@@ -152,3 +152,57 @@ def test_v2_unresolved_route_reward_is_not_freezeable() -> None:
             seeds=SeedProtocol((100, 101, 102), (200, 201, 202)),
             reward=replace(v2.reward, route_progress_weight_per_meter=None),
         ).require_frozen()
+
+
+def test_canonical_c2_matches_actual_train_candidate_without_heldout_rollouts() -> None:
+    from f1rl.learning.experiments.c2_alignment import verify_draft_c2_alignment
+    from f1rl.learning.reconstruction import RecoveryCandidate
+
+    candidate = RecoveryCandidate.from_yaml(Path("configs/recovery/wp7-c2-candidate.yml"))
+    verify_draft_c2_alignment(ExperimentDefinition.from_yaml(V2), candidate)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("wheelbase", 2.5),
+    ("ride_height", 0.7),
+])
+def test_candidate_alignment_rejects_environment_drift(field, value) -> None:
+    from f1rl.learning.experiments.c2_alignment import verify_draft_c2_alignment
+    from f1rl.learning.reconstruction import RecoveryCandidate
+
+    canonical = ExperimentDefinition.from_yaml(V2)
+    candidate = RecoveryCandidate.from_yaml(Path("configs/recovery/wp7-c2-candidate.yml"))
+    modified = replace(canonical, vehicle=replace(canonical.vehicle, **{field: value}))
+    with pytest.raises(ValueError, match="environment"):
+        verify_draft_c2_alignment(modified, candidate)
+
+
+def test_candidate_alignment_rejects_reward_and_corridor_drift() -> None:
+    from f1rl.learning.experiments.c2_alignment import verify_draft_c2_alignment
+    from f1rl.learning.reconstruction import RecoveryCandidate
+
+    canonical = ExperimentDefinition.from_yaml(V2)
+    candidate = RecoveryCandidate.from_yaml(Path("configs/recovery/wp7-c2-candidate.yml"))
+    for modified in (
+        replace(canonical, reward=replace(canonical.reward, route_progress_weight_per_meter=1.5)),
+        replace(canonical, reward=replace(canonical.reward, offtrack_penalty=3.0)),
+        replace(canonical, offtrack=replace(canonical.offtrack, lateral_limit_meters=3.0)),
+        replace(canonical, offtrack=replace(canonical.offtrack, max_consecutive_steps=5)),
+    ):
+        with pytest.raises(ValueError, match="reward/offtrack"):
+            verify_draft_c2_alignment(modified, candidate)
+
+
+def test_candidate_alignment_rejects_fake_freeze_or_seed_promotion() -> None:
+    from f1rl.learning.experiments.c2_alignment import verify_draft_c2_alignment
+    from f1rl.learning.reconstruction import RecoveryCandidate
+
+    canonical = ExperimentDefinition.from_yaml(V2)
+    candidate = RecoveryCandidate.from_yaml(Path("configs/recovery/wp7-c2-candidate.yml"))
+    for modified in (
+        replace(canonical, metadata=replace(canonical.metadata, status="frozen")),
+        replace(canonical, training=replace(canonical.training, protocol_status="frozen")),
+        replace(canonical, seeds=SeedProtocol((100, 101, 102), (200, 201, 202))),
+    ):
+        with pytest.raises(ValueError, match="draft"):
+            verify_draft_c2_alignment(modified, candidate)
