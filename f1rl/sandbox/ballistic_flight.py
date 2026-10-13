@@ -193,7 +193,7 @@ def _certify_obstacle_arc(
         raise ValueError("flight obstacle volumes must be OrientedBoxVolume")
     poses = tuple(_flight_pose(start, end_s*i/segments, gravity)
                   for i in range(segments+1))
-    for i, (a, b) in enumerate(zip(poses, poses[1:], strict=True)):
+    for i, (a, b) in enumerate(zip(poses, poses[1:])):
         h = end_s/segments
         sagitta = gravity*h*h/8.
         for obstacle in obstacles:
