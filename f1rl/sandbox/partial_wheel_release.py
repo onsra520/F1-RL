@@ -11,7 +11,7 @@ legacy-prescribed XZ/yaw. Do not use this as an accepted 6-DOF jump model.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import acos, isfinite
+from math import isfinite, atan2, hypot
 
 from .body_collision import VehicleBodyGeometry, _slerp
 from .geometry.vector import Vec3
@@ -23,6 +23,7 @@ from .multi_surface_support import (
     IndependentWheelContact, _atlas, _within_shape, _height, _body_corners,
     _intersection, _inflate, body_xz_polygon,
 )
+from .swept_surface_clearance import certify_swept_chassis_clearance
 from .track.patch import PlanarSurfacePatch
 from .vehicle import VehicleState
 
@@ -36,12 +37,17 @@ class AutomaticTakeoffPolicy:
     max_substep_xz_m: float
     release_time_tolerance_s: float = 1e-6
     release_bisections: int = 24
+    max_patch_tilt_rad: float = 0.  # opt-in: retain legacy flat-only default
 
     def __post_init__(self) -> None:
         for k in ("max_substep_xz_m", "release_time_tolerance_s"):
             value = getattr(self, k)
             if type(value) not in (int, float) or not isfinite(value) or value <= 0.:
                 raise ValueError(f"{k} must be finite positive")
+        if (type(self.max_patch_tilt_rad) not in (int,float)
+                or not isfinite(self.max_patch_tilt_rad)
+                or not 0. <= self.max_patch_tilt_rad <= .35):
+            raise ValueError("max_patch_tilt_rad must be finite within [0,0.35]")
         if type(self.release_bisections) is not int or not 4 <= self.release_bisections <= 48:
             raise ValueError("release_bisections must be an integer in [4,48]")
 
@@ -79,14 +85,14 @@ class GroundSupportStep:
             raise ValueError("invalid residual frame duration")
 
 
-def _flat_atlas(surfaces, tol):
+def _flat_atlas(surfaces, tol, max_patch_tilt_rad=0.):
     atlas = _atlas(surfaces, tol)
     if atlas is None:
         raise SuspensionResolutionError("unsupported automatic takeoff road atlas")
     patches, polygons = atlas
-    if any(abs(p.normal.y - 1.) > _EPS or abs(p.normal.x) > _EPS
-           or abs(p.normal.z) > _EPS for p in patches):
-        raise SuspensionResolutionError("automatic partial-contact transition requires flat roads")
+    if any(atan2(hypot(p.normal.x, p.normal.z), p.normal.y)
+           > max_patch_tilt_rad + _EPS for p in patches):
+        raise SuspensionResolutionError("road slope exceeds registered release policy")
     return patches, polygons
 
 
@@ -126,28 +132,11 @@ def _pose_between(a: VehicleState, b: VehicleState, t: float):
 
 
 def _body_road_clear(a, b, body, atlas):
-    """Conservative swept chassis-vs-flat-surface clearance (overhang allowed).
-
-    The midpoint body lower Y is reduced by the maximum vertical motion of
-    any hull point under linear translation and shortest-arc SLERP.
-    """
-    patches, polygons = atlas
-    q0, q1 = a.orientation, b.orientation
-    dot = abs(q0.w*q1.w+q0.x*q1.x+q0.y*q1.y+q0.z*q1.z)
-    arc = 2.*acos(max(0., min(1., dot)))
-    delta = b.position-a.position
-    body_radius = body.motion_radius_m
-    vertical_bound = (abs(delta.y)+arc*body_radius)/2.
-    xz_bound = (delta.magnitude+arc*body_radius)/2.
-    mid = _pose_between(a, b, .5)
-    envelope = _inflate(body_xz_polygon(mid, body), xz_bound)
-    lowest_y = min(v.y for v in _body_corners(mid, body))
-    for patch, poly in zip(patches, polygons, strict=True):
-        if _intersection(envelope, poly):
-            if lowest_y - vertical_bound < patch.origin.y - _EPS:
-                raise SuspensionResolutionError(
-                    "partial-contact chassis road-clearance sweep unresolved"
-                )
+    """Prove entire swept 3D chassis remains above relevant planar patches."""
+    certify_swept_chassis_clearance(
+        lambda t: _pose_between(a, b, t),
+        0., 1., body, atlas, max_subdivisions=12,
+    )
 
 
 def _step_dynamics(state, initial, contacts, physics, gravity, h):
@@ -210,7 +199,8 @@ def integrate_partial_support(
     q = previous.orientation
     if 1.-abs(expected.w*q.w+expected.x*q.x+expected.y*q.y+expected.z*q.z) > 1e-9:
         raise SuspensionResolutionError("stored suspension attitude mismatch")
-    atlas = _flat_atlas(surfaces, physics.contact.seam_height_tolerance_m)
+    atlas = _flat_atlas(surfaces, physics.contact.seam_height_tolerance_m,
+                        release_policy.max_patch_tilt_rad)
     count = physics.integration_substeps
     h = dt/count
     route = path_candidate.position-previous.position
