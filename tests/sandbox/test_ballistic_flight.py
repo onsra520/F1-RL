@@ -291,3 +291,32 @@ def test_world_ballistic_collision_is_not_forged_as_successful_event():
                    ballistic_flight_policy=POLICY)
     assert state.vehicle == initial
     assert state.flight.phase == "takeoff"
+
+
+def test_zero_time_downward_wheel_contact_must_not_be_skipped():
+    released = car(y=.3, vy=-1., grounded=False)
+    with pytest.raises(FlightPhysicsError, match="begins in descending road contact"):
+        flight(released, dt=.1)
+
+
+def test_no_hit_obstacle_still_checks_each_world_sweep_segment():
+    from f1rl.sandbox.entities.obstacle import Obstacle
+    from f1rl.sandbox.world import step_world
+    far = Obstacle("far", OrientedBoxVolume(
+        Vec3(100., 2., 100.), Vec3(1., 1., 1.), Quaternion.identity(),
+    ))
+    track, state, control, params, dynamics = world_setup(obstacles=(far,))
+    result = step_world(track, state, control, params, .1, .5,
+                        body_geometry=BODY, independent_suspension_policy=dynamics,
+                        ballistic_flight_policy=POLICY)
+    assert result.state.flight.phase == "airborne"
+    assert [e.kind for e in result.events] == ["takeoff"]
+
+
+def test_entering_road_laterally_from_below_plane_blocks_rollout():
+    # Initial chassis is off road and below its surface height. It must not
+    # travel sideways into a road patch without a validated touchdown.
+    source = car(y=-.5, vy=0., z=-5., vz=60., grounded=False)
+    plate = flat("plate", z=0., length=4.)
+    with pytest.raises(FlightPhysicsError, match="lateral entry"):
+        flight(source, dt=.12, surfaces=(plate,))
