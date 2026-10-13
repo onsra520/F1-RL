@@ -134,3 +134,28 @@ def test_invalid_policy_rejected(key, value):
     kwargs[key] = value
     with pytest.raises(ValueError):
         MultiSurfaceSuspensionPolicy(**kwargs)
+
+
+def test_world_multi_surface_policy_is_explicit_and_mutually_exclusive():
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.ramp_support import PlanarRampPolicy
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters
+    from f1rl.sandbox.world import WorldState, step_world
+
+    road = TrackWorld(surfaces=(patch("before", -2.), patch("after", 2.)))
+    original = car(0.)
+    world = WorldState(original, TrackState(frozenset()),
+                       InteractionState(frozenset(), frozenset()), ScoreState())
+    params = VehicleParameters(2.5, .3, .6, 0., 20., 0., 0., 0., 9.81)
+    args = (road, world, VehicleControl(0., 0., 0.), params, .02, .5)
+    with pytest.raises(ValueError, match="multi_surface_policy requires"):
+        step_world(*args, multi_surface_policy=POLICY)
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        step_world(*args, body_geometry=BODY, multi_surface_policy=POLICY,
+                   ramp_support_policy=PlanarRampPolicy(WHEELS, .02))
+    result = step_world(*args, body_geometry=BODY, multi_surface_policy=POLICY)
+    assert result.state.vehicle.grounded
+    assert result.events == ()
