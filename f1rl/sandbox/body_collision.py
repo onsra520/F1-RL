@@ -187,4 +187,6 @@ def sweep_body_against_obstacle(
         return last_hit, first_unknown or last_unknown
 
     contact, uncertain = visit(0.0, 1.0, max_subdivisions)
-    return SweptCollisionResult(contact, uncertain, checks)
+    # A witnessed overlap is sufficient evidence of contact; unknown
+    # clearance elsewhere does not erase the witnessed collision.
+    return SweptCollisionResult(contact, uncertain and not contact, checks)
