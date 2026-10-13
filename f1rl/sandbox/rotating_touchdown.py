@@ -1,0 +1,132 @@
+"""Conservative rotating wheel/plane down-crossing localization.
+
+Supports only research-restricted fixed-world angular-velocity trajectories,
+height-consistent *flat* road patches, and wheel-reference points. This is
+not an ODE-certified multi-contact manifold. Inconclusive sign/coverage
+intervals are rejected, never interpreted as a safe airborne episode.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from math import isfinite
+
+from .angular_landing_impulse import AngularLandingImpulsePolicy, ImpulseResolutionError
+from .geometry.vector import Vec3
+from .multi_surface_support import _within_shape
+from .road_footprint import _hull, _inflate, _square
+from .multi_surface_support import _intersection
+
+
+@dataclass(frozen=True, slots=True)
+class RotatingWheelTouchdown:
+    time_s: float
+    wheel_index: int
+    patch_id: str
+
+    def __post_init__(self) -> None:
+        if (not isfinite(self.time_s) or self.time_s < 0.
+                or type(self.wheel_index) is not int
+                or not 0 <= self.wheel_index < 4 or not self.patch_id):
+            raise ValueError("invalid rotating wheel event")
+
+
+def first_rotating_wheel_touchdown(
+    pose_at, wheels, atlas, dt: float, gravity: float,
+    policy: AngularLandingImpulsePolicy,
+) -> RotatingWheelTouchdown | None:
+    """Find first conservative down-crossing, or fail if any gap is unresolved.
+
+    The recursive interval verifier uses a Lipschitz bound of the signed
+    gap function. If endpoints show no crossing and the bound cannot exclude
+    an interior crossing, recursively subdivide. At a detected sign-change,
+    use bounded bisection. Interior-to-exterior polygon transitions near
+    the plane are explicitly unsupported.
+    """
+    if not isinstance(policy, AngularLandingImpulsePolicy):
+        raise ValueError("explicit angular event detection policy required")
+    if (type(dt) not in (int,float) or not isfinite(dt) or dt <= 0.
+            or type(gravity) not in (int,float) or not isfinite(gravity) or gravity <= 0.):
+        raise ValueError("positive finite flight timestep and gravity required")
+    patches, polygons = atlas
+    if len(patches) != len(polygons):
+        raise ValueError("invalid atlas")
+    eps=1e-8
+    segments=policy.event_bracket_segments
+    h=dt/segments
+    event_candidates=[]
+    for patch, polygon in zip(patches, polygons, strict=True):
+        normal=patch.normal
+        if abs(normal.y-1.) > 1e-9:
+            raise ImpulseResolutionError("rotating plane events require flat road patch")
+        for i,w in enumerate(wheels.positions):
+            wheel_radius=w.magnitude
+            def data(t):
+                state=pose_at(t)
+                point=state.position + state.orientation.rotate(w)
+                gap=(point-patch.origin).dot(normal)
+                inside=_within_shape(point.x,point.z,polygon)
+                return point,gap,inside,state
+            def interval(lo,hi,depth):
+                p0,g0,in0,st0=data(lo)
+                p1,g1,in1,st1=data(hi)
+                if in0 and g0 < -eps:
+                    raise ImpulseResolutionError("wheel starts below road during rotating flight")
+                if in1 and g1 < -eps and not in0:
+                    raise ImpulseResolutionError("wheel enters patch already under road surface")
+                if in0 != in1:
+                    # A wheel can enter/exit the finite road polygon within an
+                    # unresolved substep. Without a certified edge-impact
+                    # manifold this must not be treated as clean flight.
+                    if min(g0,g1) < (abs(st0.velocity.y)+gravity*dt
+                                     +st0.angular_velocity.magnitude*wheel_radius)*(hi-lo)+eps:
+                        raise ImpulseResolutionError("rotating wheel polygon crossing near road is unsupported")
+                    return None
+                if not in0:
+                    # Conservative swept XY ground-projection disc. If the
+                    # entire swept wheel footprint misses this road, no
+                    # contact with it is possible. Otherwise recurse/abort.
+                    omega=st0.angular_velocity.magnitude
+                    rad=omega*wheel_radius*(hi-lo)
+                    ext=_hull((*_square(p0.x,p0.z,rad+1e-9),
+                               *_square(p1.x,p1.z,rad+1e-9)))
+                    if not _intersection(ext,polygon):
+                        return None
+                    if depth == 0:
+                        raise ImpulseResolutionError("rotating wheel road-edge coverage unresolved")
+                    mid=(lo+hi)/2.
+                    return interval(lo,mid,depth-1) or interval(mid,hi,depth-1)
+                if g0 <= eps and (st0.velocity+st0.angular_velocity.cross(p0-st0.position)).dot(normal) <= 0.:
+                    raise ImpulseResolutionError("initial rotating wheel is in descending road contact")
+                if g0 > eps and g1 <= 0.:
+                    a,b=lo,hi
+                    for _ in range(policy.event_bisections):
+                        if b-a <= policy.event_time_tolerance_s:
+                            break
+                        mid=(a+b)/2.
+                        _,gm,inside,_=data(mid)
+                        if not inside:
+                            raise ImpulseResolutionError("wheel leaves patch during root refinement")
+                        if gm > 0.:a=mid
+                        else:b=mid
+                    return RotatingWheelTouchdown(b,i,patch.id)
+                if g1 < -eps:
+                    raise ImpulseResolutionError("rotating wheel penetrated without localized touchdown")
+                # In nearest-endpoint distance <= h/2, signed gap rate has
+                # bound |v_n| + g*dt + |omega|*wheel_arm. Require positive
+                # margin, otherwise bisect until decisive or fail closed.
+                L=(abs(st0.velocity.dot(normal))+gravity*dt
+                   +st0.angular_velocity.magnitude*wheel_radius)
+                if min(g0,g1) > L*(hi-lo)/2. + eps:
+                    return None
+                if depth == 0:
+                    raise ImpulseResolutionError("rotating contact timing remains unresolved")
+                mid=(lo+hi)/2.
+                return interval(lo,mid,depth-1) or interval(mid,hi,depth-1)
+            for segment in range(segments):
+                t0=segment*h
+                t1=(segment+1)*h
+                found=interval(t0,t1,policy.event_bisections)
+                if found is not None:
+                    event_candidates.append(found)
+                    break
+    return min(event_candidates,key=lambda e:(e.time_s,e.patch_id,e.wheel_index)) if event_candidates else None
