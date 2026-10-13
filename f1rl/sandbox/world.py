@@ -170,7 +170,7 @@ def step_world(
         # Unresolved conservative intervals must block, not tunnel.
         body_hits = []
         for obstacle in track.obstacles:
-            for segment_start, segment_end in zip(swept_poses, swept_poses[1:], strict=True):
+            for segment_start, segment_end in zip(swept_poses, swept_poses[1:]):
                 verdict = sweep_body_against_obstacle(
                     segment_start, segment_end, body_geometry, obstacle.volume
                 )
