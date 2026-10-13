@@ -8,6 +8,7 @@ from .dynamics.integrator import integrate
 from .dynamics.modifiers import MotionModifiers
 from .dynamics.vehicle_dynamics import compute_motion
 from .interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
+from .road_footprint import swept_body_road_union
 from .interactions.resolver import resolve_entry_events, resolve_motion_modifiers, resolve_obstacle_block
 from .interactions.state import InteractionState
 from .rules.scoring import ScoreState, apply_score_events
@@ -72,6 +73,19 @@ def step_world(
         candidate_query = replace(candidate_query, obstacles=tuple(body_hits))
 
     accepted, obstacle_events = resolve_obstacle_block(state.vehicle, candidate, candidate_query)
+    if body_geometry is not None:
+        road_verdict = swept_body_road_union(
+            state.vehicle, accepted, body_geometry, track.surfaces,
+            ride_height_m=parameters.ride_height,
+        )
+        if not road_verdict.valid:
+            # This is not an ObstacleHit and must not be counted as a
+            # successful/valid simulation transition. A later registered
+            # road-violation episode rule can replace this hard gate.
+            raise RuntimeError(
+                f"prospective full-body road validity {road_verdict.status}: "
+                f"{road_verdict.reason}; rollout invalid"
+            )
     accepted_query = (
         track.query_point(accepted.position, max_surface_distance, state.track)
         if obstacle_events
