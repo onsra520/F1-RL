@@ -190,3 +190,104 @@ def test_takeoff_or_airborne_phase_is_explicitly_versioned():
     assert FlightState("takeoff").phase == "takeoff"
     with pytest.raises(ValueError):
         FlightState("landed")
+
+
+def world_setup(*, phase="takeoff", vehicle=None, obstacles=(), road=None):
+    from f1rl.sandbox.independent_suspension_dynamics import (
+        IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState,
+    )
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.world import WorldState
+    from f1rl.sandbox.vehicle import VehicleParameters, VehicleControl
+    initial = vehicle or car()
+    track = TrackWorld(surfaces=(road or flat(),), obstacles=obstacles)
+    state = WorldState(initial, TrackState(frozenset()),
+                       InteractionState(frozenset(), frozenset()), ScoreState(),
+                       suspension=SuspensionDynamicsState(initial.position.y),
+                       flight=FlightState(phase))
+    dyn = IndependentSuspensionDynamicsPolicy(
+        CONTACT, mass_kg=1200., pitch_inertia_kg_m2=1800.,
+        roll_inertia_kg_m2=600., spring_stiffness_npm=30000.,
+        damper_nspm=2000., angular_damping_nmsprad=150.,
+        integration_substeps=8,
+    )
+    params = VehicleParameters(2.5, .3, .6, 0., 20., 0., 0., 50., 9.81)
+    return track, state, VehicleControl(0., 0., 0.), params, dyn
+
+
+def test_world_takeoff_to_airborne_to_landing_preserves_full_timestep():
+    from f1rl.sandbox.world import step_world
+    track, state, control, params, dynamics = world_setup()
+    first = step_world(track, state, control, params, .2, .5,
+                       body_geometry=BODY, independent_suspension_policy=dynamics,
+                       ballistic_flight_policy=POLICY)
+    assert first.state.flight.phase == "airborne"
+    assert first.state.vehicle.position.y > .3
+    assert [e.kind for e in first.events] == ["takeoff"]
+    assert first.flight_telemetry is not None
+    second = step_world(track, first.state, control, params, .3, .5,
+                        body_geometry=BODY, independent_suspension_policy=dynamics,
+                        ballistic_flight_policy=POLICY)
+    assert second.state.flight.phase == "grounded"
+    assert second.state.vehicle.grounded
+    assert second.state.vehicle.position.y == pytest.approx(.3, abs=1e-8)
+    assert [e.kind for e in second.events] == ["landing"]
+    assert second.flight_telemetry.remaining_dt_s > 0.
+    assert second.suspension_telemetry is not None
+    # The legacy point-volume scoring logic is not active on flight ticks.
+    assert second.state.suspension.height_m == pytest.approx(.3)
+
+
+def test_world_refuses_unapproved_flight_policy_or_missing_suspension():
+    from f1rl.sandbox.world import step_world
+    track, state, control, params, dynamics = world_setup()
+    with pytest.raises(ValueError, match="ballistic_flight_policy requires"):
+        step_world(track, state, control, params, .1, .5, body_geometry=BODY,
+                   ballistic_flight_policy=POLICY)
+    with pytest.raises(ValueError, match="ballistic_flight_policy requires"):
+        step_world(track, replace(state, flight=None), control, params, .1, .5,
+                   body_geometry=BODY, independent_suspension_policy=dynamics,
+                   ballistic_flight_policy=POLICY)
+
+
+def test_world_airborne_triggers_cannot_award_checkpoint_or_pickup():
+    from f1rl.sandbox.entities.checkpoint import Checkpoint
+    from f1rl.sandbox.entities.finish_line import FinishLine
+    from f1rl.sandbox.entities.score_pickup import ScorePickup
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.world import step_world
+    center = OrientedBoxVolume(Vec3(0., .3, 0.), Vec3(3., 3., 3.),
+                               Quaternion.identity())
+    track, state, control, params, dynamics = world_setup()
+    track = TrackWorld(surfaces=track.surfaces,
+                       checkpoints=(Checkpoint("checkpoint", center, 0),),
+                       finish_lines=(FinishLine("finish", center),),
+                       score_pickups=(ScorePickup("reward", center, 100),))
+    first = step_world(track, state, control, params, .1, .5,
+                       body_geometry=BODY, independent_suspension_policy=dynamics,
+                       ballistic_flight_policy=POLICY)
+    assert first.events == (first.events[0],)
+    assert first.events[0].kind == "takeoff"
+    assert first.state.score == state.score
+    assert first.state.track == state.track
+
+
+def test_world_ballistic_collision_is_not_forged_as_successful_event():
+    from f1rl.sandbox.entities.obstacle import Obstacle
+    from f1rl.sandbox.world import step_world
+    obstacle = Obstacle("wall", OrientedBoxVolume(
+        Vec3(0., .5, 2.), Vec3(.5, 1., .05), Quaternion.identity(),
+    ))
+    initial = car(vz=30., z=0.)
+    track, state, control, params, dynamics = world_setup(
+        vehicle=initial, obstacles=(obstacle,),
+    )
+    with pytest.raises(FlightPhysicsError, match="obstacle sweep"):
+        step_world(track, state, control, params, .2, .5,
+                   body_geometry=BODY, independent_suspension_policy=dynamics,
+                   ballistic_flight_policy=POLICY)
+    assert state.vehicle == initial
+    assert state.flight.phase == "takeoff"
