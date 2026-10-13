@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TypeAlias
 
+from .body_collision import VehicleBodyGeometry, sweep_body_against_obstacle
 from .dynamics.integrator import integrate
 from .dynamics.modifiers import MotionModifiers
 from .dynamics.vehicle_dynamics import compute_motion
@@ -41,12 +42,26 @@ def step_world(
     parameters: VehicleParameters,
     dt: float,
     max_surface_distance: float,
+    *,
+    body_geometry: VehicleBodyGeometry | None = None,
 ) -> WorldStepResult:
     current_query = track.query_point(state.vehicle.position, max_surface_distance, state.track)
     modifiers = resolve_motion_modifiers(current_query)
     motion = compute_motion(state.vehicle, control, parameters, current_query.contact, modifiers)
     candidate = integrate(state.vehicle, motion, parameters, current_query.contact, dt)
     candidate_query = track.query_point(candidate.position, max_surface_distance, state.track)
+    if body_geometry is not None:
+        if not isinstance(body_geometry, VehicleBodyGeometry):
+            raise ValueError("body_geometry must be VehicleBodyGeometry")
+        # Prospective full-body engine: continuous translation + rotation.
+        # Unresolved conservative intervals must block, not tunnel.
+        body_hits = tuple(
+            obstacle for obstacle in track.obstacles
+            if sweep_body_against_obstacle(
+                state.vehicle, candidate, body_geometry, obstacle.volume
+            ).blocked
+        )
+        candidate_query = replace(candidate_query, obstacles=body_hits)
 
     accepted, obstacle_events = resolve_obstacle_block(state.vehicle, candidate, candidate_query)
     accepted_query = (
