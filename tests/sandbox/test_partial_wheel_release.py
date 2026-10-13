@@ -270,3 +270,15 @@ def test_world_keeps_same_auto_policy_during_subsequent_airborne_frame():
     assert second.partial_support_telemetry is None
     assert second.state.vehicle.position.z > first.state.vehicle.position.z
     assert second.events == ()
+
+
+def test_fast_angular_motion_cannot_alias_shortest_arc_sweep():
+    from f1rl.sandbox.ballistic_flight import advance_ballistic_flight
+    spinning = VehicleState(
+        Vec3(0.,10.,5.), Vec3(0.,0.,300.),
+        Quaternion.identity(), Vec3(0.,100.,0.), False,
+    )
+    with pytest.raises(FlightPhysicsError, match="angular sweep resolution"):
+        advance_ballistic_flight(
+            spinning, FLIGHT, BODY, (road(),), (), dt=.2, gravity_mps2=9.81,
+        )
