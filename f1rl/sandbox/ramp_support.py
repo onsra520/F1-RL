@@ -196,3 +196,23 @@ def certify_single_planar_ramp(
         "outside":"body footprint or at least one tire contact outside planar road",
         "uncertain":"continuous planar wheel support not provable within subdivision budget",
     }[verdict])
+
+
+@dataclass(frozen=True, slots=True)
+class PlanarRampPolicy:
+    """Explicit research-only single-patch support policy, never auto-selected."""
+    wheels: WheelContactPoints
+    plane_tolerance_m: float
+    max_subdivisions: int = 12
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.wheels, WheelContactPoints):
+            raise ValueError("ramp policy requires WheelContactPoints")
+        if (isinstance(self.plane_tolerance_m, bool)
+            or not isinstance(self.plane_tolerance_m, (float, int))
+            or not isfinite(self.plane_tolerance_m)
+            or self.plane_tolerance_m <= 0.0):
+            raise ValueError("ramp policy tolerance must be finite positive")
+        if (type(self.max_subdivisions) is not int
+            or not 0 <= self.max_subdivisions <= 20):
+            raise ValueError("ramp policy subdivision budget must be an integer in [0,20]")
