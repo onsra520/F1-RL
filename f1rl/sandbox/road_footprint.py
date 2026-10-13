@@ -196,6 +196,7 @@ def swept_body_road_union(
     body:VehicleBodyGeometry,
     surfaces:tuple[PlanarSurfacePatch,...],
     *,
+    ride_height_m:float,
     max_subdivisions:int=12,
 )->RoadSweepResult:
     """Certify continuous projected 3D body inside a union of FLAT road patches.
@@ -210,11 +211,16 @@ def swept_body_road_union(
         raise ValueError("body must be VehicleBodyGeometry")
     if type(max_subdivisions) is not int or not 0<=max_subdivisions<=20:
         raise ValueError("max_subdivisions must be integer in [0,20]")
+    if isinstance(ride_height_m,bool) or not isinstance(ride_height_m,(int,float)) or not isfinite(ride_height_m) or ride_height_m<=0.:
+        raise ValueError('ride_height_m must be finite positive')
     roads=_flat_roads(surfaces)
     if roads is None:
         return RoadSweepResult("unsupported",0,"requires coplanar horizontal road patches")
     if not previous.grounded or not candidate.grounded:
         return RoadSweepResult("unsupported",0,"airborne/ramp policy not registered")
+    expected_y=surfaces[0].origin.y+ride_height_m
+    if abs(previous.position.y-expected_y)>1e-6 or abs(candidate.position.y-expected_y)>1e-6:
+        return RoadSweepResult("unsupported",0,"grounded reference pose disagrees with road elevation")
     q0,q1=previous.orientation,candidate.orientation
     dot=abs(q0.w*q1.w+q0.x*q1.x+q0.y*q1.y+q0.z*q1.z)
     theta=2.*acos(min(1.,max(0.,dot)))
