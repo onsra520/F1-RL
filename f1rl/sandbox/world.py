@@ -132,7 +132,7 @@ def step_world(
             # the rest of dt using grounded suspension, never discard elapsed time.
             suspension_override = SuspensionDynamicsState(candidate.position.y)
             remainder = flight_telemetry.remaining_dt_s
-            if remainder > ballistic_flight_policy.touchdown_time_epsilon_s:
+            if remainder > 0.:
                 end_target = VehicleState(
                     candidate.position + Vec3(
                         candidate.velocity.x*remainder, 0.,
