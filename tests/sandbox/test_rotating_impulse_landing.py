@@ -114,7 +114,7 @@ def test_rotating_sloped_landing_not_misreported_as_accepted_impulse():
 
 def test_rebound_with_positive_restitution_does_not_fake_grounded():
     with pytest.raises(FlightPhysicsError,match="rebounding wheel impulse"):
-        fly(policy=replace(FLIGHT,angular_impulse=replace(IMPULSE,restitution=1.)))
+        fly(policy=replace(FLIGHT,angular_impulse=replace(IMPULSE,restitution=1.,max_post_angular_speed_radps=10.)))
 
 
 def test_world_preserves_rate_state_after_accepted_angular_touchdown():
