@@ -43,6 +43,7 @@ AUDIT_ONLY_PATHS = frozenset({
     "tests/learning/test_corridor_audit_reconstruction.py",
     "docs/research/wp7-right-turn-centerline-corridor-2026-10-13.md",
     "docs/research/wp7-geometry-and-stochastic-screen-2026-10-13.md",
+    "docs/research/wp0-wp7-deep-audit-2026-10-13.md",
     "configs/recovery/wp7-vehicle-geometry-review.yml",
     "f1rl/learning/geometry_review.py",
     "f1rl/learning/robustness_screen.py",
