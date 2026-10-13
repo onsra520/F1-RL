@@ -107,7 +107,7 @@ def step_world(
         if (not isinstance(automatic_takeoff_policy, AutomaticTakeoffPolicy)
                 or ballistic_flight_policy is None
                 or independent_suspension_policy is None
-                or state.flight.phase != "grounded"):
+                or state.flight.phase not in ("grounded", "takeoff", "airborne")):
             raise ValueError(
                 "automatic_takeoff_policy requires grounded flight state, matching "
                 "ballistic policy and independent suspension"
