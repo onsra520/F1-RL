@@ -377,6 +377,10 @@ def _rotating_impulse_flight(
         )
     except ImpulseResolutionError as exc:
         raise FlightPhysicsError(f"angular landing impulse invalid: {exc}") from exc
+    if audit.normal_speed_after_mps > 1e-7:
+        raise FlightPhysicsError(
+            "rebounding wheel impulse cannot transition directly to grounded"
+        )
     attitude=_stationary_landing_attitude(incoming.orientation,incoming.position.y)
     yaw=_horizontal_yaw(incoming.orientation)
     q_conj=Quaternion(yaw.w,-yaw.x,-yaw.y,-yaw.z)
