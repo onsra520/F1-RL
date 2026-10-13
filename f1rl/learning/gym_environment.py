@@ -6,6 +6,7 @@ import gymnasium as gym
 import numpy as np
 
 from ..runtime.simulation import Simulation, SimulationConfig, SimulationSnapshot
+from ..sandbox.body_collision import VehicleBodyGeometry
 from ..sandbox.geometry.vector import Vec3
 from ..sandbox.interactions.events import ObstacleHit
 from ..sandbox.track.model import TrackWorld
@@ -83,6 +84,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         episode_config: EpisodeConfig,
         navigation: AuthoredNavigation | None = None,
         offtrack_config: OffTrackConfig | None = None,
+        body_geometry: VehicleBodyGeometry | None = None,
     ) -> None:
         super().__init__()
         values = (
@@ -134,7 +136,10 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         self._offtrack_state = OffTrackState()
         self._max_route_distance = min((surface.width for surface in track.surfaces), default=0.0) / 2.0
         self._route_highwater = 0.0
-        self._simulation = Simulation(track, initial_state, vehicle_parameters, simulation_config)
+        self._simulation = Simulation(
+            track, initial_state, vehicle_parameters, simulation_config,
+            body_geometry=body_geometry,
+        )
         self._progress: RaceProgressState | None = None
         self._needs_reset = True
 
