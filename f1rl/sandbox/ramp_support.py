@@ -129,6 +129,7 @@ def certify_single_planar_ramp(
         b_forward = rotation.rotate(Vec3(0.,0.,1.))
         e = box.half_extents
         results: list[tuple[float,float]] = []
+        body_n_bound = abs(delta.dot(normal)) + theta*body_radius
 
         # Eight vertices suffice because the patch is convex; if every
         # projected vertex is inside, the entire projected body is inside.
@@ -137,6 +138,9 @@ def certify_single_planar_ramp(
                 for sz in (-1., 1.):
                     v = box.center + b_right*(sx*e.x) + b_up*(sy*e.y) + b_forward*(sz*e.z)
                     offset = v-patch.origin
+                    # Chassis may not intersect the solid road plane even
+                    # when tire reference points are nominally supported.
+                    results.append((offset.dot(normal), body_n_bound))
                     results.append((
                         patch.width/2. - abs(offset.dot(right)),
                         body_r_bound,
