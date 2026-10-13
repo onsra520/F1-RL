@@ -274,6 +274,11 @@ def advance_ballistic_flight(
         raise ValueError("positive finite dt and gravity required")
     patches, polygons = _flat_atlas(surfaces, policy)
     if airborne.angular_velocity.magnitude > _EPS:
+        # The existing OBB sweep interpolates orientation via shortest-arc
+        # SLERP. Rotation > pi per sweep segment could alias a full turn and
+        # incorrectly report no obstacle hit; use a much stricter bound.
+        if airborne.angular_velocity.magnitude * dt / policy.collision_segments > .1:
+            raise FlightPhysicsError("angular sweep resolution insufficient")
         _rotating_exit_certified(
             airborne, policy, body, patches, polygons, dt, gravity_mps2,
         )
