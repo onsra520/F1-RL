@@ -9,6 +9,12 @@ from .dynamics.modifiers import MotionModifiers
 from .dynamics.vehicle_dynamics import compute_motion
 from .interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
 from .road_footprint import swept_body_road_union
+from .independent_suspension_dynamics import (
+    IndependentSuspensionDynamicsPolicy,
+    SuspensionDynamicsResult,
+    SuspensionDynamicsState,
+    integrate_independent_suspension,
+)
 from .ramp_support import PlanarRampPolicy, certify_single_planar_ramp
 from .multi_surface_support import MultiSurfaceSuspensionPolicy, certify_multisurface_support
 from .interactions.resolver import resolve_entry_events, resolve_motion_modifiers, resolve_obstacle_block
@@ -28,6 +34,7 @@ class WorldState:
     track: TrackState
     interactions: InteractionState
     score: ScoreState
+    suspension: SuspensionDynamicsState | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +43,7 @@ class WorldStepResult:
     query: TrackQuery
     modifiers: MotionModifiers
     events: tuple[WorldEvent, ...]
+    suspension_telemetry: SuspensionDynamicsResult | None = None
 
 
 def step_world(
@@ -49,6 +57,7 @@ def step_world(
     body_geometry: VehicleBodyGeometry | None = None,
     ramp_support_policy: PlanarRampPolicy | None = None,
     multi_surface_policy: MultiSurfaceSuspensionPolicy | None = None,
+    independent_suspension_policy: IndependentSuspensionDynamicsPolicy | None = None,
 ) -> WorldStepResult:
     if ramp_support_policy is not None and (body_geometry is None or not isinstance(ramp_support_policy, PlanarRampPolicy)):
         raise ValueError('ramp_support_policy requires full-body geometry and PlanarRampPolicy')
@@ -57,10 +66,30 @@ def step_world(
             raise ValueError("multi_surface_policy requires full-body geometry and MultiSurfaceSuspensionPolicy")
         if ramp_support_policy is not None:
             raise ValueError("single-patch and multi-surface policies are mutually exclusive")
+    if independent_suspension_policy is not None:
+        if (not isinstance(independent_suspension_policy, IndependentSuspensionDynamicsPolicy)
+                or not isinstance(body_geometry, VehicleBodyGeometry)
+                or not isinstance(state.suspension, SuspensionDynamicsState)):
+            raise ValueError("independent_suspension_policy requires explicit geometry and persistent suspension state")
+        if multi_surface_policy is not None or ramp_support_policy is not None:
+            raise ValueError("independent suspension and other road policies are mutually exclusive")
     current_query = track.query_point(state.vehicle.position, max_surface_distance, state.track)
     modifiers = resolve_motion_modifiers(current_query)
     motion = compute_motion(state.vehicle, control, parameters, current_query.contact, modifiers)
     candidate = integrate(state.vehicle, motion, parameters, current_query.contact, dt)
+    suspension_telemetry: SuspensionDynamicsResult | None = None
+    swept_poses = (state.vehicle, candidate)
+    if independent_suspension_policy is not None:
+        # Prescribed horizontal motion/yaw comes from the legacy bicycle
+        # integrator. Heave/pitch/roll and each substep's contact are solved
+        # explicitly; this opt-in does not silently modify legacy dynamics.
+        suspension_telemetry = integrate_independent_suspension(
+            state.vehicle, candidate, state.suspension,
+            independent_suspension_policy, body_geometry, track.surfaces,
+            dt=dt, gravity_mps2=parameters.gravity,
+        )
+        candidate = suspension_telemetry.vehicle
+        swept_poses = suspension_telemetry.poses
     candidate_query = track.query_point(candidate.position, max_surface_distance, state.track)
     if body_geometry is not None:
         if not isinstance(body_geometry, VehicleBodyGeometry):
@@ -69,23 +98,29 @@ def step_world(
         # Unresolved conservative intervals must block, not tunnel.
         body_hits = []
         for obstacle in track.obstacles:
-            verdict = sweep_body_against_obstacle(
-                state.vehicle, candidate, body_geometry, obstacle.volume
-            )
-            if verdict.uncertain:
-                # Unknown is not evidence of a real collision. Fail closed,
-                # but NEVER forge an ObstacleHit or a valid evaluation score.
-                raise RuntimeError(
-                    f"body sweep unresolved for obstacle {obstacle.id!r}; "
-                    "candidate rollout is invalid, not a verified collision"
+            for segment_start, segment_end in zip(swept_poses, swept_poses[1:], strict=True):
+                verdict = sweep_body_against_obstacle(
+                    segment_start, segment_end, body_geometry, obstacle.volume
                 )
-            if verdict.contact:
-                body_hits.append(obstacle)
+                if verdict.uncertain:
+                    # Unknown is not a verified collision; invalidate rather
+                    # than fabricate ObstacleHit or a successful evaluation.
+                    raise RuntimeError(
+                        f"body sweep unresolved for obstacle {obstacle.id!r}; "
+                        "candidate rollout is invalid, not a verified collision"
+                    )
+                if verdict.contact:
+                    body_hits.append(obstacle)
+                    break
         candidate_query = replace(candidate_query, obstacles=tuple(body_hits))
 
     accepted, obstacle_events = resolve_obstacle_block(state.vehicle, candidate, candidate_query)
     if body_geometry is not None:
-        if multi_surface_policy is not None:
+        if independent_suspension_policy is not None:
+            # The integrator already conservatively certified every
+            # individual substep; never switch to the legacy centre policy.
+            road_verdict = None
+        elif multi_surface_policy is not None:
             road_verdict = certify_multisurface_support(
                 state.vehicle, accepted, body_geometry,
                 multi_surface_policy, track.surfaces,
@@ -109,7 +144,7 @@ def step_world(
                 "prospective full-body ramp support unsupported: "
                 "requires exactly one planar patch; rollout invalid"
             )
-        if not road_verdict.valid:
+        if road_verdict is not None and not road_verdict.valid:
             # This is not an ObstacleHit and must not be counted as a
             # successful/valid simulation transition. A later registered
             # road-violation episode rule can replace this hard gate.
@@ -142,6 +177,10 @@ def step_world(
         track=track_state,
         interactions=interaction_state,
         score=score_state,
+        suspension=(
+            (state.suspension if obstacle_events else suspension_telemetry.dynamics)
+            if suspension_telemetry is not None else state.suspension
+        ),
     )
     events: tuple[WorldEvent, ...] = (
         *obstacle_events,
@@ -149,4 +188,7 @@ def step_world(
         *finish_events,
         *pickup_events,
     )
-    return WorldStepResult(next_state, final_query, modifiers, events)
+    return WorldStepResult(
+        next_state, final_query, modifiers, events,
+        suspension_telemetry if not obstacle_events else None,
+    )
