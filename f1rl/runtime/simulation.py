@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isfinite
 
+from ..sandbox.body_collision import VehicleBodyGeometry
 from ..sandbox.track.model import TrackWorld
 from ..sandbox.track.query import TrackQuery
 from ..sandbox.vehicle import VehicleControl, VehicleParameters
@@ -58,6 +59,7 @@ class Simulation:
         "_initial_state",
         "_parameters",
         "_config",
+        "_body_geometry",
         "_state",
         "_snapshot",
     )
@@ -68,11 +70,16 @@ class Simulation:
         initial_state: WorldState,
         parameters: VehicleParameters,
         config: SimulationConfig,
+        *,
+        body_geometry: VehicleBodyGeometry | None = None,
     ) -> None:
         self._track = track
         self._initial_state = initial_state
         self._parameters = parameters
         self._config = config
+        if body_geometry is not None and not isinstance(body_geometry, VehicleBodyGeometry):
+            raise ValueError('body_geometry must be VehicleBodyGeometry or None')
+        self._body_geometry = body_geometry
         self._state = SimulationState(0, 0.0, initial_state)
         self._snapshot = self._snapshot_for(initial_state)
 
@@ -89,6 +96,7 @@ class Simulation:
             self._parameters,
             self._config.fixed_dt,
             self._config.max_surface_distance,
+            body_geometry=self._body_geometry,
         )
         next_tick = current.tick + 1
         elapsed_time = next_tick * self._config.fixed_dt
