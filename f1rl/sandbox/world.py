@@ -147,7 +147,10 @@ def step_world(
         if candidate.grounded:
             # Exact event-time touchdown was independently certified; consume
             # the rest of dt using grounded suspension, never discard elapsed time.
-            suspension_override = SuspensionDynamicsState(candidate.position.y)
+            suspension_override = (
+                flight_telemetry.landing_suspension
+                or SuspensionDynamicsState(candidate.position.y)
+            )
             remainder = flight_telemetry.remaining_dt_s
             if remainder > 0.:
                 end_target = VehicleState(
