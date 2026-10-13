@@ -10,6 +10,7 @@ from .dynamics.vehicle_dynamics import compute_motion
 from .interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
 from .road_footprint import swept_body_road_union
 from .ramp_support import PlanarRampPolicy, certify_single_planar_ramp
+from .multi_surface_support import MultiSurfaceSuspensionPolicy, certify_multisurface_support
 from .interactions.resolver import resolve_entry_events, resolve_motion_modifiers, resolve_obstacle_block
 from .interactions.state import InteractionState
 from .rules.scoring import ScoreState, apply_score_events
@@ -47,9 +48,15 @@ def step_world(
     *,
     body_geometry: VehicleBodyGeometry | None = None,
     ramp_support_policy: PlanarRampPolicy | None = None,
+    multi_surface_policy: MultiSurfaceSuspensionPolicy | None = None,
 ) -> WorldStepResult:
     if ramp_support_policy is not None and (body_geometry is None or not isinstance(ramp_support_policy, PlanarRampPolicy)):
         raise ValueError('ramp_support_policy requires full-body geometry and PlanarRampPolicy')
+    if multi_surface_policy is not None:
+        if body_geometry is None or not isinstance(multi_surface_policy, MultiSurfaceSuspensionPolicy):
+            raise ValueError("multi_surface_policy requires full-body geometry and MultiSurfaceSuspensionPolicy")
+        if ramp_support_policy is not None:
+            raise ValueError("single-patch and multi-surface policies are mutually exclusive")
     current_query = track.query_point(state.vehicle.position, max_surface_distance, state.track)
     modifiers = resolve_motion_modifiers(current_query)
     motion = compute_motion(state.vehicle, control, parameters, current_query.contact, modifiers)
@@ -78,7 +85,12 @@ def step_world(
 
     accepted, obstacle_events = resolve_obstacle_block(state.vehicle, candidate, candidate_query)
     if body_geometry is not None:
-        if ramp_support_policy is None:
+        if multi_surface_policy is not None:
+            road_verdict = certify_multisurface_support(
+                state.vehicle, accepted, body_geometry,
+                multi_surface_policy, track.surfaces,
+            )
+        elif ramp_support_policy is None:
             road_verdict = swept_body_road_union(
                 state.vehicle, accepted, body_geometry, track.surfaces,
                 ride_height_m=parameters.ride_height,
