@@ -6,6 +6,7 @@ import gymnasium as gym
 import numpy as np
 
 from ...runtime.simulation import SimulationConfig
+from ...sandbox.body_collision import VehicleBodyGeometry
 from ...sandbox.track.model import TrackWorld
 from ...sandbox.vehicle import VehicleParameters
 from ...sandbox.world import WorldState
@@ -28,6 +29,7 @@ class F1RLEnvFactory:
     episode_config: EpisodeConfig
     navigation: AuthoredNavigation | None = None
     offtrack_config: OffTrackConfig | None = None
+    body_geometry: VehicleBodyGeometry | None = None
 
     def __post_init__(self) -> None:
         values = (
@@ -46,6 +48,8 @@ class F1RLEnvFactory:
             raise ValueError("navigation must be AuthoredNavigation or None")
         if self.offtrack_config is not None and not isinstance(self.offtrack_config, OffTrackConfig):
             raise ValueError("offtrack_config must be OffTrackConfig or None")
+        if self.body_geometry is not None and not isinstance(self.body_geometry, VehicleBodyGeometry):
+            raise ValueError("body_geometry must be VehicleBodyGeometry or None")
 
     def create(self) -> F1RLEnv:
         return F1RLEnv(
@@ -58,6 +62,7 @@ class F1RLEnvFactory:
             episode_config=self.episode_config,
             navigation=self.navigation,
             offtrack_config=self.offtrack_config,
+            body_geometry=self.body_geometry,
         )
 
 
@@ -110,6 +115,7 @@ class TrainingScenarioSet:
             "reward_composer",
             "episode_config",
             "offtrack_config",
+            "body_geometry",
         )
         for scenario in self.scenarios[1:]:
             if any(
