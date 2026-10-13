@@ -13,8 +13,8 @@ from math import isfinite
 from .angular_landing_impulse import AngularLandingImpulsePolicy, ImpulseResolutionError
 from .geometry.vector import Vec3
 from .multi_surface_support import _within_shape
-from .road_footprint import _hull, _inflate, _square
-from .multi_surface_support import _intersection
+from .road_footprint import _hull
+from .multi_surface_support import _intersection, _square
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,7 +124,10 @@ def first_rotating_wheel_touchdown(
                 return interval(lo,mid,depth-1) or interval(mid,hi,depth-1)
             for segment in range(segments):
                 t0=segment*h
-                t1=(segment+1)*h
+                earliest=min((c.time_s for c in event_candidates),default=dt)
+                if t0 >= earliest:
+                    break
+                t1=min((segment+1)*h,earliest)
                 found=interval(t0,t1,policy.event_bisections)
                 if found is not None:
                     event_candidates.append(found)
