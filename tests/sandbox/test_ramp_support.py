@@ -12,7 +12,7 @@ from f1rl.sandbox.track.patch import PlanarSurfacePatch
 from f1rl.sandbox.vehicle import VehicleState
 
 
-BODY = VehicleBodyGeometry(1., 1., 2., Vec3(0., 0., 0.))
+BODY = VehicleBodyGeometry(1., .4, 2., Vec3(0., 0., 0.))
 WHEELS = WheelContactPoints(
     Vec3(-.4, -.3, .8), Vec3(.4, -.3, .8),
     Vec3(-.4, -.3, -.8), Vec3(.4, -.3, -.8),
@@ -75,7 +75,7 @@ def test_one_tire_outside_road_but_body_still_inside():
 
 def test_body_3d_projection_can_exceed_patch_with_all_wheels_supported():
     patch,q=surface(0.,width=2.)
-    oversized=VehicleBodyGeometry(3.,1.,1.8,Vec3(0.,0.,0.))
+    oversized=VehicleBodyGeometry(3.,.4,1.8,Vec3(0.,0.,0.))
     result=certify(car(patch,q),car(patch,q),patch,body=oversized)
     assert result.status=="outside"
 
@@ -217,3 +217,13 @@ def test_policy_rejects_unreviewable_contact_tolerance(value):
     from f1rl.sandbox.ramp_support import PlanarRampPolicy
     with pytest.raises(ValueError,match="tolerance"):
         PlanarRampPolicy(WHEELS,value)
+
+
+def test_chassis_penetration_rejected_even_with_four_supported_tires():
+    patch,q=surface(pi/6.)
+    # Synthetic ground-contact offsets are -0.3m. A chassis with 0.5m
+    # half-height at that reference position penetrates the road plane.
+    penetrating=VehicleBodyGeometry(1.,1.,2.,Vec3(0.,0.,0.))
+    report=certify(car(patch,q),car(patch,q),patch,body=penetrating)
+    assert report.status=="outside"
+    assert not report.valid
