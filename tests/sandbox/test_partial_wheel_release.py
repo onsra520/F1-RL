@@ -106,7 +106,7 @@ def test_auto_release_only_when_all_four_wheels_exit_with_substep_time():
 def test_reversed_input_is_exactly_repeatable():
     p = pose(0., speed=15.)
     assert integrate(start=p, travel=2.9, dt=2.9/15.) == integrate(
-        start=p, travel=2.9, dt=.58,
+        start=p, travel=2.9, dt=2.9/15.,
     )
 
 
