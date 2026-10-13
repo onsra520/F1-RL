@@ -150,21 +150,31 @@ def _rotating_exit_certified(start, policy, body, patches, polygons, dt, gravity
     if len(patches) != 1:
         raise FlightPhysicsError("rotating flight requires one flat exit platform")
     patch, shape = patches[0], polygons[0]
-    forward = patch.forward
-    horizontal_speed = start.velocity.dot(forward)
+    # The platform outline lives in XZ; don't use 3D forward projection
+    # (which can falsely classify a wheel above an inclined road as exited).
+    fx, fz = patch.forward.x, patch.forward.z
+    flen = hypot(fx, fz)
+    fx, fz = fx/flen, fz/flen
+    horizontal_speed = start.velocity.x*fx + start.velocity.z*fz
     omega = start.angular_velocity.magnitude
     max_wheel_radius = max(w.magnitude for w in policy.contact.wheels.positions)
     if horizontal_speed <= omega*max_wheel_radius + 1e-9:
         raise FlightPhysicsError("rotating airborne path not monotonic away from road")
     for local in policy.contact.wheels.positions:
-        world = start.position + start.orientation.rotate(local)
-        if (world-patch.origin).dot(forward) <= patch.length/2.:
+        point = start.position + start.orientation.rotate(local)
+        relative = (point.x-patch.origin.x)*fx+(point.z-patch.origin.z)*fz
+        if relative <= patch.length*flen/2.:
             raise FlightPhysicsError("rotating takeoff wheel still overlaps exit platform")
-    # Even while body overhangs the edge, this globally conservative bound
-    # guarantees that no underside point reaches the road elevation.
-    start_bottom = min(v.y for v in _body_corners(start, body))
-    y_motion = abs(start.velocity.y)*dt+.5*gravity*dt*dt+omega*body.motion_radius_m*dt
-    if start_bottom-y_motion <= patch.origin.y + 1e-9:
+    # Worst-case signed-plane clearance of any underside point throughout
+    # this outward-only rotating interval, including gravity and rotation.
+    start_clearance = min(
+        (p-patch.origin).dot(patch.normal)
+        for p in _body_corners(start, body)
+    )
+    worst = (abs(start.velocity.dot(patch.normal))*dt
+             +.5*gravity*patch.normal.y*dt*dt
+             +omega*body.motion_radius_m*dt)
+    if start_clearance-worst <= 1e-9:
         raise FlightPhysicsError("rotating airborne chassis clearance unresolved")
 
 
