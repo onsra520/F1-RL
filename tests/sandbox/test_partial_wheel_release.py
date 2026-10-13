@@ -141,7 +141,7 @@ def test_sloped_platform_requires_separate_support_transition_policy():
         "incline", Vec3(0., 0., 0.), Vec3(0., .1, .99498743710662),
         Vec3(0., .99498743710662, -.1), 5., 8.,
     )
-    with pytest.raises(SuspensionResolutionError, match="flat roads"):
+    with pytest.raises(SuspensionResolutionError, match="road slope"):
         integrate(surfaces=(incline,), dt=.04)
 
 
