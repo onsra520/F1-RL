@@ -4,6 +4,7 @@ from dataclasses import dataclass, replace
 from typing import TypeAlias
 
 from .body_collision import VehicleBodyGeometry, sweep_body_against_obstacle
+from .geometry.vector import Vec3
 from .dynamics.integrator import integrate
 from .dynamics.modifiers import MotionModifiers
 from .dynamics.vehicle_dynamics import compute_motion
