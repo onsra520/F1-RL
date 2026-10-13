@@ -89,13 +89,13 @@ def test_front_axle_leaves_platform_rear_axle_remains_loaded():
 
 
 def test_auto_release_only_when_all_four_wheels_exit_with_substep_time():
-    p = pose(0., speed=5.)
-    out = integrate(start=p, travel=2.9, dt=.58)
+    p = pose(0., speed=15.)
+    out = integrate(start=p, travel=2.9, dt=2.9/15.)
     assert out.takeoff_at_s is not None
-    assert .5 < out.takeoff_at_s < .58
+    assert .16 < out.takeoff_at_s < 2.9/15.
     assert not out.vehicle.grounded
     assert out.vehicle.position.z > 2.8
-    assert out.remaining_dt_s == pytest.approx(.58-out.takeoff_at_s)
+    assert out.remaining_dt_s == pytest.approx(2.9/15.-out.takeoff_at_s)
     assert any(f.supported_wheels == 2 for f in out.frames)
     assert any(f.forces_n[0] == 0. and f.forces_n[2] > 0. for f in out.frames)
     assert out.vehicle.angular_velocity.magnitude > 0.
@@ -104,8 +104,8 @@ def test_auto_release_only_when_all_four_wheels_exit_with_substep_time():
 
 
 def test_reversed_input_is_exactly_repeatable():
-    p = pose(0., speed=5.)
-    assert integrate(start=p, travel=2.9, dt=.58) == integrate(
+    p = pose(0., speed=15.)
+    assert integrate(start=p, travel=2.9, dt=2.9/15.) == integrate(
         start=p, travel=2.9, dt=.58,
     )
 
@@ -133,7 +133,7 @@ def test_bump_penetration_not_inferred_as_successful_support():
 
 def test_horizontal_resolution_limit_is_fail_closed():
     with pytest.raises(SuspensionResolutionError, match="XZ movement"):
-        integrate(start=pose(0., speed=20.), travel=4., dt=.2)
+        integrate(start=pose(0., speed=20.), travel=4.8, dt=.2)
 
 
 def test_sloped_platform_requires_separate_support_transition_policy():
@@ -180,10 +180,10 @@ def _world(vehicle):
 
 def test_world_auto_takeoff_switches_to_ballistic_for_remaining_time():
     from f1rl.sandbox.world import step_world
-    source = pose(speed=5.)
+    source = pose(speed=15.)
     track, state, parameters = _world(source)
     result = step_world(
-        track, state, VehicleControl(0.,0.,0.), parameters, .58,.5,
+        track, state, VehicleControl(0.,0.,0.), parameters, 2.9/15.,.5,
         body_geometry=BODY, independent_suspension_policy=PHYSICS,
         ballistic_flight_policy=FLIGHT, automatic_takeoff_policy=POLICY,
     )
@@ -197,7 +197,7 @@ def test_world_auto_takeoff_switches_to_ballistic_for_remaining_time():
     assert result.events[0].time_s == pytest.approx(
         result.partial_support_telemetry.takeoff_at_s,
     )
-    assert result.state.vehicle.position.z == pytest.approx(5.*.58,abs=1e-7)
+    assert result.state.vehicle.position.z == pytest.approx(2.9,abs=1e-7)
     assert state.vehicle.grounded
     assert state.flight.phase == "grounded"
 
@@ -234,14 +234,14 @@ def test_world_auto_departure_cannot_collect_airborne_reward():
     from f1rl.sandbox.track.volume import OrientedBoxVolume
     from f1rl.sandbox.track.model import TrackWorld
     from f1rl.sandbox.world import step_world
-    source = pose(speed=5.)
+    source = pose(speed=15.)
     track, state, parameters = _world(source)
     volume = OrientedBoxVolume(Vec3(0.,.3,2.9),Vec3(2.,2.,1.),
                                 Quaternion.identity())
     track = TrackWorld(surfaces=track.surfaces,
                        score_pickups=(ScorePickup("unearned",volume,99),))
     result = step_world(
-        track, state, VehicleControl(0.,0.,0.), parameters, .58,.5,
+        track, state, VehicleControl(0.,0.,0.), parameters, 2.9/15.,.5,
         body_geometry=BODY, independent_suspension_policy=PHYSICS,
         ballistic_flight_policy=FLIGHT, automatic_takeoff_policy=POLICY,
     )
