@@ -142,3 +142,78 @@ def test_wheel_specs_are_explicit_and_ordered():
     with pytest.raises(ValueError,match="front/rear"):
         WheelContactPoints(Vec3(-1.,0.,-1.),Vec3(1.,0.,-1.),
             Vec3(-1.,0.,1.),Vec3(1.,0.,1.))
+
+
+def test_world_step_accepts_opted_in_synthetic_single_ramp():
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.ramp_support import PlanarRampPolicy
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters
+    from f1rl.sandbox.world import WorldState, step_world
+
+    patch,q=surface(pi/6.)
+    initial=car(patch,q)
+    world=WorldState(initial,TrackState(frozenset()),
+                     InteractionState(frozenset(),frozenset()),ScoreState())
+    # Zero max speed avoids adding uncontrolled downhill translation in this
+    # isolated contact-certification test; this is not a training setup.
+    params=VehicleParameters(2.5,.3,.6,0.,20.,0.,0.,0.,9.81)
+    args=(TrackWorld(surfaces=(patch,)),world,
+          VehicleControl(0.,0.,0.),params,.02,.5)
+    with pytest.raises(RuntimeError,match="road validity unsupported"):
+        step_world(*args,body_geometry=BODY)
+    result=step_world(*args,body_geometry=BODY,
+        ramp_support_policy=PlanarRampPolicy(WHEELS,TOLERANCE))
+    assert result.state.vehicle.grounded
+    assert result.state.vehicle.position==initial.position
+    assert result.events==()
+
+
+def test_world_rejects_multisurface_seam_without_support_rule():
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.ramp_support import PlanarRampPolicy
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters
+    from f1rl.sandbox.world import WorldState, step_world
+
+    patch,q=surface(pi/6.)
+    initial=car(patch,q)
+    world=WorldState(initial,TrackState(frozenset()),
+                     InteractionState(frozenset(),frozenset()),ScoreState())
+    params=VehicleParameters(2.5,.3,.6,0.,20.,0.,0.,0.,9.81)
+    extra=PlanarSurfacePatch("second",patch.origin,patch.forward,
+                             patch.normal,patch.width,patch.length)
+    with pytest.raises(RuntimeError,match="requires exactly one planar patch"):
+        step_world(TrackWorld(surfaces=(patch,extra)),world,
+            VehicleControl(0.,0.,0.),params,.02,.5,
+            body_geometry=BODY,ramp_support_policy=PlanarRampPolicy(WHEELS,TOLERANCE))
+
+
+def test_world_rejects_ramp_policy_without_body():
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.ramp_support import PlanarRampPolicy
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters
+    from f1rl.sandbox.world import WorldState, step_world
+    patch,q=surface(pi/6.)
+    initial=car(patch,q)
+    world=WorldState(initial,TrackState(frozenset()),
+                     InteractionState(frozenset(),frozenset()),ScoreState())
+    params=VehicleParameters(2.5,.3,.6,0.,20.,0.,0.,0.,9.81)
+    with pytest.raises(ValueError,match="ramp_support_policy requires"):
+        step_world(TrackWorld(surfaces=(patch,)),world,
+            VehicleControl(0.,0.,0.),params,.02,.5,
+            ramp_support_policy=PlanarRampPolicy(WHEELS,TOLERANCE))
+
+
+@pytest.mark.parametrize("value",[0.,-1.,float("nan"),True])
+def test_policy_rejects_unreviewable_contact_tolerance(value):
+    from f1rl.sandbox.ramp_support import PlanarRampPolicy
+    with pytest.raises(ValueError,match="tolerance"):
+        PlanarRampPolicy(WHEELS,value)
