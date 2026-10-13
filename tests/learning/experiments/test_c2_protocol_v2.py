@@ -84,7 +84,7 @@ def test_v2_draft_cannot_be_frozen_or_readied_by_changing_only_status() -> None:
         definition.require_frozen()
     with pytest.raises(ValueError, match="training protocol must be frozen"):
         replace(definition, metadata=replace(definition.metadata, status="frozen")).require_frozen()
-    with pytest.raises(ValueError, match="at least three paired"):
+    with pytest.raises(ValueError, match="non-pilot final training profile"):
         replace(
             definition,
             metadata=replace(definition.metadata, status="frozen"),
@@ -206,3 +206,18 @@ def test_candidate_alignment_rejects_fake_freeze_or_seed_promotion() -> None:
     ):
         with pytest.raises(ValueError, match="draft"):
             verify_draft_c2_alignment(modified, candidate)
+
+
+def test_v2_frozen_contract_requires_independent_seed_replicates(tmp_path: Path) -> None:
+    definition = ExperimentDefinition.from_yaml(V2)
+    final_profile = tmp_path / "ppo-generalization-c2-v2-training.yml"
+    final_profile.write_text("schema_version: 2\n", encoding="utf-8")
+    staged = replace(
+        definition,
+        metadata=replace(definition.metadata, status="frozen"),
+        training=replace(definition.training, protocol_status="frozen", runtime_config=final_profile),
+    )
+    with pytest.raises(ValueError, match="at least three paired"):
+        staged.require_frozen()
+    with pytest.raises(ValueError, match="at least three paired"):
+        replace(staged, seeds=SeedProtocol((100, 101, 102), (200, 201))).require_frozen()
