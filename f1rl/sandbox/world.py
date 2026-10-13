@@ -55,13 +55,21 @@ def step_world(
             raise ValueError("body_geometry must be VehicleBodyGeometry")
         # Prospective full-body engine: continuous translation + rotation.
         # Unresolved conservative intervals must block, not tunnel.
-        body_hits = tuple(
-            obstacle for obstacle in track.obstacles
-            if sweep_body_against_obstacle(
+        body_hits = []
+        for obstacle in track.obstacles:
+            verdict = sweep_body_against_obstacle(
                 state.vehicle, candidate, body_geometry, obstacle.volume
-            ).blocked
-        )
-        candidate_query = replace(candidate_query, obstacles=body_hits)
+            )
+            if verdict.uncertain:
+                # Unknown is not evidence of a real collision. Fail closed,
+                # but NEVER forge an ObstacleHit or a valid evaluation score.
+                raise RuntimeError(
+                    f"body sweep unresolved for obstacle {obstacle.id!r}; "
+                    "candidate rollout is invalid, not a verified collision"
+                )
+            if verdict.contact:
+                body_hits.append(obstacle)
+        candidate_query = replace(candidate_query, obstacles=tuple(body_hits))
 
     accepted, obstacle_events = resolve_obstacle_block(state.vehicle, candidate, candidate_query)
     accepted_query = (
