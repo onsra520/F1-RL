@@ -111,9 +111,9 @@ def test_body_penetration_rejected_even_if_tires_are_supported():
 def test_outside_at_midpoint_cannot_be_mistaken_for_clear():
     # Motion endpoints are geometrically valid but the body sweeps off road.
     road = patch("road", 0., length=8.)
-    first = car(0., rotation=Quaternion.from_axis_angle(UP, -pi/2))
-    last = car(0., rotation=Quaternion.from_axis_angle(UP, pi/2))
-    narrow = PlanarSurfacePatch("narrow", road.origin, FWD, UP, 2.1, 8.)
+    first = car(0., rotation=Quaternion.identity())
+    last = car(0., rotation=Quaternion.from_axis_angle(UP, pi))
+    narrow = PlanarSurfacePatch("narrow", road.origin, FWD, UP, 1.6, 8.)
     result = report(first, last, (narrow,))
     assert result.status in ("outside", "uncertain")
     assert not result.valid
