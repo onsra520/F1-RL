@@ -112,11 +112,9 @@ def test_rotating_sloped_landing_not_misreported_as_accepted_impulse():
         fly(policy=policy,surfaces=(inclined,))
 
 
-def test_restution_one_never_increases_kinetic_energy():
-    result=fly(policy=replace(FLIGHT,angular_impulse=replace(IMPULSE,restitution=1.)))
-    assert result.impulse_audit.post_kinetic_energy_j==pytest.approx(
-        result.impulse_audit.pre_kinetic_energy_j,rel=1e-10,
-    )
+def test_rebound_with_positive_restitution_does_not_fake_grounded():
+    with pytest.raises(FlightPhysicsError,match="rebounding wheel impulse"):
+        fly(policy=replace(FLIGHT,angular_impulse=replace(IMPULSE,restitution=1.)))
 
 
 def test_world_preserves_rate_state_after_accepted_angular_touchdown():
