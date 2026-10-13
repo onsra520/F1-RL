@@ -122,7 +122,8 @@ def test_partial_wheel_support_at_touchdown_cannot_be_counted_as_landing():
                                 .4, 8.)
     released = car(y=1., vy=-2., grounded=False)
     with pytest.raises(FlightPhysicsError, match="touchdown road/wheel/body"):
-        flight(released, dt=.4, surfaces=(narrow,),\n               policy=replace(POLICY, max_touchdown_vertical_speed_mps=10.))
+        flight(released, dt=.4, surfaces=(narrow,),
+               policy=replace(POLICY, max_touchdown_vertical_speed_mps=10.))
 
 
 def test_body_first_collision_precedes_wheels_and_is_rejected():
