@@ -9,6 +9,7 @@ from .dynamics.modifiers import MotionModifiers
 from .dynamics.vehicle_dynamics import compute_motion
 from .interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
 from .road_footprint import swept_body_road_union
+from .ramp_support import PlanarRampPolicy, certify_single_planar_ramp
 from .interactions.resolver import resolve_entry_events, resolve_motion_modifiers, resolve_obstacle_block
 from .interactions.state import InteractionState
 from .rules.scoring import ScoreState, apply_score_events
@@ -45,7 +46,10 @@ def step_world(
     max_surface_distance: float,
     *,
     body_geometry: VehicleBodyGeometry | None = None,
+    ramp_support_policy: PlanarRampPolicy | None = None,
 ) -> WorldStepResult:
+    if ramp_support_policy is not None and (body_geometry is None or not isinstance(ramp_support_policy, PlanarRampPolicy)):
+        raise ValueError('ramp_support_policy requires full-body geometry and PlanarRampPolicy')
     current_query = track.query_point(state.vehicle.position, max_surface_distance, state.track)
     modifiers = resolve_motion_modifiers(current_query)
     motion = compute_motion(state.vehicle, control, parameters, current_query.contact, modifiers)
@@ -74,10 +78,25 @@ def step_world(
 
     accepted, obstacle_events = resolve_obstacle_block(state.vehicle, candidate, candidate_query)
     if body_geometry is not None:
-        road_verdict = swept_body_road_union(
-            state.vehicle, accepted, body_geometry, track.surfaces,
-            ride_height_m=parameters.ride_height,
-        )
+        if ramp_support_policy is None:
+            road_verdict = swept_body_road_union(
+                state.vehicle, accepted, body_geometry, track.surfaces,
+                ride_height_m=parameters.ride_height,
+            )
+        elif len(track.surfaces) == 1:
+            road_verdict = certify_single_planar_ramp(
+                state.vehicle, accepted, body_geometry,
+                ramp_support_policy.wheels, track.surfaces[0],
+                plane_tolerance_m=ramp_support_policy.plane_tolerance_m,
+                max_subdivisions=ramp_support_policy.max_subdivisions,
+            )
+        else:
+            # Crossing surface seams, slope transitions and multiple decks
+            # have no approved tire-support rule in this research version.
+            raise RuntimeError(
+                "prospective full-body ramp support unsupported: "
+                "requires exactly one planar patch; rollout invalid"
+            )
         if not road_verdict.valid:
             # This is not an ObstacleHit and must not be counted as a
             # successful/valid simulation transition. A later registered
