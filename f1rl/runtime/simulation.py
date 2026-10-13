@@ -96,7 +96,7 @@ class Simulation:
             self._parameters,
             self._config.fixed_dt,
             self._config.max_surface_distance,
-            body_geometry=self._body_geometry,
+            **({"body_geometry": self._body_geometry} if self._body_geometry is not None else {}),
         )
         next_tick = current.tick + 1
         elapsed_time = next_tick * self._config.fixed_dt
