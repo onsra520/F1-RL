@@ -1,0 +1,31 @@
+# Prospective candidate research acceptance contract. NOT a runnable or frozen profile.
+# WP0 is not a formally scoped work package.
+schema_version: 1
+status: draft
+wp0: not_applicable
+simulation:
+  scope: full_body_3d
+  collision: swept_obb_conservative_linear_slerp_v1
+  body:
+    length_m: null
+    width_m: null
+    height_m: null
+    local_center_xyz_m: null
+driving:
+  rule: ordered_checkpoints_and_authored_route
+  vehicle_body_must_stay_in_road_union: true
+  max_center_route_deviation_m: null
+  ramp_airborne_road_projection_policy: null
+reliability:
+  requirement: independent_training_seeds_and_environment_perturbations
+  independent_ppo_seed_pairs: 3
+  episodes_per_train_track_per_model: 60
+  one_sided_confidence: 0.95
+  minimum_cp_lower_bound: 0.90
+  spawn_offset_range_m: null
+  heading_jitter_range_deg: null
+  perturbation_validation: null
+heldout:
+  status: sealed
+  evaluation_permitted: false
+scientific_freeze_permitted: false
