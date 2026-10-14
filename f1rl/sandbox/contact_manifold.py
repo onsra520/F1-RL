@@ -38,6 +38,7 @@ class ContactManifoldPolicy:
     rebound_separation_mps: float = 1e-3
     max_post_angular_speed_radps: float = 5.
     max_ground_yaw_radps: float = .02
+    max_impacts_per_step: int = 1
 
     def __post_init__(self) -> None:
         for name in ("yaw_inertia_kg_m2", "friction_coefficient", "restitution",
@@ -54,6 +55,8 @@ class ContactManifoldPolicy:
                 raise ValueError(f"{name} must be positive")
         if type(self.sweeps) is not int or not 1 <= self.sweeps <= 1024:
             raise ValueError("sweeps must be integer in [1,1024]")
+        if type(self.max_impacts_per_step) is not int or not 1 <= self.max_impacts_per_step <= 8:
+            raise ValueError("max_impacts_per_step must be integer in [1,8]")
 
 
 @dataclass(frozen=True, slots=True)
