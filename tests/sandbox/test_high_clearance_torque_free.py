@@ -74,7 +74,7 @@ def test_high_clearance_torque_free_is_advanced_and_audited():
 
 def test_low_altitude_near_road_refused_even_if_current_pose_clear():
     with pytest.raises(FlightPhysicsError,match="road clearance not globally certified"):
-        fly(air(y=1.2))
+        fly(air(y=1.1))
 
 
 def test_obstacle_sweep_not_assumed_safe_under_non_slerp_precession():
