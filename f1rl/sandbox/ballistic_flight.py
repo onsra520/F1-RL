@@ -100,7 +100,7 @@ class FlightTransition:
     patch_id: str | None = None
 
     def __post_init__(self) -> None:
-        if self.kind not in ("takeoff", "landing"):
+        if self.kind not in ("takeoff", "landing", "rebound"):
             raise ValueError("unknown flight transition")
         if not isfinite(self.time_s) or self.time_s < 0.:
             raise ValueError("flight event time must be nonnegative")
