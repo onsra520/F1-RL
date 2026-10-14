@@ -118,3 +118,21 @@ def test_replay_of_multiple_impacts_is_deterministic():
         MANIFOLD,restitution=.5,max_impacts_per_step=2,
     ))
     assert simulate(dt=.67,policy=policy)==simulate(dt=.67,policy=policy)
+
+
+def test_first_impact_bracket_is_nonpenetrating_and_bounded():
+    surface=patch()
+    atlas=_atlas((surface,),CONTACT.seam_height_tolerance_m)
+    initial=state()
+    option=AngularLandingImpulsePolicy()
+    first=first_rotating_wheel_touchdown(
+        lambda t:_flight_pose(initial,t,9.81),
+        W,atlas,.35,9.81,option,
+    )
+    assert first is not None
+    impact=_flight_pose(initial,first.time_s,9.81)
+    point=impact.position+impact.orientation.rotate(W.positions[first.wheel_index])
+    signed_gap=(point-surface.origin).dot(surface.normal)
+    # Never produce the already-penetrating side of a time bracket.
+    assert signed_gap >= -1e-10
+    assert signed_gap <= 1e-6
