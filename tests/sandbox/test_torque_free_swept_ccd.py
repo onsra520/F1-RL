@@ -107,8 +107,8 @@ def test_low_altitude_hover_is_safe_even_when_bounding_sphere_fails():
 
 def test_bump_in_middle_of_xz_path_blocks_while_ends_outside():
     raised=PlanarSurfacePatch(
-        "raised",Vec3(0.,.95,0.),Vec3(0.,0.,1.),
-        Vec3(0.,1.,0.),1.,3.,
+        "raised",Vec3(0.,1.02,0.),Vec3(0.,0.,1.),
+        Vec3(0.,1.,0.),1.,.4,
     )
     initial=car(p=Vec3(-4.,1.1,0.),v=Vec3(40.,0.,0.),
                 w=Vec3(0.,0.,0.))
