@@ -100,8 +100,14 @@ def test_perfectly_elastic_symmetric_impact_energy_is_conserved():
 def test_fails_closed_when_no_closing_wheel_or_no_convergence_budget():
     with pytest.raises(ManifoldResolutionError,match="no approaching"):
         run(vehicle(vy=2.))
+    # A symmetric manifold can legitimately converge in one sweep. Exercise
+    # the non-converged case with coupled sliding/friction and angular motion.
+    difficult=vehicle(vx=4.,wz=.45)
     with pytest.raises(ManifoldResolutionError):
-        run(policy=replace(POLICY,sweeps=1,velocity_tolerance_mps=1e-10))
+        run(difficult,policy=replace(
+            POLICY,sweeps=1,friction_coefficient=.9,
+            velocity_tolerance_mps=1e-12,
+        ))
 
 def test_duplicate_and_unknown_contact_geometry_rejected():
     with pytest.raises(ValueError,match="duplicate"):
