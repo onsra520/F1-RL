@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from math import acos, atan2, cos, hypot, isfinite, sqrt
 
 from .body_collision import VehicleBodyGeometry, sweep_body_against_obstacle
+from .contact_manifold import ContactManifoldPolicy, ManifoldImpulseAudit
 from .angular_landing_impulse import (
     AngularLandingImpulsePolicy, ImpulseResolutionError, WheelImpulseAudit,
     solve_one_wheel_normal_impulse,
@@ -53,6 +54,7 @@ class BallisticFlightPolicy:
     touchdown_time_epsilon_s: float = 1e-8
     max_patch_tilt_rad: float = 0.  # flat-only unless explicitly opt-in
     angular_impulse: AngularLandingImpulsePolicy | None = None
+    manifold: ContactManifoldPolicy | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.contact, MultiSurfaceSuspensionPolicy):
@@ -61,6 +63,10 @@ class BallisticFlightPolicy:
             self.angular_impulse, AngularLandingImpulsePolicy
         ):
             raise ValueError("angular_impulse must be a registered contact policy")
+        if self.manifold is not None and not isinstance(self.manifold, ContactManifoldPolicy):
+            raise ValueError("manifold must be a registered contact policy")
+        if self.manifold is not None and self.angular_impulse is not None:
+            raise ValueError("legacy single-wheel and manifold policies are mutually exclusive")
         for name in ("max_touchdown_vertical_speed_mps",
                      "max_touchdown_tilt_rad", "touchdown_time_epsilon_s"):
             value = getattr(self, name)
@@ -110,6 +116,7 @@ class FlightStep:
     touchdown_speed_mps: float | None = None
     landing_suspension: SuspensionDynamicsState | None = None
     impulse_audit: WheelImpulseAudit | None = None
+    manifold_audit: ManifoldImpulseAudit | None = None
 
     def __post_init__(self) -> None:
         if not self.poses or self.vehicle != self.poses[-1]:
@@ -437,6 +444,12 @@ def advance_ballistic_flight(
             or not isfinite(gravity_mps2) or gravity_mps2 <= 0.):
         raise ValueError("positive finite dt and gravity required")
     patches, polygons = _flat_atlas(surfaces, policy)
+    if policy.manifold is not None:
+        from .manifold_flight import advance_manifold_flight
+        return advance_manifold_flight(
+            airborne,policy,body,(patches,polygons),obstacles,
+            dt,gravity_mps2,landing_dynamics,
+        )
     if airborne.angular_velocity.magnitude > _EPS and policy.angular_impulse is not None:
         return _rotating_impulse_flight(
             airborne,policy,body,patches,polygons,obstacles,dt,gravity_mps2,
