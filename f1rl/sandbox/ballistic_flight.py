@@ -117,6 +117,7 @@ class FlightStep:
     landing_suspension: SuspensionDynamicsState | None = None
     impulse_audit: WheelImpulseAudit | None = None
     manifold_audit: ManifoldImpulseAudit | None = None
+    manifold_history: tuple[ManifoldImpulseAudit, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.poses or self.vehicle != self.poses[-1]:
