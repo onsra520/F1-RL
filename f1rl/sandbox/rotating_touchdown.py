@@ -95,8 +95,18 @@ def first_rotating_wheel_touchdown(
                         raise ImpulseResolutionError("rotating wheel road-edge coverage unresolved")
                     mid=(lo+hi)/2.
                     return interval(lo,mid,depth-1) or interval(mid,hi,depth-1)
-                if g0 <= eps and (st0.velocity+st0.angular_velocity.cross(p0-st0.position)).dot(normal) <= 0.:
+                start_speed=(st0.velocity+st0.angular_velocity.cross(
+                    p0-st0.position)).dot(normal)
+                if g0 <= eps and start_speed <= 0.:
                     raise ImpulseResolutionError("initial rotating wheel is in descending road contact")
+                if g0 <= eps and start_speed > 0.:
+                    # Immediate outward departure after an impulse is not
+                    # a second collision. Certify monotonic separation over
+                    # this interval from a bound on d(v_contact_n)/dt.
+                    max_rate_change=(gravity*normal.y
+                                     +st0.angular_velocity.magnitude**2*wheel_radius)
+                    if start_speed-max_rate_change*(hi-lo) > eps:
+                        return None
                 if g0 > eps and g1 <= 0.:
                     a,b=lo,hi
                     for _ in range(policy.event_bisections):
