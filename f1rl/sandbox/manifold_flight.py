@@ -24,6 +24,7 @@ _UP=Vec3(0.,1.,0.)
 
 def advance_manifold_flight(
     airborne, flight_policy, body, atlas, obstacles, dt, gravity, dynamics,
+    *, _depth=0,
 ):
     """Return either certified grounded state or fully consumed rebound flight.
 
@@ -40,8 +41,8 @@ def advance_manifold_flight(
     if dynamics is None or dynamics.contact!=flight_policy.contact:
         raise FlightPhysicsError("manifold requires matching registered chassis inertia")
     patches, polygons=atlas
-    if any(abs(p.normal.y-1.)>1e-9 for p in patches):
-        raise FlightPhysicsError("rotating manifold requires flat road patch events")
+    if any(p.normal.y < .5 for p in patches):
+        raise FlightPhysicsError("rotating manifold requires upward 2.5D road normals")
     if airborne.angular_velocity.magnitude*dt/flight_policy.collision_segments>.1:
         raise FlightPhysicsError("manifold angular sweep resolution insufficient")
     sampler=lambda t:_flight_pose(airborne,t,gravity)
@@ -112,18 +113,44 @@ def advance_manifold_flight(
     except ManifoldResolutionError as exc:
         raise FlightPhysicsError(f"manifold impulse invalid: {exc}") from exc
     rest=dt-impact_time
+    if impact_time<=policy.velocity_tolerance_mps:
+        raise FlightPhysicsError("impact sequence has insufficient event-time progress")
     # A multi-contact rebound remains airborne. Require strict monotonic
     # separation for every wheel across the entire remaining tick.
     if policy.restitution>0.:
+        # Multiple impacts are opt-in, bounded in count and ordered in time.
+        # Recursive flight must independently certify every intervening
+        # road/body/obstacle trajectory and cannot fake a grounded interval.
+        if _depth + 1 < policy.max_impacts_per_step and rest>1e-8:
+            following=advance_manifold_flight(
+                post,flight_policy,body,atlas,obstacles,rest,gravity,dynamics,
+                _depth=_depth+1,
+            )
+            ordered=(FlightTransition("rebound",impact_time,impact_road.id),)
+            shifted=tuple(
+                FlightTransition(t.kind,impact_time+t.time_s,t.patch_id)
+                for t in following.transitions
+            )
+            return FlightStep(
+                following.vehicle,following.flight,
+                (*poses[:-1],post,*following.poses[1:]),
+                (*ordered,*shifted),following.remaining_dt_s,
+                following.touchdown_speed_mps,following.landing_suspension,
+                following.impulse_audit,following.manifold_audit,
+                (audit,*following.manifold_history),
+            )
+        if len(patches)>1:
+            raise FlightPhysicsError("rebound with mixed road patches not certified")
         # A fully specified rebound requires every wheel to be initially
         # separating with a positive acceleration bound margin. Otherwise
         # refuse and defer to a future multi-event contact integrator.
         for local in flight_policy.contact.wheels.positions:
             arm=post.orientation.rotate(local)
-            normal_v=(post.velocity+post.angular_velocity.cross(arm)).y
+            normal_v=(post.velocity+post.angular_velocity.cross(arm)).dot(impact_road.normal)
             # Conservatively bound the change in wheel vertical velocity
             # by gravity and angular-direction curvature.
-            lower=normal_v-(gravity+post.angular_velocity.magnitude**2*arm.magnitude)*rest
+            lower=normal_v-(gravity*impact_road.normal.y
+                            +post.angular_velocity.magnitude**2*arm.magnitude)*rest
             if lower <= policy.rebound_separation_mps:
                 raise FlightPhysicsError("rebound separation cannot be certified for whole remainder")
         continuation=lambda t:_flight_pose(post,t,gravity)
@@ -147,7 +174,7 @@ def advance_manifold_flight(
         return FlightStep(
             final,FlightState("airborne"),full_poses,
             (FlightTransition("rebound",impact_time,impact_road.id),),
-            0.,max(closing_speeds),None,None,audit,
+            0.,max(closing_speeds),None,None,audit,(audit,),
         )
     # A single event cannot convert to grounded if another wheel was not
     # actually supported or if yaw velocity cannot be represented by the
@@ -176,5 +203,5 @@ def advance_manifold_flight(
     return FlightStep(
         grounded,FlightState("grounded"),(*poses[:-1],grounded),
         (FlightTransition("landing",impact_time,impact_road.id),),
-        max(0.,rest),max(closing_speeds),suspension,None,audit,
+        max(0.,rest),max(closing_speeds),suspension,None,audit,(audit,),
     )
