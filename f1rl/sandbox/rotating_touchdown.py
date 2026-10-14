@@ -118,7 +118,10 @@ def first_rotating_wheel_touchdown(
                             raise ImpulseResolutionError("wheel leaves patch during root refinement")
                         if gm > 0.:a=mid
                         else:b=mid
-                    return RotatingWheelTouchdown(b,i,patch.id)
+                    # Emit the non-penetrating side of the time bracket.
+                    # Returning b would start a rebound microscopically
+                    # below the road, violating the next frame's hard gate.
+                    return RotatingWheelTouchdown(a,i,patch.id)
                 if g1 < -eps:
                     raise ImpulseResolutionError("rotating wheel penetrated without localized touchdown")
                 # In nearest-endpoint distance <= h/2, signed gap rate has
