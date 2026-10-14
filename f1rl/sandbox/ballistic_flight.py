@@ -13,6 +13,11 @@ from math import acos, atan2, cos, hypot, isfinite, sqrt
 
 from .body_collision import VehicleBodyGeometry, sweep_body_against_obstacle
 from .contact_manifold import ContactManifoldPolicy, ManifoldImpulseAudit
+from .torque_free_rotation import (
+    TorqueFreeRotationPolicy, AngularRigidBodyState,
+    AngularRigidBodyAudit, RigidBodyIntegrationError,
+    advance_torque_free_rotation,
+)
 from .angular_landing_impulse import (
     AngularLandingImpulsePolicy, ImpulseResolutionError, WheelImpulseAudit,
     solve_one_wheel_normal_impulse,
@@ -55,6 +60,7 @@ class BallisticFlightPolicy:
     max_patch_tilt_rad: float = 0.  # flat-only unless explicitly opt-in
     angular_impulse: AngularLandingImpulsePolicy | None = None
     manifold: ContactManifoldPolicy | None = None
+    torque_free: TorqueFreeRotationPolicy | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.contact, MultiSurfaceSuspensionPolicy):
@@ -65,6 +71,10 @@ class BallisticFlightPolicy:
             raise ValueError("angular_impulse must be a registered contact policy")
         if self.manifold is not None and not isinstance(self.manifold, ContactManifoldPolicy):
             raise ValueError("manifold must be a registered contact policy")
+        if self.torque_free is not None and not isinstance(
+            self.torque_free, TorqueFreeRotationPolicy
+        ):
+            raise ValueError("torque_free must be a registered angular integration policy")
         if self.manifold is not None and self.angular_impulse is not None:
             raise ValueError("legacy single-wheel and manifold policies are mutually exclusive")
         for name in ("max_touchdown_vertical_speed_mps",
@@ -118,6 +128,7 @@ class FlightStep:
     impulse_audit: WheelImpulseAudit | None = None
     manifold_audit: ManifoldImpulseAudit | None = None
     manifold_history: tuple[ManifoldImpulseAudit, ...] = ()
+    angular_audit: AngularRigidBodyAudit | None = None
 
     def __post_init__(self) -> None:
         if not self.poses or self.vehicle != self.poses[-1]:
@@ -422,6 +433,57 @@ def _rotating_impulse_flight(
     )
 
 
+def _certified_high_clearance_torque_free(
+    airborne, policy, body, patches, obstacles, dt, gravity, dynamics,
+):
+    """Use full Euler free-spin only if a sphere bounds ALL road interactions.
+
+    Road y_max is the maximum height of the finite planar corners. Because
+    vertical ballistic motion is concave down, the minimum centre altitude
+    on [0,dt] is attained at an endpoint. A sphere about the centre therefore
+    proves every rigid wheel/body point above every road patch for all t.
+    No obstacles are allowed until certified non-SLERP rotating sweeps exist.
+    """
+    if obstacles:
+        raise FlightPhysicsError("torque-free collision sweep not yet certified for obstacles")
+    opts=policy.torque_free
+    if dynamics is None or policy.manifold is None:
+        raise FlightPhysicsError("torque-free flight requires registered 3-axis inertia")
+    if (dynamics.contact!=policy.contact
+            or abs(opts.pitch_inertia_kg_m2-dynamics.pitch_inertia_kg_m2)>1e-8
+            or abs(opts.roll_inertia_kg_m2-dynamics.roll_inertia_kg_m2)>1e-8
+            or abs(opts.yaw_inertia_kg_m2-policy.manifold.yaw_inertia_kg_m2)>1e-8):
+        raise FlightPhysicsError("torque-free and manifold inertia registrations mismatch")
+    highest=float("-inf")
+    for patch in patches:
+        for sx in (-1.,1.):
+            for sz in (-1.,1.):
+                corner=(patch.origin+patch.right*(sx*patch.width*.5)
+                        +patch.forward*(sz*patch.length*.5))
+                highest=max(highest,corner.y)
+    endpoint_y=airborne.position.y+airborne.velocity.y*dt-.5*gravity*dt*dt
+    radius=max(
+        body.motion_radius_m,
+        *(v.magnitude for v in policy.contact.wheels.positions),
+    )
+    if min(airborne.position.y,endpoint_y)-radius <= highest+1e-7:
+        raise FlightPhysicsError("torque-free flight road clearance not globally certified")
+    try:
+        state,audit=advance_torque_free_rotation(
+            AngularRigidBodyState(airborne.orientation,airborne.angular_velocity),
+            opts,dt,
+        )
+    except RigidBodyIntegrationError as exc:
+        raise FlightPhysicsError(f"torque-free angular integration blocked: {exc}") from exc
+    end=VehicleState(
+        airborne.position+airborne.velocity*dt+Vec3(0.,-.5*gravity*dt*dt,0.),
+        airborne.velocity+Vec3(0.,-gravity*dt,0.),
+        state.orientation,state.world_angular_velocity_radps,False,
+    )
+    return FlightStep(end,FlightState("airborne"),(airborne,end),(),0.,
+                      angular_audit=audit)
+
+
 def advance_ballistic_flight(
     airborne: VehicleState, policy: BallisticFlightPolicy,
     body: VehicleBodyGeometry, surfaces: tuple[PlanarSurfacePatch, ...],
@@ -445,6 +507,11 @@ def advance_ballistic_flight(
             or not isfinite(gravity_mps2) or gravity_mps2 <= 0.):
         raise ValueError("positive finite dt and gravity required")
     patches, polygons = _flat_atlas(surfaces, policy)
+    if policy.torque_free is not None:
+        return _certified_high_clearance_torque_free(
+            airborne,policy,body,patches,obstacles,dt,gravity_mps2,
+            landing_dynamics,
+        )
     if policy.manifold is not None:
         from .manifold_flight import advance_manifold_flight
         return advance_manifold_flight(
