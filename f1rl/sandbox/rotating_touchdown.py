@@ -138,9 +138,14 @@ def first_rotating_wheel_touchdown(
             for segment in range(segments):
                 t0=segment*h
                 earliest=min((c.time_s for c in event_candidates),default=dt)
-                if t0 >= earliest:
+                # Earlier wheel event uses the *above-plane* bisection
+                # endpoint. Inspect the paired time-tolerance bracket for
+                # co-contacting wheels before concluding their root absent.
+                # This does not advance the simulated chassis past event time.
+                discovery_limit=min(dt,earliest+2.*policy.event_time_tolerance_s)
+                if t0 >= discovery_limit:
                     break
-                t1=min((segment+1)*h,earliest)
+                t1=min((segment+1)*h,discovery_limit)
                 found=interval(t0,t1,policy.event_bisections)
                 if found is not None:
                     event_candidates.append(found)
