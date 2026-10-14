@@ -13,6 +13,10 @@ from math import acos, atan2, cos, hypot, isfinite, sqrt
 
 from .body_collision import VehicleBodyGeometry, sweep_body_against_obstacle
 from .contact_manifold import ContactManifoldPolicy, ManifoldImpulseAudit
+from .torque_free_swept_ccd import (
+    TorqueFreeSweepPolicy, TorqueFreeSweepResolutionError,
+    certify_torque_free_flight_sweep,
+)
 from .torque_free_rotation import (
     TorqueFreeRotationPolicy, AngularRigidBodyState,
     AngularRigidBodyAudit, RigidBodyIntegrationError,
@@ -61,6 +65,7 @@ class BallisticFlightPolicy:
     angular_impulse: AngularLandingImpulsePolicy | None = None
     manifold: ContactManifoldPolicy | None = None
     torque_free: TorqueFreeRotationPolicy | None = None
+    torque_free_sweep: TorqueFreeSweepPolicy | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.contact, MultiSurfaceSuspensionPolicy):
@@ -75,6 +80,11 @@ class BallisticFlightPolicy:
             self.torque_free, TorqueFreeRotationPolicy
         ):
             raise ValueError("torque_free must be a registered angular integration policy")
+        if self.torque_free_sweep is not None and (
+            not isinstance(self.torque_free_sweep,TorqueFreeSweepPolicy)
+            or self.torque_free is None
+        ):
+            raise ValueError("torque_free_sweep requires registered torque_free policy")
         if self.manifold is not None and self.angular_impulse is not None:
             raise ValueError("legacy single-wheel and manifold policies are mutually exclusive")
         for name in ("max_touchdown_vertical_speed_mps",
@@ -444,8 +454,6 @@ def _certified_high_clearance_torque_free(
     proves every rigid wheel/body point above every road patch for all t.
     No obstacles are allowed until certified non-SLERP rotating sweeps exist.
     """
-    if obstacles:
-        raise FlightPhysicsError("torque-free collision sweep not yet certified for obstacles")
     opts=policy.torque_free
     if dynamics is None or policy.manifold is None:
         raise FlightPhysicsError("torque-free flight requires registered 3-axis inertia")
@@ -454,6 +462,22 @@ def _certified_high_clearance_torque_free(
             or abs(opts.roll_inertia_kg_m2-dynamics.roll_inertia_kg_m2)>1e-8
             or abs(opts.yaw_inertia_kg_m2-policy.manifold.yaw_inertia_kg_m2)>1e-8):
         raise FlightPhysicsError("torque-free and manifold inertia registrations mismatch")
+    if policy.torque_free_sweep is not None:
+        try:
+            result=certify_torque_free_flight_sweep(
+                airborne,opts,body,policy.contact.wheels,
+                _atlas(patches,policy.contact.seam_height_tolerance_m),
+                obstacles,duration_s=dt,gravity_mps2=gravity,
+                sweep=policy.torque_free_sweep,
+            )
+        except TorqueFreeSweepResolutionError as exc:
+            raise FlightPhysicsError(f"torque-free continuous collision blocked: {exc}") from exc
+        return FlightStep(
+            result.vehicle,FlightState("airborne"),result.poses,
+            (),0.,angular_audit=result.angular_audit,
+        )
+    if obstacles:
+        raise FlightPhysicsError("torque-free collision sweep not yet certified for obstacles")
     highest=float("-inf")
     for patch in patches:
         for sx in (-1.,1.):
