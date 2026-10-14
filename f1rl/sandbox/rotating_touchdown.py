@@ -1,7 +1,7 @@
 """Conservative rotating wheel/plane down-crossing localization.
 
 Supports only research-restricted fixed-world angular-velocity trajectories,
-height-consistent *flat* road patches, and wheel-reference points. This is
+height-consistent 2.5D planar road patches, and wheel-reference points. This is
 not an ODE-certified multi-contact manifold. Inconclusive sign/coverage
 intervals are rejected, never interpreted as a safe airborne episode.
 """
@@ -56,8 +56,8 @@ def first_rotating_wheel_touchdown(
     event_candidates=[]
     for patch, polygon in zip(patches, polygons, strict=True):
         normal=patch.normal
-        if abs(normal.y-1.) > 1e-9:
-            raise ImpulseResolutionError("rotating plane events require flat road patch")
+        if normal.y < .5:
+            raise ImpulseResolutionError("rotating plane events require upward bounded slope")
         for i,w in enumerate(wheels.positions):
             wheel_radius=w.magnitude
             def data(t):
@@ -77,7 +77,7 @@ def first_rotating_wheel_touchdown(
                     # A wheel can enter/exit the finite road polygon within an
                     # unresolved substep. Without a certified edge-impact
                     # manifold this must not be treated as clean flight.
-                    if min(g0,g1) < (abs(st0.velocity.y)+gravity*dt
+                    if min(g0,g1) < (abs(st0.velocity.dot(normal))+gravity*normal.y*dt
                                      +st0.angular_velocity.magnitude*wheel_radius)*(hi-lo)+eps:
                         raise ImpulseResolutionError("rotating wheel polygon crossing near road is unsupported")
                     return None
@@ -114,7 +114,7 @@ def first_rotating_wheel_touchdown(
                 # In nearest-endpoint distance <= h/2, signed gap rate has
                 # bound |v_n| + g*dt + |omega|*wheel_arm. Require positive
                 # margin, otherwise bisect until decisive or fail closed.
-                L=(abs(st0.velocity.dot(normal))+gravity*dt
+                L=(abs(st0.velocity.dot(normal))+gravity*normal.y*dt
                    +st0.angular_velocity.magnitude*wheel_radius)
                 if min(g0,g1) > L*(hi-lo)/2. + eps:
                     return None
