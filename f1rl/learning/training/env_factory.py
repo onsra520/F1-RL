@@ -18,6 +18,7 @@ from ..gym_environment import F1RLEnv
 from ..observation import ObservationEncoder
 from ..offtrack import OffTrackConfig
 from ..rewards import RewardComposer
+from ..wp7_race import WP7RaceConfig
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +35,7 @@ class F1RLEnvFactory:
     body_geometry: VehicleBodyGeometry | None = None
     ramp_support_policy: PlanarRampPolicy | None = None
     physics_config: PhysicsConfig | None = None
+    race_config: WP7RaceConfig | None = None
 
     def __post_init__(self) -> None:
         values = (
@@ -62,6 +64,13 @@ class F1RLEnvFactory:
             if self.body_geometry is not None or self.ramp_support_policy is not None:
                 raise ValueError("physics_config cannot be mixed with legacy body/ramp options")
             self.physics_config.validate_state(self.initial_state, self.vehicle_parameters)
+        if self.race_config is not None:
+            if not isinstance(self.race_config, WP7RaceConfig):
+                raise ValueError("race_config must be WP7RaceConfig or None")
+            if self.physics_config is None or self.physics_config.mode not in (
+                "wp7_suspension_v1", "wp7_grounded_yaw_v1",
+            ) or self.navigation is None or self.offtrack_config is not None:
+                raise ValueError("WP7 race requires grounded physics/navigation without C2 offtrack")
 
     @property
     def requires_scientific_admission(self) -> bool:
@@ -83,6 +92,7 @@ class F1RLEnvFactory:
             body_geometry=self.body_geometry,
             ramp_support_policy=self.ramp_support_policy,
             physics_config=self.physics_config,
+            race_config=self.race_config,
         )
 
 
@@ -138,6 +148,7 @@ class TrainingScenarioSet:
             "body_geometry",
             "ramp_support_policy",
             "physics_config",
+            "race_config",
         )
         for scenario in self.scenarios[1:]:
             if any(

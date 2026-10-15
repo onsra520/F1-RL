@@ -78,6 +78,38 @@ producing a landing/contact. No exact-ODE 6-DOF TOI solver is claimed.
 PV2 verification: 184 focused tests passed; full Windows regression
 1,780 passed, 2 platform-specific skipped. Historical baseline tests unchanged.
 
+## PV3: grounded race boundary
+
+`WP7RaceConfig(version="wp7_directed_grounded_v1")` explicitly opts into
+directed center crossings over the actual accepted suspension substep path.
+It requires registered grounded physics and authored navigation, refuses C2
+offtrack mixing and ballistic mode, and records a SHA-256 over race settings,
+navigation, checkpoint order/volumes and finish volume/orientation.
+
+All continuous subsegments must pass the existing 2/4 m corridor verifier.
+Soft >2 m is telemetry, without an invented reward coefficient. A >4 m or
+unresolved sweep invalidates the episode; this is an engineering research
+rejection rule, NOT an amendment to the owner's still-null scientific hard
+violation recovery/termination policy. Gym requires reset after rejection.
+Physical state remains owned by Simulation; a route-invalid but physically
+accepted tick can advance Simulation internally, but no Gym sample is returned
+and the episode must be reset. No rejected tick is recorded as a success.
+
+Crossings use each authored gate's local +Z direction and finite XY aperture.
+Events are processed chronologically, so multiple checkpoints and finish can
+occur in one tick; an early future checkpoint is not replayed later. Simultaneous
+different gates are rejected as ambiguous. Body overlap alone does not cross
+the center gate. Physics rejection precedes all race/timeout decisions; valid
+finish precedes timeout. Legacy C2 progress/reward/6m/10-step behavior is intact.
+
+Ballistic directed race events remain unsupported: the curved flight path,
+impact-time subsegments and gate ordering need a separate continuous contract.
+Physics-only ballistic Gym tests remain supported without this race opt-in.
+No reward bonus, soft penalty or new scientific admission is introduced.
+
+PV3 verification: 92 focused tests passed; full Windows regression 1,789 passed,
+2 platform-specific skipped, including historical Gym failure semantics.
+
 ## Scientific boundaries (unchanged)
 
 True exact-ODE 6-DOF impact-time localization, near-contact recovery, measured

@@ -30,6 +30,7 @@ from .episode import (
 from .observation import NavigationTarget, ObservationEncoder
 from .offtrack import OffTrackConfig, OffTrackState
 from .route_navigation import AuthoredRoute
+from .wp7_race import WP7RaceConfig, advance_directed_race
 from .rewards import RewardComposer, RewardResult, RewardTransition, RouteProgressReward, OffTrackPenalty
 
 
@@ -90,6 +91,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         body_geometry: VehicleBodyGeometry | None = None,
         ramp_support_policy: PlanarRampPolicy | None = None,
         physics_config: PhysicsConfig | None = None,
+        race_config: WP7RaceConfig | None = None,
     ) -> None:
         super().__init__()
         values = (
@@ -138,6 +140,16 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         if offtrack_config is None and any(isinstance(term, OffTrackPenalty) for term in reward_composer.terms):
             raise ValueError("offtrack penalty requires offtrack_config")
         self._offtrack_config = offtrack_config
+        if race_config is not None:
+            if not isinstance(race_config, WP7RaceConfig):
+                raise ValueError("race_config must be WP7RaceConfig or None")
+            if (physics_config is None or physics_config.mode not in (
+                "wp7_suspension_v1", "wp7_grounded_yaw_v1",
+            ) or self._authored_route is None):
+                raise ValueError("WP7 race requires registered grounded physics and authored navigation")
+            if offtrack_config is not None:
+                raise ValueError("WP7 race cannot mix historical C2 offtrack semantics")
+        self._race_config = race_config
         self._offtrack_state = OffTrackState()
         self._max_route_distance = min((surface.width for surface in track.surfaces), default=0.0) / 2.0
         self._route_highwater = 0.0
@@ -243,7 +255,13 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             "reward_components": {},
             "telemetry": _vehicle_telemetry(snapshot.world.vehicle),
             **self._physics_info(snapshot),
+            **self._race_info(),
         }
+
+    def _race_info(self) -> dict[str, object]:
+        if self._race_config is None:
+            return {}
+        return {"race": self._race_config.provenance(self._track, self._authored_route)}
 
     def _physics_info(self, snapshot: SimulationSnapshot) -> dict[str, object]:
         if self._physics_config is None:
@@ -277,13 +295,23 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         control = map_policy_action(policy_action)
         query_before = self._simulation.snapshot.query
 
-        snapshot_after = self._simulation.step(control)
         try:
-            progress_result = advance_race_progress(
-                self._route,
-                progress_before,
-                snapshot_after.events,
-            )
+            snapshot_after = self._simulation.step(control)
+        except Exception:
+            if self._physics_config is not None and self._physics_config.mode != "legacy_v1":
+                self._needs_reset = True
+            raise
+        try:
+            race_step = None
+            if self._race_config is not None:
+                race_step = advance_directed_race(
+                    self._track, self._route, self._authored_route, progress_before, snapshot_after,
+                )
+                progress_result = race_step.progress
+            else:
+                progress_result = advance_race_progress(
+                    self._route, progress_before, snapshot_after.events,
+                )
             next_highwater = self._route_highwater
             route_delta = None
             if self._authored_route is not None:
@@ -335,6 +363,14 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 reward_result,
                 query_before,
             )
+            if race_step is not None:
+                info.update(self._race_info())
+                info["race"].update({
+                    "completed_checkpoint_ids": race_step.completed_checkpoint_ids,
+                    "directed_crossings": race_step.directed_crossings,
+                    "max_sampled_deviation_m": race_step.max_sampled_deviation_m,
+                    "soft_zone_encountered": race_step.soft_zone_encountered,
+                })
             if self._authored_route is not None:
                 info["route_highwater_meters"] = next_highwater
             if self._offtrack_config is not None:
