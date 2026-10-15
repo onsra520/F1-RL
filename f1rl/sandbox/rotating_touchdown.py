@@ -33,6 +33,7 @@ class RotatingWheelTouchdown:
 def first_rotating_wheel_touchdown(
     pose_at, wheels, atlas, dt: float, gravity: float,
     policy: AngularLandingImpulsePolicy,
+    *, certify_first_root: bool = False,
 ) -> RotatingWheelTouchdown | None:
     """Find first conservative down-crossing, or fail if any gap is unresolved.
 
@@ -44,6 +45,8 @@ def first_rotating_wheel_touchdown(
     """
     if not isinstance(policy, AngularLandingImpulsePolicy):
         raise ValueError("explicit angular event detection policy required")
+    if type(certify_first_root) is not bool:
+        raise ValueError("certify_first_root must be bool")
     if (type(dt) not in (int,float) or not isfinite(dt) or dt <= 0.
             or type(gravity) not in (int,float) or not isfinite(gravity) or gravity <= 0.):
         raise ValueError("positive finite flight timestep and gravity required")
@@ -108,6 +111,15 @@ def first_rotating_wheel_touchdown(
                     if start_speed-max_rate_change*(hi-lo) > eps:
                         return None
                 if g0 > eps and g1 <= 0.:
+                    # A sign change alone does not establish the first root
+                    # of a rotating gap. Certify decreasing motion or refine
+                    # left-to-right, rejecting exhausted uncertainty.
+                    rate_bound = gravity*normal.y + st0.angular_velocity.magnitude**2*wheel_radius
+                    if certify_first_root and start_speed+rate_bound*(hi-lo) >= 0.:
+                        if depth == 0:
+                            raise ImpulseResolutionError("first-root monotonicity unresolved")
+                        mid = (lo+hi)/2.
+                        return interval(lo,mid,depth-1) or interval(mid,hi,depth-1)
                     a,b=lo,hi
                     for _ in range(policy.event_bisections):
                         if b-a <= policy.event_time_tolerance_s:
@@ -118,6 +130,8 @@ def first_rotating_wheel_touchdown(
                             raise ImpulseResolutionError("wheel leaves patch during root refinement")
                         if gm > 0.:a=mid
                         else:b=mid
+                    if certify_first_root and b-a > policy.event_time_tolerance_s:
+                        raise ImpulseResolutionError("event-time tolerance not met within bisection budget")
                     # Emit the non-penetrating side of the time bracket.
                     # Returning b would start a rebound microscopically
                     # below the road, violating the next frame's hard gate.

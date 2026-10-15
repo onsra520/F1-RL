@@ -121,6 +121,13 @@ its ordered event is rejected. Landing requires four audited simultaneous
 contacts, dissipative energy and representable suspension state. Automatic
 release shifts any subsequent flight-event times by the departure time.
 
+The lifecycle/exact-rate and coplanar-contact boundaries opt into
+`wheel_toi_monotone_v1`: a sign-changing rotating gap must be proven decreasing
+over its root bracket using `|g''| <= gravity*n_y + |omega|^2*wheel_radius`, or
+subdivided left-to-right until proven/resolved. Bisection must actually meet
+the registered seconds tolerance; an exhausted iteration count cannot imply
+that accuracy. Historical event-localizer defaults remain unchanged.
+
 The inherited non-manifold low-energy landing map deliberately zeros vertical
 and angular rates. Its own source states that it is not an impulse/momentum
 model. It may remain available under its historical research boundary; it cannot

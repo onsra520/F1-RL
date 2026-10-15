@@ -211,6 +211,8 @@ class PhysicsConfig:
             solvers.append("torque_free_rk4_v1" if self.ballistic_flight_policy.torque_free else "ballistic_constant_omega_v1")
             if result.flight_telemetry.manifold_audit is not None:
                 solvers.append("contact_manifold_pgs_v1")
+                if self.mode == "wp7_lifecycle_v1":
+                    solvers.append("wheel_toi_monotone_v1")
         if result.grounded_yaw_telemetry is not None:
             solvers.append("grounded_dynamic_yaw_v1")
         return PhysicsTransitionAudit(

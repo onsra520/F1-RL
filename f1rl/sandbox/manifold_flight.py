@@ -58,6 +58,7 @@ def advance_manifold_flight(
     try:
         first=first_rotating_wheel_touchdown(
             sampler,flight_policy.contact.wheels,atlas,dt,gravity,event_policy,
+            certify_first_root=(policy.coplanar_flat_contacts or dynamics.angular_rate_mapping=="yaw_rx_rz_v1"),
         )
     except ImpulseResolutionError as exc:
         raise FlightPhysicsError(f"manifold time-of-contact unresolved: {exc}") from exc
