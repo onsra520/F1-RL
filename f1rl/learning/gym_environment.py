@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from typing import Any
+from dataclasses import asdict
 
 import gymnasium as gym
 import numpy as np
 
 from ..runtime.simulation import Simulation, SimulationConfig, SimulationSnapshot
+from ..runtime.physics import PhysicsConfig
 from ..sandbox.body_collision import VehicleBodyGeometry
 from ..sandbox.ramp_support import PlanarRampPolicy
 from ..sandbox.geometry.vector import Vec3
@@ -87,6 +89,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         offtrack_config: OffTrackConfig | None = None,
         body_geometry: VehicleBodyGeometry | None = None,
         ramp_support_policy: PlanarRampPolicy | None = None,
+        physics_config: PhysicsConfig | None = None,
     ) -> None:
         super().__init__()
         values = (
@@ -142,7 +145,9 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             track, initial_state, vehicle_parameters, simulation_config,
             body_geometry=body_geometry,
             ramp_support_policy=ramp_support_policy,
+            physics_config=physics_config,
         )
+        self._physics_config = physics_config
         self._progress: RaceProgressState | None = None
         self._needs_reset = True
 
@@ -237,7 +242,26 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             "game_score": snapshot.world.score.points,
             "reward_components": {},
             "telemetry": _vehicle_telemetry(snapshot.world.vehicle),
+            **self._physics_info(snapshot),
         }
+
+    def _physics_info(self, snapshot: SimulationSnapshot) -> dict[str, object]:
+        if self._physics_config is None:
+            return {}
+        telemetry = {
+            name: asdict(value) if value is not None else None
+            for name, value in (
+                ("suspension", snapshot.suspension_telemetry),
+                ("flight", snapshot.flight_telemetry),
+                ("partial_support", snapshot.partial_support_telemetry),
+                ("grounded_yaw", snapshot.grounded_yaw_telemetry),
+            )
+        }
+        return {"physics": {
+            "configuration": self._physics_config.document(),
+            "sha256": self._physics_config.sha256,
+            **telemetry,
+        }}
 
     def step(
         self,
@@ -362,6 +386,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             "completed_checkpoint_id": progress_result.completed_checkpoint_id,
             "finished_now": progress_result.finished_now,
             "game_score": snapshot.world.score.points,
+            **self._physics_info(snapshot),
             "reward_components": {
                 contribution.name: float(contribution.value)
                 for contribution in reward_result.contributions

@@ -3,6 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isfinite
 
+from .physics import PhysicsConfig
+from ..sandbox.ballistic_flight import FlightStep
+from ..sandbox.grounded_yaw_dynamics import GroundedYawAudit
+from ..sandbox.independent_suspension_dynamics import SuspensionDynamicsResult
+from ..sandbox.partial_wheel_release import GroundSupportStep
 from ..sandbox.body_collision import VehicleBodyGeometry
 from ..sandbox.ramp_support import PlanarRampPolicy
 from ..sandbox.track.model import TrackWorld
@@ -52,6 +57,10 @@ class SimulationSnapshot:
     world: WorldState
     query: TrackQuery
     events: tuple[WorldEvent, ...]
+    suspension_telemetry: SuspensionDynamicsResult | None = None
+    flight_telemetry: FlightStep | None = None
+    partial_support_telemetry: GroundSupportStep | None = None
+    grounded_yaw_telemetry: GroundedYawAudit | None = None
 
 
 class Simulation:
@@ -62,6 +71,7 @@ class Simulation:
         "_config",
         "_body_geometry",
         "_ramp_support_policy",
+        "_physics_config",
         "_state",
         "_snapshot",
     )
@@ -75,6 +85,7 @@ class Simulation:
         *,
         body_geometry: VehicleBodyGeometry | None = None,
         ramp_support_policy: PlanarRampPolicy | None = None,
+        physics_config: PhysicsConfig | None = None,
     ) -> None:
         self._track = track
         self._initial_state = initial_state
@@ -88,6 +99,13 @@ class Simulation:
             raise ValueError('ramp_support_policy requires full-body geometry and PlanarRampPolicy')
         self._body_geometry = body_geometry
         self._ramp_support_policy = ramp_support_policy
+        if physics_config is not None:
+            if not isinstance(physics_config, PhysicsConfig):
+                raise ValueError("physics_config must be PhysicsConfig or None")
+            if body_geometry is not None or ramp_support_policy is not None:
+                raise ValueError("physics_config cannot be mixed with legacy body/ramp options")
+        self._physics_config = physics_config
+        (physics_config or PhysicsConfig("legacy_v1")).validate_state(initial_state, parameters)
         self._state = SimulationState(0, 0.0, initial_state)
         self._snapshot = self._snapshot_for(initial_state)
 
@@ -106,6 +124,7 @@ class Simulation:
             self._config.max_surface_distance,
             **({"body_geometry": self._body_geometry} if self._body_geometry is not None else {}),
             **({"ramp_support_policy": self._ramp_support_policy} if self._ramp_support_policy is not None else {}),
+            **(self._physics_config.world_options() if self._physics_config is not None else {}),
         )
         next_tick = current.tick + 1
         elapsed_time = next_tick * self._config.fixed_dt
@@ -116,6 +135,10 @@ class Simulation:
             result.state,
             result.query,
             result.events,
+            result.suspension_telemetry,
+            result.flight_telemetry,
+            result.partial_support_telemetry,
+            result.grounded_yaw_telemetry,
         )
         self._state = next_state
         self._snapshot = next_snapshot

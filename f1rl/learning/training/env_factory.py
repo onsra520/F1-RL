@@ -6,6 +6,7 @@ import gymnasium as gym
 import numpy as np
 
 from ...runtime.simulation import SimulationConfig
+from ...runtime.physics import PhysicsConfig
 from ...sandbox.body_collision import VehicleBodyGeometry
 from ...sandbox.ramp_support import PlanarRampPolicy
 from ...sandbox.track.model import TrackWorld
@@ -32,6 +33,7 @@ class F1RLEnvFactory:
     offtrack_config: OffTrackConfig | None = None
     body_geometry: VehicleBodyGeometry | None = None
     ramp_support_policy: PlanarRampPolicy | None = None
+    physics_config: PhysicsConfig | None = None
 
     def __post_init__(self) -> None:
         values = (
@@ -54,6 +56,18 @@ class F1RLEnvFactory:
             raise ValueError("body_geometry must be VehicleBodyGeometry or None")
         if self.ramp_support_policy is not None and (self.body_geometry is None or not isinstance(self.ramp_support_policy, PlanarRampPolicy)):
             raise ValueError('ramp_support_policy requires body geometry and PlanarRampPolicy')
+        if self.physics_config is not None:
+            if not isinstance(self.physics_config, PhysicsConfig):
+                raise ValueError("physics_config must be PhysicsConfig or None")
+            if self.body_geometry is not None or self.ramp_support_policy is not None:
+                raise ValueError("physics_config cannot be mixed with legacy body/ramp options")
+            self.physics_config.validate_state(self.initial_state, self.vehicle_parameters)
+
+    @property
+    def requires_scientific_admission(self) -> bool:
+        return self.body_geometry is not None or (
+            self.physics_config is not None and self.physics_config.mode != "legacy_v1"
+        )
 
     def create(self) -> F1RLEnv:
         return F1RLEnv(
@@ -68,6 +82,7 @@ class F1RLEnvFactory:
             offtrack_config=self.offtrack_config,
             body_geometry=self.body_geometry,
             ramp_support_policy=self.ramp_support_policy,
+            physics_config=self.physics_config,
         )
 
 
@@ -122,6 +137,7 @@ class TrainingScenarioSet:
             "offtrack_config",
             "body_geometry",
             "ramp_support_policy",
+            "physics_config",
         )
         for scenario in self.scenarios[1:]:
             if any(

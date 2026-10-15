@@ -241,7 +241,7 @@ class TrainingRunner:
     def run_single(self, factory: F1RLEnvFactory) -> TrainingRunResult:
         if not isinstance(factory, F1RLEnvFactory):
             raise ValueError("factory must be F1RLEnvFactory")
-        if factory.body_geometry is not None:
+        if factory.requires_scientific_admission:
             raise ValueError(
                 "full-body candidate training is blocked until versioned "
                 "provenance, route-corridor and independent-seed protocol approval"
@@ -255,7 +255,7 @@ class TrainingRunner:
     def run_multi(self, scenarios: TrainingScenarioSet) -> TrainingRunResult:
         if not isinstance(scenarios, TrainingScenarioSet):
             raise ValueError("scenarios must be TrainingScenarioSet")
-        if any(scenario.factory.body_geometry is not None for scenario in scenarios.scenarios):
+        if any(scenario.factory.requires_scientific_admission for scenario in scenarios.scenarios):
             raise ValueError(
                 "full-body candidate training is blocked until versioned "
                 "provenance, route-corridor and independent-seed protocol approval"
