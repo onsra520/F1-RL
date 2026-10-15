@@ -97,3 +97,43 @@ def test_optin_enclosure_policy_is_separate_from_piecewise_ccd():
 def test_invalid_enclosure_policy_rejected(field,value):
     with pytest.raises(ValueError):
         replace(POLICY,**{field:value})
+
+
+def test_world_flight_optin_applies_both_analytic_and_numerical_ccd_gates():
+    from f1rl.sandbox.ballistic_flight import (
+        BallisticFlightPolicy,FlightPhysicsError,advance_ballistic_flight,
+    )
+    from f1rl.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
+    from f1rl.sandbox.independent_suspension_dynamics import IndependentSuspensionDynamicsPolicy
+    from f1rl.sandbox.contact_manifold import ContactManifoldPolicy
+
+    contact=MultiSurfaceSuspensionPolicy(W,.12,.12)
+    inertia=IndependentSuspensionDynamicsPolicy(
+        contact,1200.,1800.,600.,30000.,2000.,150.,
+        integration_substeps=8,
+    )
+    flight=BallisticFlightPolicy(
+        contact,6.,.12,
+        manifold=ContactManifoldPolicy(yaw_inertia_kg_m2=1600.),
+        torque_free=ANGULAR,
+        torque_free_sweep=TorqueFreeSweepPolicy(
+            slices=16,max_subdivisions=10,
+            analytic_ode=POLICY,
+        ),
+    )
+    safe=advance_ballistic_flight(
+        airborne(),flight,BODY,(ROAD,),(),
+        dt=.2,gravity_mps2=9.81,landing_dynamics=inertia,
+    )
+    assert safe.flight.phase=="airborne"
+    assert safe.angular_audit is not None
+
+    unsafe=airborne(
+        pos=Vec3(0.,.3,0.),vel=Vec3(0.,0.,0.),
+        spin=Vec3(0.,0.,0.),
+    )
+    with pytest.raises(FlightPhysicsError,match="analytic Euler ODE clearance unresolved"):
+        advance_ballistic_flight(
+            unsafe,flight,BODY,(ROAD,),(),
+            dt=.05,gravity_mps2=9.81,landing_dynamics=inertia,
+        )
