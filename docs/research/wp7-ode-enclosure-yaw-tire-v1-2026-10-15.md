@@ -25,6 +25,8 @@ Every material point of the **exact torque-free Euler ODE** lies within `r * min
 
 `MeasuredPhysicsParameter` requires name, unit, measured value, absolute uncertainty, evidence ID and method, and `PhysicsCalibrationRegister` requires an independent verifier ID. The required WP7 measurement checklist includes mass, 3 inertias, radius, width, springs, damping, axle tire cornering stiffness, grip and restitution. The registry does not invent measurements or infer calibration from synthetic tests.
 
+The separate `f1rl/research/wp7_robustness_gate.py` numerical validator checks a SUPPLIED TRAIN evaluation table for at least 60 episodes per required cell, >=3 matched paired seeds and one-sided 95% Clopper-Pearson lower bound >=0.9, rejecting missing/extra strata and untraceable rows. It does not run PPO or open datasets. Even when its numerical verdict passes, `scientifically_accepted` is deliberately false; external physical validation, independent reviewer and evidence recovery are required.
+
 Scientific acceptance still needs:
 - independently verified measured material/geometry values with source traceability and uncertainty;
 - preregistered physical validation datasets, independent reviewer, and reproducible analytic-vs-reference comparisons;
