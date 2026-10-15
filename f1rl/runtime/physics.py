@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from hashlib import sha256
 import json
-from math import isclose
+from math import isclose, atan2
 
 from ..sandbox.ballistic_flight import BallisticFlightPolicy, FlightState, FlightTransition
 from ..sandbox.body_collision import VehicleBodyGeometry
@@ -106,7 +106,7 @@ class PhysicsConfig:
                         or angular.yaw_inertia_kg_m2 != flight.manifold.yaw_inertia_kg_m2):
                     raise ValueError("torque-free and manifold inertia registration must match suspension")
 
-    def validate_state(self, initial: WorldState, parameters: VehicleParameters) -> None:
+    def validate_state(self, initial: WorldState, parameters: VehicleParameters, *, _prescribed_yaw_rate=0.) -> None:
         if self.mode == "legacy_v1":
             if initial.suspension is not None or initial.flight is not None:
                 raise ValueError("persistent research state requires an explicit WP7 physics mode")
@@ -134,12 +134,14 @@ class PhysicsConfig:
                 if abs(abs(q.w*expected_q.w + q.x*expected_q.x + q.y*expected_q.y + q.z*expected_q.z)-1.) > 1e-10:
                     raise ValueError("grounded chassis and suspension attitude disagree")
             expected = angular_velocity_for_suspension(
-                _horizontal_yaw(initial.vehicle.orientation), state, 0.,
+                _horizontal_yaw(initial.vehicle.orientation), state, _prescribed_yaw_rate,
                 self.independent_suspension_policy.angular_rate_mapping,
             )
             actual = initial.vehicle.angular_velocity
             pairs = ((initial.vehicle.velocity.y, state.heave_velocity_mps),
                      (actual.x, expected.x), (actual.z, expected.z))
+            if self.mode == "wp7_lifecycle_v1":
+                pairs += ((actual.y, expected.y),)
             if any(not isclose(a, b, rel_tol=0., abs_tol=1e-8) for a, b in pairs):
                 raise ValueError("grounded chassis and suspension rates disagree")
         yaw = self.grounded_yaw_policy
@@ -169,7 +171,12 @@ class PhysicsConfig:
             raise PhysicsTransitionError("WP7 collision recovery is unregistered; step rejected")
         events = tuple(e for e in result.events if isinstance(e, FlightTransition))
         if self.mode == "wp7_lifecycle_v1":
-            self.validate_state(result.state, parameters)
+            yaw_rate = 0.
+            if previous.vehicle.grounded and result.state.vehicle.grounded and not events:
+                first = _horizontal_yaw(previous.vehicle.orientation).rotate(Vec3(0.,0.,1.))
+                last = _horizontal_yaw(result.state.vehicle.orientation).rotate(Vec3(0.,0.,1.))
+                yaw_rate = atan2(first.cross(last).y, first.dot(last))/dt
+            self.validate_state(result.state, parameters, _prescribed_yaw_rate=yaw_rate)
             if any(e.time_s > dt+1e-8 for e in events) or any(
                 b.time_s < a.time_s for a, b in zip(events, events[1:])
             ):

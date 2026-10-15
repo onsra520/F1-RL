@@ -63,15 +63,23 @@ def audit_track(asset, *, parameters=PARAMETERS):
         for index, (a, b) in enumerate(poses):
             crossing = directed_center_gate_crossing(a.position, b.position, gate.volume)
             if crossing is not None:
-                # Project the complete body onto the finite gate's right/up axes.
+                # Affine projection along travel onto the gate plane gives the
+                # exact full-passage section for a translating, fixed OBB.
                 axes = [a.orientation.rotate(v) for v in (Vec3(1.,0.,0.), UP, Vec3(0.,0.,1.))]
                 center = BODY.box_at(crossing.center, a.orientation).center
+                normal = gate.volume.orientation.rotate(Vec3(0.,0.,1.))
+                direction = (b.position-a.position).normalized()
+                section = []
+                for sx in (-1., 1.):
+                    for sy in (-1., 1.):
+                        for sz in (-1., 1.):
+                            corner = center + axes[0]*(sx*BODY.width_m/2) + axes[1]*(sy*BODY.height_m/2) + axes[2]*(sz*BODY.length_m/2)
+                            section.append(corner-direction*((corner-gate.volume.center).dot(normal)/direction.dot(normal)))
                 fits = True
                 margins = []
                 for axis, half in ((gate.volume.orientation.rotate(Vec3(1.,0.,0.)), gate.volume.half_extents.x),
                                    (gate.volume.orientation.rotate(UP), gate.volume.half_extents.y)):
-                    radius = sum(abs(axis.dot(v))*h for v, h in zip(axes, (BODY.width_m/2, BODY.height_m/2, BODY.length_m/2)))
-                    margin = half-abs((center-gate.volume.center).dot(axis))-radius
+                    margin = half-max(abs((point-gate.volume.center).dot(axis)) for point in section)
                     margins.append(margin)
                     fits &= margin >= -1e-9
                 crossings.append({"segment": index, "path_fraction": index+crossing.fraction,

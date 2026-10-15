@@ -70,6 +70,21 @@ def test_lifecycle_rejects_incompatible_attitude_before_state_is_overwritten():
         simulation(lifecycle_config(), initial)
 
 
+def test_unowned_grounded_yaw_momentum_cannot_be_discarded():
+    initial = world(speed=0., flight=FlightState("grounded"))
+    initial = replace(initial, vehicle=replace(initial.vehicle, angular_velocity=Vec3(0.,1.,0.)))
+    with pytest.raises(ValueError, match="rates disagree"):
+        simulation(lifecycle_config(), initial)
+
+
+def test_registered_kinematic_steering_yaw_is_reconstructed_from_accepted_path():
+    sim = simulation(lifecycle_config(), world(flight=FlightState("grounded")))
+    for _ in range(3):
+        out = sim.step(VehicleControl(.1, 0., 0.))
+        assert out.world.vehicle.angular_velocity.y > 0.
+        assert out.physics_transition.final_phase == "grounded"
+
+
 @pytest.mark.parametrize("change", ["mapping", "manifold", "yaw", "release"])
 def test_lifecycle_cannot_combine_unregistered_kernels(change):
     config = lifecycle_config()

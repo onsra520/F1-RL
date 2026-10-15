@@ -6,6 +6,8 @@ import pytest
 from f1rl.research.wp7_track_feasibility import audit_train_tracks, audit_track
 from f1rl.track_assets import load_track_asset
 from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.geometry.rotation import Quaternion
+from math import radians
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -45,3 +47,13 @@ def test_narrow_road_rejects_full_body_while_centerline_remains_inside():
 def test_unknown_track_is_rejected_before_any_asset_access():
     with pytest.raises(ValueError, match="four TRAIN"):
         audit_train_tracks(ROOT, track_ids=("heldout-v1",))
+
+
+def test_oblique_aperture_checks_entire_body_passage_not_center_pose_projection():
+    asset = load_track_asset(ROOT / "assets/tracks/training/straight-sprint-v1.json")
+    gate = asset.world.checkpoints[0]
+    gate = replace(gate, volume=replace(gate.volume, half_extents=Vec3(2.2, 2., 1.),
+        orientation=Quaternion.from_axis_angle(Vec3(0.,1.,0.), radians(80))))
+    result = audit_track(replace(asset, world=replace(asset.world,
+        checkpoints=(gate, *asset.world.checkpoints[1:]))))
+    assert f"body_aperture:{gate.id}" in result["blockers"]
