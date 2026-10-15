@@ -17,6 +17,9 @@ from math import acos, isfinite
 
 from .body_collision import VehicleBodyGeometry, _slerp, sweep_body_against_obstacle
 from .geometry.vector import Vec3
+from .euler_ode_clearance import (
+    EulerODEEnclosurePolicy,certify_torque_free_ode_clearance,
+)
 from .independent_suspension_dynamics import SuspensionResolutionError
 from .multi_surface_support import _intersection, _square, _within_shape
 from .swept_surface_clearance import certify_swept_chassis_clearance
@@ -41,6 +44,7 @@ class TorqueFreeSweepPolicy:
     max_subdivisions: int=12
     max_slice_rotation_rad: float=.12
     clearance_epsilon_m: float=1e-7
+    analytic_ode: EulerODEEnclosurePolicy | None=None
 
     def __post_init__(self):
         if type(self.slices) is not int or not 4<=self.slices<=256:
@@ -51,6 +55,10 @@ class TorqueFreeSweepPolicy:
             x=getattr(self,name)
             if type(x) not in (int,float) or not isfinite(x) or x<=0.:
                 raise ValueError(name+" must be finite positive")
+        if self.analytic_ode is not None and not isinstance(
+            self.analytic_ode,EulerODEEnclosurePolicy
+        ):
+            raise ValueError("analytic_ode must be an explicit Euler enclosure policy")
         if self.max_slice_rotation_rad>.3 or self.clearance_epsilon_m>.01:
             raise ValueError("collision certificate tolerance outside registered bound")
 
@@ -169,6 +177,17 @@ def certify_torque_free_flight_sweep(
     patches,polygons=atlas
     if len(patches)!=len(polygons):
         raise ValueError("invalid registered road atlas")
+    if sweep.analytic_ode is not None:
+        verdict=certify_torque_free_ode_clearance(
+            initial,angular,body,wheels,atlas,obstacles,
+            duration_s=duration_s,gravity_mps2=gravity_mps2,
+            policy=sweep.analytic_ode,
+        )
+        if not verdict.valid:
+            raise TorqueFreeSweepResolutionError(
+                "analytic Euler ODE clearance unresolved in time interval "
+                f"{verdict.first_uncertain_window_s}"
+            )
     h=duration_s/sweep.slices
     poses=[initial]
     angular_state=AngularRigidBodyState(
