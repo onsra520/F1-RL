@@ -6,7 +6,7 @@ accepted; uncertain subsequent wheel/road contact fails closed.
 """
 from __future__ import annotations
 
-from math import acos, cos
+from math import acos, cos, sin
 
 from .angular_landing_impulse import AngularLandingImpulsePolicy, ImpulseResolutionError
 from .contact_manifold import (
@@ -41,6 +41,11 @@ def advance_manifold_flight(
     if dynamics is None or dynamics.contact!=flight_policy.contact:
         raise FlightPhysicsError("manifold requires matching registered chassis inertia")
     patches, polygons=atlas
+    if policy.coplanar_flat_contacts and (
+        any(p.normal != _UP for p in patches)
+        or len({p.origin.y for p in patches}) != 1
+    ):
+        raise FlightPhysicsError("coplanar contact requires exactly horizontal equal-height planes")
     if any(p.normal.y < .5 for p in patches):
         raise FlightPhysicsError("rotating manifold requires upward 2.5D road normals")
     if airborne.angular_velocity.magnitude*dt/flight_policy.collision_segments>.1:
@@ -48,7 +53,7 @@ def advance_manifold_flight(
     sampler=lambda t:_flight_pose(airborne,t,gravity)
     event_policy=AngularLandingImpulsePolicy(
         event_bracket_segments=64,event_bisections=32,
-        event_time_tolerance_s=1e-8,
+        event_time_tolerance_s=flight_policy.touchdown_time_epsilon_s,
     )
     try:
         first=first_rotating_wheel_touchdown(
@@ -72,23 +77,28 @@ def advance_manifold_flight(
         return FlightStep(poses[-1],FlightState("airborne"),poses,(),0.)
     incoming=sampler(impact_time)
     impact_road=next(p for p in patches if p.id==first.patch_id)
-    first_poly=polygons[patches.index(impact_road)]
     contacts=[]
     for i,local in enumerate(flight_policy.contact.wheels.positions):
         point=incoming.position+incoming.orientation.rotate(local)
-        if not _within_shape(point.x,point.z,first_poly):
+        candidates = sorted((
+            patch for patch, poly in zip(patches, polygons, strict=True)
+            if (policy.coplanar_flat_contacts or patch.id == impact_road.id)
+            and _within_shape(point.x,point.z,poly)
+        ), key=lambda patch: patch.id)
+        if not candidates:
             continue
-        gap=(point-impact_road.origin).dot(impact_road.normal)
+        road = candidates[0]
+        gap=(point-road.origin).dot(road.normal)
         if gap < -policy.simultaneous_gap_m:
             raise FlightPhysicsError("unresolved wheel penetration at manifold event")
         if abs(gap)<=policy.simultaneous_gap_m:
             contacts.append(WheelManifoldContact(
-                i,impact_road.id,local,impact_road.normal,
+                i,road.id,local,road.normal,
             ))
     if first.wheel_index not in {c.wheel_index for c in contacts}:
         raise FlightPhysicsError("first wheel event missing from manifold")
     for other_patch,poly in zip(patches,polygons,strict=True):
-        if other_patch.id == impact_road.id:
+        if other_patch.id == impact_road.id or policy.coplanar_flat_contacts:
             continue
         for local in flight_policy.contact.wheels.positions:
             p=incoming.position+incoming.orientation.rotate(local)
@@ -113,7 +123,7 @@ def advance_manifold_flight(
     except ManifoldResolutionError as exc:
         raise FlightPhysicsError(f"manifold impulse invalid: {exc}") from exc
     rest=dt-impact_time
-    if impact_time<=policy.velocity_tolerance_mps:
+    if impact_time<=flight_policy.touchdown_time_epsilon_s:
         raise FlightPhysicsError("impact sequence has insufficient event-time progress")
     # A multi-contact rebound remains airborne. Require strict monotonic
     # separation for every wheel across the entire remaining tick.
@@ -139,7 +149,7 @@ def advance_manifold_flight(
                 following.impulse_audit,following.manifold_audit,
                 (audit,*following.manifold_history),
             )
-        if len(patches)>1:
+        if len(patches)>1 and not policy.coplanar_flat_contacts:
             raise FlightPhysicsError("rebound with mixed road patches not certified")
         # A fully specified rebound requires every wheel to be initially
         # separating with a positive acceleration bound margin. Otherwise
@@ -190,15 +200,18 @@ def advance_manifold_flight(
     yaw=_horizontal_yaw(post.orientation)
     conjugate=Quaternion(yaw.w,-yaw.x,-yaw.y,-yaw.z)
     wlocal=conjugate.rotate(post.angular_velocity)
-    if abs(wlocal.y)>policy.max_ground_yaw_radps:
-        raise FlightPhysicsError("grounded yaw dynamics not accepted for manifold transition")
     orientation_state=_stationary_landing_attitude(
         post.orientation,post.position.y,
     )
+    roll_rate=wlocal.z/cos(orientation_state.pitch_x_rad)
+    yaw_rate=(wlocal.y+sin(orientation_state.pitch_x_rad)*roll_rate
+              if dynamics.angular_rate_mapping=="yaw_rx_rz_v1" else wlocal.y)
+    if abs(yaw_rate)>policy.max_ground_yaw_radps:
+        raise FlightPhysicsError("grounded yaw dynamics not accepted for manifold transition")
     suspension=SuspensionDynamicsState(
         post.position.y,post.velocity.y,
         orientation_state.pitch_x_rad,wlocal.x,
-        orientation_state.roll_z_rad,wlocal.z/cos(orientation_state.pitch_x_rad),
+        orientation_state.roll_z_rad,roll_rate,
     )
     return FlightStep(
         grounded,FlightState("grounded"),(*poses[:-1],grounded),

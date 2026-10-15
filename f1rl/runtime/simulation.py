@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isfinite
 
-from .physics import PhysicsConfig
+from .physics import PhysicsConfig, PhysicsTransitionAudit
 from ..sandbox.ballistic_flight import FlightStep
 from ..sandbox.grounded_yaw_dynamics import GroundedYawAudit
 from ..sandbox.independent_suspension_dynamics import SuspensionDynamicsResult
@@ -61,6 +61,7 @@ class SimulationSnapshot:
     flight_telemetry: FlightStep | None = None
     partial_support_telemetry: GroundSupportStep | None = None
     grounded_yaw_telemetry: GroundedYawAudit | None = None
+    physics_transition: PhysicsTransitionAudit | None = None
 
 
 class Simulation:
@@ -106,6 +107,8 @@ class Simulation:
                 raise ValueError("physics_config cannot be mixed with legacy body/ramp options")
         self._physics_config = physics_config
         (physics_config or PhysicsConfig("legacy_v1")).validate_state(initial_state, parameters)
+        if physics_config is not None:
+            physics_config.validate_track(track)
         self._state = SimulationState(0, 0.0, initial_state)
         self._snapshot = self._snapshot_for(initial_state)
 
@@ -126,10 +129,15 @@ class Simulation:
             **({"ramp_support_policy": self._ramp_support_policy} if self._ramp_support_policy is not None else {}),
             **(self._physics_config.world_options() if self._physics_config is not None else {}),
         )
-        if self._physics_config is not None:
-            self._physics_config.validate_transition(result)
         next_tick = current.tick + 1
         elapsed_time = next_tick * self._config.fixed_dt
+        transition = None
+        if self._physics_config is not None:
+            transition = self._physics_config.validate_transition(
+                result, previous=current.world, parameters=self._parameters,
+                dt=self._config.fixed_dt, start_time_s=current.elapsed_time,
+                end_time_s=elapsed_time,
+            )
         next_state = SimulationState(next_tick, elapsed_time, result.state)
         next_snapshot = SimulationSnapshot(
             next_tick,
@@ -141,6 +149,7 @@ class Simulation:
             result.flight_telemetry,
             result.partial_support_telemetry,
             result.grounded_yaw_telemetry,
+            transition,
         )
         self._state = next_state
         self._snapshot = next_snapshot

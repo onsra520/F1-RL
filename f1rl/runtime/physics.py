@@ -10,21 +10,36 @@ from hashlib import sha256
 import json
 from math import isclose
 
-from ..sandbox.ballistic_flight import BallisticFlightPolicy, FlightState
+from ..sandbox.ballistic_flight import BallisticFlightPolicy, FlightState, FlightTransition
 from ..sandbox.body_collision import VehicleBodyGeometry
 from ..sandbox.grounded_yaw_dynamics import GroundedYawPolicy
 from ..sandbox.independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState, _horizontal_yaw,
+    angular_velocity_for_suspension,
+    suspension_orientation,
 )
 from ..sandbox.geometry.vector import Vec3
 from ..sandbox.partial_wheel_release import AutomaticTakeoffPolicy
 from ..sandbox.interactions.events import ObstacleHit
 from ..sandbox.vehicle import VehicleParameters
 from ..sandbox.world import WorldState, WorldStepResult
+from ..sandbox.track.model import TrackWorld
 
 
 class PhysicsTransitionError(RuntimeError):
     """Rejected research tick; no physical state or race result is published."""
+
+
+@dataclass(frozen=True, slots=True)
+class PhysicsTransitionAudit:
+    version: str
+    physical_mode: str
+    initial_phase: str
+    final_phase: str
+    start_time_s: float
+    end_time_s: float
+    solvers: tuple[str, ...]
+    events: tuple[FlightTransition, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,6 +55,7 @@ class PhysicsConfig:
     def __post_init__(self) -> None:
         if self.mode not in (
             "legacy_v1", "wp7_suspension_v1", "wp7_ballistic_v1", "wp7_grounded_yaw_v1",
+            "wp7_lifecycle_v1",
         ):
             raise ValueError("unregistered physics mode")
         if self.contact_geometry != "suspension_reference_points_v1":
@@ -65,12 +81,20 @@ class PhysicsConfig:
             raise ValueError("WP7 owner body must remain 4.0 x 1.8 x 1.2 m")
         flight = self.ballistic_flight_policy
         yaw = self.grounded_yaw_policy
-        if (flight is not None) != (self.mode == "wp7_ballistic_v1"):
+        if (flight is not None) != (self.mode in ("wp7_ballistic_v1", "wp7_lifecycle_v1")):
             raise ValueError("ballistic mode requires its explicit flight policy exclusively")
         if (yaw is not None) != (self.mode == "wp7_grounded_yaw_v1"):
             raise ValueError("grounded yaw mode requires its explicit yaw policy exclusively")
         if self.automatic_takeoff_policy is not None and flight is None:
             raise ValueError("automatic takeoff requires ballistic mode")
+        if self.mode == "wp7_lifecycle_v1":
+            if (suspension.angular_rate_mapping != "yaw_rx_rz_v1"
+                    or flight.manifold is None or flight.torque_free is not None
+                    or flight.angular_impulse is not None or self.automatic_takeoff_policy is None
+                    or flight.max_patch_tilt_rad != 0.
+                    or self.automatic_takeoff_policy.max_patch_tilt_rad != 0.
+                    or flight.manifold.max_ground_yaw_radps > 1e-8):
+                raise ValueError("lifecycle requires exact rate mapping, flat manifold/release and zero-yaw recovery; variable-omega TOI unsupported")
         if flight is not None:
             if flight.contact != suspension.contact:
                 raise ValueError("flight and suspension contact contracts must match")
@@ -104,8 +128,14 @@ class PhysicsConfig:
         explicit_launch = initial.flight is not None and initial.flight.phase == "takeoff"
         if initial.vehicle.grounded and not explicit_launch:
             state = initial.suspension
-            expected = _horizontal_yaw(initial.vehicle.orientation).rotate(
-                Vec3(state.pitch_rate_radps, 0., state.roll_rate_radps),
+            if self.mode == "wp7_lifecycle_v1":
+                expected_q = suspension_orientation(_horizontal_yaw(initial.vehicle.orientation), state)
+                q = initial.vehicle.orientation
+                if abs(abs(q.w*expected_q.w + q.x*expected_q.x + q.y*expected_q.y + q.z*expected_q.z)-1.) > 1e-10:
+                    raise ValueError("grounded chassis and suspension attitude disagree")
+            expected = angular_velocity_for_suspension(
+                _horizontal_yaw(initial.vehicle.orientation), state, 0.,
+                self.independent_suspension_policy.angular_rate_mapping,
             )
             actual = initial.vehicle.angular_velocity
             pairs = ((initial.vehicle.velocity.y, state.heave_velocity_mps),
@@ -120,11 +150,68 @@ class PhysicsConfig:
                            parameters.wheelbase, abs_tol=1e-8):
                 raise ValueError("grounded yaw axle geometry must match vehicle wheelbase")
 
-    def validate_transition(self, result: WorldStepResult) -> None:
+    def validate_track(self, track: TrackWorld) -> None:
+        if self.mode == "wp7_lifecycle_v1" and (
+            not track.surfaces or any(p.normal != Vec3(0., 1., 0.) for p in track.surfaces)
+            or len({p.origin.y for p in track.surfaces}) != 1
+        ):
+            raise ValueError("lifecycle v1 requires coplanar horizontal road patches")
+
+    def validate_transition(
+        self, result: WorldStepResult, *, previous: WorldState,
+        parameters: VehicleParameters, dt: float, start_time_s: float, end_time_s: float,
+    ) -> PhysicsTransitionAudit | None:
+        if self.mode == "legacy_v1":
+            return None
         if self.mode != "legacy_v1" and any(isinstance(e, ObstacleHit) for e in result.events):
             # Legacy rollback zeroes the chassis velocity while retaining the
             # previous suspension rates; it is not a registered impulse/recovery.
             raise PhysicsTransitionError("WP7 collision recovery is unregistered; step rejected")
+        events = tuple(e for e in result.events if isinstance(e, FlightTransition))
+        if self.mode == "wp7_lifecycle_v1":
+            self.validate_state(result.state, parameters)
+            if any(e.time_s > dt+1e-8 for e in events) or any(
+                b.time_s < a.time_s for a, b in zip(events, events[1:])
+            ):
+                raise PhysicsTransitionError("unordered/out-of-tick flight events")
+            flight = result.flight_telemetry
+            phase = "airborne" if previous.flight.phase == "airborne" else "grounded"
+            for event in events:
+                if event.kind == "takeoff":
+                    if phase != "grounded":
+                        raise PhysicsTransitionError("takeoff requires grounded predecessor")
+                    phase = "airborne"
+                else:
+                    if phase != "airborne":
+                        raise PhysicsTransitionError("impact requires airborne predecessor")
+                    if event.kind == "landing":
+                        phase = "grounded"
+            if (phase == "grounded") != result.state.vehicle.grounded:
+                raise PhysicsTransitionError("phase change lacks ordered transition evidence")
+            if any(e.kind == "landing" for e in events):
+                if flight is None or flight.manifold_audit is None or len(flight.manifold_audit.contacts) != 4:
+                    raise PhysicsTransitionError("grounded recovery requires four simultaneous audited wheel contacts")
+            if flight is not None:
+                for audit in flight.manifold_history:
+                    if audit.post_kinetic_energy_j > audit.pre_kinetic_energy_j + self.ballistic_flight_policy.manifold.energy_tolerance_j:
+                        raise PhysicsTransitionError("impact energy gain violates lifecycle contract")
+        solvers = []
+        if result.suspension_telemetry is not None:
+            solvers.append("independent_suspension_v1")
+        if result.partial_support_telemetry is not None:
+            solvers.append("partial_wheel_support_v1")
+        if result.flight_telemetry is not None:
+            solvers.append("torque_free_rk4_v1" if self.ballistic_flight_policy.torque_free else "ballistic_constant_omega_v1")
+            if result.flight_telemetry.manifold_audit is not None:
+                solvers.append("contact_manifold_pgs_v1")
+        if result.grounded_yaw_telemetry is not None:
+            solvers.append("grounded_dynamic_yaw_v1")
+        return PhysicsTransitionAudit(
+            "wp7_transition_audit_v1", self.mode,
+            previous.flight.phase if previous.flight is not None else "grounded",
+            result.state.flight.phase if result.state.flight is not None else "grounded",
+            start_time_s, end_time_s, tuple(solvers), events,
+        )
 
     def world_options(self) -> dict[str, object]:
         names = (

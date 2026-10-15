@@ -226,6 +226,10 @@ def step_world(
                             "same-tick automatic recontact lacks a registered impulse solver"
                         )
                     candidate = flight_telemetry.vehicle
+                    flight_events += tuple(
+                        FlightTransition(event.kind, departure + event.time_s, event.patch_id)
+                        for event in flight_telemetry.transitions
+                    )
                     swept_poses = (*swept_poses, *flight_telemetry.poses[1:])
         elif independent_suspension_policy is not None:
             # Legacy XZ/yaw stay prescribed; default 4-wheel solver unchanged.

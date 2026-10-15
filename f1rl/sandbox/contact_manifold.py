@@ -39,8 +39,11 @@ class ContactManifoldPolicy:
     max_post_angular_speed_radps: float = 5.
     max_ground_yaw_radps: float = .02
     max_impacts_per_step: int = 1
+    coplanar_flat_contacts: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.coplanar_flat_contacts) is not bool:
+            raise ValueError("coplanar_flat_contacts must be bool")
         for name in ("yaw_inertia_kg_m2", "friction_coefficient", "restitution",
                      "velocity_tolerance_mps", "energy_tolerance_j",
                      "simultaneous_gap_m", "rebound_separation_mps",
@@ -82,6 +85,7 @@ class ManifoldContactAudit:
     tangential_impulse_ns: Vec3
     incoming_normal_speed_mps: float
     outgoing_normal_speed_mps: float
+    patch_id: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -218,7 +222,7 @@ def solve_wheel_contact_manifold(
         total_force=total_force+impulse
         total_torque=total_torque+r[i].cross(impulse)
         audit_contacts.append(ManifoldContactAudit(
-            c.wheel_index, normal_acc[i], tangent_acc[i], vn_initial[i],vn,
+            c.wheel_index, normal_acc[i], tangent_acc[i], vn_initial[i],vn,c.patch_id,
         ))
     if (v-airborne.velocity-total_force/physics.mass_kg).magnitude > 1e-7:
         raise ManifoldResolutionError("linear momentum audit failed")

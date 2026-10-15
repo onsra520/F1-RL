@@ -12,7 +12,7 @@ wheel/body road-coverage contract; failure rejects the rollout.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import isfinite
+from math import cos, isfinite, sin
 
 from .body_collision import VehicleBodyGeometry, _slerp
 from .geometry.rotation import Quaternion
@@ -45,8 +45,11 @@ class IndependentSuspensionDynamicsPolicy:
     angular_damping_nmsprad: float
     integration_substeps: int = 8
     max_abs_tilt_rad: float = .35
+    angular_rate_mapping: str = "small_angle_v1"
 
     def __post_init__(self) -> None:
+        if self.angular_rate_mapping not in ("small_angle_v1", "yaw_rx_rz_v1"):
+            raise ValueError("unregistered suspension angular-rate mapping")
         if not isinstance(self.contact, MultiSurfaceSuspensionPolicy):
             raise ValueError("explicit independent wheel contact policy required")
         for key in ("mass_kg", "pitch_inertia_kg_m2", "roll_inertia_kg_m2",
@@ -123,15 +126,28 @@ def suspension_orientation(yaw: Quaternion, dynamics: SuspensionDynamicsState) -
             * Quaternion.from_axis_angle(_Z, dynamics.roll_z_rad))
 
 
+def angular_velocity_for_suspension(
+    yaw: Quaternion, state: SuspensionDynamicsState, yaw_rate: float,
+    mapping: str = "small_angle_v1",
+) -> Vec3:
+    if mapping == "yaw_rx_rz_v1":
+        local = Vec3(state.pitch_rate_radps, -sin(state.pitch_x_rad)*state.roll_rate_radps,
+                     cos(state.pitch_x_rad)*state.roll_rate_radps)
+        return yaw.rotate(local) + Vec3(0., yaw_rate, 0.)
+    if mapping != "small_angle_v1":
+        raise ValueError("unregistered suspension angular-rate mapping")
+    rotation_rate = yaw.rotate(Vec3(state.pitch_rate_radps, 0., state.roll_rate_radps))
+    return Vec3(rotation_rate.x, yaw_rate, rotation_rate.z)
+
+
 def _pose(x: float, z: float, yaw: Quaternion, state: SuspensionDynamicsState,
-          horizontal_velocity: Vec3, yaw_rate: float) -> VehicleState:
+          horizontal_velocity: Vec3, yaw_rate: float,
+          mapping: str = "small_angle_v1") -> VehicleState:
     angle = suspension_orientation(yaw, state)
-    local_omega = Vec3(state.pitch_rate_radps, 0., state.roll_rate_radps)
-    rotation_rate = yaw.rotate(local_omega)
     return VehicleState(
         Vec3(x, state.height_m, z),
         Vec3(horizontal_velocity.x, state.heave_velocity_mps, horizontal_velocity.z),
-        angle, Vec3(rotation_rate.x, yaw_rate, rotation_rate.z), True,
+        angle, angular_velocity_for_suspension(yaw, state, yaw_rate, mapping), True,
     )
 
 
@@ -235,6 +251,7 @@ def integrate_independent_suspension(
             previous.position.x + route.x * t,
             previous.position.z + route.z * t,
             yaw, dynamic, path_candidate.velocity, path_candidate.angular_velocity.y,
+            policy.angular_rate_mapping,
         )
         report = certify_multisurface_support(pose, next_pose, body, policy.contact, surfaces)
         if not report.valid:

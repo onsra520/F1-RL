@@ -321,6 +321,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 ("flight", snapshot.flight_telemetry),
                 ("partial_support", snapshot.partial_support_telemetry),
                 ("grounded_yaw", snapshot.grounded_yaw_telemetry),
+                ("transition", snapshot.physics_transition),
             )
         }
         return {"physics": {

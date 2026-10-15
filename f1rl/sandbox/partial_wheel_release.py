@@ -226,6 +226,7 @@ def integrate_partial_support(
         proposed = _pose(
             previous.position.x+route.x*t, previous.position.z+route.z*t,
             yaw, new_dynamic, path_candidate.velocity, path_candidate.angular_velocity.y,
+            physics.angular_rate_mapping,
         )
         _body_road_clear(pose, proposed, body, atlas)
         final_contacts = sample_partial_wheels(proposed, physics.contact, atlas)
