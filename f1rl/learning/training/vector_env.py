@@ -70,6 +70,10 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         self.action_space = scenarios.action_space
         self.observation_space = scenarios.observation_space
 
+    @property
+    def requires_scientific_admission(self) -> bool:
+        return any(s.factory.requires_scientific_admission for s in self._scenarios.scenarios)
+
     def reset(
         self,
         *,

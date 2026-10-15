@@ -402,3 +402,51 @@ def test_explicit_takeoff_keeps_its_separate_authorized_upward_release_domain():
     assert not out.world.vehicle.grounded
     assert out.events[0].kind == "takeoff"
     assert out.world.vehicle.position.y == pytest.approx(.5877375)
+
+
+@pytest.mark.parametrize("vector", [False, True])
+def test_direct_ppo_create_cannot_bypass_research_admission(monkeypatch, vector):
+    import f1rl.learning.algorithms.ppo as ppo
+    from stable_baselines3.common.vec_env import DummyVecEnv
+    candidate = factory(PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION))
+    env = DummyVecEnv([candidate.create]) if vector else candidate.create()
+    def forbidden(*args, **kwargs):
+        raise AssertionError("PPO backend created before admission")
+    monkeypatch.setattr(ppo, "PPO", forbidden)
+    try:
+        with pytest.raises(ValueError, match="research physics training is blocked"):
+            ppo.PPOModel.create(env, ppo.PPOConfig(n_steps=2, batch_size=2))
+    finally:
+        env.close()
+
+
+def test_attached_research_environment_cannot_bypass_ppo_learn_admission():
+    from f1rl.learning.algorithms.ppo import PPOModel
+    from stable_baselines3.common.vec_env import DummyVecEnv
+    candidate = factory(PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION))
+    env = DummyVecEnv([candidate.create])
+    class Backend:
+        def get_env(self):
+            return env
+        def learn(self, **kwargs):
+            raise AssertionError("PPO learned before admission")
+    try:
+        with pytest.raises(ValueError, match="research physics training is blocked"):
+            PPOModel(Backend()).learn(2)
+    finally:
+        env.close()
+
+
+def test_sampled_vecenv_exposes_admission_before_first_reset():
+    import f1rl.learning.algorithms.ppo as ppo
+    from f1rl.learning.training.config import VectorEnvConfig
+    from f1rl.learning.training.env_factory import TrainingScenario, TrainingScenarioSet
+    from f1rl.learning.training.vector_env import make_multi_track_vector_env
+    candidate = factory(PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION))
+    scenarios = TrainingScenarioSet((TrainingScenario("synthetic", candidate),))
+    env = make_multi_track_vector_env(scenarios, VectorEnvConfig(n_envs=1), 9)
+    try:
+        with pytest.raises(ValueError, match="research physics training is blocked"):
+            ppo.PPOModel.create(env, ppo.PPOConfig(n_steps=2, batch_size=2))
+    finally:
+        env.close()

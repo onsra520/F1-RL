@@ -151,6 +151,23 @@ def _validate_rollout_size(env: PPOTrainingEnv, n_steps: int, batch_size: int) -
         raise ValueError("batch_size must divide n_steps * num_envs exactly")
 
 
+def _validate_training_admission(env: object) -> None:
+    if isinstance(env, F1RLEnv):
+        blocked = env.requires_scientific_admission
+    elif isinstance(env, VecEnv):
+        try:
+            flags = env.get_attr("requires_scientific_admission")
+        except AttributeError as exc:
+            raise ValueError("vector training requires explicit admission metadata") from exc
+        if len(flags) != env.num_envs or any(type(flag) is not bool for flag in flags):
+            raise ValueError("invalid vector training admission metadata")
+        blocked = any(flags)
+    else:
+        raise ValueError("unregistered training environment")
+    if blocked:
+        raise ValueError("research physics training is blocked until scientific admission is reviewed")
+
+
 class PPOModel:
     def __init__(self, model: PPO) -> None:
         self._model = model
@@ -161,6 +178,7 @@ class PPOModel:
             raise ValueError("env must be F1RLEnv or VecEnv")
         if not isinstance(config, PPOConfig):
             raise ValueError("config must be PPOConfig")
+        _validate_training_admission(env)
         _validate_rollout_size(env, config.n_steps, config.batch_size)
 
         model = PPO(
@@ -231,8 +249,10 @@ class PPOModel:
             raise ValueError("total_timesteps must be a positive integer")
         if progress_hook is not None and not callable(progress_hook):
             raise ValueError("progress_hook must be callable or None")
-        if self._model.get_env() is None:
+        env = self._model.get_env()
+        if env is None:
             raise RuntimeError("an environment is required to continue learning")
+        _validate_training_admission(env)
 
         kwargs: dict[str, object] = {
             "total_timesteps": total_timesteps,

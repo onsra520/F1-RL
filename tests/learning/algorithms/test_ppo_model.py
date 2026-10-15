@@ -210,7 +210,7 @@ def test_learn_uses_cumulative_backend_semantics() -> None:
             self.calls: list[tuple[int, bool]] = []
 
         def get_env(self) -> object:
-            return object()
+            return _env()
 
         def learn(self, *, total_timesteps: int, reset_num_timesteps: bool) -> None:
             self.calls.append((total_timesteps, reset_num_timesteps))

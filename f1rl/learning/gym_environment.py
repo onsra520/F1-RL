@@ -181,6 +181,9 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             physics_config=physics_config,
         )
         self._physics_config = physics_config
+        self._requires_scientific_admission = body_geometry is not None or (
+            physics_config is not None and physics_config.mode != "legacy_v1"
+        )
         self._progress: RaceProgressState | None = None
         self._needs_reset = True
 
@@ -205,6 +208,10 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             shape=(observation_encoder.size,),
             dtype=np.float32,
         )
+
+    @property
+    def requires_scientific_admission(self) -> bool:
+        return self._requires_scientific_admission
 
     def reset(
         self,

@@ -182,8 +182,17 @@ Gym, including partial wheel loading and no phantom race/score event.
 
 ## Final reproducible software checks
 
+Completion audit additionally closed direct `PPOModel.create/learn` bypasses:
+F1RLEnv and sampled vector slots expose read-only admission metadata, creation
+checks before backend allocation, and learning rechecks the current attached
+environment (including load/reattach paths). Missing/malformed vector metadata
+is rejected. This supplements the unconditional runner guards, without
+granting any new admission or blocking existing baseline F1 environments.
+The adapter's cumulative-learning test double now returns a real baseline
+environment; no production escape for test-only environment objects exists.
+
 Final local Windows Python 3.12.15 verification after review fixes:
-**1,804 passed, 2 platform-specific skipped**; 45 new integration cases passed.
+**1,808 passed, 2 platform-specific skipped**; 49 new integration cases passed.
 Compileall, dependency compatibility (`uv pip check`), owner preregistration
 and `git diff --check` passed. Parent-to-HEAD diff contains no config or track
 asset changes. Cross-OS exact-HEAD CI receipts belong in the Draft PR, so adding
