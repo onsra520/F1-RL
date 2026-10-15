@@ -17,8 +17,13 @@ from ..sandbox.independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState,
 )
 from ..sandbox.partial_wheel_release import AutomaticTakeoffPolicy
+from ..sandbox.interactions.events import ObstacleHit
 from ..sandbox.vehicle import VehicleParameters
-from ..sandbox.world import WorldState
+from ..sandbox.world import WorldState, WorldStepResult
+
+
+class PhysicsTransitionError(RuntimeError):
+    """Rejected research tick; no physical state or race result is published."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,7 +88,9 @@ class PhysicsConfig:
             return
         if not isinstance(initial.suspension, SuspensionDynamicsState):
             raise ValueError("WP7 requires persistent suspension state")
-        if not isclose(initial.vehicle.position.y, initial.suspension.height_m, abs_tol=1e-8):
+        if initial.vehicle.grounded and not isclose(
+            initial.vehicle.position.y, initial.suspension.height_m, rel_tol=0., abs_tol=1e-8,
+        ):
             raise ValueError("initial suspension height disagrees with vehicle")
         if self.ballistic_flight_policy is None:
             if initial.flight is not None or not initial.vehicle.grounded:
@@ -100,6 +107,12 @@ class PhysicsConfig:
             if not isclose(yaw.front_axle_distance_m + yaw.rear_axle_distance_m,
                            parameters.wheelbase, abs_tol=1e-8):
                 raise ValueError("grounded yaw axle geometry must match vehicle wheelbase")
+
+    def validate_transition(self, result: WorldStepResult) -> None:
+        if self.mode != "legacy_v1" and any(isinstance(e, ObstacleHit) for e in result.events):
+            # Legacy rollback zeroes the chassis velocity while retaining the
+            # previous suspension rates; it is not a registered impulse/recovery.
+            raise PhysicsTransitionError("WP7 collision recovery is unregistered; step rejected")
 
     def world_options(self) -> dict[str, object]:
         names = (

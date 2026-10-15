@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from f1rl.sandbox.geometry.vector import Vec3
 from f1rl.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
 from f1rl.sandbox.track.state import ScorePickupCollected
+from f1rl.sandbox.ballistic_flight import FlightTransition
+from f1rl.sandbox.world import WorldEvent
 
 from .route import RaceRoute, _validate_route_state
 
@@ -42,13 +44,13 @@ class RaceProgressResult:
 def advance_race_progress(
     route: RaceRoute,
     state: RaceProgressState,
-    events: tuple[CheckpointEntered | FinishLineEntered | ObstacleHit | ScorePickupCollected, ...],
+    events: tuple[WorldEvent, ...],
 ) -> RaceProgressResult:
     if not isinstance(route, RaceRoute):
         raise ValueError("route must be RaceRoute")
     if not isinstance(state, RaceProgressState):
         raise ValueError("state must be RaceProgressState")
-    if not isinstance(events, tuple) or not all(isinstance(event, (CheckpointEntered, FinishLineEntered, ObstacleHit, ScorePickupCollected)) for event in events):
+    if not isinstance(events, tuple) or not all(isinstance(event, (CheckpointEntered, FinishLineEntered, ObstacleHit, ScorePickupCollected, FlightTransition)) for event in events):
         raise ValueError("events must be a tuple of WorldEvent values")
     _validate_route_state(route, state)
     if state.finished:

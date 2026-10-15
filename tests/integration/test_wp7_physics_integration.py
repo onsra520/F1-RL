@@ -220,3 +220,123 @@ def test_scenario_contract_and_vector_slots_preserve_physics_identity():
         assert all(info["physics"]["suspension"] is not None for info in infos)
     finally:
         vec.close()
+
+
+def test_research_ground_collision_rejects_unregistered_rollback_recovery():
+    from f1rl.sandbox.entities.obstacle import Obstacle
+    from f1rl.sandbox.track.volume import OrientedBoxVolume
+
+    obstacle = Obstacle("wall", OrientedBoxVolume(
+        Vec3(0., .8, 2.2), Vec3(.5, .8, .02), Quaternion.identity(),
+    ))
+    config = PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION)
+    sim = simulation(config, track=TrackWorld(surfaces=(ROAD,), obstacles=(obstacle,)))
+    before = sim.snapshot
+    with pytest.raises(RuntimeError, match="collision recovery is unregistered"):
+        sim.step(VehicleControl(0., 0., 0.))
+    assert sim.snapshot is before
+
+
+def test_airborne_snapshot_can_reconstruct_with_last_grounded_suspension_state():
+    flight = BallisticFlightPolicy(CONTACT, 3., .1)
+    config = PhysicsConfig("wp7_ballistic_v1", BODY, SUSPENSION, flight)
+    initial = replace(
+        world(height=5., grounded=False, flight=FlightState("airborne")),
+        suspension=SuspensionDynamicsState(.5),
+    )
+    sim = simulation(config, initial)
+    result = sim.step(VehicleControl(0., 0., 0.))
+    rebuilt = simulation(config, result.world)
+    assert rebuilt.step(VehicleControl(0., 0., 0.)).world == sim.step(VehicleControl(0., 0., 0.)).world
+
+
+@pytest.mark.parametrize("restitution", [0., .5])
+def test_gym_manifold_landing_and_rebound_preserve_event_time_and_energy(restitution):
+    from math import sqrt
+    from f1rl.sandbox.contact_manifold import ContactManifoldPolicy
+
+    flight = BallisticFlightPolicy(
+        CONTACT, 6., .12,
+        manifold=ContactManifoldPolicy(1600., restitution=restitution),
+    )
+    config = PhysicsConfig("wp7_ballistic_v1", BODY, SUSPENSION, flight)
+    initial = world(height=.85, speed=0., vertical_speed=-1., grounded=False,
+                    flight=FlightState("airborne"))
+    env = replace(factory(config, initial), simulation_config=SimulationConfig(.25, 1.)).create()
+    try:
+        env.reset()
+        info = env.step(np.array([0., 0.], dtype=np.float32))[-1]
+        telemetry = info["physics"]["flight"]
+        event = telemetry["transitions"][0]
+        expected_time = (sqrt(1. + 2.*9.81*.35) - 1.) / 9.81
+        assert event["time_s"] == pytest.approx(expected_time, abs=1e-7)
+        assert info["elapsed_time"] == .25
+        assert info["next_checkpoint_index"] == 0
+        assert not info["finished"]
+        assert info["game_score"] == 0
+        assert info["reward_components"] == {}
+        audit = telemetry["manifold_audit"]
+        assert len(audit["contacts"]) == 4
+        assert audit["pre_kinetic_energy_j"] == pytest.approx(4720.2, abs=.01)
+        assert audit["post_kinetic_energy_j"] <= audit["pre_kinetic_energy_j"] + 1e-5
+        assert audit["post_kinetic_energy_j"] == pytest.approx(4720.2*restitution**2, abs=.1)
+        assert info["telemetry"]["grounded"] is (restitution == 0.)
+        assert event["kind"] == ("landing" if restitution == 0. else "rebound")
+        if restitution == 0.:
+            assert telemetry["remaining_dt_s"] == pytest.approx(.25-expected_time)
+            assert info["physics"]["suspension"] is not None
+        else:
+            assert telemetry["remaining_dt_s"] == 0.
+            assert info["telemetry"]["vehicle_velocity"][1] > 0.
+    finally:
+        env.close()
+
+
+def test_registered_ode_clearance_reaches_runtime_and_never_forges_contact():
+    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
+    from f1rl.sandbox.contact_manifold import ContactManifoldPolicy
+    from f1rl.sandbox.euler_ode_clearance import EulerODEEnclosurePolicy
+    from f1rl.sandbox.torque_free_rotation import TorqueFreeRotationPolicy
+    from f1rl.sandbox.torque_free_swept_ccd import TorqueFreeSweepPolicy
+
+    flight = BallisticFlightPolicy(
+        CONTACT, 6., .12, manifold=ContactManifoldPolicy(1600.),
+        torque_free=TorqueFreeRotationPolicy(1800., 1600., 600.),
+        torque_free_sweep=TorqueFreeSweepPolicy(analytic_ode=EulerODEEnclosurePolicy()),
+    )
+    config = PhysicsConfig("wp7_ballistic_v1", BODY, SUSPENSION, flight)
+    start = world(height=5., speed=0., grounded=False, flight=FlightState("airborne"))
+    start = replace(start, vehicle=replace(start.vehicle, angular_velocity=Vec3(0., .7, 0.)))
+    safe = simulation(config, start).step(VehicleControl(0., 0., 0.))
+    assert safe.flight_telemetry.angular_audit is not None
+    assert safe.events == ()
+    assert safe.world.vehicle.position.y == pytest.approx(4.9877375)
+    near = simulation(config, world(height=.5, speed=0., grounded=False,
+                                   flight=FlightState("airborne")))
+    before = near.snapshot
+    with pytest.raises(FlightPhysicsError, match="analytic Euler ODE clearance unresolved"):
+        near.step(VehicleControl(0., 0., 0.))
+    assert near.snapshot is before
+
+
+def test_grounded_seam_is_supported_but_mixed_patch_landing_is_rejected():
+    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
+    from f1rl.sandbox.contact_manifold import ContactManifoldPolicy
+
+    surfaces = (
+        replace(ROAD, id="left", origin=Vec3(-5., 0., 0.), width=10.),
+        replace(ROAD, id="right", origin=Vec3(5., 0., 0.), width=10.),
+    )
+    track = TrackWorld(surfaces=surfaces)
+    grounded = simulation(PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION), track=track)
+    out = grounded.step(VehicleControl(0., 0., 0.))
+    assert {s.contact.patch_id for s in out.suspension_telemetry.force_samples[-1]} == {"left", "right"}
+    flight = BallisticFlightPolicy(CONTACT, 6., .12, manifold=ContactManifoldPolicy(1600.))
+    initial = world(height=.85, speed=0., vertical_speed=-1., grounded=False,
+                    flight=FlightState("airborne"))
+    airborne = simulation(PhysicsConfig("wp7_ballistic_v1", BODY, SUSPENSION, flight),
+                          initial, track=track, dt=.25)
+    before = airborne.snapshot
+    with pytest.raises(FlightPhysicsError, match="multi-surface simultaneous contact unsupported"):
+        airborne.step(VehicleControl(0., 0., 0.))
+    assert airborne.snapshot is before

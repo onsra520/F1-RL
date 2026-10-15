@@ -126,6 +126,8 @@ class Simulation:
             **({"ramp_support_policy": self._ramp_support_policy} if self._ramp_support_policy is not None else {}),
             **(self._physics_config.world_options() if self._physics_config is not None else {}),
         )
+        if self._physics_config is not None:
+            self._physics_config.validate_transition(result)
         next_tick = current.tick + 1
         elapsed_time = next_tick * self._config.fixed_dt
         next_state = SimulationState(next_tick, elapsed_time, result.state)

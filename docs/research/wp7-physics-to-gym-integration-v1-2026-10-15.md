@@ -50,7 +50,35 @@ and low-speed rejection preserves the last accepted runtime snapshot.
 Legacy observations/rewards/terminal flags/world telemetry are compared to an
 explicit legacy registration. No new scientific rollout or model is produced.
 
-## Scientific boundaries
+## PV2: contact and recovery boundary
+
+End-to-end Gym tests exposed a real handoff failure: World emitted
+`FlightTransition` but both race progress and reward validation rejected it.
+Both now accept that known world-event variant; it gives no race progress,
+score or reward bonus. Synthetic four-point landings and restitution rebounds
+reach Gym with event time, impulse/energy audit, and full-tick continuation.
+The fixed-gravity contact time is independently checked by a quadratic root;
+zero and 0.5 restitution cases check dissipative impact energy. These are
+numerical/software scenarios, not measured vehicle validation.
+
+Research-mode grounded obstacle contact now rejects the entire tick before
+Simulation publishes state. The old rollback zeros chassis velocities while
+retaining previous suspension rates, so it is not a coherent registered
+physical recovery. Legacy rollback is unchanged. A grounded recovery law
+needs explicit impulse/contact constraints and consistent suspension/yaw state
+mapping; no such law is inferred here. Airborne suspension state retains its
+last grounded value and is not incorrectly required to equal flight altitude.
+
+Two coplanar patches support grounded four-wheel suspension. Simultaneous
+mixed-patch landing remains rejected with unchanged snapshot. Torque-free
+flight with nested RK4 CCD and analytic Euler clearance registration reaches
+Simulation, but unresolved near-road enclosure still raises rather than
+producing a landing/contact. No exact-ODE 6-DOF TOI solver is claimed.
+
+PV2 verification: 184 focused tests passed; full Windows regression
+1,780 passed, 2 platform-specific skipped. Historical baseline tests unchanged.
+
+## Scientific boundaries (unchanged)
 
 True exact-ODE 6-DOF impact-time localization, near-contact recovery, measured
 tire patches, unsupported mixed-patch impacts and empirical calibration remain

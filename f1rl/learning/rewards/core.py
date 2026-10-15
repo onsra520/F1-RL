@@ -9,8 +9,9 @@ from ...sandbox.interactions.events import CheckpointEntered, FinishLineEntered,
 from ...sandbox.track.state import ScorePickupCollected
 from ...sandbox.vehicle import VehicleState
 from ...sandbox.world import WorldEvent
+from ...sandbox.ballistic_flight import FlightTransition
 
-_ALLOWED_EVENTS = (ObstacleHit, CheckpointEntered, FinishLineEntered, ScorePickupCollected)
+_ALLOWED_EVENTS = (ObstacleHit, CheckpointEntered, FinishLineEntered, ScorePickupCollected, FlightTransition)
 
 
 def _finite_number(value: object, name: str) -> float:
