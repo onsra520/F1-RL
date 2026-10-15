@@ -1,0 +1,140 @@
+"""TRAIN-only authored-path body audit; neither route search nor admission.
+
+Certificates cover linear translation/constant orientation on each segment.
+Heading junctions, sloped support and absent speed profiles remain explicit
+blockers. A failed authored path is not proof that every possible path fails.
+"""
+from dataclasses import asdict
+from hashlib import sha256
+from math import acos, degrees, tan
+from pathlib import Path
+
+from ..learning.experiments.definition import ExperimentDefinition
+from ..learning.pilot_preflight import TRAIN_IDS
+from ..sandbox.body_collision import VehicleBodyGeometry, sweep_body_against_obstacle
+from ..sandbox.directed_center_crossing import directed_center_gate_crossing
+from ..sandbox.geometry.rotation import Quaternion
+from ..sandbox.geometry.vector import Vec3
+from ..sandbox.road_footprint import swept_body_road_union
+from ..sandbox.vehicle import VehicleParameters, VehicleState
+from ..track_assets import load_track_asset, load_track_manifest
+from ..track_assets.canonical import fingerprint_track_world
+
+BODY = VehicleBodyGeometry(1.8, 1.2, 4., Vec3(0., .3, 0.))
+PARAMETERS = VehicleParameters(3., .5, .5, 6., 10., .4, .1, 15., 9.81)
+UP = Vec3(0., 1., 0.)
+ZERO = Vec3(0., 0., 0.)
+
+
+def audit_track(asset, *, parameters=PARAMETERS):
+    if asset.track_id not in TRAIN_IDS or asset.navigation is None:
+        raise ValueError("audit requires one of four TRAIN tracks and authored navigation")
+    blockers = []
+    segments = []
+    poses = []
+    directions = []
+    for index, (first, last) in enumerate(zip(asset.navigation.points, asset.navigation.points[1:])):
+        direction = (last-first).normalized()
+        right = UP.cross(direction).normalized()
+        rotation = Quaternion.from_basis(right, direction.cross(right), direction)
+        a, b = (VehicleState(p+UP*parameters.ride_height, ZERO, rotation, ZERO, True)
+                for p in (first, last))
+        poses.append((a, b))
+        directions.append(direction)
+        road = swept_body_road_union(a, b, BODY, asset.world.surfaces,
+                                    ride_height_m=parameters.ride_height)
+        obstacles = []
+        for obstacle in asset.world.obstacles:
+            result = sweep_body_against_obstacle(a, b, BODY, obstacle.volume)
+            status = "contact" if result.contact else "uncertain" if result.uncertain else "clear"
+            obstacles.append({"obstacle_id": obstacle.id, "status": status, "checks": result.checks})
+            if status != "clear":
+                blockers.append(f"body_obstacle:{index}:{obstacle.id}:{status}")
+        if not road.valid:
+            blockers.append(f"body_road:{index}:{road.status}")
+        segments.append({"index": index, "road": asdict(road), "obstacles": obstacles})
+    angles = [acos(max(-1., min(1., a.dot(b)))) for a, b in zip(directions, directions[1:])]
+    if any(angle > 1e-8 for angle in angles):
+        blockers.append("authored_heading_discontinuity")
+    gates = []
+    gate_cursor = -1.
+    for gate in (*sorted(asset.world.checkpoints, key=lambda c: c.order), *asset.world.finish_lines):
+        crossings = []
+        for index, (a, b) in enumerate(poses):
+            crossing = directed_center_gate_crossing(a.position, b.position, gate.volume)
+            if crossing is not None:
+                # Project the complete body onto the finite gate's right/up axes.
+                axes = [a.orientation.rotate(v) for v in (Vec3(1.,0.,0.), UP, Vec3(0.,0.,1.))]
+                center = BODY.box_at(crossing.center, a.orientation).center
+                fits = True
+                margins = []
+                for axis, half in ((gate.volume.orientation.rotate(Vec3(1.,0.,0.)), gate.volume.half_extents.x),
+                                   (gate.volume.orientation.rotate(UP), gate.volume.half_extents.y)):
+                    radius = sum(abs(axis.dot(v))*h for v, h in zip(axes, (BODY.width_m/2, BODY.height_m/2, BODY.length_m/2)))
+                    margin = half-abs((center-gate.volume.center).dot(axis))-radius
+                    margins.append(margin)
+                    fits &= margin >= -1e-9
+                crossings.append({"segment": index, "path_fraction": index+crossing.fraction,
+                                  "body_fits": fits, "aperture_margins_m": margins})
+                if not fits:
+                    blockers.append(f"body_aperture:{gate.id}")
+        if not crossings:
+            blockers.append(f"directed_gate_not_crossed:{gate.id}")
+        else:
+            ordered = [c for c in crossings if c["path_fraction"] > gate_cursor+1e-9]
+            if not ordered:
+                blockers.append(f"directed_gate_order:{gate.id}")
+            else:
+                gate_cursor = ordered[0]["path_fraction"]
+        gates.append({"gate_id": gate.id, "crossings": crossings})
+    transitions = []
+    surfaces = {p.id: p for p in asset.world.surfaces}
+    ids = asset.navigation.surface_ids
+    for i, (first, last) in enumerate(zip(ids, ids[1:])):
+        if first != last:
+            normal_change = degrees(acos(max(-1., min(1., surfaces[first].normal.dot(surfaces[last].normal)))))
+            transitions.append({"point_index": i+1, "from": first, "to": last, "normal_change_deg": normal_change})
+            if normal_change > 1e-8:
+                blockers.append(f"surface_transition_uncertified:{i+1}")
+    return {
+        "track_id": asset.track_id, "world_sha256": fingerprint_track_world(asset.world),
+        "geometry_status": "uncertified" if blockers else "certified_authored_sweep",
+        "body": asdict(BODY), "vehicle_parameters": asdict(parameters),
+        "segments": segments, "gates": gates, "surface_transitions": transitions,
+        "turning": {"minimum_radius_m": parameters.wheelbase/tan(parameters.max_steering_angle),
+                    "maximum_junction_deg": degrees(max(angles, default=0.)),
+                    "scope": "exact_authored_polyline; alternative smooth paths not searched"},
+        "braking": {"status": "unregistered_speed_profile", "policy_brake": 0.,
+                    "reason": "no speed/time trajectory or lateral-force validation; no braking feasibility certificate"},
+        "blockers": sorted(set(blockers)),
+        "training_authorized": False,
+    }
+
+
+def audit_train_tracks(repository_root, *, track_ids=TRAIN_IDS):
+    if track_ids != TRAIN_IDS:
+        raise ValueError("audit requires exactly the four TRAIN identities")
+    root = Path(repository_root).resolve(strict=True)
+    manifest_path = root / "assets/tracks/manifest.json"
+    entries = {e.track_id: e for e in load_track_manifest(manifest_path).tracks}
+    config_path = root / "configs/experiments/ppo-generalization-v1.yml"
+    definition = ExperimentDefinition.from_yaml(config_path)
+    rows = []
+    for identity in TRAIN_IDS:
+        entry = entries[identity]
+        if entry.path != f"training/{identity}.json":
+            raise ValueError("TRAIN manifest path drift")
+        path = manifest_path.parent / entry.path
+        if path.is_symlink() or not path.resolve(strict=True).is_relative_to(root / "assets/tracks/training"):
+            raise ValueError("TRAIN source escapes registry")
+        asset = load_track_asset(path)
+        if asset.track_id != identity or asset.world_sha256 != entry.world_sha256 or asset.content_sha256 != entry.content_sha256:
+            raise ValueError("TRAIN asset identity/hash drift")
+        row = audit_track(asset, parameters=VehicleParameters(**asdict(definition.vehicle)))
+        row.update(source_path=path.relative_to(root).as_posix(), source_sha256=sha256(path.read_bytes()).hexdigest())
+        rows.append(row)
+    return {"schema_version": "wp7_body_track_audit_v1", "tracks": rows,
+            "manifest_sha256": sha256(manifest_path.read_bytes()).hexdigest(),
+            "vehicle_config_sha256": sha256(config_path.read_bytes()).hexdigest(),
+            "scope": "authored_geometry_only; no rollout, calibration or alternative-path proof",
+            "training_authorized": False}

@@ -30,7 +30,7 @@ from .episode import (
 from .observation import NavigationTarget, ObservationEncoder
 from .offtrack import OffTrackConfig, OffTrackState
 from .route_navigation import AuthoredRoute
-from .wp7_race import WP7RaceConfig, advance_directed_race
+from .wp7_race import WP7RaceConfig, RaceContractError, advance_directed_race
 from .train_reset import TrainResetConfig, sample_train_spawn
 from .rewards import RewardComposer, RewardResult, RewardTransition, RouteProgressReward, OffTrackPenalty
 
@@ -187,6 +187,8 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         self._progress: RaceProgressState | None = None
         self._needs_reset = True
 
+        self._last_research_outcome: dict[str, object] | None = None
+
         self.action_space = gym.spaces.Box(
             low=np.array([-1.0, 0.0], dtype=np.float32),
             high=np.array([1.0, 1.0], dtype=np.float32),
@@ -213,6 +215,18 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
     def requires_scientific_admission(self) -> bool:
         return self._requires_scientific_admission
 
+    @property
+    def last_research_outcome(self) -> dict[str, object] | None:
+        """Rejected research steps raise; their classification remains inspectable."""
+        return None if self._last_research_outcome is None else dict(self._last_research_outcome)
+
+    def _record_research_outcome(self, kind: str, valid: bool, reason: str) -> None:
+        if self.requires_scientific_admission:
+            self._last_research_outcome = {
+                "version": "wp7_episode_outcome_v1", "kind": kind,
+                "valid_sample": valid, "reason": reason,
+            }
+
     def reset(
         self,
         *,
@@ -222,6 +236,8 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         if options:
             raise ValueError("non-empty reset options are not supported")
         super().reset(seed=seed)
+
+        self._last_research_outcome = None
 
         self._reset_metadata = None
         if self._reset_config is not None:
@@ -346,9 +362,10 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
 
         try:
             snapshot_after = self._simulation.step(control)
-        except Exception:
+        except Exception as exc:
             if self._physics_config is not None and self._physics_config.mode != "legacy_v1":
                 self._needs_reset = True
+                self._record_research_outcome("invalid_physical_transition", False, str(exc))
             raise
         try:
             race_step = None
@@ -428,14 +445,26 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 info["truncation_reason"] = (
                     "offtrack" if next_offtrack.truncated and not progress_result.state.finished else None
                 )
-        except Exception:
+        except Exception as exc:
             self._needs_reset = True
+            self._record_research_outcome(
+                "uncertified_route_state" if isinstance(exc, RaceContractError) else "invalid_environment_transition",
+                False, str(exc),
+            )
             raise
 
         self._progress = progress_result.state
         self._offtrack_state = next_offtrack
         self._route_highwater = next_highwater
         self._needs_reset = status.terminated or status.truncated
+        self._record_research_outcome(
+            "successful_finish" if progress_result.state.finished else
+            "valid_truncation" if status.truncated else "active", True,
+            "finish" if progress_result.state.finished else
+            (info.get("truncation_reason") or "step_limit") if status.truncated else "accepted_step",
+        )
+        if self.last_research_outcome is not None:
+            info["research_outcome"] = self.last_research_outcome
         return (
             observation,
             float(reward_result.total),
