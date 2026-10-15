@@ -50,3 +50,58 @@ def test_prediction_only_load_cannot_later_train_research_env(tmp_path, monkeypa
     finally:
         baseline.close()
         research.close()
+
+
+@pytest.mark.parametrize("backend", ["dummy", "subproc"])
+@pytest.mark.parametrize("entrypoint", ["create", "backend_create", "raw_learn"])
+def test_real_vector_backend_cannot_bypass_any_project_learning_entrypoint(backend, entrypoint, monkeypatch):
+    from stable_baselines3 import PPO as SB3PPO
+    from f1rl.learning.training.config import VectorEnvConfig
+    from f1rl.learning.training.vector_env import make_vector_env
+    candidate = factory(PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION))
+    vector = make_vector_env(candidate, VectorEnvConfig(n_envs=1, backend=backend))
+    baseline = make_factory().create()
+    try:
+        assert vector.get_attr("requires_scientific_admission") == [True]
+        if entrypoint == "raw_learn":
+            model = PPOModel.create(baseline, PPOConfig(n_steps=2, batch_size=2))
+            model._model.set_env(vector)
+            def forbidden(*args, **kwargs):
+                raise AssertionError("SB3 collected a rollout before admission")
+            monkeypatch.setattr(SB3PPO, "learn", forbidden)
+            invoke = lambda: model._model.learn(2)
+        elif entrypoint == "create":
+            invoke = lambda: PPOModel.create(vector, PPOConfig(n_steps=2, batch_size=2))
+        else:
+            invoke = lambda: PPO("MlpPolicy", vector, n_steps=2, batch_size=2)
+        with pytest.raises(ValueError, match="blocked") as caught:
+            invoke()
+        assert caught.value.report["training_authorized"] is False
+    finally:
+        vector.close()
+        baseline.close()
+
+
+@pytest.mark.parametrize("flags", [[], [0], ["false"], [None], [False, False]])
+def test_malformed_vector_admission_metadata_never_allocates_backend(flags, monkeypatch):
+    from stable_baselines3.common.vec_env import DummyVecEnv
+    vector = DummyVecEnv([make_factory().create])
+    try:
+        monkeypatch.setattr(vector, "get_attr", lambda *args, **kwargs: flags)
+        with pytest.raises(ValueError, match="metadata"):
+            PPOModel.create(vector, PPOConfig(n_steps=2, batch_size=2))
+    finally:
+        vector.close()
+
+
+def test_missing_vector_admission_metadata_fails_closed(monkeypatch):
+    from stable_baselines3.common.vec_env import DummyVecEnv
+    vector = DummyVecEnv([make_factory().create])
+    def missing(*args, **kwargs):
+        raise AttributeError("requires_scientific_admission")
+    try:
+        monkeypatch.setattr(vector, "get_attr", missing)
+        with pytest.raises(ValueError, match="metadata"):
+            PPOModel.create(vector, PPOConfig(n_steps=2, batch_size=2))
+    finally:
+        vector.close()

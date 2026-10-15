@@ -157,14 +157,19 @@ Fresh exact-HEAD test/compile/dependency/CI receipts and the stacked Draft PR li
 are recorded in the PR after final verification. This document's intermediate
 receipts are not a substitute for that final source binding.
 
-Final local Windows Python 3.12.15 regression after review fixes: **1,858 passed,
-2 platform-specific skipped** in 63.91 s. Compileall for `f1rl` and `scripts`,
+Final local Windows Python 3.12.15 regression after review fixes: **1,870 passed,
+2 platform-specific skipped** in 73.03 s. Compileall for `f1rl` and `scripts`,
 `uv pip check` (23 compatible packages), owner validation and `git diff --check`
 passed. Parent-to-working-tree comparison confirms no recovery configuration,
-canonical track asset or artifact changes. The new PV5 focused suite has 50
+canonical track asset or artifact changes. The new PV5 focused suite has 62
 cases; the admission tool's larger focused receipt additionally includes
 existing race/reset regressions. Cross-OS CI must be checked on the final PR
 HEAD, independently of these local results.
+
+The final guard audit additionally exercises real DummyVecEnv/SubprocVecEnv
+adapter creation, direct backend construction and raw learning after reattach,
+plus absent/malformed vector metadata. All 15 backend-admission cases passed
+without collecting an unapproved research rollout.
 
 Review found and regression tests reproduced three defects: unowned yaw being
 zeroed, center-pose-only aperture acceptance at oblique incidence, and Python
