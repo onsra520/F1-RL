@@ -167,7 +167,27 @@ Owner decisions, historical C2 configs, model ZIPs and archived evidence are
 unchanged. HELD-OUT remains sealed. `training_permitted`, `heldout_permitted`,
 `scientific_freeze_permitted`, and `wp8_permitted` remain false.
 
-## Reproducible software checks
+## Review findings and resolution
+
+Standards review found no documented boundary violations and one non-blocking
+maintenance observation: factory/direct-Gym boundary checks overlap, following
+the existing constructor-validation pattern. No speculative refactor was added.
+Spec review reproduced inconsistent grounded chassis/suspension velocities
+being overwritten without impulse. Registration and alternate reset now reject
+heave and world-frame X/Z angular-rate mismatches, using the solver's yaw-frame
+mapping; tests include 90-degree heading, unchanged rejection snapshot and
+the separate explicit takeoff domain. Follow-up review found no remaining
+material Spec finding. Automatic platform-edge release is also exercised through
+Gym, including partial wheel loading and no phantom race/score event.
+
+## Final reproducible software checks
+
+Final local Windows Python 3.12.15 verification after review fixes:
+**1,804 passed, 2 platform-specific skipped**; 45 new integration cases passed.
+Compileall, dependency compatibility (`uv pip check`), owner preregistration
+and `git diff --check` passed. Parent-to-HEAD diff contains no config or track
+asset changes. Cross-OS exact-HEAD CI receipts belong in the Draft PR, so adding
+the receipt does not create another unverified source commit.
 
 ```text
 python -m pytest tests/integration/test_wp7_physics_integration.py tests/runtime tests/learning/training/test_fullbody_training_gate.py -q

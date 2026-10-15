@@ -340,3 +340,65 @@ def test_grounded_seam_is_supported_but_mixed_patch_landing_is_rejected():
     with pytest.raises(FlightPhysicsError, match="multi-surface simultaneous contact unsupported"):
         airborne.step(VehicleControl(0., 0., 0.))
     assert airborne.snapshot is before
+
+
+def test_registered_automatic_edge_release_reaches_gym_without_phantom_race_events():
+    from f1rl.sandbox.partial_wheel_release import AutomaticTakeoffPolicy
+    flight = BallisticFlightPolicy(CONTACT, 6., .15)
+    config = PhysicsConfig("wp7_ballistic_v1", BODY, SUSPENSION, flight,
+                           automatic_takeoff_policy=AutomaticTakeoffPolicy(.6))
+    candidate = factory(config, world(speed=40., flight=FlightState("grounded")))
+    track = replace(candidate.track, surfaces=(replace(ROAD, length=4.),))
+    env = replace(candidate, track=track, simulation_config=SimulationConfig(.1, 1.)).create()
+    try:
+        env.reset()
+        info = env.step(np.array([0., 0.], dtype=np.float32))[-1]
+        assert not info["telemetry"]["grounded"]
+        partial = info["physics"]["partial_support"]
+        assert 0. < partial["takeoff_at_s"] < .1
+        assert any(sum(c is not None for c in frame["contacts"]) == 2 for frame in partial["frames"])
+        assert not info["finished"]
+        assert info["game_score"] == 0
+    finally:
+        env.close()
+
+
+@pytest.mark.parametrize("velocity,omega", [
+    (Vec3(0., 2., 5.), Vec3(0., 0., 0.)),
+    (Vec3(0., 0., 5.), Vec3(1., 0., 0.)),
+    (Vec3(0., 0., 5.), Vec3(0., 0., 1.)),
+])
+def test_inconsistent_grounded_rates_are_rejected_before_admission_or_reset(velocity, omega):
+    config = PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION)
+    initial = world()
+    invalid = replace(initial, vehicle=replace(initial.vehicle, velocity=velocity, angular_velocity=omega))
+    with pytest.raises(ValueError, match="suspension rates disagree"):
+        simulation(config, invalid)
+    sim = simulation(config)
+    before = sim.snapshot
+    with pytest.raises(ValueError, match="suspension rates disagree"):
+        sim.reset(initial_state=invalid)
+    assert sim.snapshot is before
+
+
+def test_grounded_rate_consistency_uses_world_frame_and_allows_consistent_rates():
+    from math import pi
+    initial = world()
+    initial = replace(initial,
+        vehicle=replace(initial.vehicle,
+            orientation=Quaternion.from_axis_angle(Vec3(0., 1., 0.), pi/2),
+            velocity=Vec3(5., .05, 0.), angular_velocity=Vec3(.2, 0., -.1)),
+        suspension=replace(initial.suspension, heave_velocity_mps=.05, pitch_rate_radps=.1, roll_rate_radps=.2))
+    sim = simulation(PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION), initial)
+    assert sim.snapshot.world == initial
+    assert sim.step(VehicleControl(0., 0., 0.)).suspension_telemetry is not None
+
+
+def test_explicit_takeoff_keeps_its_separate_authorized_upward_release_domain():
+    flight = BallisticFlightPolicy(CONTACT, 3., .1)
+    config = PhysicsConfig("wp7_ballistic_v1", BODY, SUSPENSION, flight)
+    initial = world(speed=0., vertical_speed=2., flight=FlightState("takeoff"))
+    out = simulation(config, initial).step(VehicleControl(0., 0., 0.))
+    assert not out.world.vehicle.grounded
+    assert out.events[0].kind == "takeoff"
+    assert out.world.vehicle.position.y == pytest.approx(.5877375)

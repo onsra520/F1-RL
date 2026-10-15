@@ -23,6 +23,15 @@ Use `TrainingScenario(track_id, factory)` and a non-empty `TrainingScenarioSet` 
 
 The wrapper exposes canonical spaces before its first reset and does not select an episode during construction. Each reset creates a new fixed-track `F1RLEnv`; the prior environment is closed first, and a failed new reset closes the partial environment and propagates the error. Wrapper `close()` closes its active environment.
 
+WP7 research factories additionally share equal `physics_config`, `race_config`
+and `reset_config` registrations (and the existing offtrack/body/ramp contract).
+When TRAIN reset preparation is enabled, the per-track `reset_track_id` must
+match its scenario ID and hash-bound TRAIN registry. Rank and reset sequence
+are preserved across environment recreation, independently of track-selection
+and Gym seeds. These opt-ins keep policy spaces unchanged. Both runner
+entrypoints still reject all research full-body factories before creating
+models or artifacts; successful reset preparation does not grant admission.
+
 `sampling_seed` exclusively controls selection. Each vector rank receives an independent stream derived by SHA-256 from the seed and rank. Gym/SB3 `reset(seed=...)` does not restart or alter that stream. `track_id` appears in reset and transition `info` (including terminal transitions), never in policy observations.
 
 ## Training orchestration

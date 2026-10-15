@@ -14,8 +14,9 @@ from ..sandbox.ballistic_flight import BallisticFlightPolicy, FlightState
 from ..sandbox.body_collision import VehicleBodyGeometry
 from ..sandbox.grounded_yaw_dynamics import GroundedYawPolicy
 from ..sandbox.independent_suspension_dynamics import (
-    IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState,
+    IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState, _horizontal_yaw,
 )
+from ..sandbox.geometry.vector import Vec3
 from ..sandbox.partial_wheel_release import AutomaticTakeoffPolicy
 from ..sandbox.interactions.events import ObstacleHit
 from ..sandbox.vehicle import VehicleParameters
@@ -100,6 +101,17 @@ class PhysicsConfig:
                 raise ValueError("ballistic mode requires persistent flight state")
             if initial.vehicle.grounded != (initial.flight.phase != "airborne"):
                 raise ValueError("initial flight phase disagrees with grounded flag")
+        explicit_launch = initial.flight is not None and initial.flight.phase == "takeoff"
+        if initial.vehicle.grounded and not explicit_launch:
+            state = initial.suspension
+            expected = _horizontal_yaw(initial.vehicle.orientation).rotate(
+                Vec3(state.pitch_rate_radps, 0., state.roll_rate_radps),
+            )
+            actual = initial.vehicle.angular_velocity
+            pairs = ((initial.vehicle.velocity.y, state.heave_velocity_mps),
+                     (actual.x, expected.x), (actual.z, expected.z))
+            if any(not isclose(a, b, rel_tol=0., abs_tol=1e-8) for a, b in pairs):
+                raise ValueError("grounded chassis and suspension rates disagree")
         yaw = self.grounded_yaw_policy
         if yaw is not None:
             if not isclose(yaw.mass_kg, self.independent_suspension_policy.mass_kg, abs_tol=1e-8):
