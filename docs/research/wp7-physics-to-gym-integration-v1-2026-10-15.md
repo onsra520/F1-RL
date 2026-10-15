@@ -110,6 +110,52 @@ No reward bonus, soft penalty or new scientific admission is introduced.
 PV3 verification: 92 focused tests passed; full Windows regression 1,789 passed,
 2 platform-specific skipped, including historical Gym failure semantics.
 
+## PV4: TRAIN reset preparation, admission still closed
+
+`TrainResetConfig` accepts an explicit TRAIN-only manifest-entry registry and
+independent uint32 seed. Evaluation/non-training paths, duplicate identities
+and actual-world SHA-256 mismatches are rejected. Factory scenario IDs must
+match the registered reset identity. The registry is a declared research input,
+not an independent attestation that its contents are scientifically approved.
+
+Opt-in Gym resets sample lateral offset uniformly in [-0.5,+0.5] m and heading
+in [-5,+5] degrees from a SHA-256-derived stream keyed by protocol version,
+perturbation seed, vector rank, track ID and reset index. Gym/SB3 reset seeds
+do not rewind it. Multi-track wrapper recreation preserves the rank/reset
+index; track selection uses its existing separate sampling RNG. No global
+random state is modified. The metadata records exact draw seed, offsets,
+attempt count, rejected draws, world hash and configuration hash.
+
+V1 requires upright, stationary independent suspension plus the grounded race
+contract. Each draw checks all-wheel/body road support, body/obstacle overlap,
+route validity and gate-start feasibility. A bounded sequence of infeasible
+draws fails reset; it never falls back to nominal or reports an invalid sample
+as a valid episode. Nominal source state/navigation remain immutable. Alternate
+Simulation reset states require explicit research physics and never replace
+its constructor baseline. Spaces remain unchanged.
+
+This research seed/filter implementation does NOT fill the null scientific
+protocol fields in owner preregistration, approve a final seed roster or create
+a runnable full-body experiment. The runner still refuses training before
+artifacts are created. No real TRAIN/HELD-OUT rollout is run in this work.
+
+PV4 focused software checks: 152 passed, 1 platform-specific skip, including
+DummyVecEnv/SubprocVecEnv spawn, independent rank streams, redraw/no-fallback,
+range endpoints, hash drift and runner admission. Full regression recorded
+below after the final review. PV4 full Windows regression: 1,798 passed,
+2 platform-specific skips.
+
+## Scientific acceptance matrix
+
+| Gate | Implemented | Software verified | Empirically validated | Status / required evidence |
+|---|---|---|---|---|
+| G1 physics | Bounded kernel-to-Gym handoff, guarded landings, directed grounded race | Synthetic gravity/impact energy, trajectory and failure contracts | No | BLOCKED: measured references, exact-ODE 6-DOF TOI/recovery and airborne race contract |
+| G2 calibration | Existing measured-parameter/evidence schema | Units, completeness and hash contracts | No | BLOCKED: authentic measurements/uncertainty, independent physical comparison |
+| G3 robustness | Existing numeric CP checks; feasible research reset implementation | Per-cell checker and deterministic reset/vector tests | No | BLOCKED: admitted versioned experiment, >=3 paired seeds, >=60 real episodes/cell, 95% one-sided lower bound >=0.90 |
+| G4 reproducibility | Explicit nested physics/race/reset identities; existing run provenance | Hash/replay/config propagation tests | No independent replay | BLOCKED: training-time source/runtime capture and independent full-run reproduction |
+| G5 private Drive | Existing manifests/offline byte comparison | Existing integrity regressions | No verified Drive recovery | BLOCKED: authorized private destination and independent off-device restore receipt |
+| G6 review | Research decisions and limitations documented | Regression does not grant approval | No | BLOCKED: independent scientific review and explicit owner sign-off after G1-G5 |
+
 ## Scientific boundaries (unchanged)
 
 True exact-ODE 6-DOF impact-time localization, near-contact recovery, measured

@@ -146,9 +146,17 @@ class Simulation:
         self._snapshot = next_snapshot
         return next_snapshot
 
-    def reset(self) -> SimulationSnapshot:
-        self._state = SimulationState(0, 0.0, self._initial_state)
-        self._snapshot = self._snapshot_for(self._initial_state)
+    def reset(self, *, initial_state: WorldState | None = None) -> SimulationSnapshot:
+        initial = self._initial_state if initial_state is None else initial_state
+        if initial_state is not None:
+            if self._physics_config is None or self._physics_config.mode == "legacy_v1":
+                raise ValueError("alternate reset state requires registered research physics")
+            if not isinstance(initial, WorldState):
+                raise ValueError("reset initial_state must be WorldState")
+            self._physics_config.validate_state(initial, self._parameters)
+        snapshot = self._snapshot_for(initial)
+        self._state = SimulationState(0, 0.0, initial)
+        self._snapshot = snapshot
         return self._snapshot
 
     def _snapshot_for(self, world: WorldState) -> SimulationSnapshot:

@@ -111,6 +111,13 @@ def _sha256(payload: dict[str, object]) -> str:
     return hashlib.sha256(_canonical_bytes(payload)).hexdigest()
 
 
+def fingerprint_track_world(world: TrackWorld) -> str:
+    """Canonical geometry identity, independent of checkout line endings."""
+    if not isinstance(world, TrackWorld):
+        raise ValueError("world must be TrackWorld")
+    return _sha256({"hash_schema": "f1rl-track-world-v1", "world": _world_payload(world)})
+
+
 def _build_track_asset(
     *,
     schema_version: int,
@@ -125,9 +132,7 @@ def _build_track_asset(
         raise ValueError("world must be TrackWorld")
 
     canonical_world = _world_payload(world)
-    world_sha256 = _sha256(
-        {"hash_schema": "f1rl-track-world-v1", "world": canonical_world}
-    )
+    world_sha256 = fingerprint_track_world(world)
     content_payload: dict[str, object] = {
         "hash_schema": "f1rl-track-content-v2" if schema_version == 2 else "f1rl-track-content-v1",
         "spawn": _spawn_payload(spawn),

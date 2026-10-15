@@ -31,6 +31,7 @@ from .observation import NavigationTarget, ObservationEncoder
 from .offtrack import OffTrackConfig, OffTrackState
 from .route_navigation import AuthoredRoute
 from .wp7_race import WP7RaceConfig, advance_directed_race
+from .train_reset import TrainResetConfig, sample_train_spawn
 from .rewards import RewardComposer, RewardResult, RewardTransition, RouteProgressReward, OffTrackPenalty
 
 
@@ -92,6 +93,10 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         ramp_support_policy: PlanarRampPolicy | None = None,
         physics_config: PhysicsConfig | None = None,
         race_config: WP7RaceConfig | None = None,
+        reset_config: TrainResetConfig | None = None,
+        reset_track_id: str | None = None,
+        reset_rank: int = 0,
+        reset_sequence: int = 0,
     ) -> None:
         super().__init__()
         values = (
@@ -150,6 +155,22 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             if offtrack_config is not None:
                 raise ValueError("WP7 race cannot mix historical C2 offtrack semantics")
         self._race_config = race_config
+        if reset_config is not None:
+            if not isinstance(reset_config, TrainResetConfig) or race_config is None:
+                raise ValueError("TRAIN reset requires explicit config and WP7 race contract")
+            if physics_config.mode != "wp7_suspension_v1":
+                raise ValueError("TRAIN reset requires grounded suspension mode")
+            reset_config.validate_track(track, reset_track_id)
+        elif reset_track_id is not None:
+            raise ValueError("reset track identity requires TRAIN reset config")
+        if any(type(i) is not int or i < 0 for i in (reset_rank, reset_sequence)):
+            raise ValueError("reset rank/sequence must be nonnegative integers")
+        self._reset_config = reset_config
+        self._reset_track_id = reset_track_id
+        self._reset_rank = reset_rank
+        self._reset_sequence = reset_sequence
+        self._nominal_initial_state = initial_state
+        self._reset_metadata = None
         self._offtrack_state = OffTrackState()
         self._max_route_distance = min((surface.width for surface in track.surfaces), default=0.0) / 2.0
         self._route_highwater = 0.0
@@ -195,7 +216,17 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             raise ValueError("non-empty reset options are not supported")
         super().reset(seed=seed)
 
-        snapshot = self._simulation.reset()
+        self._reset_metadata = None
+        if self._reset_config is not None:
+            self._needs_reset = True
+            initial, metadata = sample_train_spawn(
+                self._reset_config, self._reset_track_id, self._track,
+                self._nominal_initial_state, self._physics_config, self._authored_route,
+                rank=self._reset_rank, reset_index=self._reset_sequence,
+            )
+            snapshot = self._simulation.reset(initial_state=initial)
+        else:
+            snapshot = self._simulation.reset()
         progress = RaceProgressState(0, False)
         target_position = self._route_target(snapshot.world.vehicle, progress)
         try:
@@ -209,6 +240,9 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         self._offtrack_state = OffTrackState()
         self._route_highwater = 0.0
         self._needs_reset = False
+        if self._reset_config is not None:
+            self._reset_sequence += 1
+            self._reset_metadata = metadata
         return observation, self._reset_info()
 
     def _route_target(self, vehicle: VehicleState, progress: RaceProgressState) -> Vec3 | None:
@@ -256,7 +290,14 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             "telemetry": _vehicle_telemetry(snapshot.world.vehicle),
             **self._physics_info(snapshot),
             **self._race_info(),
+            **self._train_reset_info(),
         }
+
+    def _train_reset_info(self) -> dict[str, object]:
+        if self._reset_metadata is None:
+            return {}
+        from copy import deepcopy
+        return {"train_reset": deepcopy(self._reset_metadata)}
 
     def _race_info(self) -> dict[str, object]:
         if self._race_config is None:
@@ -423,6 +464,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             "finished_now": progress_result.finished_now,
             "game_score": snapshot.world.score.points,
             **self._physics_info(snapshot),
+            **self._train_reset_info(),
             "reward_components": {
                 contribution.name: float(contribution.value)
                 for contribution in reward_result.contributions

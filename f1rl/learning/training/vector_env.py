@@ -19,6 +19,8 @@ class _RankedEnvFactory:
     rank: int
 
     def __call__(self) -> F1RLEnv:
+        if self.factory.reset_config is not None:
+            return self.factory.create(reset_rank=self.rank)
         return self.factory.create()
 
 
@@ -61,6 +63,8 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         )
         self._scenarios = scenarios
         self._selection_rng = random.Random(rank_seed)
+        self._rank = rank
+        self._reset_sequence = 0
         self._active_env: F1RLEnv | None = None
         self._current_scenario: TrainingScenario | None = None
         self.action_space = scenarios.action_space
@@ -80,7 +84,10 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             previous_env.close()
 
         scenario = self._selection_rng.choice(self._scenarios.scenarios)
-        env = scenario.factory.create()
+        env = (
+            scenario.factory.create(reset_rank=self._rank, reset_sequence=self._reset_sequence)
+            if scenario.factory.reset_config is not None else scenario.factory.create()
+        )
         try:
             observation, info = env.reset(seed=seed, options=options)
         except Exception:
@@ -92,6 +99,7 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
 
         self._active_env = env
         self._current_scenario = scenario
+        self._reset_sequence += 1
         return observation, {**info, "track_id": scenario.track_id}
 
     def step(

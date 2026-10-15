@@ -19,6 +19,7 @@ from ..observation import ObservationEncoder
 from ..offtrack import OffTrackConfig
 from ..rewards import RewardComposer
 from ..wp7_race import WP7RaceConfig
+from ..train_reset import TrainResetConfig
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +37,8 @@ class F1RLEnvFactory:
     ramp_support_policy: PlanarRampPolicy | None = None
     physics_config: PhysicsConfig | None = None
     race_config: WP7RaceConfig | None = None
+    reset_config: TrainResetConfig | None = None
+    reset_track_id: str | None = None
 
     def __post_init__(self) -> None:
         values = (
@@ -71,6 +74,13 @@ class F1RLEnvFactory:
                 "wp7_suspension_v1", "wp7_grounded_yaw_v1",
             ) or self.navigation is None or self.offtrack_config is not None:
                 raise ValueError("WP7 race requires grounded physics/navigation without C2 offtrack")
+        if self.reset_config is not None:
+            if (not isinstance(self.reset_config, TrainResetConfig) or self.race_config is None
+                    or self.physics_config.mode != "wp7_suspension_v1"):
+                raise ValueError("TRAIN reset requires WP7 grounded race and suspension config")
+            self.reset_config.validate_track(self.track, self.reset_track_id)
+        elif self.reset_track_id is not None:
+            raise ValueError("reset track identity requires TRAIN reset config")
 
     @property
     def requires_scientific_admission(self) -> bool:
@@ -78,7 +88,7 @@ class F1RLEnvFactory:
             self.physics_config is not None and self.physics_config.mode != "legacy_v1"
         )
 
-    def create(self) -> F1RLEnv:
+    def create(self, *, reset_rank: int = 0, reset_sequence: int = 0) -> F1RLEnv:
         return F1RLEnv(
             track=self.track,
             initial_state=self.initial_state,
@@ -93,6 +103,10 @@ class F1RLEnvFactory:
             ramp_support_policy=self.ramp_support_policy,
             physics_config=self.physics_config,
             race_config=self.race_config,
+            reset_config=self.reset_config,
+            reset_track_id=self.reset_track_id,
+            reset_rank=reset_rank,
+            reset_sequence=reset_sequence,
         )
 
 
@@ -106,6 +120,8 @@ class TrainingScenario:
             raise ValueError("track_id must be a non-empty string")
         if not isinstance(self.factory, F1RLEnvFactory):
             raise ValueError("factory must be F1RLEnvFactory")
+        if self.factory.reset_config is not None and self.factory.reset_track_id != self.track_id:
+            raise ValueError("scenario ID must match registered TRAIN reset identity")
 
 
 def _spaces_compatible(first: gym.Space, second: gym.Space) -> bool:
@@ -149,6 +165,7 @@ class TrainingScenarioSet:
             "ramp_support_policy",
             "physics_config",
             "race_config",
+            "reset_config",
         )
         for scenario in self.scenarios[1:]:
             if any(
