@@ -1,0 +1,261 @@
+"""Executable registration preparation, never training authorization.
+
+The instantiated candidate is grounded-only. Required flight/race/reset
+integration is explicitly incomplete; registering its gap cannot certify it.
+"""
+from dataclasses import asdict, replace
+from hashlib import sha256
+import json
+from pathlib import Path
+from datetime import datetime, timezone
+from importlib import metadata
+import os
+import platform
+import subprocess
+import sys
+
+from ..learning.provenance import _capture_git_provenance
+from ..learning.pilot_preflight import TRAIN_IDS
+from ..learning.reconstruction import RecoveryCandidate, build_training_scenarios
+from ..learning.rewards import RewardComposer, RouteProgressReward, CollisionPenalty, TimePenalty
+from ..learning.route_navigation import AuthoredRoute
+from ..learning.training.config import TrainingRunConfig
+from ..learning.training.env_factory import TrainingScenario, TrainingScenarioSet
+from ..learning.train_reset import TrainResetConfig
+from ..learning.wp7_race import WP7RaceConfig
+from ..runtime.physics import PhysicsConfig
+from ..sandbox.geometry.vector import Vec3
+from ..sandbox.independent_suspension_dynamics import IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState
+from ..sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
+from ..sandbox.ramp_support import WheelContactPoints
+from ..track_assets import load_track_manifest
+from .wp7_track_feasibility import BODY
+
+
+def digest(document):
+    return sha256(json.dumps(document, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
+
+
+def _unique(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate protocol field")
+        result[key] = value
+    return result
+
+
+def load_registration(root):
+    path = root / "configs/research/wp7-pv5-protocol-v1.json"
+    doc = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique)
+    keys = {"schema_version", "status", "simulator_version", "training_profile", "seed_roster",
+            "cohorts", "evaluation", "engineering_suspension", "required_domains", "calibration",
+            "source_policy", "approval"}
+    if not isinstance(doc, dict) or set(doc) != keys:
+        raise ValueError("protocol registration requires exact fields")
+    fixed = {
+        "schema_version": "wp7_experiment_registration_v1", "status": "draft_not_authorized",
+        "simulator_version": "f1rl-0.1.0/wp7-pv5", "training_profile": "configs/recovery/wp7-pilot-200k.yml",
+        "cohorts": ["singletrack_each_train", "multitrack_uniform_reset"],
+        "required_domains": ["grounded", "partial_support", "takeoff", "flight", "landing", "recovery"],
+        "calibration": "provisional_engineering_values_require_measured_reference_and_independent_review",
+        "source_policy": "exact_commit_clean_tree_and_actual_file_hashes_at_training_start",
+        "approval": "separate_independently_verified_owner_contract_required",
+    }
+    if any(doc[key] != value for key, value in fixed.items()):
+        raise ValueError("unregistered protocol contract")
+    seeds = doc["seed_roster"]
+    if not isinstance(seeds, list) or len(seeds) < 3:
+        raise ValueError("protocol requires at least three paired seeds")
+    for row in seeds:
+        if not isinstance(row, dict) or set(row) != {"ppo", "sampling", "perturbation"} or any(
+            type(s) is not int or not 0 <= s < 2**32 for s in row.values()
+        ):
+            raise ValueError("invalid protocol seed identity")
+    if any(len({row[key] for row in seeds}) != len(seeds) for key in seeds[0]):
+        raise ValueError("protocol seed streams must be independent across replicates")
+    evaluation = doc["evaluation"]
+    expected = {
+        "strata": ["nominal", "randomized_train"], "episodes_per_cell": 60,
+        "confidence": .95, "minimum_lower_bound": .90, "interval": "exact_one_sided_clopper_pearson",
+        "multiplicity": "per_cell_no_familywise_claim_owner_review_required", "policy_actions": "stochastic",
+        "episode_seed_protocol": "sha256(protocol,policy,track,stratum,episode)_uint32_v1",
+        "checkpoint_selection": "final_model_primary_all_checkpoints_diagnostic_no_best_selection",
+        "invalid_episode": "abort_cell_preserve_invalid_evidence_no_redraw_or_success_credit",
+    }
+    if evaluation != expected or type(evaluation["episodes_per_cell"]) is not int:
+        raise ValueError("protocol evaluation fields changed; version/review required")
+    suspension = doc["engineering_suspension"]
+    if not isinstance(suspension, dict) or set(suspension) != {
+        "mass_kg", "pitch_inertia_kg_m2", "roll_inertia_kg_m2", "spring_stiffness_npm",
+        "damper_nspm", "angular_damping_nmsprad", "max_abs_tilt_rad", "integration_substeps",
+    }:
+        raise ValueError("protocol suspension requires exact parameter fields")
+    return doc
+
+
+def prepare_scenarios(root, registration):
+    candidate = RecoveryCandidate.from_yaml(root / "configs/recovery/wp7-c2-candidate.yml")
+    baseline = build_training_scenarios(candidate)
+    entries = {e.track_id: e for e in load_track_manifest(root / "assets/tracks/manifest.json").tracks}
+    registry = tuple(entries[identity] for identity in TRAIN_IDS)
+    reset = TrainResetConfig(registration["seed_roster"][0]["perturbation"], registry)
+    wheels = WheelContactPoints(Vec3(-.75,-.5,1.5), Vec3(.75,-.5,1.5),
+                                Vec3(-.75,-.5,-1.5), Vec3(.75,-.5,-1.5))
+    contact = MultiSurfaceSuspensionPolicy(wheels, .12, .12)
+    suspension = IndependentSuspensionDynamicsPolicy(contact, **registration["engineering_suspension"],
+                                                     angular_rate_mapping="yaw_rx_rz_v1")
+    physics = PhysicsConfig("wp7_suspension_v1", BODY, suspension)
+    rewards = RewardComposer((RouteProgressReward(1.), CollisionPenalty(5.), TimePenalty(.1)))
+    scenarios = []
+    for row in baseline.scenarios:
+        factory = replace(row.factory, offtrack_config=None, physics_config=physics,
+            race_config=WP7RaceConfig(), reset_config=reset, reset_track_id=row.track_id,
+            reward_composer=rewards, initial_state=replace(row.factory.initial_state,
+                suspension=SuspensionDynamicsState(row.factory.initial_state.vehicle.position.y)))
+        scenarios.append(TrainingScenario(row.track_id, factory))
+    return TrainingScenarioSet(tuple(scenarios))
+
+
+def build_protocol(repository_root):
+    root = Path(repository_root).resolve(strict=True)
+    registration = load_registration(root)
+    scenarios = prepare_scenarios(root, registration)
+    config = TrainingRunConfig.from_yaml(root / registration["training_profile"])
+    reference = scenarios.scenarios[0].factory
+    policies = []
+    for index, seed in enumerate(registration["seed_roster"]):
+        for cohort, tracks in [("multitrack", TRAIN_IDS), *((f"singletrack-{t}", (t,)) for t in TRAIN_IDS)]:
+            policies.append({"policy_id": f"{cohort}-seed{index}", "training_ids": list(tracks),
+                             "seeds": seed, "ppo": asdict(replace(config.ppo, seed=seed["ppo"]))})
+    tracks = []
+    for row in scenarios.scenarios:
+        factory = row.factory
+        entry = next(e for e in factory.reset_config.training_registry if e.track_id == row.track_id)
+        tracks.append({"track_id": row.track_id, "world_sha256": entry.world_sha256,
+            "content_sha256": entry.content_sha256,
+            "race_sha256": factory.race_config.provenance(factory.track, AuthoredRoute(factory.navigation))["sha256"]})
+    files = sorted([*root.joinpath("f1rl").rglob("*.py"), *root.joinpath("scripts").glob("*.py"),
+        *root.joinpath("tests").rglob("*.py"),
+        root / "pyproject.toml", root / "configs/research/wp7-pv5-protocol-v1.json",
+        root / "configs/experiments/ppo-generalization-v1.yml", root / registration["training_profile"],
+        root / "configs/recovery/wp7-c2-candidate.yml", root / "configs/recovery/wp7-owner-decisions-preregistered-v1.yml",
+        root / "assets/tracks/manifest.json",
+        *(root / f"assets/tracks/training/{t}.json" for t in TRAIN_IDS)])
+    source = {p.relative_to(root).as_posix(): sha256(p.read_bytes()).hexdigest() for p in files}
+    document = {
+        "schema_version": "wp7_bound_protocol_v1", "registration": registration,
+        "source": asdict(_capture_git_provenance(root)), "source_files": source,
+        "physics": reference.physics_config.document(), "physics_sha256": reference.physics_config.sha256,
+        "tracks": tracks,
+        "resets": [{"seeds": row, "sha256": replace(reference.reset_config, seed=row["perturbation"]).sha256}
+                   for row in registration["seed_roster"]],
+        "vehicle": asdict(reference.vehicle_parameters), "simulation": asdict(reference.simulation_config),
+        "observation": {"features": list(reference.observation_encoder.feature_names),
+                        "configuration": asdict(reference.observation_encoder.config)},
+        "action": {"version": "steering-throttle-brake0-v1", "low": [-1.,0.], "high": [1.,1.]},
+        "rewards": [{"name": r.name, "configuration": asdict(r)} for r in reference.reward_composer.terms],
+        "episode": asdict(reference.episode_config), "policies": policies,
+        "vector_environment": asdict(config.vector_env), "requested_device": config.ppo.device,
+        "training_steps": config.total_timesteps, "checkpoint_every_steps": config.checkpoint_every_steps,
+        "required_cells": len(policies)*len(TRAIN_IDS)*2,
+        "minimum_evaluation_episodes": len(policies)*len(TRAIN_IDS)*2*60,
+        "evaluator": "f1rl.learning.evaluation.evaluator:evaluate_episode/stochastic",
+        "split_identity": "four_train_only_no_heldout_rollout",
+        "registration_blockers": ["flight_race_reset_integration_missing", "owner_failure_policy_missing",
+                                  "cohort_and_multiplicity_review_required", "engineering_parameters_uncalibrated"],
+        "training_authorized": False,
+    }
+    document = json.loads(json.dumps(document, allow_nan=False))
+    return {**document, "sha256": digest(document)}
+
+
+def validate_protocol(document, repository_root):
+    if not isinstance(document, dict) or digest(document) != digest(build_protocol(repository_root)):
+        raise ValueError("protocol is missing, inconsistent or stale against actual source/configuration")
+
+
+def evaluation_seed(protocol, policy_id, track_id, stratum, episode):
+    if (policy_id not in {p["policy_id"] for p in protocol["policies"]} or track_id not in TRAIN_IDS
+            or stratum not in ("nominal", "randomized_train") or type(episode) is not int or episode < 0):
+        raise ValueError("unregistered evaluation cell")
+    return int(digest([protocol["sha256"], policy_id, track_id, stratum, episode])[:8], 16)
+
+
+def prepare_evaluation_factory(repository_root, protocol, policy_id, track_id, stratum, episode):
+    """Construct a registered cell without resetting, evaluating or admitting it."""
+    validate_protocol(protocol, repository_root)
+    seed = evaluation_seed(protocol, policy_id, track_id, stratum, episode)
+    scenarios = prepare_scenarios(Path(repository_root).resolve(strict=True), protocol["registration"])
+    factory = next(row.factory for row in scenarios.scenarios if row.track_id == track_id)
+    if stratum == "nominal":
+        factory = replace(factory, reset_config=None, reset_track_id=None)
+    else:
+        factory = replace(factory, reset_config=replace(factory.reset_config, seed=seed))
+    return factory, {"policy_id": policy_id, "track_id": track_id, "stratum": stratum,
+                     "episode": episode, "environment_seed": seed, "policy_rng_seed": seed,
+                     "deterministic_prediction": False, "training_authorized": False}
+
+
+def _runtime():
+    packages = {name: metadata.version(name) for name in
+                ("numpy", "gymnasium", "stable-baselines3", "torch", "PyYAML")}
+    probe = Path(__file__).resolve().parents[2] / "scripts/wp7_capture_gpu.py"
+    result = subprocess.run([sys.executable, "-B", str(probe)], capture_output=True, text=True, check=True, timeout=30)
+    gpu = json.loads(result.stdout)
+    return {"python_version": platform.python_version(), "implementation": platform.python_implementation(),
+            "os": platform.system(), "os_release": platform.release(), "packages": packages,
+            "cpu": {"architecture": platform.machine(), "model": platform.processor() or os.environ.get("PROCESSOR_IDENTIFIER", "unavailable"),
+                    "logical_processors": os.cpu_count()},
+            **gpu}
+
+
+def _artifacts(artifacts):
+    if not isinstance(artifacts, dict) or any(not isinstance(k, str) or not k.strip() for k in artifacts):
+        raise ValueError("manifest artifact identities required")
+    result = {}
+    for identity, source in artifacts.items():
+        path = Path(source)
+        if path.suffix.lower() != ".zip" or path.is_symlink() or not path.is_file():
+            raise ValueError("manifest requires explicit existing model/checkpoint ZIP files")
+        result[identity] = {"sha256": sha256(path.read_bytes()).hexdigest(), "size_bytes": path.stat().st_size}
+    return result
+
+
+def capture_runtime_manifest(repository_root, protocol, *, artifacts=None):
+    """Capture now, before any future run; this function never starts PPO.
+
+    Admission must require clean source separately. Inspection captures may
+    deliberately report dirty source, and can never serve as past run evidence.
+    """
+    validate_protocol(protocol, repository_root)
+    document = {"schema_version": "wp7_runtime_manifest_v1",
+        "scope": "current_capture_not_historical_provenance",
+        "captured_at_utc": datetime.now(timezone.utc).isoformat(),
+        "protocol_sha256": protocol["sha256"], "source": protocol["source"],
+        "source_files": protocol["source_files"], "runtime": _runtime(),
+        "requested_device": protocol["requested_device"], "policies": protocol["policies"],
+        "physics_sha256": protocol["physics_sha256"], "tracks": protocol["tracks"],
+        "resets": protocol["resets"], "split_identity": protocol["split_identity"],
+        "evaluator": protocol["evaluator"], "artifacts": _artifacts({} if artifacts is None else artifacts),
+        "training_executed": False}
+    return {**document, "sha256": digest(document)}
+
+
+def validate_runtime_manifest(manifest, protocol, repository_root, *, artifacts=None):
+    """Validate a current capture against actual files/runtime, not historical claims."""
+    validate_protocol(protocol, repository_root)
+    if not isinstance(manifest, dict):
+        raise ValueError("manifest must be a mapping")
+    expected = capture_runtime_manifest(repository_root, protocol, artifacts=artifacts)
+    actual = {k: v for k, v in manifest.items() if k not in ("captured_at_utc", "sha256")}
+    reference = {k: v for k, v in expected.items() if k not in ("captured_at_utc", "sha256")}
+    stamp = manifest.get("captured_at_utc")
+    try:
+        captured = datetime.fromisoformat(stamp)
+        if captured.tzinfo is None or captured.utcoffset().total_seconds() != 0:
+            raise ValueError("UTC capture time required")
+    except (ValueError, TypeError) as exc:
+        raise ValueError("manifest capture time invalid") from exc
+    if digest(actual) != digest(reference) or manifest.get("sha256") != digest({k:v for k,v in manifest.items() if k != "sha256"}):
+        raise ValueError("manifest fields, runtime or artifact bytes inconsistent")

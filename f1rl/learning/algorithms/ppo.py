@@ -165,7 +165,8 @@ def _validate_training_admission(env: object) -> None:
     else:
         raise ValueError("unregistered training environment")
     if blocked:
-        raise ValueError("research physics training is blocked until scientific admission is reviewed")
+        from ...research.wp7_admission import reject_research_training
+        reject_research_training("research physics training is blocked until scientific admission is reviewed")
 
 
 class PPO(_SB3PPO):

@@ -242,7 +242,8 @@ class TrainingRunner:
         if not isinstance(factory, F1RLEnvFactory):
             raise ValueError("factory must be F1RLEnvFactory")
         if factory.requires_scientific_admission:
-            raise ValueError(
+            from ...research.wp7_admission import reject_research_training
+            reject_research_training(
                 "full-body candidate training is blocked until versioned "
                 "provenance, route-corridor and independent-seed protocol approval"
             )
@@ -256,7 +257,8 @@ class TrainingRunner:
         if not isinstance(scenarios, TrainingScenarioSet):
             raise ValueError("scenarios must be TrainingScenarioSet")
         if any(scenario.factory.requires_scientific_admission for scenario in scenarios.scenarios):
-            raise ValueError(
+            from ...research.wp7_admission import reject_research_training
+            reject_research_training(
                 "full-body candidate training is blocked until versioned "
                 "provenance, route-corridor and independent-seed protocol approval"
             )
