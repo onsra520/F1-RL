@@ -11,7 +11,7 @@ import numpy as np
 import yaml
 
 try:
-    from stable_baselines3 import PPO
+    from stable_baselines3 import PPO as _SB3PPO
     from stable_baselines3.common.callbacks import BaseCallback
     from stable_baselines3.common.vec_env import VecEnv
 except ImportError as error:
@@ -166,6 +166,23 @@ def _validate_training_admission(env: object) -> None:
         raise ValueError("unregistered training environment")
     if blocked:
         raise ValueError("research physics training is blocked until scientific admission is reviewed")
+
+
+class PPO(_SB3PPO):
+    """Project backend: prediction-only loading never grants learning admission."""
+
+    def __init__(self, policy, env, **kwargs):
+        # SB3 load reconstructs with setup disabled, including inference envs.
+        if env is not None and kwargs.get("_init_setup_model", True):
+            _validate_training_admission(env)
+        super().__init__(policy, env, **kwargs)
+
+    def learn(self, *args, **kwargs):
+        env = self.get_env()
+        if env is None:
+            raise RuntimeError("an environment is required to continue learning")
+        _validate_training_admission(env)
+        return super().learn(*args, **kwargs)
 
 
 class PPOModel:
