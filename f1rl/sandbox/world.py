@@ -5,6 +5,9 @@ from typing import TypeAlias
 
 from .body_collision import VehicleBodyGeometry, sweep_body_against_obstacle
 from .geometry.vector import Vec3
+from .grounded_yaw_dynamics import (
+    GroundedYawPolicy,GroundedYawAudit,advance_grounded_yaw,
+)
 from .dynamics.integrator import integrate
 from .dynamics.modifiers import MotionModifiers
 from .dynamics.vehicle_dynamics import compute_motion
@@ -58,6 +61,7 @@ class WorldStepResult:
     suspension_telemetry: SuspensionDynamicsResult | None = None
     flight_telemetry: FlightStep | None = None
     partial_support_telemetry: GroundSupportStep | None = None
+    grounded_yaw_telemetry: GroundedYawAudit | None = None
 
 
 def step_world(
@@ -74,6 +78,7 @@ def step_world(
     independent_suspension_policy: IndependentSuspensionDynamicsPolicy | None = None,
     ballistic_flight_policy: BallisticFlightPolicy | None = None,
     automatic_takeoff_policy: AutomaticTakeoffPolicy | None = None,
+    grounded_yaw_policy: GroundedYawPolicy | None = None,
 ) -> WorldStepResult:
     if ramp_support_policy is not None and (body_geometry is None or not isinstance(ramp_support_policy, PlanarRampPolicy)):
         raise ValueError('ramp_support_policy requires full-body geometry and PlanarRampPolicy')
@@ -89,6 +94,21 @@ def step_world(
             raise ValueError("independent_suspension_policy requires explicit geometry and persistent suspension state")
         if multi_surface_policy is not None or ramp_support_policy is not None:
             raise ValueError("independent suspension and other road policies are mutually exclusive")
+    if grounded_yaw_policy is not None:
+        if (not isinstance(grounded_yaw_policy,GroundedYawPolicy)
+                or independent_suspension_policy is None
+                or automatic_takeoff_policy is not None):
+            raise ValueError("grounded_yaw_policy requires independent suspension and no automatic takeoff")
+        if abs(grounded_yaw_policy.mass_kg-independent_suspension_policy.mass_kg)>1e-8:
+            raise ValueError("grounded yaw and suspension mass must match")
+        if (abs(grounded_yaw_policy.front_axle_distance_m
+                +grounded_yaw_policy.rear_axle_distance_m-parameters.wheelbase)>1e-8):
+            raise ValueError("grounded yaw axle geometry must match vehicle wheelbase")
+        if (ballistic_flight_policy is not None
+                and ballistic_flight_policy.manifold is not None
+                and abs(grounded_yaw_policy.yaw_inertia_kg_m2
+                        -ballistic_flight_policy.manifold.yaw_inertia_kg_m2)>1e-8):
+            raise ValueError("grounded yaw inertia must match registered flight manifold")
     if ballistic_flight_policy is not None:
         if (not isinstance(ballistic_flight_policy, BallisticFlightPolicy)
                 or not isinstance(body_geometry, VehicleBodyGeometry)
@@ -120,6 +140,7 @@ def step_world(
     flight_events: tuple[FlightTransition, ...] = ()
     suspension_telemetry: SuspensionDynamicsResult | None = None
     suspension_override: SuspensionDynamicsState | None = None
+    grounded_yaw_telemetry: GroundedYawAudit | None = None
     flight_active = (ballistic_flight_policy is not None
                      and state.flight.phase in ("takeoff", "airborne"))
     if flight_active:
@@ -172,6 +193,12 @@ def step_world(
         modifiers = resolve_motion_modifiers(current_query)
         motion = compute_motion(state.vehicle, control, parameters, current_query.contact, modifiers)
         candidate = integrate(state.vehicle, motion, parameters, current_query.contact, dt)
+        if grounded_yaw_policy is not None:
+            candidate,grounded_yaw_telemetry=advance_grounded_yaw(
+                state.vehicle,candidate,
+                control.steering*parameters.max_steering_angle,
+                grounded_yaw_policy,dt=dt,gravity_mps2=parameters.gravity,
+            )
         swept_poses = (state.vehicle, candidate)
         if automatic_takeoff_policy is not None:
             partial_support_telemetry = integrate_partial_support(
@@ -335,4 +362,5 @@ def step_world(
         suspension_telemetry if not obstacle_events else None,
         flight_telemetry,
         partial_support_telemetry,
+        grounded_yaw_telemetry,
     )
