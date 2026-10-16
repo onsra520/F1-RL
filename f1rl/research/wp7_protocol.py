@@ -230,6 +230,14 @@ def prepare_training_scenarios(repository_root, protocol, policy_id):
     }
 
 
+def policy_stochastic_seed(protocol, policy_id, track_id, stratum, episode):
+    """Independent policy-action seed; distinct domain from Gym reset stream."""
+    evaluation_seed(protocol, policy_id, track_id, stratum, episode)
+    return int(digest([
+        protocol["sha256"], "policy_action_rng_v1", policy_id, track_id, stratum, episode,
+    ])[:8], 16)
+
+
 def prepare_evaluation_factory(repository_root, protocol, policy_id, track_id, stratum, episode):
     """Construct a registered cell without resetting, evaluating or admitting it."""
     validate_protocol(protocol, repository_root)
@@ -245,7 +253,8 @@ def prepare_evaluation_factory(repository_root, protocol, policy_id, track_id, s
         factory = replace(factory, reset_config=replace(factory.reset_config, seed=seed))
     return factory, {"policy_id": policy_id, "track_id": track_id, "stratum": stratum,
                      "paired_seed_index": seed_index, "training_seed_bundle": dict(policy["seeds"]),
-                     "episode": episode, "environment_seed": seed, "policy_rng_seed": seed,
+                     "episode": episode, "environment_seed": seed,
+                     "policy_rng_seed": policy_stochastic_seed(protocol, policy_id, track_id, stratum, episode),
                      "deterministic_prediction": False, "training_authorized": False}
 
 

@@ -189,6 +189,8 @@ def evaluate_episode(
     track_id: str,
     factory: F1RLEnvFactory,
     policy: EvaluationPolicy,
+    reset_seed: int | None = None,
+    deterministic: bool = True,
 ) -> EpisodeMetrics:
     if not isinstance(track_id, str) or not track_id.strip():
         raise ValueError("track_id must be a non-empty string")
@@ -199,12 +201,17 @@ def evaluate_episode(
     ):
         raise ValueError("policy must satisfy EvaluationPolicy")
 
+    if reset_seed is not None and (type(reset_seed) is not int or not 0 <= reset_seed < 2**32):
+        raise ValueError("reset_seed must be uint32 or None")
+    if type(deterministic) is not bool:
+        raise ValueError("deterministic must be bool")
+
     fixed_dt = float(factory.simulation_config.fixed_dt)
     route = RaceRoute.from_track(factory.track)
     authored_route = AuthoredRoute(factory.navigation) if factory.navigation is not None else None
     env = factory.create()
     try:
-        observation, reset_info = env.reset()
+        observation, reset_info = env.reset() if reset_seed is None else env.reset(seed=reset_seed)
         previous_position = _reset_position(reset_info)
 
         executed_steps = 0
@@ -227,7 +234,7 @@ def evaluate_episode(
         route_highwater = 0.0
 
         while True:
-            action = policy.predict(observation, deterministic=True)
+            action = policy.predict(observation, deterministic=deterministic)
             observation, reward, terminated, truncated, info = env.step(action)
             executed_steps += 1
 
