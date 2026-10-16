@@ -102,7 +102,7 @@
           "priority": "P0",
           "source": "f1rl/research/wp7_track_feasibility.py",
           "test": "tests/research/test_pv5_track_feasibility.py",
-          "blocker": "requires additional verified engineering or independent approval"
+          "blocker": "Straight/slalom alternative planar geometry certificates exist; right-turn candidate search and ramp support remain unresolved; executed speed/contact evidence still required."
         },
         {
           "id": "speed_trajectory_certified",
@@ -111,7 +111,7 @@
           "priority": "P0",
           "source": "f1rl/research/wp7_track_feasibility.py",
           "test": "tests/research/test_pv5_track_feasibility.py",
-          "blocker": "requires additional verified engineering or independent approval"
+          "blocker": "Continuous geometry and steering curvature do not certify the boost/braking speed schedule or executed contact/trajectory tracking."
         }
       ],
       "compatibility": {
