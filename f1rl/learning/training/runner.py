@@ -238,6 +238,20 @@ class TrainingRunner:
         self._checkpoint_observer = checkpoint_observer
         self._final_model_observer = final_model_observer
 
+    def run_registered(self, binding: object) -> TrainingRunResult:
+        """Validate a policy-bound WP7 execution before any model/artifact creation.
+
+        This does not waive the independent research admission guard.
+        """
+        from ...research.wp7_execution import PolicyBoundTrainingConfig
+
+        if not isinstance(binding, PolicyBoundTrainingConfig):
+            raise ValueError("registered execution requires PolicyBoundTrainingConfig")
+        binding.validate(self._config, binding.scenarios)
+        if len(binding.scenarios.scenarios) == 1:
+            return self.run_single(binding.scenarios.scenarios[0].factory)
+        return self.run_multi(binding.scenarios)
+
     def run_single(self, factory: F1RLEnvFactory) -> TrainingRunResult:
         if not isinstance(factory, F1RLEnvFactory):
             raise ValueError("factory must be F1RLEnvFactory")
