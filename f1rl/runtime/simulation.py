@@ -5,6 +5,7 @@ from math import isfinite
 
 from .physics import PhysicsConfig, PhysicsTransitionAudit
 from ..sandbox.ballistic_flight import FlightStep
+from ..sandbox.center_trajectory import CenterSegment
 from ..sandbox.grounded_yaw_dynamics import GroundedYawAudit
 from ..sandbox.independent_suspension_dynamics import SuspensionDynamicsResult
 from ..sandbox.partial_wheel_release import GroundSupportStep
@@ -62,6 +63,7 @@ class SimulationSnapshot:
     partial_support_telemetry: GroundSupportStep | None = None
     grounded_yaw_telemetry: GroundedYawAudit | None = None
     physics_transition: PhysicsTransitionAudit | None = None
+    center_segments: tuple[CenterSegment, ...] = ()
 
 
 class Simulation:
@@ -150,6 +152,7 @@ class Simulation:
             result.partial_support_telemetry,
             result.grounded_yaw_telemetry,
             transition,
+            result.center_segments,
         )
         self._state = next_state
         self._snapshot = next_snapshot

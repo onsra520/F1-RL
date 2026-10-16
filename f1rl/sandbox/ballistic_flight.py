@@ -8,6 +8,8 @@ reject the reported remainder rather than silently changing simulation time.
 """
 from __future__ import annotations
 
+from .center_trajectory import CenterSegment
+
 from dataclasses import dataclass
 from math import acos, atan2, cos, hypot, isfinite, sqrt
 
@@ -139,6 +141,7 @@ class FlightStep:
     manifold_audit: ManifoldImpulseAudit | None = None
     manifold_history: tuple[ManifoldImpulseAudit, ...] = ()
     angular_audit: AngularRigidBodyAudit | None = None
+    center_segments: tuple[CenterSegment, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.poses or self.vehicle != self.poses[-1]:

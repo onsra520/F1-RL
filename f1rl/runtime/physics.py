@@ -11,6 +11,7 @@ import json
 from math import isclose, atan2
 
 from ..sandbox.ballistic_flight import BallisticFlightPolicy, FlightState, FlightTransition
+from ..sandbox.center_trajectory import CenterSegment
 from ..sandbox.body_collision import VehicleBodyGeometry
 from ..sandbox.grounded_yaw_dynamics import GroundedYawPolicy
 from ..sandbox.independent_suspension_dynamics import (
@@ -171,6 +172,16 @@ class PhysicsConfig:
             raise PhysicsTransitionError("WP7 collision recovery is unregistered; step rejected")
         events = tuple(e for e in result.events if isinstance(e, FlightTransition))
         if self.mode == "wp7_lifecycle_v1":
+            segments = result.center_segments
+            if (not isinstance(segments,tuple) or not segments
+                    or not all(isinstance(s,CenterSegment) for s in segments)
+                    or abs(segments[0].start_time_s) > 1e-9
+                    or abs(segments[-1].end_time_s-dt) > 1e-8
+                    or (segments[0].start-previous.vehicle.position).magnitude > 1e-7
+                    or (segments[-1].end-result.state.vehicle.position).magnitude > 1e-7
+                    or any(abs(a.end_time_s-b.start_time_s) > 1e-9
+                           or (a.end-b.start).magnitude > 1e-7 for a,b in zip(segments,segments[1:]))):
+                raise PhysicsTransitionError("lifecycle center trajectory is incomplete or discontinuous")
             yaw_rate = 0.
             if previous.vehicle.grounded and result.state.vehicle.grounded and not events:
                 first = _horizontal_yaw(previous.vehicle.orientation).rotate(Vec3(0.,0.,1.))

@@ -138,11 +138,11 @@
         {
           "id": "airborne_gate_contract",
           "weight": 30,
-          "status": "blocked",
+          "status": "implemented",
           "priority": "P0",
           "source": "f1rl/learning/wp7_race.py",
-          "test": "tests/integration/test_pv5_outcomes.py",
-          "blocker": "requires additional verified engineering or independent approval"
+          "test": "tests/integration/test_wp7_lifecycle_race.py",
+          "blocker": null
         },
         {
           "id": "hard_route_failure_approved",
@@ -151,7 +151,7 @@
           "priority": "P0",
           "source": "f1rl/learning/wp7_race.py",
           "test": "tests/integration/test_pv5_outcomes.py",
-          "blocker": "requires additional verified engineering or independent approval"
+          "blocker": "Owner hard_route_violation_semantics is null; only reject_invalid_rollout is registered. No approved terminal-failure/reward rule is inferred."
         }
       ],
       "compatibility": {
@@ -187,11 +187,11 @@
         {
           "id": "lifecycle_race_reset",
           "weight": 25,
-          "status": "blocked",
+          "status": "implemented",
           "priority": "P0",
           "source": "f1rl/learning/gym_environment.py",
-          "test": "tests/integration/test_pv5_lifecycle.py",
-          "blocker": "requires additional verified engineering or independent approval"
+          "test": "tests/integration/test_wp7_lifecycle_race.py",
+          "blocker": null
         }
       ],
       "compatibility": {

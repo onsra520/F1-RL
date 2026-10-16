@@ -148,9 +148,8 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         if race_config is not None:
             if not isinstance(race_config, WP7RaceConfig):
                 raise ValueError("race_config must be WP7RaceConfig or None")
-            if (physics_config is None or physics_config.mode not in (
-                "wp7_suspension_v1", "wp7_grounded_yaw_v1",
-            ) or self._authored_route is None):
+            if (physics_config is None or not race_config.supports_physics_mode(physics_config.mode)
+                    or self._authored_route is None):
                 raise ValueError("WP7 race requires registered grounded physics and authored navigation")
             if offtrack_config is not None:
                 raise ValueError("WP7 race cannot mix historical C2 offtrack semantics")
@@ -158,7 +157,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         if reset_config is not None:
             if not isinstance(reset_config, TrainResetConfig) or race_config is None:
                 raise ValueError("TRAIN reset requires explicit config and WP7 race contract")
-            if physics_config.mode != "wp7_suspension_v1":
+            if not reset_config.supports_physics_mode(physics_config.mode):
                 raise ValueError("TRAIN reset requires grounded suspension mode")
             reset_config.validate_track(track, reset_track_id)
         elif reset_track_id is not None:
@@ -372,6 +371,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             if self._race_config is not None:
                 race_step = advance_directed_race(
                     self._track, self._route, self._authored_route, progress_before, snapshot_after,
+                    self._race_config,
                 )
                 progress_result = race_step.progress
             else:
@@ -437,6 +437,9 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                     "max_sampled_deviation_m": race_step.max_sampled_deviation_m,
                     "soft_zone_encountered": race_step.soft_zone_encountered,
                 })
+                if self._race_config.version == "wp7_directed_lifecycle_research_v1":
+                    info["race"]["tick_local_crossing_times_s"] = race_step.crossing_times_s
+                    info["race"]["crossing_time_origin_s"] = snapshot_after.physics_transition.start_time_s
             if self._authored_route is not None:
                 info["route_highwater_meters"] = next_highwater
             if self._offtrack_config is not None:

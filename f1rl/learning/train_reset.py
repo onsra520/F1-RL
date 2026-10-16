@@ -39,7 +39,7 @@ class TrainResetConfig:
     def __post_init__(self) -> None:
         if type(self.seed) is not int or not 0 <= self.seed <= 2**32-1:
             raise ValueError("TRAIN perturbation seed must be a uint32")
-        if self.version != "wp7_train_reset_research_v1":
+        if self.version not in ("wp7_train_reset_research_v1","wp7_train_reset_lifecycle_research_v1"):
             raise ValueError("unregistered TRAIN reset protocol")
         if type(self.max_attempts) is not int or not 1 <= self.max_attempts <= 128:
             raise ValueError("feasible-spawn attempts must be within [1,128]")
@@ -60,6 +60,11 @@ class TrainResetConfig:
         if entry is None or fingerprint_track_world(track) != entry.world_sha256:
             raise ValueError("TRAIN reset track identity is absent or mismatched")
 
+    def supports_physics_mode(self, mode: str) -> bool:
+        expected = ("wp7_lifecycle_v1" if self.version == "wp7_train_reset_lifecycle_research_v1"
+                    else "wp7_suspension_v1")
+        return mode == expected
+
     @property
     def sha256(self) -> str:
         return sha256(json.dumps(asdict(self), sort_keys=True, separators=(",", ":"),
@@ -73,8 +78,10 @@ def sample_train_spawn(
     config.validate_track(track, track_id)
     if any(type(i) is not int or i < 0 for i in (rank, reset_index)):
         raise ValueError("rank/reset index must be nonnegative integers")
-    if physics.mode != "wp7_suspension_v1" or not initial.vehicle.grounded:
+    if not config.supports_physics_mode(physics.mode) or not initial.vehicle.grounded:
         raise ValueError("TRAIN reset v1 requires grounded independent suspension mode")
+    if physics.mode == "wp7_lifecycle_v1" and (initial.flight is None or initial.flight.phase != "grounded"):
+        raise ValueError("lifecycle reset requires registered grounded flight phase")
     vehicle = initial.vehicle
     suspension = initial.suspension
     if (vehicle.velocity.magnitude > 1e-9 or vehicle.angular_velocity.magnitude > 1e-9

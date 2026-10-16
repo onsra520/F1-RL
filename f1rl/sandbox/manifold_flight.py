@@ -7,6 +7,9 @@ accepted; uncertain subsequent wheel/road contact fails closed.
 from __future__ import annotations
 
 from math import acos, cos, sin
+from dataclasses import replace
+
+from .center_trajectory import CenterSegment
 
 from .angular_landing_impulse import AngularLandingImpulsePolicy, ImpulseResolutionError
 from .contact_manifold import (
@@ -75,7 +78,9 @@ def advance_manifold_flight(
         flight_policy.collision_segments,
     )
     if first is None:
-        return FlightStep(poses[-1],FlightState("airborne"),poses,(),0.)
+        return FlightStep(poses[-1],FlightState("airborne"),poses,(),0.,
+                          center_segments=(CenterSegment(0.,dt,airborne.position,poses[-1].position,
+                                                         airborne.velocity,gravity),))
     incoming=sampler(impact_time)
     impact_road=next(p for p in patches if p.id==first.patch_id)
     contacts=[]
@@ -126,6 +131,8 @@ def advance_manifold_flight(
     rest=dt-impact_time
     if impact_time<=flight_policy.touchdown_time_epsilon_s:
         raise FlightPhysicsError("impact sequence has insufficient event-time progress")
+    incoming_path = (CenterSegment(0.,impact_time,airborne.position,incoming.position,
+                                   airborne.velocity,gravity),)
     # A multi-contact rebound remains airborne. Require strict monotonic
     # separation for every wheel across the entire remaining tick.
     if policy.restitution>0.:
@@ -149,6 +156,8 @@ def advance_manifold_flight(
                 following.touchdown_speed_mps,following.landing_suspension,
                 following.impulse_audit,following.manifold_audit,
                 (audit,*following.manifold_history),
+                center_segments=(*incoming_path,*(replace(s,start_time_s=s.start_time_s+impact_time,
+                    end_time_s=s.end_time_s+impact_time) for s in following.center_segments)),
             )
         if len(patches)>1 and not policy.coplanar_flat_contacts:
             raise FlightPhysicsError("rebound with mixed road patches not certified")
@@ -186,6 +195,8 @@ def advance_manifold_flight(
             final,FlightState("airborne"),full_poses,
             (FlightTransition("rebound",impact_time,impact_road.id),),
             0.,max(closing_speeds),None,None,audit,(audit,),
+            center_segments=(*incoming_path,*((CenterSegment(impact_time,dt,post.position,final.position,
+                post.velocity,gravity),) if rest > 0. else ())),
         )
     # A single event cannot convert to grounded if another wheel was not
     # actually supported or if yaw velocity cannot be represented by the
@@ -218,4 +229,5 @@ def advance_manifold_flight(
         grounded,FlightState("grounded"),(*poses[:-1],grounded),
         (FlightTransition("landing",impact_time,impact_road.id),),
         max(0.,rest),max(closing_speeds),suspension,None,audit,(audit,),
+        center_segments=incoming_path,
     )

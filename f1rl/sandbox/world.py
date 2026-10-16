@@ -4,6 +4,7 @@ from dataclasses import dataclass, replace
 from typing import TypeAlias
 
 from .body_collision import VehicleBodyGeometry, sweep_body_against_obstacle
+from .center_trajectory import CenterSegment, linear_center_segments
 from .geometry.vector import Vec3
 from .grounded_yaw_dynamics import (
     GroundedYawPolicy,GroundedYawAudit,advance_grounded_yaw,
@@ -62,6 +63,7 @@ class WorldStepResult:
     flight_telemetry: FlightStep | None = None
     partial_support_telemetry: GroundSupportStep | None = None
     grounded_yaw_telemetry: GroundedYawAudit | None = None
+    center_segments: tuple[CenterSegment, ...] = ()
 
 
 def step_world(
@@ -138,6 +140,7 @@ def step_world(
     partial_support_telemetry: GroundSupportStep | None = None
     auto_released = False
     flight_events: tuple[FlightTransition, ...] = ()
+    center_segments: tuple[CenterSegment, ...] = ()
     suspension_telemetry: SuspensionDynamicsResult | None = None
     suspension_override: SuspensionDynamicsState | None = None
     grounded_yaw_telemetry: GroundedYawAudit | None = None
@@ -160,6 +163,7 @@ def step_world(
             landing_dynamics=independent_suspension_policy,
         )
         candidate = flight_telemetry.vehicle
+        center_segments = flight_telemetry.center_segments
         flight_events += flight_telemetry.transitions
         swept_poses = (
             (state.vehicle, *flight_telemetry.poses[1:])
@@ -188,6 +192,7 @@ def step_world(
                     dt=remainder, gravity_mps2=parameters.gravity,
                 )
                 candidate = suspension_telemetry.vehicle
+                center_segments += linear_center_segments(suspension_telemetry.poses,dt-remainder,dt)
                 swept_poses = (*swept_poses, *suspension_telemetry.poses[1:])
     else:
         modifiers = resolve_motion_modifiers(current_query)
@@ -207,6 +212,11 @@ def step_world(
                 automatic_takeoff_policy, dt=dt, gravity_mps2=parameters.gravity,
             )
             candidate = partial_support_telemetry.vehicle
+            partial_times = tuple(f.time_s for f in partial_support_telemetry.frames) + (
+                partial_support_telemetry.takeoff_at_s if partial_support_telemetry.takeoff_at_s is not None else dt,)
+            center_segments = tuple(CenterSegment(a,b,p.position,q.position)
+                for a,b,p,q in zip(partial_times,partial_times[1:],partial_support_telemetry.poses,
+                                   partial_support_telemetry.poses[1:]))
             swept_poses = partial_support_telemetry.poses
             if partial_support_telemetry.takeoff_at_s is not None:
                 auto_released = True
@@ -226,6 +236,8 @@ def step_world(
                             "same-tick automatic recontact lacks a registered impulse solver"
                         )
                     candidate = flight_telemetry.vehicle
+                    center_segments += tuple(replace(s,start_time_s=s.start_time_s+departure,
+                        end_time_s=s.end_time_s+departure) for s in flight_telemetry.center_segments)
                     flight_events += tuple(
                         FlightTransition(event.kind, departure + event.time_s, event.patch_id)
                         for event in flight_telemetry.transitions
@@ -239,6 +251,7 @@ def step_world(
                 dt=dt, gravity_mps2=parameters.gravity,
             )
             candidate = suspension_telemetry.vehicle
+            center_segments = linear_center_segments(suspension_telemetry.poses,0.,dt)
             swept_poses = suspension_telemetry.poses
     candidate_query = track.query_point(candidate.position, max_surface_distance, state.track)
     if body_geometry is not None:
@@ -367,4 +380,5 @@ def step_world(
         flight_telemetry,
         partial_support_telemetry,
         grounded_yaw_telemetry,
+        center_segments if not obstacle_events else (),
     )

@@ -70,13 +70,12 @@ class F1RLEnvFactory:
         if self.race_config is not None:
             if not isinstance(self.race_config, WP7RaceConfig):
                 raise ValueError("race_config must be WP7RaceConfig or None")
-            if self.physics_config is None or self.physics_config.mode not in (
-                "wp7_suspension_v1", "wp7_grounded_yaw_v1",
-            ) or self.navigation is None or self.offtrack_config is not None:
+            if (self.physics_config is None or not self.race_config.supports_physics_mode(self.physics_config.mode)
+                    or self.navigation is None or self.offtrack_config is not None):
                 raise ValueError("WP7 race requires grounded physics/navigation without C2 offtrack")
         if self.reset_config is not None:
             if (not isinstance(self.reset_config, TrainResetConfig) or self.race_config is None
-                    or self.physics_config.mode != "wp7_suspension_v1"):
+                    or not self.reset_config.supports_physics_mode(self.physics_config.mode)):
                 raise ValueError("TRAIN reset requires WP7 grounded race and suspension config")
             self.reset_config.validate_track(self.track, self.reset_track_id)
         elif self.reset_track_id is not None:
