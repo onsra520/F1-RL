@@ -94,12 +94,19 @@ def load_registration(root):
     return doc
 
 
-def prepare_scenarios(root, registration):
+def prepare_scenarios(root, registration, *, seed_index: int):
+    """Build registered TRAIN scenarios for exactly one paired seed replicate.
+
+    This is preparation only. A correct seed binding does not grant PPO admission.
+    """
+    seeds = registration["seed_roster"]
+    if type(seed_index) is not int or not 0 <= seed_index < len(seeds):
+        raise ValueError("explicit registered seed_index required for TRAIN scenarios")
     candidate = RecoveryCandidate.from_yaml(root / "configs/recovery/wp7-c2-candidate.yml")
     baseline = build_training_scenarios(candidate)
     entries = {e.track_id: e for e in load_track_manifest(root / "assets/tracks/manifest.json").tracks}
     registry = tuple(entries[identity] for identity in TRAIN_IDS)
-    reset = TrainResetConfig(registration["seed_roster"][0]["perturbation"], registry)
+    reset = TrainResetConfig(seeds[seed_index]["perturbation"], registry)
     wheels = WheelContactPoints(Vec3(-.75,-.5,1.5), Vec3(.75,-.5,1.5),
                                 Vec3(-.75,-.5,-1.5), Vec3(.75,-.5,-1.5))
     contact = MultiSurfaceSuspensionPolicy(wheels, .12, .12)
@@ -120,7 +127,7 @@ def prepare_scenarios(root, registration):
 def build_protocol(repository_root):
     root = Path(repository_root).resolve(strict=True)
     registration = load_registration(root)
-    scenarios = prepare_scenarios(root, registration)
+    scenarios = prepare_scenarios(root, registration, seed_index=0)
     config = TrainingRunConfig.from_yaml(root / registration["training_profile"])
     reference = scenarios.scenarios[0].factory
     policies = []
@@ -182,17 +189,62 @@ def evaluation_seed(protocol, policy_id, track_id, stratum, episode):
     return int(digest([protocol["sha256"], policy_id, track_id, stratum, episode])[:8], 16)
 
 
+def _scenarios_for_policy(root, protocol, policy_id):
+    policy = next((p for p in protocol["policies"] if p["policy_id"] == policy_id), None)
+    if policy is None:
+        raise ValueError("unregistered training policy identity")
+    seed_index = next(
+        (i for i, bundle in enumerate(protocol["registration"]["seed_roster"])
+         if bundle == policy["seeds"]),
+        None,
+    )
+    if seed_index is None:
+        raise ValueError("policy lacks an exact registered paired seed bundle")
+    all_scenarios = prepare_scenarios(root, protocol["registration"], seed_index=seed_index)
+    scenarios = tuple(
+        scenario for scenario in all_scenarios.scenarios
+        if scenario.track_id in policy["training_ids"]
+    )
+    if tuple(s.track_id for s in scenarios) != tuple(policy["training_ids"]):
+        raise ValueError("policy track roster is inconsistent with TRAIN registry")
+    return TrainingScenarioSet(scenarios), seed_index, policy, all_scenarios
+
+
+def prepare_training_scenarios(repository_root, protocol, policy_id):
+    """Reconstruct a policy-specific TRAIN scenario set without training.
+
+    Fail closed on policy/seed mismatch. This API does NOT grant admission.
+    """
+    validate_protocol(protocol, repository_root)
+    scenarios, index, policy, _ = _scenarios_for_policy(
+        Path(repository_root).resolve(strict=True), protocol, policy_id
+    )
+    return scenarios, {
+        "policy_id": policy_id,
+        "paired_seed_index": index,
+        "seed_bundle": dict(policy["seeds"]),
+        "track_ids": list(policy["training_ids"]),
+        "physics_sha256": scenarios.scenarios[0].factory.physics_config.sha256,
+        "reset_sha256": scenarios.scenarios[0].factory.reset_config.sha256,
+        "training_authorized": False,
+    }
+
+
 def prepare_evaluation_factory(repository_root, protocol, policy_id, track_id, stratum, episode):
     """Construct a registered cell without resetting, evaluating or admitting it."""
     validate_protocol(protocol, repository_root)
     seed = evaluation_seed(protocol, policy_id, track_id, stratum, episode)
-    scenarios = prepare_scenarios(Path(repository_root).resolve(strict=True), protocol["registration"])
+    _, seed_index, policy, scenarios = _scenarios_for_policy(
+        Path(repository_root).resolve(strict=True), protocol, policy_id
+    )
+    # Cross-track evaluation is required even for single-track-trained policies.
     factory = next(row.factory for row in scenarios.scenarios if row.track_id == track_id)
     if stratum == "nominal":
         factory = replace(factory, reset_config=None, reset_track_id=None)
     else:
         factory = replace(factory, reset_config=replace(factory.reset_config, seed=seed))
     return factory, {"policy_id": policy_id, "track_id": track_id, "stratum": stratum,
+                     "paired_seed_index": seed_index, "training_seed_bundle": dict(policy["seeds"]),
                      "episode": episode, "environment_seed": seed, "policy_rng_seed": seed,
                      "deterministic_prediction": False, "training_authorized": False}
 
