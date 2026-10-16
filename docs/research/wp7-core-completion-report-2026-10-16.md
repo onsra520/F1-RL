@@ -1,7 +1,7 @@
 # WP7 Core Completion Report — 2026-10-16
 
 **Overall: incomplete.** Four engineering increments have been implemented and
-reviewed, with an additional Right-turn geometry increment, but seven subsystems remain below 90% and unresolved P0 capabilities
+reviewed, with additional Right-turn geometry and distance-ground-motion increments, but seven subsystems remain below 90% and unresolved P0 capabilities
 remain. Software regressions do not establish scientific acceptance. No weights
 or thresholds were changed to improve these scores.
 
@@ -16,7 +16,8 @@ Base: PR #22 `research/wp7-core-execution-closure-v1`,
 | B timed lifecycle race/reset | `research/wp7-lifecycle-race-closure-v1` | `c2768a3aa184b3862168eae092dc103f7567290d` | [#24](https://github.com/onsra520/F1-RL/pull/24) |
 | C braking and isolated saved PPO inference | `research/wp7-control-evaluation-worker-v1` | `13189b76a3068e62f5d3c40b354d7362a8c2b817` | [#25](https://github.com/onsra520/F1-RL/pull/25) |
 | D run manifests and trusted reviews | `research/wp7-run-evidence-review-v1` | `84ff1dbcd371f48ccccc92247d71ec213b8dcc0a`, documentation `e05b4cc7464da123600520dda0c8f5489f1be98b` | [#26](https://github.com/onsra520/F1-RL/pull/26) |
-| E Right-turn arc geometry and corridor witnesses | `research/wp7-general-planar-path-v1` | latest commit containing this report | stacked Draft PR on #26 |
+| E Right-turn arc geometry and corridor witnesses | `research/wp7-general-planar-path-v1` | `a14cecfac0183fa75beef37c3bae4a55db6f775c` | [#27](https://github.com/onsra520/F1-RL/pull/27) |
+| F distance-consistent research ground motion | `research/wp7-distance-ground-motion-v1` | latest commit containing this report | stacked Draft PR on #27 |
 
 No automatic merge. Canonical assets, historical archives and owner decisions
 are unchanged. Owner-contract SHA-256 remains
@@ -80,6 +81,21 @@ braking and airborne gravity-only control behavior are integrated through Gym.
 `PolicyBoundTrainingConfig` extends the existing contract with actual vector,
 race/action, observation/simulation and checkpoint-plan identities.
 
+F closes a numerical steering exploit: legacy yaw used incoming speed while
+translation used post-braking speed, allowing rotation with zero translation.
+The explicitly registered `arc_distance_v1` integrates distance and yaw from
+one force-frozen, stop/cap-aware bicycle law. Suspension substeps use that same
+law at their time nodes. Actual wheel support preserves braking after the
+centre leaves a platform; missing/ambiguous horizontal support is rejected.
+Direct Gym and factory research braking both require this registration.
+Historical Euler entry points/default configuration documents stay unchanged.
+Current prepared TRAIN scenarios now bind the new schema-2 physics identity;
+old receipts require explicit regeneration, without automatic model migration.
+Ground sweep/event certificates still cover numerical substep chords/SLERP,
+not an exact continuous physical force ODE. This does not close ramp support,
+all-track speed schedules or physical calibration. See
+`wp7-distance-ground-motion-2026-10-16.md`.
+
 The new isolated worker loads a real, saved **untrained** PPO model and executes
 stochastic inference in software fixtures only. Model bytes and concrete factory/
 reward identities are checked. Policy-action RNG is process-isolated and seeded
@@ -107,7 +123,8 @@ is empty. See `wp7-run-evidence-review-2026-10-16.md` for schema and CLI details
 | B | 1,936 pass / 2 platform skips | 1,938 pass each; run `38858890456` |
 | C | 1,953 pass / 2 platform skips | 1,955 pass each; run `38861174631` |
 | D | 1,975 pass / 2 platform skips; 22 new focused tests; 162 matrix tests | 1,977 pass each at `e05b4cc`; run `38862597646` |
-| E | 1,989 pass / 2 platform skips; 38 focused geometry/readiness tests pass | Exact-HEAD Windows/Ubuntu CI required for this increment; consult stacked Draft PR checks |
+| E | 1,989 pass / 2 platform skips; 38 focused geometry/readiness tests pass | 1,991 pass each at `a14cecf`; run `38903097375` |
+| F | 2,023 pass / 2 platform skips; 112 focused integration/kernel/binding tests pass | Exact-HEAD Windows/Ubuntu CI required; consult stacked Draft PR checks |
 
 D compileall, dependency compatibility (26 packages), and `git diff --check`
 passed before commit. Two-axis review has no remaining material P0/P1/P2 in

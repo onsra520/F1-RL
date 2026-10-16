@@ -1,17 +1,19 @@
 """Versioned research physics registration; never scientific training admission.
 
-Longitudinal motion remains legacy-prescribed. Contacts are suspension
-reference points, not tire hubs/patches. No physical constants are inferred.
+Longitudinal motion is explicitly legacy Euler or force-frozen distance bicycle.
+Contacts are suspension reference points, not tire hubs/patches. No physical
+constants are inferred.
 """
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from hashlib import sha256
 import json
-from math import isclose, atan2
+from math import isclose, atan2, sin, tan
 
 from ..sandbox.ballistic_flight import BallisticFlightPolicy, FlightState, FlightTransition
 from ..sandbox.center_trajectory import CenterSegment
+from ..sandbox.dynamics.integrator import _distance_ground_frame
 from ..sandbox.body_collision import VehicleBodyGeometry
 from ..sandbox.grounded_yaw_dynamics import GroundedYawPolicy
 from ..sandbox.independent_suspension_dynamics import (
@@ -52,8 +54,12 @@ class PhysicsConfig:
     automatic_takeoff_policy: AutomaticTakeoffPolicy | None = None
     grounded_yaw_policy: GroundedYawPolicy | None = None
     contact_geometry: str = "suspension_reference_points_v1"
+    ground_motion_version: str = 'legacy_euler_v1'
 
     def __post_init__(self) -> None:
+        if (self.ground_motion_version not in ('legacy_euler_v1','arc_distance_v1')
+                or self.ground_motion_version=='arc_distance_v1' and self.mode not in ('wp7_suspension_v1','wp7_lifecycle_v1')):
+            raise ValueError('unregistered research ground motion version/mode')
         if self.mode not in (
             "legacy_v1", "wp7_suspension_v1", "wp7_ballistic_v1", "wp7_grounded_yaw_v1",
             "wp7_lifecycle_v1",
@@ -78,6 +84,8 @@ class PhysicsConfig:
         suspension = self.independent_suspension_policy
         if body is None or suspension is None:
             raise ValueError("WP7 requires explicit body geometry and independent suspension")
+        if self.ground_motion_version=='arc_distance_v1' and suspension.angular_rate_mapping!='yaw_rx_rz_v1':
+            raise ValueError('distance ground version requires exact suspension angular-rate mapping')
         if (body.length_m, body.width_m, body.height_m) != (4., 1.8, 1.2):
             raise ValueError("WP7 owner body must remain 4.0 x 1.8 x 1.2 m")
         flight = self.ballistic_flight_policy
@@ -114,6 +122,8 @@ class PhysicsConfig:
             return
         if not isinstance(initial.suspension, SuspensionDynamicsState):
             raise ValueError("WP7 requires persistent suspension state")
+        if self.ground_motion_version=='arc_distance_v1' and initial.vehicle.grounded:
+            _distance_ground_frame(initial.vehicle,parameters)
         if initial.vehicle.grounded and not isclose(
             initial.vehicle.position.y, initial.suspension.height_m, rel_tol=0., abs_tol=1e-8,
         ):
@@ -141,7 +151,7 @@ class PhysicsConfig:
             actual = initial.vehicle.angular_velocity
             pairs = ((initial.vehicle.velocity.y, state.heave_velocity_mps),
                      (actual.x, expected.x), (actual.z, expected.z))
-            if self.mode == "wp7_lifecycle_v1":
+            if self.mode == "wp7_lifecycle_v1" or self.ground_motion_version=='arc_distance_v1':
                 pairs += ((actual.y, expected.y),)
             if any(not isclose(a, b, rel_tol=0., abs_tol=1e-8) for a, b in pairs):
                 raise ValueError("grounded chassis and suspension rates disagree")
@@ -171,6 +181,26 @@ class PhysicsConfig:
             # previous suspension rates; it is not a registered impulse/recovery.
             raise PhysicsTransitionError("WP7 collision recovery is unregistered; step rejected")
         events = tuple(e for e in result.events if isinstance(e, FlightTransition))
+        distance_yaw_rate = None
+        if (self.ground_motion_version=='arc_distance_v1' and previous.vehicle.grounded
+                and result.state.vehicle.grounded and not events):
+            first = _horizontal_yaw(previous.vehicle.orientation).rotate(Vec3(0.,0.,1.))
+            last = _horizontal_yaw(result.state.vehicle.orientation).rotate(Vec3(0.,0.,1.))
+            yaw_change = atan2(first.cross(last).y,first.dot(last))
+            delta = result.state.vehicle.position-previous.vehicle.position
+            horizontal_delta = Vec3(delta.x,0.,delta.z)
+            chord = horizontal_delta.magnitude
+            midpoint_forward = (first+last).normalized()
+            along = horizontal_delta.dot(midpoint_forward)
+            if along < -1e-8 or (horizontal_delta-midpoint_forward*along).magnitude>1e-8:
+                raise PhysicsTransitionError('accepted displacement does not follow a forward arc')
+            if chord<=1e-12 and abs(yaw_change)>1e-8:
+                raise PhysicsTransitionError('zero-distance steering cannot rotate the chassis')
+            curvature = 2*sin(yaw_change/2)/chord if chord>1e-12 else 0.
+            if abs(curvature)>tan(parameters.max_steering_angle)/parameters.wheelbase+1e-8:
+                raise PhysicsTransitionError('accepted ground path exceeds steering curvature')
+            distance_yaw_rate = curvature*result.state.vehicle.velocity.dot(last)
+            self.validate_state(result.state,parameters,_prescribed_yaw_rate=distance_yaw_rate)
         if self.mode == "wp7_lifecycle_v1":
             segments = result.center_segments
             if (not isinstance(segments,tuple) or not segments
@@ -186,7 +216,10 @@ class PhysicsConfig:
             if previous.vehicle.grounded and result.state.vehicle.grounded and not events:
                 first = _horizontal_yaw(previous.vehicle.orientation).rotate(Vec3(0.,0.,1.))
                 last = _horizontal_yaw(result.state.vehicle.orientation).rotate(Vec3(0.,0.,1.))
-                yaw_rate = atan2(first.cross(last).y, first.dot(last))/dt
+                yaw_change = atan2(first.cross(last).y, first.dot(last))
+                yaw_rate = yaw_change/dt
+                if distance_yaw_rate is not None:
+                    yaw_rate = distance_yaw_rate
             self.validate_state(result.state, parameters, _prescribed_yaw_rate=yaw_rate)
             if any(e.time_s > dt+1e-8 for e in events) or any(
                 b.time_s < a.time_s for a, b in zip(events, events[1:])
@@ -214,6 +247,11 @@ class PhysicsConfig:
                     if audit.post_kinetic_energy_j > audit.pre_kinetic_energy_j + self.ballistic_flight_policy.manifold.energy_tolerance_j:
                         raise PhysicsTransitionError("impact energy gain violates lifecycle contract")
         solvers = []
+        if self.ground_motion_version=='arc_distance_v1' and (
+            result.partial_support_telemetry is not None
+            or result.suspension_telemetry is not None and result.flight_telemetry is None
+        ):
+            solvers.append('arc_distance_ground_v1')
         if result.suspension_telemetry is not None:
             solvers.append("independent_suspension_v1")
         if result.partial_support_telemetry is not None:
@@ -238,14 +276,20 @@ class PhysicsConfig:
             "body_geometry", "independent_suspension_policy", "ballistic_flight_policy",
             "automatic_takeoff_policy", "grounded_yaw_policy",
         )
-        return {name: getattr(self, name) for name in names if getattr(self, name) is not None}
+        options = {name: getattr(self, name) for name in names if getattr(self, name) is not None}
+        if self.ground_motion_version!='legacy_euler_v1':
+            options['ground_motion_version'] = self.ground_motion_version
+        return options
 
     def document(self) -> dict[str, object]:
+        configuration = asdict(self)
+        if self.ground_motion_version=='legacy_euler_v1':
+            configuration.pop('ground_motion_version')
         return {
-            "schema_version": 1,
+            "schema_version": 1 if self.ground_motion_version=='legacy_euler_v1' else 2,
             "validation_scope": "software_research_only",
-            "longitudinal_model": "legacy_prescribed_v1",
-            **asdict(self),
+            "longitudinal_model": "legacy_prescribed_v1" if self.ground_motion_version=='legacy_euler_v1' else 'force_frozen_distance_bicycle_v1',
+            **configuration,
         }
 
     @property

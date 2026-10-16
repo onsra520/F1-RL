@@ -71,6 +71,10 @@ class F1RLEnvFactory:
             if self.body_geometry is not None or self.ramp_support_policy is not None:
                 raise ValueError("physics_config cannot be mixed with legacy body/ramp options")
             self.physics_config.validate_state(self.initial_state, self.vehicle_parameters)
+        if (self.requires_scientific_admission and self.action_contract is not None
+                and self.action_contract.version=='steering-throttle-brake-v2'
+                and (self.physics_config is None or self.physics_config.ground_motion_version!='arc_distance_v1')):
+            raise ValueError('research braking requires distance ground integration')
         if self.race_config is not None:
             if not isinstance(self.race_config, WP7RaceConfig):
                 raise ValueError("race_config must be WP7RaceConfig or None")

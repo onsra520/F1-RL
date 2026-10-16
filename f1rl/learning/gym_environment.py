@@ -103,6 +103,12 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         if action_contract is not None and not isinstance(action_contract,ActionContract):
             raise ValueError("action_contract must be ActionContract or None")
         self._action_contract = action_contract or ActionContract()
+        if physics_config is not None and not isinstance(physics_config,PhysicsConfig):
+            raise ValueError('physics_config must be PhysicsConfig or None')
+        research = body_geometry is not None or (physics_config is not None and physics_config.mode!='legacy_v1')
+        if (research and self._action_contract.version=='steering-throttle-brake-v2'
+                and (physics_config is None or physics_config.ground_motion_version!='arc_distance_v1')):
+            raise ValueError('research braking requires distance ground integration')
         values = (
             (track, TrackWorld, "track"),
             (initial_state, WorldState, "initial_state"),

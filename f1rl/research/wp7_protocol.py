@@ -112,7 +112,7 @@ def prepare_scenarios(root, registration, *, seed_index: int):
     contact = MultiSurfaceSuspensionPolicy(wheels, .12, .12)
     suspension = IndependentSuspensionDynamicsPolicy(contact, **registration["engineering_suspension"],
                                                      angular_rate_mapping="yaw_rx_rz_v1")
-    physics = PhysicsConfig("wp7_suspension_v1", BODY, suspension)
+    physics = PhysicsConfig("wp7_suspension_v1", BODY, suspension,ground_motion_version='arc_distance_v1')
     rewards = RewardComposer((RouteProgressReward(1.), CollisionPenalty(5.), TimePenalty(.1)))
     scenarios = []
     for row in baseline.scenarios:

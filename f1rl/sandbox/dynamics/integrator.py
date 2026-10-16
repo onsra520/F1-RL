@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from math import isfinite, pi, sin, tan
+
 from ..geometry.rotation import Quaternion
 from ..geometry.vector import Vec3
 from ..surface import SurfaceContact
-from ..vehicle import VehicleParameters, VehicleState
+from ..vehicle import VehicleControl, VehicleParameters, VehicleState
 from .vehicle_dynamics import MotionDerivatives
 
 
@@ -87,3 +89,55 @@ def integrate(
     position = position + contact.normal * (parameters.ride_height - signed_distance)
 
     return VehicleState(position, velocity, orientation, derivatives.angular_velocity, True)
+
+
+def _distance_ground_frame(state: VehicleState,parameters: VehicleParameters):
+    aligned = _surface_aligned_orientation(state,Vec3(0.,1.,0.))
+    forward = aligned.rotate(LOCAL_FORWARD)
+    tangent = Vec3(state.velocity.x,0.,state.velocity.z)
+    speed = tangent.dot(forward)
+    if (speed < -1e-8 or speed > parameters.max_ground_speed+1e-8
+            or (tangent-forward*speed).magnitude>1e-8):
+        raise ValueError('distance ground integration requires bounded forward no-slip velocity')
+    return aligned,forward,max(0.,min(speed,parameters.max_ground_speed))
+
+
+def integrate_ground_distance(
+    state: VehicleState, derivatives: MotionDerivatives, control: VehicleControl,
+    parameters: VehicleParameters, contact: SurfaceContact, dt: float,
+) -> VehicleState:
+    """Flat no-slip bicycle step with distance/yaw from one force-frozen law.
+
+    Longitudinal force is frozen for the tick as in compute_ground_motion.
+    Stop/speed-cap event times split the distance integral. This is a reduced
+    constrained bicycle model, not tire-slip or rigid-body force validation.
+    """
+    if (type(dt) not in (int,float) or not isfinite(dt) or dt<=0
+            or contact.normal!=Vec3(0.,1.,0.)):
+        raise ValueError('distance ground integration requires finite dt and horizontal contact')
+    aligned,forward,speed = _distance_ground_frame(state,parameters)
+    acceleration = derivatives.linear_acceleration.dot(forward)
+    moving_dt = dt
+    tail_speed = None
+    if acceleration<0 and speed+acceleration*dt<0:
+        moving_dt = -speed/acceleration
+        tail_speed = 0.
+    elif acceleration>0 and speed+acceleration*dt>parameters.max_ground_speed:
+        moving_dt = (parameters.max_ground_speed-speed)/acceleration
+        tail_speed = parameters.max_ground_speed
+    end_speed = max(0.,min(speed+acceleration*dt,parameters.max_ground_speed))
+    distance = speed*moving_dt+.5*acceleration*moving_dt*moving_dt
+    if tail_speed is not None:
+        distance += tail_speed*(dt-moving_dt)
+    curvature = tan(control.steering*parameters.max_steering_angle)/parameters.wheelbase
+    angle = curvature*distance
+    if not isfinite(distance) or not isfinite(angle) or abs(angle)>=pi:
+        raise ValueError('distance ground step exceeds finite shortest-yaw numeric domain')
+    half = angle/2
+    sinc = sin(half)/half if half else 1.
+    midpoint_forward = Quaternion.from_axis_angle(contact.normal,half).rotate(forward)
+    position = state.position+midpoint_forward*(distance*sinc)
+    position = Vec3(position.x,contact.point.y+parameters.ride_height,position.z)
+    orientation = Quaternion.from_axis_angle(contact.normal,angle)*aligned
+    velocity = orientation.rotate(LOCAL_FORWARD)*end_speed
+    return VehicleState(position,velocity,orientation,contact.normal*(curvature*end_speed),True)

@@ -8,8 +8,13 @@ from f1rl.learning.action import ActionContract
 from tests.integration.test_wp7_lifecycle_race import lifecycle_race_factory
 
 
+def braking_factory(**kwargs):
+    base = lifecycle_race_factory(**kwargs)
+    return replace(base,physics_config=replace(base.physics_config,ground_motion_version='arc_distance_v1'))
+
+
 def test_explicit_brake_contract_decelerates_actual_grounded_lifecycle():
-    base = lifecycle_race_factory(launch=False,finish=20.)
+    base = braking_factory(launch=False,finish=20.)
     candidate = replace(base,action_contract=ActionContract('steering-throttle-brake-v2'))
     env = candidate.create()
     try:
@@ -34,7 +39,7 @@ def test_legacy_two_action_contract_still_coasts_with_brake_zero():
 
 
 def test_braking_cannot_reverse_stationary_or_slow_vehicle():
-    base = lifecycle_race_factory(launch=False,finish=20.)
+    base = braking_factory(launch=False,finish=20.)
     base = replace(base,initial_state=replace(base.initial_state,
         vehicle=replace(base.initial_state.vehicle,velocity=replace(base.initial_state.vehicle.velocity,z=.5))),
         action_contract=ActionContract('steering-throttle-brake-v2'))
@@ -48,7 +53,7 @@ def test_braking_cannot_reverse_stationary_or_slow_vehicle():
 
 
 def test_airborne_controls_do_not_invent_forces_and_observations_stay_valid():
-    base = replace(lifecycle_race_factory(finish=20.),action_contract=ActionContract('steering-throttle-brake-v2'))
+    base = replace(braking_factory(finish=20.),action_contract=ActionContract('steering-throttle-brake-v2'))
     a,b = base.create(),base.create()
     try:
         a.reset(); b.reset()
@@ -68,7 +73,7 @@ def test_airborne_controls_do_not_invent_forces_and_observations_stay_valid():
 
 @pytest.mark.parametrize('action',[[0.,0.,-1.],[0.,0.,float('nan')],[0.,0.,2.]])
 def test_invalid_brake_actions_rejected(action):
-    env = replace(lifecycle_race_factory(launch=False),
+    env = replace(braking_factory(launch=False),
         action_contract=ActionContract('steering-throttle-brake-v2')).create()
     try:
         env.reset()

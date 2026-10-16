@@ -9,13 +9,13 @@ from .geometry.vector import Vec3
 from .grounded_yaw_dynamics import (
     GroundedYawPolicy,GroundedYawAudit,advance_grounded_yaw,
 )
-from .dynamics.integrator import integrate
+from .dynamics.integrator import integrate, integrate_ground_distance
 from .dynamics.modifiers import MotionModifiers
 from .dynamics.vehicle_dynamics import compute_motion
 from .interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
 from .road_footprint import swept_body_road_union
 from .partial_wheel_release import (
-    AutomaticTakeoffPolicy, GroundSupportStep, integrate_partial_support,
+    AutomaticTakeoffPolicy, GroundSupportStep, integrate_partial_support, partial_ground_contact,
 )
 from .ballistic_flight import (
     BallisticFlightPolicy, FlightPhysicsError, FlightState,
@@ -81,7 +81,12 @@ def step_world(
     ballistic_flight_policy: BallisticFlightPolicy | None = None,
     automatic_takeoff_policy: AutomaticTakeoffPolicy | None = None,
     grounded_yaw_policy: GroundedYawPolicy | None = None,
+    ground_motion_version: str = 'legacy_euler_v1',
 ) -> WorldStepResult:
+    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1'):
+        raise ValueError('unregistered ground motion version')
+    if ground_motion_version=='arc_distance_v1' and grounded_yaw_policy is not None:
+        raise ValueError('distance bicycle integration cannot replace dynamic tire yaw')
     if ramp_support_policy is not None and (body_geometry is None or not isinstance(ramp_support_policy, PlanarRampPolicy)):
         raise ValueError('ramp_support_policy requires full-body geometry and PlanarRampPolicy')
     if multi_surface_policy is not None:
@@ -196,8 +201,20 @@ def step_world(
                 swept_poses = (*swept_poses, *suspension_telemetry.poses[1:])
     else:
         modifiers = resolve_motion_modifiers(current_query)
-        motion = compute_motion(state.vehicle, control, parameters, current_query.contact, modifiers)
-        candidate = integrate(state.vehicle, motion, parameters, current_query.contact, dt)
+        motion_contact = current_query.contact
+        if ground_motion_version=='arc_distance_v1' and motion_contact is None:
+            if automatic_takeoff_policy is None or independent_suspension_policy is None:
+                raise ValueError('distance ground motion requires verified ground support')
+            motion_contact = partial_ground_contact(state.vehicle,independent_suspension_policy.contact,
+                                                   track.surfaces,automatic_takeoff_policy)
+        motion = compute_motion(state.vehicle, control, parameters, motion_contact, modifiers)
+        path_at_time = None
+        if ground_motion_version=='arc_distance_v1':
+            def path_at_time(time_s):
+                return integrate_ground_distance(state.vehicle,motion,control,parameters,motion_contact,time_s)
+            candidate = path_at_time(dt)
+        else:
+            candidate = integrate(state.vehicle, motion, parameters, current_query.contact, dt)
         if grounded_yaw_policy is not None:
             candidate,grounded_yaw_telemetry=advance_grounded_yaw(
                 state.vehicle,candidate,
@@ -210,6 +227,7 @@ def step_world(
                 state.vehicle, candidate, state.suspension,
                 independent_suspension_policy, body_geometry, track.surfaces,
                 automatic_takeoff_policy, dt=dt, gravity_mps2=parameters.gravity,
+                path_at_time=path_at_time,
             )
             candidate = partial_support_telemetry.vehicle
             partial_times = tuple(f.time_s for f in partial_support_telemetry.frames) + (
@@ -249,6 +267,7 @@ def step_world(
                 state.vehicle, candidate, state.suspension,
                 independent_suspension_policy, body_geometry, track.surfaces,
                 dt=dt, gravity_mps2=parameters.gravity,
+                path_at_time=path_at_time,
             )
             candidate = suspension_telemetry.vehicle
             center_segments = linear_center_segments(suspension_telemetry.poses,0.,dt)

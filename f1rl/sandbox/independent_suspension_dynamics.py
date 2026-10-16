@@ -12,6 +12,7 @@ wheel/body road-coverage contract; failure rejects the rollout.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Callable
 from math import cos, isfinite, sin
 
 from .body_collision import VehicleBodyGeometry, _slerp
@@ -161,6 +162,7 @@ def integrate_independent_suspension(
     *,
     dt: float,
     gravity_mps2: float,
+    path_at_time: Callable[[float],VehicleState] | None = None,
 ) -> SuspensionDynamicsResult:
     """Integrate unilateral 4-wheel forces along the supplied XZ/yaw path.
 
@@ -168,6 +170,8 @@ def integrate_independent_suspension(
     steering or yaw. The *discrete polygonal* trajectory is checked segment
     by segment; no claim of continuous integration of real-world force ODEs.
     """
+    if path_at_time is not None and not callable(path_at_time):
+        raise ValueError('path_at_time must be callable')
     if (not isinstance(previous, VehicleState) or not isinstance(path_candidate, VehicleState)
             or not isinstance(initial, SuspensionDynamicsState)
             or not isinstance(policy, IndependentSuspensionDynamicsPolicy)
@@ -247,12 +251,17 @@ def integrate_independent_suspension(
                 abs(dynamic.roll_z_rad) > policy.max_abs_tilt_rad):
             raise SuspensionResolutionError(f"tilt bound exceeded at substep {index}")
         t = (index + 1) / count
-        next_pose = _pose(
-            previous.position.x + route.x * t,
-            previous.position.z + route.z * t,
-            yaw, dynamic, path_candidate.velocity, path_candidate.angular_velocity.y,
-            policy.angular_rate_mapping,
-        )
+        if path_at_time is None:
+            next_pose = _pose(
+                previous.position.x + route.x * t,
+                previous.position.z + route.z * t,
+                yaw, dynamic, path_candidate.velocity, path_candidate.angular_velocity.y,
+                policy.angular_rate_mapping,
+            )
+        else:
+            sample = path_at_time((index+1)*h)
+            next_pose = _pose(sample.position.x,sample.position.z,_horizontal_yaw(sample.orientation),
+                dynamic,sample.velocity,sample.angular_velocity.y,policy.angular_rate_mapping)
         report = certify_multisurface_support(pose, next_pose, body, policy.contact, surfaces)
         if not report.valid:
             raise SuspensionResolutionError(

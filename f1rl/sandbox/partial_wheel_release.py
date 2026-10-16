@@ -6,11 +6,12 @@ is NOT silently classified as leaving the road. Transition time is localized
 within a deterministic bracket; it is not a continuous-time force ODE proof.
 
 The dynamics remain the prospective small-angle 3-DOF spring model, with
-legacy-prescribed XZ/yaw. Do not use this as an accepted 6-DOF jump model.
+caller-prescribed XZ/yaw. Do not use this as an accepted 6-DOF jump model.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Callable
 from math import isfinite, atan2, hypot
 
 from .body_collision import VehicleBodyGeometry, _slerp
@@ -25,6 +26,7 @@ from .multi_surface_support import (
 )
 from .swept_surface_clearance import certify_swept_chassis_clearance
 from .track.patch import PlanarSurfacePatch
+from .surface import SurfaceContact
 from .vehicle import VehicleState
 
 _EPS = 1e-9
@@ -121,6 +123,19 @@ def sample_partial_wheels(state: VehicleState, contact_policy, atlas):
     return tuple(result)
 
 
+def partial_ground_contact(state, contact_policy, surfaces, release_policy):
+    """Resolve a unique horizontal plane from actual remaining wheel support."""
+    atlas = _flat_atlas(surfaces,contact_policy.seam_height_tolerance_m,
+                        release_policy.max_patch_tilt_rad)
+    contacts = tuple(c for c in sample_partial_wheels(state,contact_policy,atlas) if c is not None)
+    supported_ids = {c.patch_id for c in contacts}
+    planes = {(p.origin.y,p.normal) for p in atlas[0] if p.id in supported_ids}
+    if len(planes)!=1 or next(iter(planes))[1]!=Vec3(0.,1.,0.):
+        raise SuspensionResolutionError('distance ground motion requires unique horizontal wheel support')
+    height,normal = next(iter(planes))
+    return SurfaceContact(Vec3(state.position.x,height,state.position.z),normal)
+
+
 def _pose_between(a: VehicleState, b: VehicleState, t: float):
     return VehicleState(
         a.position + (b.position - a.position)*t,
@@ -180,7 +195,10 @@ def integrate_partial_support(
     surfaces: tuple[PlanarSurfacePatch, ...],
     release_policy: AutomaticTakeoffPolicy,
     *, dt: float, gravity_mps2: float,
+    path_at_time: Callable[[float],VehicleState] | None = None,
 ) -> GroundSupportStep:
+    if path_at_time is not None and not callable(path_at_time):
+        raise ValueError('path_at_time must be callable')
     if (not isinstance(previous, VehicleState) or not isinstance(path_candidate, VehicleState)
             or not isinstance(initial, SuspensionDynamicsState)
             or not isinstance(physics, IndependentSuspensionDynamicsPolicy)
@@ -222,12 +240,20 @@ def integrate_partial_support(
         )
         frames.append(PartialWheelFrame(i*h, contacts, forces))
         t = (i+1)/count
-        yaw = _slerp(yaw0,yaw1,t)
-        proposed = _pose(
-            previous.position.x+route.x*t, previous.position.z+route.z*t,
-            yaw, new_dynamic, path_candidate.velocity, path_candidate.angular_velocity.y,
-            physics.angular_rate_mapping,
-        )
+        if path_at_time is None:
+            yaw = _slerp(yaw0,yaw1,t)
+            proposed = _pose(
+                previous.position.x+route.x*t, previous.position.z+route.z*t,
+                yaw, new_dynamic, path_candidate.velocity, path_candidate.angular_velocity.y,
+                physics.angular_rate_mapping,
+            )
+        else:
+            sample = path_at_time((i+1)*h)
+            proposed = _pose(sample.position.x,sample.position.z,_horizontal_yaw(sample.orientation),
+                new_dynamic,sample.velocity,sample.angular_velocity.y,physics.angular_rate_mapping)
+            movement = proposed.position-pose.position
+            if Vec3(movement.x,0.,movement.z).magnitude > release_policy.max_substep_xz_m:
+                raise SuspensionResolutionError('substep XZ movement exceeds certified release resolution')
         _body_road_clear(pose, proposed, body, atlas)
         final_contacts = sample_partial_wheels(proposed, physics.contact, atlas)
         final_mask = tuple(c is not None for c in final_contacts)
