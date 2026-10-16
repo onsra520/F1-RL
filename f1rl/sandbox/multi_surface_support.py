@@ -157,6 +157,51 @@ def _body_corners(state, body):
                  for sx in (-1., 1.) for sy in (-1., 1.) for sz in (-1., 1.))
 
 
+def _bounded_patch_body_clearance(state, body, patch, polygon, inflation=0.):
+    """Lower clearance of an inflated OBB clipped to the patch's vertical prism.
+
+    Clip all six original faces. Every vertex of the bounded intersection lies
+    on one of them: vertical prism planes alone have rank at most two. A linear
+    signed-plane clearance therefore reaches its minimum in this vertex set.
+    """
+    box = body.box_at(state.position, state.orientation)
+    scale = 1. + max(inflation, *(abs(v) for p in (box.center, box.half_extents, patch.origin)
+                                for v in (p.x, p.y, p.z)),
+                     *(abs(v) for p in polygon for v in p))
+    if not isfinite(scale) or scale > 1e6 or not isfinite(inflation) or inflation < 0.:
+        return None
+    margin = 1e-9 * scale
+    axes = tuple(box.orientation.rotate(v) for v in (Vec3(1.,0.,0.), Vec3(0.,1.,0.), Vec3(0.,0.,1.)))
+    e = box.half_extents + Vec3(inflation+margin, inflation+margin, inflation+margin)
+    corners = tuple(box.center + axes[0]*(sx*e.x) + axes[1]*(sy*e.y) + axes[2]*(sz*e.z)
+                    for sx in (-1.,1.) for sy in (-1.,1.) for sz in (-1.,1.))
+    vertices = []
+    for indices in ((0,1,3,2), (4,6,7,5), (0,4,5,1), (2,3,7,6), (0,2,6,4), (1,5,7,3)):
+        face = tuple(corners[i] for i in indices)
+        for a,b in zip(polygon, polygon[1:]+polygon[:1], strict=True):
+            if not face:
+                break
+            dx,dz = b[0]-a[0],b[1]-a[1]
+            length = hypot(dx,dz)
+            if length <= 1e-4 * scale:
+                return None
+            def signed(p):
+                return (dx*(p.z-a[1])-dz*(p.x-a[0]))/length + margin
+            clipped = []
+            for first,last in zip(face, face[1:]+face[:1], strict=True):
+                d0,d1 = signed(first),signed(last)
+                if d0 >= 0.:
+                    clipped.append(first)
+                if (d0 >= 0.) != (d1 >= 0.):
+                    clipped.append(first + (last-first)*(d0/(d0-d1)))
+            face = tuple(clipped)
+        vertices.extend(face)
+    if not vertices:
+        return None  # No numerical witness of a bounded intersection.
+    clearance = min((p-patch.origin).dot(patch.normal) for p in vertices) - margin
+    return clearance if isfinite(clearance) else None
+
+
 def _square(x, z, r):
     return ((x-r, z-r), (x+r, z-r), (x+r, z+r), (x-r, z+r))
 
@@ -167,6 +212,7 @@ def certify_multisurface_support(
     body: VehicleBodyGeometry,
     policy: MultiSurfaceSuspensionPolicy,
     surfaces: tuple[PlanarSurfacePatch, ...],
+    *, body_clearance_version: str = 'infinite_patch_planes_v1',
 ) -> MultiSurfaceSupportVerdict:
     """Conservative continuous four-wheel / body containment for linear+SLERP sweep.
 
@@ -174,6 +220,8 @@ def certify_multisurface_support(
     throughout this *prescribed* motion, subject to 2.5D atlas assumptions.
     It does not calculate a physically correct chassis pose or spring forces.
     """
+    if body_clearance_version not in ('infinite_patch_planes_v1', 'bounded_patch_planes_v2'):
+        raise ValueError('unregistered body/road clearance version')
     if not isinstance(previous, VehicleState) or not isinstance(candidate, VehicleState):
         raise ValueError("previous/candidate must be VehicleState")
     if not isinstance(body, VehicleBodyGeometry) or not isinstance(policy, MultiSurfaceSuspensionPolicy):
@@ -191,13 +239,14 @@ def certify_multisurface_support(
     wheel_bound = delta.magnitude + theta * max(p.magnitude for p in policy.wheels.positions)
     body_bound = delta.magnitude + theta * body.motion_radius_m
     checks = 0
+    numerical_unresolved = False
 
     def state_at(t):
         return VehicleState(previous.position + delta*t, previous.velocity,
                             _slerp(q0, q1, t), previous.angular_velocity, True)
 
     def sample(t, r_w, r_b):
-        nonlocal checks
+        nonlocal checks, numerical_unresolved
         checks += 1
         state = state_at(t)
         contacts = _contacts(state, policy, atlas)
@@ -212,7 +261,13 @@ def certify_multisurface_support(
         for patch, poly in zip(patches, polygons, strict=True):
             if not _intersection(envelope, poly):
                 continue
-            if min((v-patch.origin).dot(patch.normal) for v in corners) < r_b - _EPS:
+            clearance = min((v-patch.origin).dot(patch.normal) for v in corners) - r_b
+            if body_clearance_version == 'bounded_patch_planes_v2':
+                clearance = _bounded_patch_body_clearance(state, body, patch, poly, r_b)
+                if clearance is None:
+                    numerical_unresolved = True
+                    return True, False, contacts
+            if clearance < -_EPS:
                 return False, False, contacts
 
         for local in policy.wheels.positions:
@@ -235,6 +290,8 @@ def certify_multisurface_support(
     # never manufactures an OUTSIDE report or a successful rollout.
     for t in (0., 1.):
         present, _, contacts = sample(t, 0., 0.)
+        if numerical_unresolved:
+            return MultiSurfaceSupportVerdict('unsupported', checks, 'bounded patch clipping outside numerical domain', contacts)
         if not present:
             return MultiSurfaceSupportVerdict("outside", checks, "invalid endpoint body or wheel support", contacts)
 
@@ -242,6 +299,8 @@ def certify_multisurface_support(
         mid = (lo + hi) / 2.
         radius = (hi - lo) / 2.
         present, proven, contacts = sample(mid, wheel_bound * radius, body_bound * radius)
+        if numerical_unresolved:
+            return 'uncertain', contacts
         if proven:
             return "clear", contacts
         # Need an actual witnessed invalid midpoint before declaring OUTSIDE.

@@ -40,6 +40,8 @@ def advance_manifold_flight(
         FlightPhysicsError, FlightStep, FlightState, FlightTransition,
         _certify_obstacle_arc, _flight_pose, _stationary_landing_attitude,
     )
+    if dynamics is not None and dynamics.force_model != 'legacy_vertical_v1':
+        raise FlightPhysicsError('manifold recovery does not implement the road-relative force model')
     policy=flight_policy.manifold
     if dynamics is None or dynamics.contact!=flight_policy.contact:
         raise FlightPhysicsError("manifold requires matching registered chassis inertia")

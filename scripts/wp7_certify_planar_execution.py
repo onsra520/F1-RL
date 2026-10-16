@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from f1rl.learning.pilot_preflight import TRAIN_IDS
-from f1rl.research.wp7_executed_feasibility import certify_planar_execution, replay_planar_execution
+from f1rl.research.wp7_executed_feasibility import certify_planar_execution, certify_ramp_execution, replay_planar_execution
 from f1rl.research.wp7_protocol import _unique
 
 
@@ -17,6 +17,7 @@ def main():
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument('--track',choices=TRAIN_IDS)
     mode.add_argument('--replay',type=Path)
+    mode.add_argument('--ramp-proposal',action='store_true',help='explicit unadmitted road-relative engineering profile')
     parser.add_argument('--expected-sha256')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -28,9 +29,9 @@ def main():
     else:
         if args.expected_sha256 is not None:
             parser.error('--expected-sha256 requires --replay')
-        result = certify_planar_execution(root,args.track)
+        result = certify_ramp_execution(root) if args.ramp_proposal else certify_planar_execution(root,args.track)
     print(json.dumps(result,indent=2,allow_nan=False))
-    return 0 if result['status']=='executable_numerical_planar_path' else 2
+    return 0 if result['status'] in ('executable_numerical_planar_path','executable_numerical_ramp_path') else 2
 
 
 if __name__=='__main__':

@@ -85,6 +85,15 @@ def step_world(
 ) -> WorldStepResult:
     if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1'):
         raise ValueError('unregistered ground motion version')
+    if (isinstance(independent_suspension_policy, IndependentSuspensionDynamicsPolicy)
+            and independent_suspension_policy.force_model != 'legacy_vertical_v1'
+            and (ballistic_flight_policy is not None or automatic_takeoff_policy is not None
+                 or grounded_yaw_policy is not None)):
+        raise ValueError('road-relative force model requires grounded suspension-only stepping')
+    if (isinstance(independent_suspension_policy, IndependentSuspensionDynamicsPolicy)
+            and independent_suspension_policy.force_model != 'legacy_vertical_v1'
+            and control.steering != 0.):
+        raise ValueError('road-relative reduced driving requires zero steering')
     if ground_motion_version=='arc_distance_v1' and grounded_yaw_policy is not None:
         raise ValueError('distance bicycle integration cannot replace dynamic tire yaw')
     if ramp_support_policy is not None and (body_geometry is None or not isinstance(ramp_support_policy, PlanarRampPolicy)):

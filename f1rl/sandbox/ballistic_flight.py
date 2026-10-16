@@ -527,6 +527,9 @@ def advance_ballistic_flight(
             or not isinstance(policy, BallisticFlightPolicy)
             or not isinstance(body, VehicleBodyGeometry)):
         raise ValueError("airborne vehicle, body and flight policy required")
+    if (isinstance(landing_dynamics, IndependentSuspensionDynamicsPolicy)
+            and landing_dynamics.force_model != 'legacy_vertical_v1'):
+        raise FlightPhysicsError('landing does not implement the road-relative force model')
     if (isinstance(dt, bool) or not isinstance(dt, (int, float))
             or not isfinite(dt) or dt <= 0.
             or isinstance(gravity_mps2, bool)

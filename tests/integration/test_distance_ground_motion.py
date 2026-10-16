@@ -69,6 +69,7 @@ def test_legacy_physics_document_and_default_world_options_stay_identical():
     expected = asdict(physics)
     expected.pop('ground_motion_version')
     expected.pop('spawn_reference')
+    expected['independent_suspension_policy'].pop('force_model')
     assert physics.document() == dict(schema_version=1,validation_scope='software_research_only',
         longitudinal_model='legacy_prescribed_v1',**expected)
     assert 'ground_motion_version' not in physics.world_options()

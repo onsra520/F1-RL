@@ -88,6 +88,8 @@ class PhysicsConfig:
         suspension = self.independent_suspension_policy
         if body is None or suspension is None:
             raise ValueError("WP7 requires explicit body geometry and independent suspension")
+        if suspension.force_model != 'legacy_vertical_v1' and self.mode != 'wp7_suspension_v1':
+            raise ValueError('road-relative force model requires grounded suspension-only mode')
         if self.ground_motion_version=='arc_distance_v1' and suspension.angular_rate_mapping!='yaw_rx_rz_v1':
             raise ValueError('distance ground version requires exact suspension angular-rate mapping')
         if (body.length_m, body.width_m, body.height_m) != (4., 1.8, 1.2):
@@ -143,7 +145,8 @@ class PhysicsConfig:
         explicit_launch = initial.flight is not None and initial.flight.phase == "takeoff"
         if initial.vehicle.grounded and not explicit_launch:
             state = initial.suspension
-            if self.mode == "wp7_lifecycle_v1":
+            if (self.mode == "wp7_lifecycle_v1"
+                    or self.independent_suspension_policy.force_model != 'legacy_vertical_v1'):
                 expected_q = suspension_orientation(_horizontal_yaw(initial.vehicle.orientation), state)
                 q = initial.vehicle.orientation
                 if abs(abs(q.w*expected_q.w + q.x*expected_q.x + q.y*expected_q.y + q.z*expected_q.z)-1.) > 1e-10:
@@ -155,7 +158,8 @@ class PhysicsConfig:
             actual = initial.vehicle.angular_velocity
             pairs = ((initial.vehicle.velocity.y, state.heave_velocity_mps),
                      (actual.x, expected.x), (actual.z, expected.z))
-            if self.mode == "wp7_lifecycle_v1" or self.ground_motion_version=='arc_distance_v1':
+            if (self.mode == "wp7_lifecycle_v1" or self.ground_motion_version=='arc_distance_v1'
+                    or self.independent_suspension_policy.force_model != 'legacy_vertical_v1'):
                 pairs += ((actual.y, expected.y),)
             if any(not isclose(a, b, rel_tol=0., abs_tol=1e-8) for a, b in pairs):
                 raise ValueError("grounded chassis and suspension rates disagree")
@@ -198,6 +202,12 @@ class PhysicsConfig:
             # previous suspension rates; it is not a registered impulse/recovery.
             raise PhysicsTransitionError("WP7 collision recovery is unregistered; step rejected")
         events = tuple(e for e in result.events if isinstance(e, FlightTransition))
+        if self.independent_suspension_policy.force_model != 'legacy_vertical_v1':
+            self.validate_state(result.state, parameters)
+            first = _horizontal_yaw(previous.vehicle.orientation).rotate(Vec3(0.,0.,1.))
+            last = _horizontal_yaw(result.state.vehicle.orientation).rotate(Vec3(0.,0.,1.))
+            if (first-last).magnitude > 1e-8:
+                raise PhysicsTransitionError('road-relative reduced driving cannot change yaw')
         distance_yaw_rate = None
         if (self.ground_motion_version=='arc_distance_v1' and previous.vehicle.grounded
                 and result.state.vehicle.grounded and not events):
@@ -270,7 +280,9 @@ class PhysicsConfig:
         ):
             solvers.append('arc_distance_ground_v1')
         if result.suspension_telemetry is not None:
-            solvers.append("independent_suspension_v1")
+            solvers.append("road_relative_vertical_suspension_v2" if
+                self.independent_suspension_policy.force_model == 'road_relative_vertical_v2'
+                else "independent_suspension_v1")
         if result.partial_support_telemetry is not None:
             solvers.append("partial_wheel_support_v1")
         if result.flight_telemetry is not None:
@@ -300,15 +312,20 @@ class PhysicsConfig:
 
     def document(self) -> dict[str, object]:
         configuration = asdict(self)
+        suspension = configuration['independent_suspension_policy']
+        road_relative = suspension is not None and suspension['force_model'] != 'legacy_vertical_v1'
+        if suspension is not None and not road_relative:
+            suspension.pop('force_model')
         if self.ground_motion_version=='legacy_euler_v1':
             configuration.pop('ground_motion_version')
         if self.spawn_reference=='legacy_vehicle_position_v1':
             configuration.pop('spawn_reference')
         return {
-            "schema_version": 1 if self.ground_motion_version=='legacy_euler_v1' and self.spawn_reference=='legacy_vehicle_position_v1' else 2,
+            "schema_version": 3 if road_relative else 1 if self.ground_motion_version=='legacy_euler_v1' and self.spawn_reference=='legacy_vehicle_position_v1' else 2,
             "validation_scope": "software_research_only",
             "longitudinal_model": "legacy_prescribed_v1" if self.ground_motion_version=='legacy_euler_v1' else 'force_frozen_distance_bicycle_v1',
             **configuration,
+            **({'body_clearance_version': 'bounded_patch_planes_v2'} if road_relative else {}),
         }
 
     @property

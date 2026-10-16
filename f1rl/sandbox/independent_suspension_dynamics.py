@@ -8,6 +8,10 @@ dynamics, airborne/landing or chassis mass/inertia calibration.
 The longitudinal path/yaw is prescribed by the calling motion integrator.
 Every integrated substep is checked by the separate conservative continuous
 wheel/body road-coverage contract; failure rejects the rollout.
+
+Opt-in road_relative_vertical_v2 uses the exact wheel/height-field gap
+derivative and its virtual-work pitch/roll Jacobians. Its inertia remains the
+reduced constant generalized inertia, not a finite-angle rigid-body solver.
 """
 from __future__ import annotations
 
@@ -47,8 +51,12 @@ class IndependentSuspensionDynamicsPolicy:
     integration_substeps: int = 8
     max_abs_tilt_rad: float = .35
     angular_rate_mapping: str = "small_angle_v1"
+    force_model: str = "legacy_vertical_v1"
 
     def __post_init__(self) -> None:
+        if (self.force_model not in ('legacy_vertical_v1', 'road_relative_vertical_v2')
+                or self.force_model == 'road_relative_vertical_v2' and self.angular_rate_mapping != 'yaw_rx_rz_v1'):
+            raise ValueError('unregistered suspension force model/rate mapping')
         if self.angular_rate_mapping not in ("small_angle_v1", "yaw_rx_rz_v1"):
             raise ValueError("unregistered suspension angular-rate mapping")
         if not isinstance(self.contact, MultiSurfaceSuspensionPolicy):
@@ -90,6 +98,8 @@ class WheelForceSample:
     contact: IndependentWheelContact
     upward_force_n: float
     vertical_wheel_velocity_mps: float
+    # V1: approximate world vertical rate. V2: exact y-h(x,z) gap rate used
+    # by the damper; force_model in the registered policy binds the meaning.
 
     def __post_init__(self) -> None:
         if not isinstance(self.contact, IndependentWheelContact):
@@ -203,6 +213,12 @@ def integrate_independent_suspension(
     if (abs(initial.pitch_x_rad) > policy.max_abs_tilt_rad or
             abs(initial.roll_z_rad) > policy.max_abs_tilt_rad):
         raise SuspensionResolutionError("initial chassis tilt exceeds small-angle contract")
+    if policy.force_model == 'road_relative_vertical_v2':
+        yaw_rate = previous.angular_velocity.y + sin(initial.pitch_x_rad)*initial.roll_rate_radps
+        expected_rate = angular_velocity_for_suspension(yaw0, initial, yaw_rate, policy.angular_rate_mapping)
+        if (abs(previous.velocity.y-initial.heave_velocity_mps) > 1e-8
+                or (previous.angular_velocity-expected_rate).magnitude > 1e-8):
+            raise SuspensionResolutionError('road-relative force model requires consistent chassis/suspension rates')
 
     count = policy.integration_substeps
     h = dt / count
@@ -226,13 +242,26 @@ def integrate_independent_suspension(
             wheel_vel = (dynamic.heave_velocity_mps
                          - dynamic.pitch_rate_radps * local.z
                          + dynamic.roll_rate_radps * local.x)
+            pitch_lever, roll_lever = -local.z, local.x
+            if policy.force_model == 'road_relative_vertical_v2':
+                patch = next(p for p in atlas[0] if p.id == ground.patch_id)
+                # Gap y-h(x,z): its derivative includes road input and finite
+                # pitch/roll geometry. The gradient also owns virtual work.
+                gap_gradient = patch.normal / patch.normal.y
+                arm = pose.orientation.rotate(local)
+                wheel_vel = gap_gradient.dot(pose.velocity + pose.angular_velocity.cross(arm))
+                current_yaw = _horizontal_yaw(pose.orientation)
+                pitch_axis = current_yaw.rotate(_X)
+                roll_axis = (current_yaw * Quaternion.from_axis_angle(_X, dynamic.pitch_x_rad)).rotate(_Z)
+                pitch_lever = gap_gradient.dot(pitch_axis.cross(arm))
+                roll_lever = gap_gradient.dot(roll_axis.cross(arm))
             preload = policy.mass_kg * gravity_mps2 / 4.
             load = max(0., preload + policy.spring_stiffness_npm * ground.deflection_m
                        - policy.damper_nspm * wheel_vel)
             force_samples.append(WheelForceSample(ground, load, wheel_vel))
             total_force += load
-            pitch_torque -= local.z * load
-            roll_torque += local.x * load
+            pitch_torque += pitch_lever * load
+            roll_torque += roll_lever * load
         new_heave_v = dynamic.heave_velocity_mps + (
             total_force / policy.mass_kg - gravity_mps2) * h
         new_pitch_v = dynamic.pitch_rate_radps + (
@@ -262,7 +291,9 @@ def integrate_independent_suspension(
             sample = path_at_time((index+1)*h)
             next_pose = _pose(sample.position.x,sample.position.z,_horizontal_yaw(sample.orientation),
                 dynamic,sample.velocity,sample.angular_velocity.y,policy.angular_rate_mapping)
-        report = certify_multisurface_support(pose, next_pose, body, policy.contact, surfaces)
+        options = ({'body_clearance_version': 'bounded_patch_planes_v2'}
+                   if policy.force_model == 'road_relative_vertical_v2' else {})
+        report = certify_multisurface_support(pose, next_pose, body, policy.contact, surfaces, **options)
         if not report.valid:
             raise SuspensionResolutionError(
                 f"uncertified suspension substep {index}: {report.status}: {report.reason}"

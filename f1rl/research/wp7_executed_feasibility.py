@@ -4,7 +4,7 @@ The reference curve is C2 and curvature bounded. Executed collision/contact and
 gate proofs cover the registered numerical substep chords/SLERP, not a physical
 continuous-force ODE or a tracking-error bound for that different trajectory.
 """
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from hashlib import sha256
 from math import acos, atan, atan2, cos, isfinite
 from pathlib import Path
@@ -33,6 +33,8 @@ UP = Vec3(0.,1.,0.)
 FORWARD = Vec3(0.,0.,1.)
 CONTROLLER = dict(version='quintic_tracking_speed_stop_v1',speed_mps=3.,
                   heading_gain_per_m=.8,lateral_gain_per_m2=.3,brake_after_finish_m=2.5)
+RAMP_CONTROLLER = dict(version='longitudinal_ramp_speed_stop_proposal_v1', horizontal_speed_mps=3.5,
+                       brake_after_finish_m=2.5, max_abs_tilt_rad=.2, steering=0.)
 _LOADED_SOURCE_SHA256 = sha256(Path(__file__).read_bytes()).hexdigest()
 
 
@@ -66,16 +68,27 @@ def _validated_controls(controls):
 
 
 def certify_planar_execution(repository_root,track_id,*,controls=None):
+    return _certify_execution(repository_root, track_id, controls=controls, ramp_profile=False)
+
+
+def certify_ramp_execution(repository_root,*,controls=None):
+    """Nominal explicit engineering proposal; not the registered PPO profile."""
+    return _certify_execution(repository_root, 'ramp-v1', controls=controls, ramp_profile=True)
+
+
+def _certify_execution(repository_root,track_id,*,controls,ramp_profile):
     """Run fresh exact-root code; parent module state cannot mint a source pin."""
     if track_id not in TRAIN_IDS:
         raise ValueError('registered TRAIN identity required')
-    _validated_controls(controls)
+    validated = _validated_controls(controls)
+    if ramp_profile and validated is not None and any(c.steering != 0. for c in validated):
+        raise ValueError('ramp proposal requires zero steering')
     root = Path(repository_root).resolve(strict=True)
     if (root!=Path(__file__).resolve().parents[2]
             or sha256(Path(__file__).read_bytes()).hexdigest()!=_LOADED_SOURCE_SHA256):
         raise ValueError('execution source origin or loaded wrapper bytes differ')
     source = _execution_sources(root)
-    payload = json.dumps(dict(track_id=track_id,controls=controls,source=source),allow_nan=False)
+    payload = json.dumps(dict(track_id=track_id,controls=controls,source=source,ramp_profile=ramp_profile),allow_nan=False)
     bootstrap = ('import sys;sys.path.insert(0,sys.argv[1]);'
                  'from f1rl.research.wp7_executed_feasibility import _worker;_worker()')
     # A fresh cache prefix prevents stale checkout pyc files from supplying code.
@@ -99,7 +112,7 @@ def _worker():
         raise ValueError('worker source origin or import-time source bytes differ')
     _verify_module_origins(root)
     runtime = asdict(_capture_runtime_provenance())
-    result = _execute_planar(root,payload['track_id'],controls=payload['controls'])
+    result = _execute_planar(root,payload['track_id'],controls=payload['controls'],ramp_profile=payload['ramp_profile'])
     _verify_module_origins(root)
     if (_execution_sources(root)!=payload['source']
             or build_protocol(root)['sha256']!=result['protocol_sha256']
@@ -146,6 +159,23 @@ def _control(snapshot,factory,knots,finish_z):
                           min(1.,max(0.,-drive/p.max_braking)))
 
 
+def _ramp_control(snapshot,factory,finish_z):
+    vehicle = snapshot.world.vehicle
+    p = factory.vehicle_parameters
+    contact = snapshot.query.contact
+    if contact is None or abs(contact.normal.x)>1e-10:
+        raise ValueError('ramp proposal requires longitudinal supported road')
+    if vehicle.position.z>=finish_z+RAMP_CONTROLLER['brake_after_finish_m']:
+        return VehicleControl(0.,0.,1.)
+    forward = FORWARD.reject_from(contact.normal).normalized()
+    speed = vehicle.velocity.reject_from(contact.normal).dot(forward)
+    gravity = (UP*(-p.gravity)).reject_from(contact.normal).dot(forward)
+    drive = ((RAMP_CONTROLLER['horizontal_speed_mps']/contact.normal.y-speed)/factory.simulation_config.fixed_dt
+             +p.rolling_drag*speed-gravity)
+    return VehicleControl(0.,min(1.,max(0.,drive/p.max_acceleration)),
+                          min(1.,max(0.,-drive/p.max_braking)))
+
+
 def _plane_range(box,gate):
     normal = gate.orientation.rotate(FORWARD)
     axes = tuple(box.orientation.rotate(v) for v in (Vec3(1.,0.,0.),UP,FORWARD))
@@ -178,7 +208,7 @@ def _gate_segment_clear(first,last,gate):
     return True
 
 
-def _execute_planar(repository_root,track_id,*,controls=None):
+def _execute_planar(repository_root,track_id,*,controls=None,ramp_profile=False):
     """Execute a reference controller or an exact control tape on a real TRAIN asset.
 
     Nominal spawn only, no RNG/policy/model, no redraw or asset changes. Execution
@@ -192,6 +222,14 @@ def _execute_planar(repository_root,track_id,*,controls=None):
     protocol = build_protocol(root)
     factories = prepare_scenarios(root,load_registration(root),seed_index=0).scenarios
     factory = next(s.factory for s in factories if s.track_id==track_id)
+    registered_physics_sha256 = factory.physics_config.sha256
+    if ramp_profile:
+        if track_id != 'ramp-v1':
+            raise ValueError('ramp proposal requires the actual TRAIN ramp')
+        suspension = replace(factory.physics_config.independent_suspension_policy,
+            force_model='road_relative_vertical_v2',max_abs_tilt_rad=RAMP_CONTROLLER['max_abs_tilt_rad'])
+        factory = replace(factory,physics_config=replace(factory.physics_config,
+            independent_suspension_policy=suspension,ground_motion_version='legacy_euler_v1'))
     asset = load_track_asset(root/f'assets/tracks/training/{track_id}.json')
     expected = next(t for t in protocol['tracks'] if t['track_id']==track_id)
     if asset.world_sha256!=expected['world_sha256'] or asset.content_sha256!=expected['content_sha256']:
@@ -209,7 +247,13 @@ def _execute_planar(repository_root,track_id,*,controls=None):
         gate_ids=[],expected_gate_ids=[g.id for g in gates],full_body_gate_passages=[],
         max_speed_mps=0.,max_sampled_route_deviation_m=0.,finished=False,stopped=False,
         training_authorized=False,scientific_evidence=False,trajectory_sha256=digest([]))
-    if geometry['geometry_status']!='certified_continuous_planar_path':
+    if ramp_profile:
+        result.update(schema_version='wp7_executed_ramp_proposal_v1',
+            profile_registration_status='engineering_proposal_not_training_registration',
+            registered_physics_sha256=registered_physics_sha256,controller=dict(RAMP_CONTROLLER),
+            scope='nominal_grounded_reduced_suspension_and_legacy_longitudinal_proposal_not_registered_PPO_or_physical_validation',
+            reference_geometry_sha256=digest(dict(navigation=asdict(factory.navigation),horizontal_curvature_per_m=0.)))
+    if not ramp_profile and geometry['geometry_status']!='certified_continuous_planar_path':
         result['blockers'].append('reference_geometry_unresolved')
     if track_id=='right-turn-v1':
         result['blockers'].append('reference_hard_4m_corridor_violation_no_executable_graph')
@@ -226,7 +270,9 @@ def _execute_planar(repository_root,track_id,*,controls=None):
     else:
         limit = len(controls) if controls is not None else min(500,factory.episode_config.max_steps)
         for tick in range(limit):
-            control = controls[tick] if controls is not None else _control(sim.snapshot,factory,geometry['knots_xz_m'],gates[-1].volume.center.z)
+            control = controls[tick] if controls is not None else (
+                _ramp_control(sim.snapshot,factory,gates[-1].volume.center.z) if ramp_profile else
+                _control(sim.snapshot,factory,geometry['knots_xz_m'],gates[-1].volume.center.z))
             result['controls'].append([control.steering,control.throttle,control.brake])
             try:
                 snapshot = sim.step(control)
@@ -268,7 +314,7 @@ def _execute_planar(repository_root,track_id,*,controls=None):
     if not result['stopped']:
         result['blockers'].append('terminal_braking_stop_incomplete')
     if not result['blockers']:
-        result['status'] = 'executable_numerical_planar_path'
+        result['status'] = 'executable_numerical_ramp_path' if ramp_profile else 'executable_numerical_planar_path'
     return {**result,'sha256':digest(result)}
 
 
@@ -277,7 +323,10 @@ def replay_planar_execution(repository_root,document,*,expected_sha256):
     if (not isinstance(document,dict) or document.get('sha256')!=expected_sha256
             or digest({k:v for k,v in document.items() if k!='sha256'})!=expected_sha256):
         raise ValueError('independent certificate identity differs')
-    restored = certify_planar_execution(repository_root,document.get('track_id'),controls=document.get('controls'))
+    if document.get('schema_version') == 'wp7_executed_ramp_proposal_v1':
+        restored = certify_ramp_execution(repository_root,controls=document.get('controls'))
+    else:
+        restored = certify_planar_execution(repository_root,document.get('track_id'),controls=document.get('controls'))
     if restored!=document:
         raise ValueError('executed source, controls or physical evidence identity differs')
     return restored

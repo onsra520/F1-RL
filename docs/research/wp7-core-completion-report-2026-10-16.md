@@ -18,7 +18,8 @@ Base: PR #22 `research/wp7-core-execution-closure-v1`,
 | D run manifests and trusted reviews | `research/wp7-run-evidence-review-v1` | `84ff1dbcd371f48ccccc92247d71ec213b8dcc0a`, documentation `e05b4cc7464da123600520dda0c8f5489f1be98b` | [#26](https://github.com/onsra520/F1-RL/pull/26) |
 | E Right-turn arc geometry and corridor witnesses | `research/wp7-general-planar-path-v1` | `a14cecfac0183fa75beef37c3bae4a55db6f775c` | [#27](https://github.com/onsra520/F1-RL/pull/27) |
 | F distance-consistent research ground motion | `research/wp7-distance-ground-motion-v1` | `42e1993f0f2821b34aa95f200483bc51cfc1fe35` | [#28](https://github.com/onsra520/F1-RL/pull/28) |
-| G registered spawn and executed planar witnesses | `research/wp7-executable-planar-feasibility-v1` | latest commit containing this report | stacked Draft PR on #28 |
+| G registered spawn and executed planar witnesses | `research/wp7-executable-planar-feasibility-v1` | `b24670dff81069979624eca1c4a036615757bd8b` | [#29](https://github.com/onsra520/F1-RL/pull/29) |
+| H road-relative suspension and bounded Ramp proposal | `research/wp7-ramp-force-consistency-v1` | latest commit containing this report | stacked Draft PR on #29 |
 
 No automatic merge. Canonical assets, historical archives and owner decisions
 are unchanged. Owner-contract SHA-256 remains
@@ -57,7 +58,7 @@ manifest/world/content identities. No HELD-OUT assets were opened.
 | `straight-sprint-v1` | Continuous planar body/steering reference plus nominal executed numerical physics/body/gate/speed/stop witness | Continuous physical ODE/tracking-error validation; randomized full-path execution |
 | `slalom-v1` | C2 alternative geometry plus nominal executed numerical boost/braking/contact/body/gate/stop witness | Continuous physical ODE/tracking-error validation; randomized full-path execution |
 | `right-turn-v1` | Three arc paths certify continuous body/road/obstacle/gate geometry | All three violate hard 4 m corridor; executable speed/contact/steering schedule remains unresolved |
-| `ramp-v1` | Explicit unsupported sloped/noncoplanar domain | Ramp contact continuity, mixed support and elevated passage |
+| `ramp-v1` | Registered profile remains unsupported; separate nominal reduced-force engineering proposal executes ramp/crest/gates/stop and replay | Registered profile integration, coupled drive/reaction physics, lifecycle and randomized validation |
 
 Straight/slalom reference curves and Right-turn certificates are sufficient geometric proofs within their
 declared planar domains. The reference certificates are not physics rollouts;
@@ -130,6 +131,18 @@ time windows and independently supplied trusted identities. Both successful
 fixture signatures still leave every permission false. The actual trust registry
 is empty. See `wp7-run-evidence-review-2026-10-16.md` for schema and CLI details.
 
+H fixes road-input damping and finite-angle virtual-work forces in an explicit
+reduced suspension model, plus a finite-patch body-clearance false rejection at
+the Ramp crest. The actual TRAIN Ramp can execute nominal gates/contact/body/
+corridor/speed/stop checks and exact replay in that engineering proposal. It
+records both the registered physics hash and the actual proposal hash: the
+0.2 rad numerical tilt domain and legacy longitudinal Euler are not silently
+substituted into registered PPO scenarios. New-model steering, flight, partial
+support and landing combinations reject. This remains road-driven reduced
+dynamics, without coupled traction/drive-work or spatial-inertia validation;
+it does not close the registered Ramp capability or change readiness scores.
+See `wp7-ramp-force-consistency-2026-10-17.md`.
+
 ## Verification and compatibility
 
 | Increment | Local full Windows | Exact-HEAD Windows + Ubuntu CI |
@@ -140,7 +153,8 @@ is empty. See `wp7-run-evidence-review-2026-10-16.md` for schema and CLI details
 | D | 1,975 pass / 2 platform skips; 22 new focused tests; 162 matrix tests | 1,977 pass each at `e05b4cc`; run `38862597646` |
 | E | 1,989 pass / 2 platform skips; 38 focused geometry/readiness tests pass | 1,991 pass each at `a14cecf`; run `38903097375` |
 | F | 2,023 pass / 2 platform skips; 112 focused integration/kernel/binding tests pass | 2,025 pass each at `42e1993`; run `38908204431` |
-| G | 2,048 pass / 2 platform skips; 6 real-TRAIN spawn tests and 19 execution/replay/source-boundary tests | Exact-HEAD Windows/Ubuntu CI required; consult stacked Draft PR checks |
+| G | 2,048 pass / 2 platform skips; 6 real-TRAIN spawn tests and 19 execution/replay/source-boundary tests | 2,050 full and 165 execution/readiness pass each at `b24670d`; run `38946178709` |
+| H | 2,069 pass / 2 platform skips; 21 new force/geometry/boundary and actual Ramp proposal/replay cases | Exact-HEAD Windows/Ubuntu CI required; consult stacked Draft PR checks |
 
 D compileall, dependency compatibility (26 packages), and `git diff --check`
 passed before commit. Two-axis review has no remaining material P0/P1/P2 in

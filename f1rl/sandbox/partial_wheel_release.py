@@ -207,6 +207,8 @@ def integrate_partial_support(
         raise ValueError("invalid partial-wheel integration inputs")
     if not previous.grounded:
         raise SuspensionResolutionError("partial-wheel solver requires grounded start")
+    if physics.force_model != 'legacy_vertical_v1':
+        raise SuspensionResolutionError('partial support does not implement the road-relative force model')
     if (type(dt) not in (float,int) or not isfinite(dt) or dt <= 0.
             or type(gravity_mps2) not in (float,int) or not isfinite(gravity_mps2) or gravity_mps2 <= 0.):
         raise ValueError("positive finite dt and gravity required")
