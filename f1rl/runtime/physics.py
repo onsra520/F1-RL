@@ -55,8 +55,12 @@ class PhysicsConfig:
     grounded_yaw_policy: GroundedYawPolicy | None = None
     contact_geometry: str = "suspension_reference_points_v1"
     ground_motion_version: str = 'legacy_euler_v1'
+    spawn_reference: str = 'legacy_vehicle_position_v1'
 
     def __post_init__(self) -> None:
+        if (self.spawn_reference not in ('legacy_vehicle_position_v1','authored_horizontal_road_v1')
+                or self.spawn_reference!='legacy_vehicle_position_v1' and self.mode=='legacy_v1'):
+            raise ValueError('unregistered research spawn reference')
         if (self.ground_motion_version not in ('legacy_euler_v1','arc_distance_v1')
                 or self.ground_motion_version=='arc_distance_v1' and self.mode not in ('wp7_suspension_v1','wp7_lifecycle_v1')):
             raise ValueError('unregistered research ground motion version/mode')
@@ -162,6 +166,19 @@ class PhysicsConfig:
             if not isclose(yaw.front_axle_distance_m + yaw.rear_axle_distance_m,
                            parameters.wheelbase, abs_tol=1e-8):
                 raise ValueError("grounded yaw axle geometry must match vehicle wheelbase")
+
+    def validate_navigation_spawn(self, authored: Vec3, position: Vec3,
+                                  parameters: VehicleParameters, track: TrackWorld) -> None:
+        if self.spawn_reference=='legacy_vehicle_position_v1':
+            if authored!=position:
+                raise ValueError('navigation start must match initial vehicle position')
+            return
+        contact = track.surface_at(authored,0.)
+        if contact is None or contact.normal!=Vec3(0.,1.,0.):
+            raise ValueError('authored spawn requires horizontal road contact')
+        expected = authored+Vec3(0.,parameters.ride_height,0.)
+        if (position-expected).magnitude>1e-9:
+            raise ValueError('research chassis spawn must match authored road plus ride height')
 
     def validate_track(self, track: TrackWorld) -> None:
         if self.mode == "wp7_lifecycle_v1" and (
@@ -285,8 +302,10 @@ class PhysicsConfig:
         configuration = asdict(self)
         if self.ground_motion_version=='legacy_euler_v1':
             configuration.pop('ground_motion_version')
+        if self.spawn_reference=='legacy_vehicle_position_v1':
+            configuration.pop('spawn_reference')
         return {
-            "schema_version": 1 if self.ground_motion_version=='legacy_euler_v1' else 2,
+            "schema_version": 1 if self.ground_motion_version=='legacy_euler_v1' and self.spawn_reference=='legacy_vehicle_position_v1' else 2,
             "validation_scope": "software_research_only",
             "longitudinal_model": "legacy_prescribed_v1" if self.ground_motion_version=='legacy_euler_v1' else 'force_frozen_distance_bicycle_v1',
             **configuration,

@@ -112,14 +112,21 @@ def prepare_scenarios(root, registration, *, seed_index: int):
     contact = MultiSurfaceSuspensionPolicy(wheels, .12, .12)
     suspension = IndependentSuspensionDynamicsPolicy(contact, **registration["engineering_suspension"],
                                                      angular_rate_mapping="yaw_rx_rz_v1")
-    physics = PhysicsConfig("wp7_suspension_v1", BODY, suspension,ground_motion_version='arc_distance_v1')
+    physics = PhysicsConfig("wp7_suspension_v1", BODY, suspension,ground_motion_version='arc_distance_v1',
+                            spawn_reference='authored_horizontal_road_v1')
     rewards = RewardComposer((RouteProgressReward(1.), CollisionPenalty(5.), TimePenalty(.1)))
     scenarios = []
     for row in baseline.scenarios:
+        initial = row.factory.initial_state
+        contact = row.factory.track.surface_at(initial.vehicle.position,0.)
+        if contact is None or contact.normal!=Vec3(0.,1.,0.):
+            raise ValueError('registered TRAIN spawn requires horizontal authored road')
+        position = initial.vehicle.position+Vec3(0.,row.factory.vehicle_parameters.ride_height,0.)
+        initial = replace(initial,vehicle=replace(initial.vehicle,position=position),
+                          suspension=SuspensionDynamicsState(position.y))
         factory = replace(row.factory, offtrack_config=None, physics_config=physics,
             race_config=WP7RaceConfig(), reset_config=reset, reset_track_id=row.track_id,
-            reward_composer=rewards, initial_state=replace(row.factory.initial_state,
-                suspension=SuspensionDynamicsState(row.factory.initial_state.vehicle.position.y)))
+            reward_composer=rewards, initial_state=initial)
         scenarios.append(TrainingScenario(row.track_id, factory))
     return TrainingScenarioSet(tuple(scenarios))
 
@@ -141,6 +148,7 @@ def build_protocol(repository_root):
         entry = next(e for e in factory.reset_config.training_registry if e.track_id == row.track_id)
         tracks.append({"track_id": row.track_id, "world_sha256": entry.world_sha256,
             "content_sha256": entry.content_sha256,
+            "initial_state_sha256": digest(json.loads(json.dumps(asdict(factory.initial_state),default=sorted))),
             "race_sha256": factory.race_config.provenance(factory.track, AuthoredRoute(factory.navigation))["sha256"]})
     files = sorted([*root.joinpath("f1rl").rglob("*.py"), *root.joinpath("scripts").glob("*.py"),
         *root.joinpath("tests").rglob("*.py"),

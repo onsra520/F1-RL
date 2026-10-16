@@ -132,8 +132,8 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         if navigation is not None:
             if not isinstance(navigation, AuthoredNavigation):
                 raise ValueError("navigation must be AuthoredNavigation or None")
-            if navigation.points[0] != initial_state.vehicle.position:
-                raise ValueError("navigation start must match initial vehicle position")
+            (physics_config or PhysicsConfig('legacy_v1')).validate_navigation_spawn(
+                navigation.points[0],initial_state.vehicle.position,vehicle_parameters,track)
             if navigation.points[-1] != self._route.finish.target_position:
                 raise ValueError("navigation finish must match track finish")
             if len(navigation.checkpoint_point_indices) != len(self._route.checkpoints):

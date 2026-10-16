@@ -1,7 +1,7 @@
 # WP7 Core Completion Report — 2026-10-16
 
 **Overall: incomplete.** Four engineering increments have been implemented and
-reviewed, with additional Right-turn geometry and distance-ground-motion increments, but seven subsystems remain below 90% and unresolved P0 capabilities
+reviewed, with additional Right-turn geometry, distance-ground-motion and executed planar feasibility increments, but seven subsystems remain below 90% and unresolved P0 capabilities
 remain. Software regressions do not establish scientific acceptance. No weights
 or thresholds were changed to improve these scores.
 
@@ -17,7 +17,8 @@ Base: PR #22 `research/wp7-core-execution-closure-v1`,
 | C braking and isolated saved PPO inference | `research/wp7-control-evaluation-worker-v1` | `13189b76a3068e62f5d3c40b354d7362a8c2b817` | [#25](https://github.com/onsra520/F1-RL/pull/25) |
 | D run manifests and trusted reviews | `research/wp7-run-evidence-review-v1` | `84ff1dbcd371f48ccccc92247d71ec213b8dcc0a`, documentation `e05b4cc7464da123600520dda0c8f5489f1be98b` | [#26](https://github.com/onsra520/F1-RL/pull/26) |
 | E Right-turn arc geometry and corridor witnesses | `research/wp7-general-planar-path-v1` | `a14cecfac0183fa75beef37c3bae4a55db6f775c` | [#27](https://github.com/onsra520/F1-RL/pull/27) |
-| F distance-consistent research ground motion | `research/wp7-distance-ground-motion-v1` | latest commit containing this report | stacked Draft PR on #27 |
+| F distance-consistent research ground motion | `research/wp7-distance-ground-motion-v1` | `42e1993f0f2821b34aa95f200483bc51cfc1fe35` | [#28](https://github.com/onsra520/F1-RL/pull/28) |
+| G registered spawn and executed planar witnesses | `research/wp7-executable-planar-feasibility-v1` | latest commit containing this report | stacked Draft PR on #28 |
 
 No automatic merge. Canonical assets, historical archives and owner decisions
 are unchanged. Owner-contract SHA-256 remains
@@ -53,13 +54,14 @@ manifest/world/content identities. No HELD-OUT assets were opened.
 
 | Track | Certified result | Unresolved physical requirements |
 |---|---|---|
-| `straight-sprint-v1` | Authored sweep and continuous planar body/steering certificate | Executed speed/braking/contact schedule |
-| `slalom-v1` | C2 alternative trajectory with continuous enclosing-body road/obstacle/gate and curvature checks | Executed speed/boost/braking/contact schedule |
+| `straight-sprint-v1` | Continuous planar body/steering reference plus nominal executed numerical physics/body/gate/speed/stop witness | Continuous physical ODE/tracking-error validation; randomized full-path execution |
+| `slalom-v1` | C2 alternative geometry plus nominal executed numerical boost/braking/contact/body/gate/stop witness | Continuous physical ODE/tracking-error validation; randomized full-path execution |
 | `right-turn-v1` | Three arc paths certify continuous body/road/obstacle/gate geometry | All three violate hard 4 m corridor; executable speed/contact/steering schedule remains unresolved |
 | `ramp-v1` | Explicit unsupported sloped/noncoplanar domain | Ramp contact continuity, mixed support and elevated passage |
 
-Straight/slalom and Right-turn certificates are sufficient geometric proofs within their
-declared planar domains. They are not physics rollouts. Right-turn's three exact
+Straight/slalom reference curves and Right-turn certificates are sufficient geometric proofs within their
+declared planar domains. The reference certificates are not physics rollouts;
+G separately executes Straight/slalom in the registered numerical simulator. Right-turn's three exact
 candidates have reproducible hard-corridor violation witnesses; this is not a
 global infeasibility certificate. No asset correction is asserted or approved.
 See `wp7-right-turn-arc-feasibility-2026-10-16.md`. Ramp's planar-candidate aperture failures do not prove the real ramp
@@ -96,6 +98,19 @@ not an exact continuous physical force ODE. This does not close ramp support,
 all-track speed schedules or physical calibration. See
 `wp7-distance-ground-motion-2026-10-16.md`.
 
+G fixes actual registered spawn preparation: road-authored spawn coordinates
+were incorrectly used as chassis height, placing wheel references below travel.
+An explicit versioned spawn reference now initializes chassis/suspension at
+road plus ride height while preserving authored navigation and legacy equality.
+All four real TRAIN factories reset and accept their first physics step.
+The existing auditor can optionally execute nominal Straight/Slalom reference
+control tapes and independently replay source/config/runtime-bound evidence in
+a fresh exact-root worker. Numerical body/road/obstacle/contact checks, full-body
+gate enclosures, ordered race/corridor checks and stopping all run on actual
+registered assets. These are engineering witnesses, not learned policy or
+randomized robustness evidence. Right-turn/ramp remain unresolved, so matrix
+weights/statuses stay unchanged. See `wp7-executed-planar-feasibility-2026-10-16.md`.
+
 The new isolated worker loads a real, saved **untrained** PPO model and executes
 stochastic inference in software fixtures only. Model bytes and concrete factory/
 reward identities are checked. Policy-action RNG is process-isolated and seeded
@@ -124,7 +139,8 @@ is empty. See `wp7-run-evidence-review-2026-10-16.md` for schema and CLI details
 | C | 1,953 pass / 2 platform skips | 1,955 pass each; run `38861174631` |
 | D | 1,975 pass / 2 platform skips; 22 new focused tests; 162 matrix tests | 1,977 pass each at `e05b4cc`; run `38862597646` |
 | E | 1,989 pass / 2 platform skips; 38 focused geometry/readiness tests pass | 1,991 pass each at `a14cecf`; run `38903097375` |
-| F | 2,023 pass / 2 platform skips; 112 focused integration/kernel/binding tests pass | Exact-HEAD Windows/Ubuntu CI required; consult stacked Draft PR checks |
+| F | 2,023 pass / 2 platform skips; 112 focused integration/kernel/binding tests pass | 2,025 pass each at `42e1993`; run `38908204431` |
+| G | 2,048 pass / 2 platform skips; 6 real-TRAIN spawn tests and 19 execution/replay/source-boundary tests | Exact-HEAD Windows/Ubuntu CI required; consult stacked Draft PR checks |
 
 D compileall, dependency compatibility (26 packages), and `git diff --check`
 passed before commit. Two-axis review has no remaining material P0/P1/P2 in
