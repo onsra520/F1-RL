@@ -20,6 +20,7 @@ from ..offtrack import OffTrackConfig
 from ..rewards import RewardComposer
 from ..wp7_race import WP7RaceConfig
 from ..train_reset import TrainResetConfig
+from ..action import ActionContract
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,8 +40,11 @@ class F1RLEnvFactory:
     race_config: WP7RaceConfig | None = None
     reset_config: TrainResetConfig | None = None
     reset_track_id: str | None = None
+    action_contract: ActionContract | None = None
 
     def __post_init__(self) -> None:
+        if self.action_contract is not None and not isinstance(self.action_contract,ActionContract):
+            raise ValueError("action_contract must be ActionContract or None")
         values = (
             (self.track, TrackWorld, "track"),
             (self.initial_state, WorldState, "initial_state"),
@@ -106,6 +110,7 @@ class F1RLEnvFactory:
             reset_track_id=self.reset_track_id,
             reset_rank=reset_rank,
             reset_sequence=reset_sequence,
+            action_contract=self.action_contract,
         )
 
 
@@ -165,6 +170,7 @@ class TrainingScenarioSet:
             "physics_config",
             "race_config",
             "reset_config",
+            "action_contract",
         )
         for scenario in self.scenarios[1:]:
             if any(

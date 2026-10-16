@@ -10,6 +10,8 @@ from pathlib import Path
 
 from ..learning.training.config import TrainingRunConfig
 from ..learning.training.env_factory import TrainingScenarioSet
+from ..learning.action import ActionContract
+from ..learning.route_navigation import AuthoredRoute
 from .wp7_protocol import (
     build_protocol, prepare_training_scenarios, validate_protocol, digest,
 )
@@ -67,7 +69,7 @@ def build_policy_execution(repository_root: Path | str, policy_id: str) -> Polic
     if any(s.factory.reset_config.seed != bundle["perturbation"] for s in scenarios.scenarios):
         raise ValueError("registered TRAIN perturbation seed mismatch")
     receipt = {
-        "schema_version": "wp7_policy_execution_binding_v1",
+        "schema_version": "wp7_policy_execution_binding_v2",
         "policy_id": policy_id,
         "protocol_sha256": protocol["sha256"],
         "seed_bundle": dict(bundle),
@@ -76,6 +78,15 @@ def build_policy_execution(repository_root: Path | str, policy_id: str) -> Polic
         "reset_sha256": identity["reset_sha256"],
         "ppo": asdict(config.ppo),
         "sampling_seed": config.sampling_seed,
+        "vector_environment": asdict(config.vector_env),
+        "race_sha256_by_track": {s.track_id:s.factory.race_config.provenance(
+            s.factory.track,AuthoredRoute(s.factory.navigation))["sha256"] for s in scenarios.scenarios},
+        "action_contract": asdict(scenarios.scenarios[0].factory.action_contract or ActionContract()),
+        "observation_sha256": digest(protocol["observation"]),
+        "simulation_sha256": digest(protocol["simulation"]),
+        "checkpoint_plan": {"training_steps":config.total_timesteps,
+                            "checkpoint_every_steps":config.checkpoint_every_steps,
+                            "selection":"final_model_primary"},
         "training_authorized": False,
     }
     receipt["sha256"] = digest(receipt)

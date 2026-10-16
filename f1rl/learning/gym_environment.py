@@ -17,7 +17,7 @@ from ..sandbox.track.query import TrackQuery
 from ..sandbox.vehicle import VehicleParameters, VehicleState
 from ..track_assets.model import AuthoredNavigation
 from ..sandbox.world import WorldState
-from .action import PolicyAction, map_policy_action
+from .action import ActionContract, BrakingPolicyAction, PolicyAction, map_policy_action
 from .episode import (
     EpisodeConfig,
     EpisodeStatus,
@@ -97,8 +97,12 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         reset_track_id: str | None = None,
         reset_rank: int = 0,
         reset_sequence: int = 0,
+        action_contract: ActionContract | None = None,
     ) -> None:
         super().__init__()
+        if action_contract is not None and not isinstance(action_contract,ActionContract):
+            raise ValueError("action_contract must be ActionContract or None")
+        self._action_contract = action_contract or ActionContract()
         values = (
             (track, TrackWorld, "track"),
             (initial_state, WorldState, "initial_state"),
@@ -189,9 +193,9 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         self._last_research_outcome: dict[str, object] | None = None
 
         self.action_space = gym.spaces.Box(
-            low=np.array([-1.0, 0.0], dtype=np.float32),
-            high=np.array([1.0, 1.0], dtype=np.float32),
-            shape=(2,),
+            low=np.array(self._action_contract.low, dtype=np.float32),
+            high=np.array(self._action_contract.high, dtype=np.float32),
+            shape=(len(self._action_contract.low),),
             dtype=np.float32,
         )
 
@@ -479,12 +483,15 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
     def _policy_action(self, action: np.ndarray) -> PolicyAction:
         if not isinstance(action, np.ndarray):
             raise ValueError("action must be a numpy.ndarray")
-        if action.shape != (2,):
-            raise ValueError("action must have shape (2,)")
+        shape = (len(self._action_contract.low),)
+        if action.shape != shape:
+            raise ValueError(f"action must have shape {shape}")
         if action.dtype.kind not in "iuf":
             raise ValueError("action must contain real numeric values")
         if not np.isfinite(action).all():
             raise ValueError("action values must be finite")
+        if shape == (3,):
+            return BrakingPolicyAction(*(float(v) for v in action))
         return PolicyAction(float(action[0]), float(action[1]))
 
     def _step_info(
