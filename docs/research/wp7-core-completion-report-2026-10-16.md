@@ -34,7 +34,7 @@ of scientific success. Compatibility remains a separate unfinished gate.
 | Simulation runtime | 100 | IN_PROGRESS | None in matrix | `runtime/physics.py`, `runtime/simulation.py`, lifecycle/runtime tests | Functional PASS |
 | Vehicle dynamics | 45 | IN_PROGRESS | P0 ramp domain; P1 mixed-normal recovery | `sandbox/manifold_flight.py`, `test_pv5_lifecycle.py` | Incomplete |
 | Track feasibility | 45 | IN_PROGRESS | P0 all TRAIN feasible; speed trajectory | `research/wp7_track_feasibility.py`, planar certificates/tests | Incomplete |
-| Race/episode | 75 | IN_PROGRESS | P0 owner-approved hard-route failure semantics | `learning/episode/wp7_race.py`, `test_wp7_lifecycle_race.py` | Owner blocked |
+| Race/episode | 75 | IN_PROGRESS | P0 owner-approved hard-route failure semantics | `learning/wp7_race.py`, `test_wp7_lifecycle_race.py` | Owner blocked |
 | Gym/reset | 100 | IN_PROGRESS | None in matrix | `test_wp7_train_reset.py`, `test_wp7_lifecycle_race.py` | Functional PASS |
 | Perception/control | 75 | IN_PROGRESS | P0 control feasible on all required tracks | `test_versioned_braking_control.py`, observation tests | Incomplete |
 | Training/PPO | 75 | IN_PROGRESS | P0 independently admitted registered training | `wp7_execution.py`, binding/vector/runner tests | Admission blocked |
