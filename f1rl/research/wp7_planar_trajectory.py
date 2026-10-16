@@ -149,6 +149,9 @@ def search_planar_trajectory(asset, *, parameters=PARAMETERS):
     """Bounded deterministic candidate search; no assets rewritten or PPO run."""
     if asset.track_id not in TRAIN_IDS:
         raise ValueError("only four registered TRAIN tracks supported")
+    if asset.track_id == 'right-turn-v1':
+        from .wp7_arc_trajectory import search_right_turn_trajectory
+        return search_right_turn_trajectory(asset,parameters=parameters)
     if asset.track_id == "slalom-v1":
         candidates = (
             ((0.,4.),(-3.,25.),(-3.,43.),(3.,61.),(3.,70.),(-3.,85.),(1.,98.5),(-3.,110.),(-3.,114.),(0.,127.)),
@@ -156,10 +159,6 @@ def search_planar_trajectory(asset, *, parameters=PARAMETERS):
         )
     elif asset.track_id == "straight-sprint-v1":
         candidates = (((0.,4.),(0.,116.)),)
-    elif asset.track_id == "right-turn-v1":
-        # Explore a diagonal alternative, without falsely inferring that a
-        # failed z-monotone family proves infeasibility of all planar curves.
-        candidates = (((0.,4.),(0.,35.),(0.,62.),(20.,70.),(64.,74.)),)
     else:
         candidates = (((0.,4.),(0.,155.)),)
     attempts = []

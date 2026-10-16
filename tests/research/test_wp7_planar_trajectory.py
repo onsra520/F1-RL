@@ -72,7 +72,7 @@ def test_invalid_or_degenerate_path_rejected(knots):
         certify_planar_trajectory(straight(),knots)
 
 
-@pytest.mark.parametrize("track", ["right-turn-v1","ramp-v1"])
+@pytest.mark.parametrize("track", ["ramp-v1"])
 def test_failed_candidate_search_never_claims_general_infeasibility(track):
     asset = load_track_asset(ROOT / f"assets/tracks/training/{track}.json")
     result = search_planar_trajectory(asset)

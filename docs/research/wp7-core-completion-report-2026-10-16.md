@@ -1,7 +1,7 @@
 # WP7 Core Completion Report — 2026-10-16
 
 **Overall: incomplete.** Four engineering increments have been implemented and
-reviewed, but seven subsystems remain below 90% and unresolved P0 capabilities
+reviewed, with an additional Right-turn geometry increment, but seven subsystems remain below 90% and unresolved P0 capabilities
 remain. Software regressions do not establish scientific acceptance. No weights
 or thresholds were changed to improve these scores.
 
@@ -15,7 +15,8 @@ Base: PR #22 `research/wp7-core-execution-closure-v1`,
 | A continuous planar certificates | `research/wp7-core-completion-v1` | `81bad5315cc6ba95fb41cef94a050b001055bad1` | [#23](https://github.com/onsra520/F1-RL/pull/23) |
 | B timed lifecycle race/reset | `research/wp7-lifecycle-race-closure-v1` | `c2768a3aa184b3862168eae092dc103f7567290d` | [#24](https://github.com/onsra520/F1-RL/pull/24) |
 | C braking and isolated saved PPO inference | `research/wp7-control-evaluation-worker-v1` | `13189b76a3068e62f5d3c40b354d7362a8c2b817` | [#25](https://github.com/onsra520/F1-RL/pull/25) |
-| D run manifests and trusted reviews | `research/wp7-run-evidence-review-v1` | commit containing this report | stacked Draft PR on #25 |
+| D run manifests and trusted reviews | `research/wp7-run-evidence-review-v1` | `84ff1dbcd371f48ccccc92247d71ec213b8dcc0a`, documentation `e05b4cc7464da123600520dda0c8f5489f1be98b` | [#26](https://github.com/onsra520/F1-RL/pull/26) |
+| E Right-turn arc geometry and corridor witnesses | `research/wp7-general-planar-path-v1` | latest commit containing this report | stacked Draft PR on #26 |
 
 No automatic merge. Canonical assets, historical archives and owner decisions
 are unchanged. Owner-contract SHA-256 remains
@@ -53,13 +54,14 @@ manifest/world/content identities. No HELD-OUT assets were opened.
 |---|---|---|
 | `straight-sprint-v1` | Authored sweep and continuous planar body/steering certificate | Executed speed/braking/contact schedule |
 | `slalom-v1` | C2 alternative trajectory with continuous enclosing-body road/obstacle/gate and curvature checks | Executed speed/boost/braking/contact schedule |
-| `right-turn-v1` | Finite candidate family remains unresolved | General trajectory search, steering and repeated directed-plane ordering |
+| `right-turn-v1` | Three arc paths certify continuous body/road/obstacle/gate geometry | All three violate hard 4 m corridor; executable speed/contact/steering schedule remains unresolved |
 | `ramp-v1` | Explicit unsupported sloped/noncoplanar domain | Ramp contact continuity, mixed support and elevated passage |
 
-Straight/slalom certificates are sufficient geometric proofs within their
-declared planar domain. They are not physics rollouts. Right-turn search failure
-is not a global infeasibility certificate; no asset correction is asserted or
-approved. Ramp's planar-candidate aperture failures do not prove the real ramp
+Straight/slalom and Right-turn certificates are sufficient geometric proofs within their
+declared planar domains. They are not physics rollouts. Right-turn's three exact
+candidates have reproducible hard-corridor violation witnesses; this is not a
+global infeasibility certificate. No asset correction is asserted or approved.
+See `wp7-right-turn-arc-feasibility-2026-10-16.md`. Ramp's planar-candidate aperture failures do not prove the real ramp
 impossible. See `wp7-core-completion-phase-a-2026-10-16.md`.
 
 ## Integrated execution and PPO infrastructure
@@ -104,7 +106,8 @@ is empty. See `wp7-run-evidence-review-2026-10-16.md` for schema and CLI details
 | A | 1,918 pass / 2 platform skips | 1,920 pass each; run `38857506598` |
 | B | 1,936 pass / 2 platform skips | 1,938 pass each; run `38858890456` |
 | C | 1,953 pass / 2 platform skips | 1,955 pass each; run `38861174631` |
-| D | 1,975 pass / 2 platform skips; 22 new focused tests; 162 matrix tests | Required on the commit containing this report; consult Draft PR checks |
+| D | 1,975 pass / 2 platform skips; 22 new focused tests; 162 matrix tests | 1,977 pass each at `e05b4cc`; run `38862597646` |
+| E | 1,989 pass / 2 platform skips; 38 focused geometry/readiness tests pass | Exact-HEAD Windows/Ubuntu CI required for this increment; consult stacked Draft PR checks |
 
 D compileall, dependency compatibility (26 packages), and `git diff --check`
 passed before commit. Two-axis review has no remaining material P0/P1/P2 in
@@ -129,7 +132,7 @@ are unverified; CPU success cannot be promoted to universal compatibility.
 | G5 evidence recovery | BLOCKED | Actual private Google Drive archival and independently restored bytes |
 | G6 scientific review | BLOCKED | Authenticated real trust bootstrap, independent reviewer and owner sign-off after G1–G5 |
 
-Remaining engineering: general Right-turn trajectory search; verified ramp/contact
+Remaining engineering: general corridor-compliant Right-turn trajectory search; verified ramp/contact
 support; executable speed/braking/boost schedules and tracking on all four tracks;
 future admitted runner checkpoint observers and research-worker registration;
 CUDA/remaining compatibility evidence. Remaining owner/external decisions:

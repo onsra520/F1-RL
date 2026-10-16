@@ -102,7 +102,7 @@
           "priority": "P0",
           "source": "f1rl/research/wp7_track_feasibility.py",
           "test": "tests/research/test_pv5_track_feasibility.py",
-          "blocker": "Straight/slalom alternative planar geometry certificates exist; right-turn candidate search and ramp support remain unresolved; executed speed/contact evidence still required."
+          "blocker": "Straight/slalom and Right-turn arc body/road/gate geometry certificates exist. All searched Right-turn arcs violate the hard 4 m corridor; ramp support and executed speed/contact evidence remain unresolved."
         },
         {
           "id": "speed_trajectory_certified",
