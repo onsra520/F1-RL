@@ -14,11 +14,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+science = ["cryptography>=50.0.2,<51"]
 rl = [
     "stable-baselines3>=2.9,<2.10",
     "PyYAML>=6,<7",
 ]
 dev = [
+    "cryptography>=50.0.2,<51",
     "pytest>=8,<10",
     "stable-baselines3>=2.9,<2.10",
     "PyYAML>=6,<7",

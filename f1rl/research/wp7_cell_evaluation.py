@@ -109,10 +109,8 @@ def save_cell_evidence(record: dict, output_path: Path) -> None:
             f.write(data)
             f.flush()
             os.fsync(f.fileno())
-        with output_path.open("xb") as dest:
-            dest.write(tmp.read_bytes())
-            dest.flush()
-            os.fsync(dest.fileno())
+        # Same-directory hard link publishes complete bytes without overwrite.
+        os.link(tmp, output_path)
     finally:
         if tmp is not None:
             tmp.unlink(missing_ok=True)

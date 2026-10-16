@@ -1,8 +1,8 @@
 """Evidence-bound readiness report with an intentionally closed approval boundary.
 
 No input boolean, matching checksum or green software receipt is an owner
-signature. This version has no authorization verifier and cannot grant training.
-A separately reviewed verifier/schema is required before adding that transition.
+signature. Review authentication is implemented separately; no trusted owner
+bootstrap or independently verified scientific approval is present.
 """
 from pathlib import Path
 from hashlib import sha256
@@ -78,8 +78,8 @@ def evaluate_admission(repository_root, *, verify_software=False, capture_runtim
           "variable-omega TOI, mixed normals, tire patches and grounded obstacle recovery remain unsupported",
           "docs/research/wp7-pv5-transition-domains-v1.md")
     block("separate_approval_verifier_required", "authorization",
-          "no separately verified owner/reviewer approval contract exists in this version",
-          "f1rl/learning/owner_acceptance.py:review_preregistered_contract")
+          "review signature verifier exists but trusted owner/reviewer identities and independent scientific admission are absent",
+          "configs/research/wp7-trusted-reviewers-v1.json")
     block("owner_training_permission_false", "authorization",
           "preregistered owner reader does not grant training", "owner_permissions.training_permitted")
     document = {
@@ -88,7 +88,7 @@ def evaluate_admission(repository_root, *, verify_software=False, capture_runtim
         "software_verification": software,
         "physical_validation_readiness": "blocked", "experiment_registration": "blocked",
         "authorization": {"contract": "separate_verified_approval_required_v1",
-                          "verifier_implemented": False, "verified": False},
+                          "verifier_implemented": True, "verified": False},
         "training_authorized": False, "post_training_acceptance": "not_evaluated",
         "owner_permissions": {name: getattr(owner, name) for name in
             ("training_permitted", "heldout_permitted", "scientific_freeze_permitted", "wp8_permitted")},

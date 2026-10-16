@@ -5,6 +5,8 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 import json
 import os
+from copy import deepcopy
+from uuid import uuid4
 from pathlib import Path
 from typing import Literal
 
@@ -237,6 +239,12 @@ class TrainingRunner:
         self._provenance = provenance
         self._checkpoint_observer = checkpoint_observer
         self._final_model_observer = final_model_observer
+        self._registered_run_manifest = None
+
+    @property
+    def registered_run_manifest(self) -> dict | None:
+        """Pre-execution capture, including denied attempts; never proof of training."""
+        return deepcopy(self._registered_run_manifest)
 
     def run_registered(self, binding: object) -> TrainingRunResult:
         """Validate a policy-bound WP7 execution before any model/artifact creation.
@@ -248,6 +256,8 @@ class TrainingRunner:
         if not isinstance(binding, PolicyBoundTrainingConfig):
             raise ValueError("registered execution requires PolicyBoundTrainingConfig")
         binding.validate(self._config, binding.scenarios)
+        from ...research.wp7_run_manifest import capture_registered_run
+        self._registered_run_manifest = capture_registered_run(binding, run_id=uuid4().hex)
         if len(binding.scenarios.scenarios) == 1:
             return self.run_single(binding.scenarios.scenarios[0].factory)
         return self.run_multi(binding.scenarios)
