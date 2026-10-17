@@ -30,7 +30,8 @@ def _verify_software(root, protocol):
              "tests/integration/test_wp7_race_contract.py", "tests/integration/test_wp7_train_reset.py"]
     spatial = protocol_profile(protocol)=='spatial_ground_v1'
     if spatial:
-        paths.extend(['tests/research/test_wp7_spatial_profile.py','tests/research/test_wp7_spatial_profile_execution.py'])
+        paths.extend(['tests/research/test_wp7_spatial_profile.py','tests/research/test_wp7_spatial_profile_execution.py',
+                      'tests/research/test_wp7_spatial_ramp_tracking.py'])
     command = [sys.executable, "-B", "-m", "pytest", "-p", "no:cacheprovider", *paths, "-q"]
     environment = {**os.environ, "PYTHONPATH": str(root), "PYTHONDONTWRITEBYTECODE": "1"}
     environment.pop("PYTEST_ADDOPTS", None)

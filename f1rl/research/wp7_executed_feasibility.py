@@ -223,6 +223,13 @@ def _ramp_control(snapshot,factory,finish_z):
                           min(1.,max(0.,-drive/p.max_braking)))
 
 
+def _spatial_ramp_control(snapshot,factory,finish_z):
+    """Retain slope-aware speed control while tracking the authored horizontal route."""
+    knots=tuple((point.x,point.z) for point in factory.navigation.points)
+    steering=_control(snapshot,factory,knots,finish_z).steering
+    return replace(_ramp_control(snapshot,factory,finish_z),steering=steering)
+
+
 def _arc_control(snapshot,factory,pieces,finish_s):
     """Project onto line/circle pieces and track the bounded arc reference."""
     vehicle = snapshot.world.vehicle
@@ -369,6 +376,11 @@ def _execute_planar(repository_root,track_id,*,controls=None,ramp_profile=False,
             paired_seed_index=selection['seed_index'],reset_rank=selection['reset_rank'],
             reset_index=selection['reset_index'],reset_metadata=None,
             scope='registered_spatial_numerical_TRAIN_execution_not_calibrated_or_scientific_evidence')
+    if selection is not None and ramp_reference:
+        result['controller'] = {k:v for k,v in RAMP_CONTROLLER.items() if k!='steering'}
+        result['controller'].update(version='spatial_ramp_route_speed_stop_v1',
+            heading_gain_per_m=CONTROLLER['heading_gain_per_m'],
+            lateral_gain_per_m2=CONTROLLER['lateral_gain_per_m2'])
     if coupled_profile or spatial_profile:
         result.update(schema_version='wp7_executed_spatial_ramp_proposal_v1' if spatial_profile else 'wp7_executed_coupled_ramp_proposal_v1',
             scope='nominal_spatial_force_contact_numerical_proposal_not_registered_PPO_or_measured_physics' if spatial_profile else
@@ -412,6 +424,7 @@ def _execute_planar(repository_root,track_id,*,controls=None,ramp_profile=False,
         for tick in range(limit):
             control = controls[tick] if controls is not None else (
                 _arc_control(sim.snapshot,factory,pieces,geometry['gate_passages'][-1]['crossing_s_m']) if arc_reference else
+                _spatial_ramp_control(sim.snapshot,factory,gates[-1].volume.center.z) if selection is not None and ramp_reference else
                 _ramp_control(sim.snapshot,factory,gates[-1].volume.center.z) if ramp_reference else
                 _control(sim.snapshot,factory,geometry['knots_xz_m'],gates[-1].volume.center.z))
             result['controls'].append([control.steering,control.throttle,control.brake])
