@@ -2,9 +2,9 @@ name: WP7 body collision v2 regression
 
 on:
   push:
-    branches: [research/wp7-body-collision-v2, research/wp7-road-footprint-v1, research/wp7-ramp-support-v1, research/wp7-owner-acceptance-v1, research/wp7-multisurface-suspension-v1, research/wp7-independent-suspension-dynamics-v1, research/wp7-ballistic-landing-v1, research/wp7-auto-support-release-v1, research/wp7-sloped-clearance-tilted-landing-v1, research/wp7-angular-impulse-landing-v1, research/wp7-contact-manifold-rebound-v1, research/wp7-6dof-sloped-events-v1, research/wp7-torque-free-swept-ccd-v1, research/wp7-ode-enclosure-yaw-tire-v1, research/wp7-physical-validation-readiness-v1, research/wp7-scientific-acceptance-evidence-v1, research/wp7-physics-validation-v1, research/wp7-unified-physics-admission-v1, research/wp7-core-readiness-90-v1, research/wp7-core-execution-closure-v1, research/wp7-core-completion-v1, research/wp7-lifecycle-race-closure-v1, research/wp7-control-evaluation-worker-v1, research/wp7-run-evidence-review-v1, research/wp7-general-planar-path-v1, research/wp7-distance-ground-motion-v1, research/wp7-executable-planar-feasibility-v1, research/wp7-ramp-force-consistency-v1, research/wp7-coupled-ramp-contact-v1, research/wp7-directed-center-feasibility-v1, research/wp7-spatial-ground-contact-v1]
+    branches: ['research/wp7-*']
   pull_request:
-    branches: [audit/h01-canonical-c2-contract, research/wp7-body-collision-v2, research/wp7-road-footprint-v1, research/wp7-ramp-support-v1, research/wp7-owner-acceptance-v1, research/wp7-multisurface-suspension-v1, research/wp7-scientific-acceptance-evidence-v1, research/wp7-physics-validation-v1, research/wp7-unified-physics-admission-v1, research/wp7-core-readiness-90-v1, research/wp7-core-execution-closure-v1, research/wp7-core-completion-v1, research/wp7-lifecycle-race-closure-v1, research/wp7-control-evaluation-worker-v1, research/wp7-run-evidence-review-v1, research/wp7-general-planar-path-v1, research/wp7-distance-ground-motion-v1, research/wp7-executable-planar-feasibility-v1, research/wp7-ramp-force-consistency-v1, research/wp7-coupled-ramp-contact-v1, research/wp7-directed-center-feasibility-v1, research/wp7-spatial-ground-contact-v1]
+    branches: ['audit/h01-canonical-c2-contract', 'research/wp7-*']
 
 permissions:
   contents: read
