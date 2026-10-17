@@ -12,7 +12,7 @@ import sys
 
 from ..learning.owner_acceptance import review_preregistered_contract
 from ..sandbox.tire_calibration_contract import REQUIRED_WP7_MEASUREMENTS
-from .wp7_protocol import build_protocol, digest, _runtime
+from .wp7_protocol import build_protocol, digest, _runtime, protocol_profile
 from .wp7_track_feasibility import audit_train_tracks
 
 
@@ -28,11 +28,14 @@ def _verify_software(root, protocol):
              "tests/research/test_pv5_track_feasibility.py", "tests/integration/test_pv5_outcomes.py",
              "tests/research/test_pv5_protocol.py", "tests/learning/training/test_pv5_backend_admission.py",
              "tests/integration/test_wp7_race_contract.py", "tests/integration/test_wp7_train_reset.py"]
+    spatial = protocol_profile(protocol)=='spatial_ground_v1'
+    if spatial:
+        paths.extend(['tests/research/test_wp7_spatial_profile.py','tests/research/test_wp7_spatial_profile_execution.py'])
     command = [sys.executable, "-B", "-m", "pytest", "-p", "no:cacheprovider", *paths, "-q"]
     environment = {**os.environ, "PYTHONPATH": str(root), "PYTHONDONTWRITEBYTECODE": "1"}
     environment.pop("PYTEST_ADDOPTS", None)
-    result = subprocess.run(command, cwd=root, env=environment, capture_output=True, text=True, timeout=120)
-    current = build_protocol(root)
+    result = subprocess.run(command, cwd=root, env=environment, capture_output=True, text=True, timeout=1200 if spatial else 120)
+    current = build_protocol(root,profile=protocol_profile(protocol))
     return {"command": command, "returncode": result.returncode,
             "source_unchanged": current["sha256"] == protocol["sha256"],
             "stdout_sha256": sha256(result.stdout.encode()).hexdigest(),
@@ -41,12 +44,12 @@ def _verify_software(root, protocol):
             "scope": "focused_synthetic_software_checks_not_empirical_validation"}
 
 
-def evaluate_admission(repository_root, *, verify_software=False, capture_runtime=True):
+def evaluate_admission(repository_root, *, verify_software=False, capture_runtime=True,profile='pv5_v1'):
     if type(verify_software) is not bool or type(capture_runtime) is not bool:
         raise ValueError("admission options must be bool")
     root = Path(repository_root).resolve(strict=True)
     owner = review_preregistered_contract(root / "configs/recovery/wp7-owner-decisions-preregistered-v1.yml")
-    protocol = build_protocol(root)
+    protocol = build_protocol(root,profile=profile)
     track_audit = audit_train_tracks(root)
     runtime = _runtime() if capture_runtime else None
     software = _verify_software(root, protocol) if verify_software else None
@@ -100,10 +103,10 @@ def evaluate_admission(repository_root, *, verify_software=False, capture_runtim
     return {**document, "sha256": digest(document)}
 
 
-def reject_research_training(message, *, repository_root=None):
+def reject_research_training(message, *, repository_root=None,profile='pv5_v1'):
     root = repository_root or Path(__file__).resolve().parents[2]
     try:
-        report = evaluate_admission(root, capture_runtime=False)
+        report = evaluate_admission(root, capture_runtime=False,profile=profile)
     except Exception as exc:
         report = {"schema_version": "wp7_admission_report_v1", "status": "implementation_incomplete",
                   "training_authorized": False,

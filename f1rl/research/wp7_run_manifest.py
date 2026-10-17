@@ -22,7 +22,7 @@ def capture_registered_run(binding, *, run_id):
     if not isinstance(run_id, str) or not run_id.strip() or len(run_id) > 128:
         raise ValueError('explicit bounded run identity required')
     binding.validate(binding.configuration, binding.scenarios)
-    protocol = build_protocol(binding.root)
+    protocol = build_protocol(binding.root,profile=binding.profile)
     if protocol['sha256'] != binding.protocol_sha256:
         raise ValueError('protocol changed during run preparation')
     runtime = capture_runtime_manifest(binding.root, protocol)

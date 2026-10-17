@@ -258,6 +258,10 @@ class TrainingRunner:
         binding.validate(self._config, binding.scenarios)
         from ...research.wp7_run_manifest import capture_registered_run
         self._registered_run_manifest = capture_registered_run(binding, run_id=uuid4().hex)
+        if any(s.factory.requires_scientific_admission for s in binding.scenarios.scenarios):
+            from ...research.wp7_admission import reject_research_training
+            reject_research_training('registered research execution remains blocked before model/artifact allocation',
+                                     repository_root=binding.root,profile=binding.profile)
         if len(binding.scenarios.scenarios) == 1:
             return self.run_single(binding.scenarios.scenarios[0].factory)
         return self.run_multi(binding.scenarios)

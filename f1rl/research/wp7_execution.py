@@ -25,12 +25,13 @@ class PolicyBoundTrainingConfig:
     configuration: TrainingRunConfig
     scenarios: TrainingScenarioSet
     receipt: dict[str, object]
+    profile: str = 'pv5_v1'
 
     def validate(self, config: TrainingRunConfig, scenarios: TrainingScenarioSet) -> None:
         """Rebuild from disk and compare exact policy, PPO, sampling and reset IDs."""
         if not isinstance(config, TrainingRunConfig) or not isinstance(scenarios, TrainingScenarioSet):
             raise ValueError("registered policy requires TrainingRunConfig and TrainingScenarioSet")
-        current = build_policy_execution(self.root, self.policy_id)
+        current = build_policy_execution(self.root, self.policy_id,profile=self.profile)
         if self.protocol_sha256 != current.protocol_sha256:
             raise ValueError("registered protocol/source drift before execution")
         if config != current.configuration:
@@ -43,7 +44,7 @@ class PolicyBoundTrainingConfig:
             raise ValueError("execution preparation cannot authorize scientific training")
 
 
-def build_policy_execution(repository_root: Path | str, policy_id: str) -> PolicyBoundTrainingConfig:
+def build_policy_execution(repository_root: Path | str, policy_id: str,*,profile='pv5_v1') -> PolicyBoundTrainingConfig:
     """Bind exactly one registered policy to a runner config and TRAIN scenario set.
 
     Does not create models, reset a Gym environment, train, or open artifacts.
@@ -51,7 +52,7 @@ def build_policy_execution(repository_root: Path | str, policy_id: str) -> Polic
     if not isinstance(policy_id, str) or not policy_id:
         raise ValueError("registered policy_id required")
     root = Path(repository_root).resolve(strict=True)
-    protocol = build_protocol(root)
+    protocol = build_protocol(root,profile=profile)
     validate_protocol(protocol, root)
     scenarios, identity = prepare_training_scenarios(root, protocol, policy_id)
     bundle = identity["seed_bundle"]
@@ -90,4 +91,4 @@ def build_policy_execution(repository_root: Path | str, policy_id: str) -> Polic
         "training_authorized": False,
     }
     receipt["sha256"] = digest(receipt)
-    return PolicyBoundTrainingConfig(root, policy_id, protocol["sha256"], config, scenarios, receipt)
+    return PolicyBoundTrainingConfig(root, policy_id, protocol["sha256"], config, scenarios, receipt,profile)

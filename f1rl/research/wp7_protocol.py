@@ -22,12 +22,15 @@ from ..learning.route_navigation import AuthoredRoute
 from ..learning.training.config import TrainingRunConfig
 from ..learning.training.env_factory import TrainingScenario, TrainingScenarioSet
 from ..learning.train_reset import TrainResetConfig
+from ..learning.action import ActionContract
 from ..learning.wp7_race import WP7RaceConfig
 from ..runtime.physics import PhysicsConfig
 from ..sandbox.geometry.vector import Vec3
 from ..sandbox.independent_suspension_dynamics import IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState
 from ..sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
 from ..sandbox.ramp_support import WheelContactPoints
+from ..sandbox.coupled_longitudinal_dynamics import LongitudinalContactPolicy
+from ..sandbox.spatial_contact_dynamics import SpatialContactPolicy
 from ..track_assets import load_track_manifest
 from .wp7_track_feasibility import BODY
 
@@ -45,17 +48,36 @@ def _unique(pairs):
     return result
 
 
-def load_registration(root):
-    path = root / "configs/research/wp7-pv5-protocol-v1.json"
+PROFILES = ('pv5_v1','spatial_ground_v1')
+
+
+def _registration_path(root,profile):
+    if type(profile) is not str or profile not in PROFILES:
+        raise ValueError('unregistered execution profile')
+    return root / ('configs/research/wp7-spatial-ground-protocol-v1.json' if profile=='spatial_ground_v1'
+                   else 'configs/research/wp7-pv5-protocol-v1.json')
+
+
+def protocol_profile(protocol):
+    if not isinstance(protocol,dict) or protocol.get('schema_version') not in ('wp7_bound_protocol_v1','wp7_bound_protocol_v2'):
+        raise ValueError('unregistered protocol profile schema')
+    return 'spatial_ground_v1' if protocol['schema_version']=='wp7_bound_protocol_v2' else 'pv5_v1'
+
+
+def load_registration(root,*,profile='pv5_v1'):
+    path = _registration_path(root,profile)
+    spatial = profile=='spatial_ground_v1'
     doc = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique)
     keys = {"schema_version", "status", "simulator_version", "training_profile", "seed_roster",
             "cohorts", "evaluation", "engineering_suspension", "required_domains", "calibration",
             "source_policy", "approval"}
+    if spatial:
+        keys.add('engineering_spatial_contact')
     if not isinstance(doc, dict) or set(doc) != keys:
         raise ValueError("protocol registration requires exact fields")
     fixed = {
-        "schema_version": "wp7_experiment_registration_v1", "status": "draft_not_authorized",
-        "simulator_version": "f1rl-0.1.0/wp7-pv5", "training_profile": "configs/recovery/wp7-pilot-200k.yml",
+        "schema_version": "wp7_experiment_registration_v2" if spatial else "wp7_experiment_registration_v1", "status": "draft_not_authorized",
+        "simulator_version": "f1rl-0.1.0/wp7-spatial-ground-v1" if spatial else "f1rl-0.1.0/wp7-pv5", "training_profile": "configs/recovery/wp7-pilot-200k.yml",
         "cohorts": ["singletrack_each_train", "multitrack_uniform_reset"],
         "required_domains": ["grounded", "partial_support", "takeoff", "flight", "landing", "recovery"],
         "calibration": "provisional_engineering_values_require_measured_reference_and_independent_review",
@@ -86,10 +108,24 @@ def load_registration(root):
     if evaluation != expected or type(evaluation["episodes_per_cell"]) is not int:
         raise ValueError("protocol evaluation fields changed; version/review required")
     suspension = doc["engineering_suspension"]
-    if not isinstance(suspension, dict) or set(suspension) != {
+    if not isinstance(suspension,dict):
+        raise ValueError('protocol suspension requires exact parameter fields')
+    suspension_keys = {
         "mass_kg", "pitch_inertia_kg_m2", "roll_inertia_kg_m2", "spring_stiffness_npm",
         "damper_nspm", "angular_damping_nmsprad", "max_abs_tilt_rad", "integration_substeps",
-    }:
+    }
+    if spatial:
+        suspension_keys.add('force_model')
+        if suspension.get('force_model')!='road_relative_vertical_v2':
+            raise ValueError('spatial registration requires road-relative force model')
+        contact = doc['engineering_spatial_contact']
+        if (not isinstance(contact,dict) or set(contact)!={'traction','yaw_inertia_kg_m2','lateral_damping_nspm','max_angular_speed_radps'}
+                or not isinstance(contact['traction'],dict) or set(contact['traction'])!={
+                    'traction_mu','max_drive_power_w','brake_speed_scale_mps','energy_relative_tolerance',
+                    'energy_absolute_tolerance_j','max_refinements'}):
+            raise ValueError('spatial registration requires exact contact policy fields')
+        SpatialContactPolicy(**{**contact,'traction':LongitudinalContactPolicy(**contact['traction'])})
+    if not isinstance(suspension, dict) or set(suspension) != suspension_keys:
         raise ValueError("protocol suspension requires exact parameter fields")
     return doc
 
@@ -112,8 +148,13 @@ def prepare_scenarios(root, registration, *, seed_index: int):
     contact = MultiSurfaceSuspensionPolicy(wheels, .12, .12)
     suspension = IndependentSuspensionDynamicsPolicy(contact, **registration["engineering_suspension"],
                                                      angular_rate_mapping="yaw_rx_rz_v1")
-    physics = PhysicsConfig("wp7_suspension_v1", BODY, suspension,ground_motion_version='arc_distance_v1',
-                            spawn_reference='authored_horizontal_road_v1')
+    spatial = registration['schema_version']=='wp7_experiment_registration_v2'
+    spatial_policy = registration.get('engineering_spatial_contact')
+    physics = PhysicsConfig("wp7_suspension_v1", BODY, suspension,
+        ground_motion_version='spatial_contact_v1' if spatial else 'arc_distance_v1',
+        spawn_reference='authored_horizontal_road_v1',spatial_contact_policy=(
+            SpatialContactPolicy(**{**spatial_policy,'traction':LongitudinalContactPolicy(**spatial_policy['traction'])})
+            if spatial else None))
     rewards = RewardComposer((RouteProgressReward(1.), CollisionPenalty(5.), TimePenalty(.1)))
     scenarios = []
     for row in baseline.scenarios:
@@ -126,14 +167,15 @@ def prepare_scenarios(root, registration, *, seed_index: int):
                           suspension=SuspensionDynamicsState(position.y))
         factory = replace(row.factory, offtrack_config=None, physics_config=physics,
             race_config=WP7RaceConfig(), reset_config=reset, reset_track_id=row.track_id,
-            reward_composer=rewards, initial_state=initial)
+            reward_composer=rewards, initial_state=initial,
+            action_contract=ActionContract('steering-throttle-brake-v2') if spatial else None)
         scenarios.append(TrainingScenario(row.track_id, factory))
     return TrainingScenarioSet(tuple(scenarios))
 
 
-def build_protocol(repository_root):
+def build_protocol(repository_root,*,profile='pv5_v1'):
     root = Path(repository_root).resolve(strict=True)
-    registration = load_registration(root)
+    registration = load_registration(root,profile=profile)
     scenarios = prepare_scenarios(root, registration, seed_index=0)
     config = TrainingRunConfig.from_yaml(root / registration["training_profile"])
     reference = scenarios.scenarios[0].factory
@@ -152,14 +194,14 @@ def build_protocol(repository_root):
             "race_sha256": factory.race_config.provenance(factory.track, AuthoredRoute(factory.navigation))["sha256"]})
     files = sorted([*root.joinpath("f1rl").rglob("*.py"), *root.joinpath("scripts").glob("*.py"),
         *root.joinpath("tests").rglob("*.py"),
-        root / "pyproject.toml", root / "configs/research/wp7-pv5-protocol-v1.json",
+        root / "pyproject.toml", _registration_path(root,profile),
         root / "configs/experiments/ppo-generalization-v1.yml", root / registration["training_profile"],
         root / "configs/recovery/wp7-c2-candidate.yml", root / "configs/recovery/wp7-owner-decisions-preregistered-v1.yml",
         root / "assets/tracks/manifest.json",
         *(root / f"assets/tracks/training/{t}.json" for t in TRAIN_IDS)])
     source = {p.relative_to(root).as_posix(): sha256(p.read_bytes()).hexdigest() for p in files}
     document = {
-        "schema_version": "wp7_bound_protocol_v1", "registration": registration,
+        "schema_version": "wp7_bound_protocol_v2" if profile=='spatial_ground_v1' else "wp7_bound_protocol_v1", "registration": registration,
         "source": asdict(_capture_git_provenance(root)), "source_files": source,
         "physics": reference.physics_config.document(), "physics_sha256": reference.physics_config.sha256,
         "tracks": tracks,
@@ -168,7 +210,9 @@ def build_protocol(repository_root):
         "vehicle": asdict(reference.vehicle_parameters), "simulation": asdict(reference.simulation_config),
         "observation": {"features": list(reference.observation_encoder.feature_names),
                         "configuration": asdict(reference.observation_encoder.config)},
-        "action": {"version": "steering-throttle-brake0-v1", "low": [-1.,0.], "high": [1.,1.]},
+        "action": {"version": (reference.action_contract or ActionContract()).version,
+                   "low":list((reference.action_contract or ActionContract()).low),
+                   "high":list((reference.action_contract or ActionContract()).high)},
         "rewards": [{"name": r.name, "configuration": asdict(r)} for r in reference.reward_composer.terms],
         "episode": asdict(reference.episode_config), "policies": policies,
         "vector_environment": asdict(config.vector_env), "requested_device": config.ppo.device,
@@ -186,7 +230,7 @@ def build_protocol(repository_root):
 
 
 def validate_protocol(document, repository_root):
-    if not isinstance(document, dict) or digest(document) != digest(build_protocol(repository_root)):
+    if not isinstance(document, dict) or digest(document) != digest(build_protocol(repository_root,profile=protocol_profile(document))):
         raise ValueError("protocol is missing, inconsistent or stale against actual source/configuration")
 
 

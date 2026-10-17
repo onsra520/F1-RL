@@ -120,7 +120,13 @@ def audit_track(asset, *, parameters=PARAMETERS):
 
 
 def audit_train_tracks(repository_root, *, track_ids=TRAIN_IDS, search_alternatives=False, execute_controls=False,
-                       registered_center_gates=False):
+                       registered_center_gates=False,execution_profile="pv5_v1"):
+    if type(execution_profile) is not str or execution_profile not in ('pv5_v1','spatial_ground_v1'):
+        raise ValueError('unregistered execution profile')
+    if execution_profile=='spatial_ground_v1':
+        if execute_controls is not True:
+            raise ValueError('spatial profile audit requires actual execution')
+        registered_center_gates = True
     if type(search_alternatives) is not bool:
         raise ValueError("search_alternatives must be bool")
     if type(execute_controls) is not bool:
@@ -161,7 +167,11 @@ def audit_train_tracks(repository_root, *, track_ids=TRAIN_IDS, search_alternati
         if execute_controls:
             from .wp7_executed_feasibility import certify_planar_execution, certify_registered_center_execution
             executor = certify_registered_center_execution if registered_center_gates else certify_planar_execution
-            row['executed_planar_trajectory'] = executor(root,identity)
+            if execution_profile=='spatial_ground_v1':
+                from .wp7_executed_feasibility import certify_spatial_profile_execution
+                row['executed_spatial_trajectory'] = certify_spatial_profile_execution(root,identity)
+            else:
+                row['executed_planar_trajectory'] = executor(root,identity)
         row.update(source_path=path.relative_to(root).as_posix(), source_sha256=sha256(path.read_bytes()).hexdigest())
         rows.append(row)
     report = {"schema_version": "wp7_body_track_audit_v1", "tracks": rows,
@@ -174,4 +184,15 @@ def audit_train_tracks(repository_root, *, track_ids=TRAIN_IDS, search_alternati
     if registered_center_gates:
         report.update(schema_version='wp7_body_track_audit_v2',gate_contract='directed_center_crossing_v1',
             owner_contract_sha256=sha256((root/'configs/recovery/wp7-owner-decisions-preregistered-v1.yml').read_bytes()).hexdigest())
+    if execution_profile=='spatial_ground_v1':
+        from .wp7_protocol import build_protocol
+        protocol = build_protocol(root,profile=execution_profile)
+        if any(row['executed_spatial_trajectory']['protocol_sha256']!=protocol['sha256']
+               or row['executed_spatial_trajectory']['physics_sha256']!=protocol['physics_sha256'] for row in rows):
+            raise ValueError('spatial audit source/profile identity changed between executions')
+        report.update(schema_version='wp7_body_track_audit_v3',execution_profile=execution_profile,
+            protocol_sha256=protocol['sha256'],physics_sha256=protocol['physics_sha256'],
+            scope='authored_findings_separate_from_nominal_registered_spatial_execution_not_physical_validation',
+            all_train_executable=all(row['executed_spatial_trajectory']['status']=='executable_numerical_registered_spatial_path'
+                                     for row in rows))
     return report

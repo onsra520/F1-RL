@@ -18,7 +18,7 @@ from ..learning.action import ActionContract
 from ..track_assets.canonical import fingerprint_track_world
 from .wp7_admission import evaluate_admission, ScientificAdmissionError
 from .wp7_protocol import (
-    digest, evaluation_seed, policy_stochastic_seed, validate_protocol,
+    digest, evaluation_seed, policy_stochastic_seed, validate_protocol, protocol_profile,
 )
 
 
@@ -201,7 +201,7 @@ def evaluate_registered_cell(
     """Research entrypoint requires independently verified approval and worker."""
     validate_protocol(protocol, repository_root)
     evaluation_seed(protocol, policy_id, track_id, stratum, 0)
-    report = evaluate_admission(repository_root, capture_runtime=True)
+    report = evaluate_admission(repository_root, capture_runtime=True,profile=protocol_profile(protocol))
     if (not report["training_authorized"]
             or not report["authorization"]["verified"]
             or not report["owner_permissions"]["training_permitted"]):
