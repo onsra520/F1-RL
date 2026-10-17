@@ -1,0 +1,18 @@
+{
+  "schema_version": "wp7_hard_route_owner_outcome_v2",
+  "version": "wp7_hard_route_terminal_failure_v2",
+  "owner_decision_date": "2026-10-17",
+  "parent_owner_contract_sha256": "d9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1",
+  "soft_corridor_m": 2.0,
+  "hard_corridor_m": 4.0,
+  "violation_comparison": "strict_greater_than",
+  "outcome": "valid_terminal_failure",
+  "reward_policy": "registered_terms_valid_prefix_no_terminal_adjustment",
+  "terminal_penalty": 0.0,
+  "new_success_credit": false,
+  "new_reward_shaping": false,
+  "training_permitted": false,
+  "heldout_permitted": false,
+  "scientific_freeze_permitted": false,
+  "wp8_permitted": false
+}

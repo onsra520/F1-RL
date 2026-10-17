@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
-from dataclasses import asdict
+from dataclasses import asdict, replace
 
 import gymnasium as gym
 import numpy as np
@@ -11,7 +11,8 @@ from ..runtime.physics import PhysicsConfig
 from ..sandbox.body_collision import VehicleBodyGeometry
 from ..sandbox.ramp_support import PlanarRampPolicy
 from ..sandbox.geometry.vector import Vec3
-from ..sandbox.interactions.events import ObstacleHit
+from ..sandbox.interactions.events import ObstacleHit, CheckpointEntered, FinishLineEntered
+from ..sandbox.ballistic_flight import FlightTransition
 from ..sandbox.track.model import TrackWorld
 from ..sandbox.track.query import TrackQuery
 from ..sandbox.vehicle import VehicleParameters, VehicleState
@@ -32,7 +33,8 @@ from .offtrack import OffTrackConfig, OffTrackState
 from .route_navigation import AuthoredRoute
 from .wp7_race import WP7RaceConfig, RaceContractError, advance_directed_race
 from .train_reset import TrainResetConfig, sample_train_spawn
-from .rewards import RewardComposer, RewardResult, RewardTransition, RouteProgressReward, OffTrackPenalty
+from .rewards import (RewardComposer, RewardResult, RewardTransition, RewardContribution,
+    RouteProgressReward, OffTrackPenalty, TargetProgressReward, TimePenalty, CollisionPenalty)
 
 
 def _vec3_tuple(value: Vec3) -> tuple[float, float, float]:
@@ -126,6 +128,10 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         self._simulation_config = simulation_config
         self._observation_encoder = observation_encoder
         self._reward_composer = reward_composer
+        if (isinstance(race_config,WP7RaceConfig) and race_config.owner_terminal
+                and any(type(t) not in (RouteProgressReward,OffTrackPenalty,TargetProgressReward,TimePenalty,CollisionPenalty)
+                        for t in reward_composer.terms)):
+            raise ValueError('owner outcome requires registered reward terms with valid-prefix semantics')
         self._episode_config = episode_config
         self._route = RaceRoute.from_track(track)
         self._authored_route: AuthoredRoute | None = None
@@ -392,11 +398,32 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 progress_result = advance_race_progress(
                     self._route, progress_before, snapshot_after.events,
                 )
+            reward_duration=self._simulation_config.fixed_dt
+            reward_vehicle=snapshot_after.world.vehicle
+            reward_events=snapshot_after.events
+            if race_step is not None and self._race_config.owner_terminal:
+                if race_step.terminal_time_s is not None:
+                    reward_duration=race_step.terminal_time_s
+                    segment=next(s for s in snapshot_after.center_segments
+                                 if s.start_time_s<=reward_duration<=s.end_time_s)
+                    reward_vehicle=replace(reward_vehicle,position=segment.position_at(reward_duration))
+                physical=[]
+                for event in snapshot_after.events:
+                    if isinstance(event,(CheckpointEntered,FinishLineEntered)):
+                        continue
+                    if isinstance(event,FlightTransition):
+                        if event.time_s<=reward_duration:
+                            physical.append(event)
+                    elif reward_duration<self._simulation_config.fixed_dt:
+                        raise RaceContractError('terminal prefix contains untimed physical or pickup event')
+                    else:
+                        physical.append(event)
+                reward_events=tuple(physical)+race_step.valid_gate_events
             next_highwater = self._route_highwater
             route_delta = None
             if self._authored_route is not None:
                 projection = self._authored_route.project(
-                    snapshot_after.world.vehicle.position,
+                    reward_vehicle.position,
                     next_checkpoint_index=progress_result.state.next_checkpoint_index,
                 )
                 next_highwater = self._authored_route.advance_highwater(
@@ -404,28 +431,31 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                     projection,
                     max_path_distance=self._max_route_distance,
                 )
+                if reward_duration==0.:
+                    next_highwater=self._route_highwater
                 route_delta = next_highwater - self._route_highwater
             next_offtrack = self._offtrack_state
             lateral_distance = None
             if self._offtrack_config is not None:
                 assert self._authored_route is not None
                 lateral_distance = self._authored_route.horizontal_distance(
-                    snapshot_after.world.vehicle.position
+                    reward_vehicle.position
                 )
                 next_offtrack = self._offtrack_state.advance(
                     lateral_distance, self._offtrack_config
                 )
-            reward_result = self._reward_composer.evaluate(
+            reward_result = (RewardResult(0.,tuple(RewardContribution(t.name,0.) for t in self._reward_composer.terms))
+                             if reward_duration==0. else self._reward_composer.evaluate(
                 RewardTransition(
                     previous_vehicle=previous_vehicle,
-                    next_vehicle=snapshot_after.world.vehicle,
+                    next_vehicle=reward_vehicle,
                     target_position=target_before,
-                    events=snapshot_after.events,
-                    dt=self._simulation_config.fixed_dt,
+                    events=reward_events,
+                    dt=reward_duration,
                     route_progress_delta_meters=route_delta,
                     off_track=next_offtrack.outside if self._offtrack_config is not None else None,
                 )
-            )
+            ))
             status = episode_status(
                 progress_result.state,
                 snapshot_after.tick,
@@ -433,6 +463,8 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             )
             if next_offtrack.truncated and not progress_result.state.finished:
                 status = EpisodeStatus(False, True)
+            if race_step is not None and race_step.terminal_failure:
+                status=EpisodeStatus(True,False)
             observation = self._encode_observation(
                 snapshot_after.world.vehicle,
                 self._route_target(snapshot_after.world.vehicle, progress_result.state),
@@ -451,7 +483,12 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                     "max_sampled_deviation_m": race_step.max_sampled_deviation_m,
                     "soft_zone_encountered": race_step.soft_zone_encountered,
                 })
-                if self._race_config.version == "wp7_directed_lifecycle_research_v1":
+                if self._race_config.owner_terminal:
+                    info['race'].update(terminal_failure=race_step.terminal_failure,
+                        terminal_time_s=race_step.terminal_time_s,reward_valid_prefix_s=reward_duration,
+                        reward_prefix_position=_vec3_tuple(reward_vehicle.position),
+                        physical_tick_end_time_s=self._simulation_config.fixed_dt)
+                if self._race_config.version in ('wp7_directed_lifecycle_research_v1','wp7_directed_grounded_owner_v2','wp7_directed_lifecycle_owner_v2'):
                     info["race"]["tick_local_crossing_times_s"] = race_step.crossing_times_s
                     info["race"]["crossing_time_origin_s"] = snapshot_after.physics_transition.start_time_s
             if self._authored_route is not None:
@@ -475,8 +512,10 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         self._route_highwater = next_highwater
         self._needs_reset = status.terminated or status.truncated
         self._record_research_outcome(
+            "valid_terminal_failure" if race_step is not None and race_step.terminal_failure else
             "successful_finish" if progress_result.state.finished else
             "valid_truncation" if status.truncated else "active", True,
+            "hard_route_violation" if race_step is not None and race_step.terminal_failure else
             "finish" if progress_result.state.finished else
             (info.get("truncation_reason") or "step_limit") if status.truncated else "accepted_step",
         )
