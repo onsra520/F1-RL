@@ -7,6 +7,7 @@ from f1rl.learning.pilot_preflight import TRAIN_IDS
 from f1rl.research.wp7_executed_feasibility import (
     certify_planar_execution, certify_ramp_execution, certify_coupled_ramp_execution, replay_planar_execution,
     certify_registered_center_execution,
+    certify_spatial_ramp_execution,
 )
 from f1rl.research.wp7_protocol import _unique
 
@@ -23,6 +24,7 @@ def main():
     mode.add_argument('--replay',type=Path)
     mode.add_argument('--ramp-proposal',action='store_true',help='explicit unadmitted road-relative engineering profile')
     mode.add_argument('--ramp-coupled-proposal',action='store_true',help='explicit unadmitted coupled force/work profile')
+    mode.add_argument('--ramp-spatial-proposal',action='store_true',help='explicit unadmitted spatial force/contact profile')
     parser.add_argument('--expected-sha256')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -35,6 +37,7 @@ def main():
         if args.expected_sha256 is not None:
             parser.error('--expected-sha256 requires --replay')
         result = (certify_registered_center_execution(root,args.registered_center_track) if args.registered_center_track else
+                  certify_spatial_ramp_execution(root) if args.ramp_spatial_proposal else
                   certify_coupled_ramp_execution(root) if args.ramp_coupled_proposal else
                   certify_ramp_execution(root) if args.ramp_proposal else certify_planar_execution(root,args.track))
     print(json.dumps(result,indent=2,allow_nan=False))

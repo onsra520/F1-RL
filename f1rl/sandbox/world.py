@@ -9,6 +9,7 @@ from .coupled_longitudinal_dynamics import (
     CoupledGroundAudit, LongitudinalContactPolicy, integrate_coupled_longitudinal,
 )
 from .geometry.vector import Vec3
+from .spatial_contact_dynamics import SpatialGroundAudit, SpatialContactPolicy, integrate_spatial_contact
 from .grounded_yaw_dynamics import (
     GroundedYawPolicy,GroundedYawAudit,advance_grounded_yaw,
 )
@@ -68,6 +69,7 @@ class WorldStepResult:
     grounded_yaw_telemetry: GroundedYawAudit | None = None
     center_segments: tuple[CenterSegment, ...] = ()
     coupled_ground_telemetry: CoupledGroundAudit | None = None
+    spatial_ground_telemetry: SpatialGroundAudit | None = None
 
 
 def step_world(
@@ -87,10 +89,19 @@ def step_world(
     grounded_yaw_policy: GroundedYawPolicy | None = None,
     ground_motion_version: str = 'legacy_euler_v1',
     longitudinal_contact_policy: LongitudinalContactPolicy | None = None,
+    spatial_contact_policy: SpatialContactPolicy | None = None,
 ) -> WorldStepResult:
-    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1'):
+    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1'):
         raise ValueError('unregistered ground motion version')
     coupled = ground_motion_version == 'coupled_longitudinal_v1'
+    spatial = ground_motion_version == 'spatial_contact_v1'
+    if (spatial != (spatial_contact_policy is not None)
+            or spatial and (not isinstance(spatial_contact_policy,SpatialContactPolicy)
+                or not isinstance(independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
+                or independent_suspension_policy.force_model!='road_relative_vertical_v2'
+                or independent_suspension_policy.angular_rate_mapping!='yaw_rx_rz_v1'
+                or state.flight is not None)):
+        raise ValueError('spatial ground motion requires its exclusive supported contact policy')
     if (coupled != (longitudinal_contact_policy is not None)
             or coupled and (not isinstance(longitudinal_contact_policy,LongitudinalContactPolicy)
                 or not isinstance(independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
@@ -104,7 +115,7 @@ def step_world(
         raise ValueError('road-relative force model requires grounded suspension-only stepping')
     if (isinstance(independent_suspension_policy, IndependentSuspensionDynamicsPolicy)
             and independent_suspension_policy.force_model != 'legacy_vertical_v1'
-            and control.steering != 0.):
+            and control.steering != 0. and not spatial):
         raise ValueError('road-relative reduced driving requires zero steering')
     if ground_motion_version=='arc_distance_v1' and grounded_yaw_policy is not None:
         raise ValueError('distance bicycle integration cannot replace dynamic tire yaw')
@@ -171,15 +182,21 @@ def step_world(
     suspension_override: SuspensionDynamicsState | None = None
     grounded_yaw_telemetry: GroundedYawAudit | None = None
     coupled_ground_telemetry: CoupledGroundAudit | None = None
+    spatial_ground_telemetry: SpatialGroundAudit | None = None
     flight_active = (ballistic_flight_policy is not None
                      and state.flight.phase in ("takeoff", "airborne"))
-    if coupled:
+    if coupled or spatial:
         modifiers = resolve_motion_modifiers(current_query)
-        result = integrate_coupled_longitudinal(state.vehicle,state.suspension,
-            independent_suspension_policy,body_geometry,track.surfaces,parameters,
-            control,longitudinal_contact_policy,dt=dt,modifiers=modifiers)
+        if spatial:
+            result = integrate_spatial_contact(state.vehicle,independent_suspension_policy,
+                body_geometry,track.surfaces,parameters,control,spatial_contact_policy,dt=dt,modifiers=modifiers)
+            spatial_ground_telemetry = result.audit
+        else:
+            result = integrate_coupled_longitudinal(state.vehicle,state.suspension,
+                independent_suspension_policy,body_geometry,track.surfaces,parameters,
+                control,longitudinal_contact_policy,dt=dt,modifiers=modifiers)
+            coupled_ground_telemetry = result.audit
         suspension_telemetry = result.suspension
-        coupled_ground_telemetry = result.audit
         candidate = suspension_telemetry.vehicle
         swept_poses = suspension_telemetry.poses
         center_segments = result.center_segments
@@ -433,4 +450,5 @@ def step_world(
         grounded_yaw_telemetry,
         center_segments if not obstacle_events else (),
         coupled_ground_telemetry if not obstacle_events else None,
+        spatial_ground_telemetry if not obstacle_events else None,
     )

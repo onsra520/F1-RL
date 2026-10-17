@@ -70,10 +70,12 @@ def test_legacy_physics_document_and_default_world_options_stay_identical():
     expected.pop('ground_motion_version')
     expected.pop('spawn_reference')
     expected.pop('longitudinal_contact_policy')
+    expected.pop('spatial_contact_policy')
     expected['independent_suspension_policy'].pop('force_model')
     assert physics.document() == dict(schema_version=1,validation_scope='software_research_only',
         longitudinal_model='legacy_prescribed_v1',**expected)
     assert 'ground_motion_version' not in physics.world_options()
+    assert physics.sha256=='758c5c42d696e0ea02f23412668ef85dd7614c60fa5caeb39c72d010eaa4ca4f'
     changed = replace(physics,ground_motion_version='arc_distance_v1')
     assert changed.document()['schema_version']==2
     assert changed.sha256!=physics.sha256

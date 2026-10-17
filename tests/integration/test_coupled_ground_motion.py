@@ -100,3 +100,17 @@ def test_coupled_proposal_cannot_allocate_trainable_ppo():
             PPOModel.create(env,PPOConfig(n_steps=2,batch_size=2))
     finally:
         env.close()
+
+
+def test_coupled_transition_also_rejects_infinite_work_ledger():
+    from f1rl.runtime.physics import PhysicsTransitionError
+    from f1rl.sandbox.world import step_world
+    f=coupled_factory()
+    r=step_world(f.track,f.initial_state,VehicleControl(0.,.5,0.),f.vehicle_parameters,
+        .1,f.simulation_config.max_surface_distance,**f.physics_config.world_options())
+    audit=r.coupled_ground_telemetry
+    leaf=replace(audit.substeps[0],final_energy_j=float('inf'),energy_residual_j=float('inf'),energy_tolerance_j=float('inf'))
+    changed=replace(r,coupled_ground_telemetry=replace(audit,substeps=(leaf,*audit.substeps[1:])))
+    with pytest.raises(PhysicsTransitionError,match='force/time audit'):
+        f.physics_config.validate_transition(changed,previous=f.initial_state,
+            parameters=f.vehicle_parameters,dt=.1,start_time_s=0.,end_time_s=.1)

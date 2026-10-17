@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from hashlib import sha256
 import json
-from math import isclose, atan2, sin, tan
+from math import isclose, isfinite, atan2, sin, tan
 
 from ..sandbox.ballistic_flight import BallisticFlightPolicy, FlightState, FlightTransition
 from ..sandbox.center_trajectory import CenterSegment
@@ -24,9 +24,11 @@ from ..sandbox.independent_suspension_dynamics import (
     suspension_orientation,
 )
 from ..sandbox.geometry.vector import Vec3
+from ..sandbox.geometry.rotation import Quaternion
 from ..sandbox.partial_wheel_release import AutomaticTakeoffPolicy
 from ..sandbox.interactions.events import ObstacleHit
 from ..sandbox.vehicle import VehicleParameters
+from ..sandbox.spatial_contact_dynamics import SpatialContactPolicy, _suspension_state
 from ..sandbox.world import WorldState, WorldStepResult
 from ..sandbox.track.model import TrackWorld
 
@@ -59,15 +61,24 @@ class PhysicsConfig:
     ground_motion_version: str = 'legacy_euler_v1'
     spawn_reference: str = 'legacy_vehicle_position_v1'
     longitudinal_contact_policy: LongitudinalContactPolicy | None = None
+    spatial_contact_policy: SpatialContactPolicy | None = None
 
     def __post_init__(self) -> None:
         if (self.spawn_reference not in ('legacy_vehicle_position_v1','authored_horizontal_road_v1')
                 or self.spawn_reference!='legacy_vehicle_position_v1' and self.mode=='legacy_v1'):
             raise ValueError('unregistered research spawn reference')
-        if (self.ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1')
+        if (self.ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1')
                 or self.ground_motion_version=='arc_distance_v1' and self.mode not in ('wp7_suspension_v1','wp7_lifecycle_v1')):
             raise ValueError('unregistered research ground motion version/mode')
         coupled = self.ground_motion_version == 'coupled_longitudinal_v1'
+        spatial = self.ground_motion_version == 'spatial_contact_v1'
+        if (spatial != (self.spatial_contact_policy is not None)
+                or spatial and (self.mode!='wp7_suspension_v1'
+                    or not isinstance(self.spatial_contact_policy,SpatialContactPolicy)
+                    or not isinstance(self.independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
+                    or self.independent_suspension_policy.force_model!='road_relative_vertical_v2'
+                    or self.independent_suspension_policy.angular_rate_mapping!='yaw_rx_rz_v1')):
+            raise ValueError('spatial ground version requires its exclusive supported contact policy')
         if (coupled != (self.longitudinal_contact_policy is not None)
                 or coupled and (self.mode != 'wp7_suspension_v1'
                     or not isinstance(self.longitudinal_contact_policy,LongitudinalContactPolicy)
@@ -142,6 +153,12 @@ class PhysicsConfig:
             _distance_ground_frame(initial.vehicle,parameters)
         if self.ground_motion_version=='coupled_longitudinal_v1':
             _longitudinal_frame(initial.vehicle,initial.suspension)
+        if self.ground_motion_version=='spatial_contact_v1':
+            derived = _suspension_state(initial.vehicle)
+            if any(abs(getattr(derived,key)-getattr(initial.suspension,key))>1e-8
+                   for key in derived.__dataclass_fields__):
+                raise ValueError('spatial chassis and persistent suspension state disagree')
+            _prescribed_yaw_rate = initial.vehicle.angular_velocity.y + sin(derived.pitch_x_rad)*derived.roll_rate_radps
         if initial.vehicle.grounded and not isclose(
             initial.vehicle.position.y, initial.suspension.height_m, rel_tol=0., abs_tol=1e-8,
         ):
@@ -218,9 +235,22 @@ class PhysicsConfig:
             # previous suspension rates; it is not a registered impulse/recovery.
             raise PhysicsTransitionError("WP7 collision recovery is unregistered; step rejected")
         events = tuple(e for e in result.events if isinstance(e, FlightTransition))
-        if self.ground_motion_version=='coupled_longitudinal_v1':
-            audit,segments = result.coupled_ground_telemetry,result.center_segments
-            if (audit is None or audit.version!='coupled_longitudinal_rk4_work_v1'
+        if self.ground_motion_version in ('coupled_longitudinal_v1','spatial_contact_v1'):
+            spatial = self.ground_motion_version=='spatial_contact_v1'
+            audit = result.spatial_ground_telemetry if spatial else result.coupled_ground_telemetry
+            segments = result.center_segments
+            expected_version = 'spatial_contact_world_momentum_rk4_v1' if spatial else 'coupled_longitudinal_rk4_work_v1'
+            if audit is not None and any(
+                any(type(v) not in (int,float) or not isfinite(v) for v in
+                    (leaf.initial_energy_j,leaf.final_energy_j,leaf.actuator_work_j,leaf.dissipation_j,
+                     leaf.energy_residual_j,leaf.energy_tolerance_j,leaf.linear_impulse_residual_ns,
+                     leaf.angular_impulse_residual_nms))
+                or leaf.energy_tolerance_j<=0. or leaf.dissipation_j<0.
+                or min(leaf.linear_impulse_residual_ns,leaf.angular_impulse_residual_nms)<0.
+                for leaf in audit.substeps
+            ):
+                raise PhysicsTransitionError(f'{"spatial" if spatial else "coupled"} force/time audit requires finite work evidence')
+            if (audit is None or audit.version!=expected_version
                     or not audit.substeps or len(segments)!=len(audit.substeps)
                     or events or result.flight_telemetry is not None
                     or abs(segments[0].start_time_s)>1e-9 or abs(segments[-1].end_time_s-dt)>1e-8
@@ -234,11 +264,42 @@ class PhysicsConfig:
                            or not a.angular_impulse_residual_nms<=1e-7
                            for s,a in zip(segments,audit.substeps))):
                 raise PhysicsTransitionError('coupled force/time audit missing or inconsistent')
+            if spatial:
+                poses = result.suspension_telemetry.poses if result.suspension_telemetry is not None else ()
+                if (len(poses)!=len(audit.substeps)+1 or poses[0]!=previous.vehicle
+                        or poses[-1]!=result.state.vehicle or result.coupled_ground_telemetry is not None):
+                    raise PhysicsTransitionError('spatial impulse trajectory missing or inconsistent')
+                suspension = self.independent_suspension_policy
+                def momentum(pose):
+                    q = pose.orientation
+                    omega = Quaternion(q.w,-q.x,-q.y,-q.z).rotate(pose.angular_velocity)
+                    return q.rotate(Vec3(suspension.pitch_inertia_kg_m2*omega.x,
+                        self.spatial_contact_policy.yaw_inertia_kg_m2*omega.y,
+                        suspension.roll_inertia_kg_m2*omega.z))
+                for first,last,leaf in zip(poses,poses[1:],audit.substeps):
+                    linear = ((last.velocity-first.velocity)*suspension.mass_kg-leaf.force_impulse_ns).magnitude
+                    angular = (momentum(last)-momentum(first)-leaf.torque_impulse_nms).magnitude
+                    balance = leaf.final_energy_j-leaf.initial_energy_j-leaf.actuator_work_j+leaf.dissipation_j
+                    if (not linear<=1e-7 or not angular<=1e-7
+                            or not isclose(linear,leaf.linear_impulse_residual_ns,abs_tol=1e-8)
+                            or not isclose(angular,leaf.angular_impulse_residual_nms,abs_tol=1e-8)
+                            or not isclose(balance,leaf.energy_residual_j,abs_tol=1e-7)):
+                        raise PhysicsTransitionError('spatial impulse/work evidence disagrees with accepted poses')
+                totals = {
+                    name:sum(getattr(leaf,name) for leaf in audit.substeps)
+                    for name in ('actuator_work_j','dissipation_j','energy_residual_j')
+                }
+                totals.update(max_linear_impulse_residual_ns=max(a.linear_impulse_residual_ns for a in audit.substeps),
+                              max_angular_impulse_residual_nms=max(a.angular_impulse_residual_nms for a in audit.substeps))
+                if any(type(getattr(audit,name)) not in (int,float) or not isfinite(getattr(audit,name))
+                       or not isclose(getattr(audit,name),value,rel_tol=1e-10,abs_tol=1e-8)
+                       for name,value in totals.items()):
+                    raise PhysicsTransitionError('spatial work summary differs from accepted leaves')
         if self.independent_suspension_policy.force_model != 'legacy_vertical_v1':
             self.validate_state(result.state, parameters)
             first = _horizontal_yaw(previous.vehicle.orientation).rotate(Vec3(0.,0.,1.))
             last = _horizontal_yaw(result.state.vehicle.orientation).rotate(Vec3(0.,0.,1.))
-            if (first-last).magnitude > 1e-8:
+            if self.ground_motion_version!='spatial_contact_v1' and (first-last).magnitude > 1e-8:
                 raise PhysicsTransitionError('road-relative reduced driving cannot change yaw')
         distance_yaw_rate = None
         if (self.ground_motion_version=='arc_distance_v1' and previous.vehicle.grounded
@@ -311,7 +372,9 @@ class PhysicsConfig:
             or result.suspension_telemetry is not None and result.flight_telemetry is None
         ):
             solvers.append('arc_distance_ground_v1')
-        if result.coupled_ground_telemetry is not None:
+        if result.spatial_ground_telemetry is not None:
+            solvers.append('spatial_contact_world_momentum_rk4_v1')
+        elif result.coupled_ground_telemetry is not None:
             solvers.append('coupled_longitudinal_rk4_work_v1')
         elif result.suspension_telemetry is not None:
             solvers.append("road_relative_vertical_suspension_v2" if
@@ -338,7 +401,7 @@ class PhysicsConfig:
         names = (
             "body_geometry", "independent_suspension_policy", "ballistic_flight_policy",
             "automatic_takeoff_policy", "grounded_yaw_policy",
-            "longitudinal_contact_policy",
+            "longitudinal_contact_policy", "spatial_contact_policy",
         )
         options = {name: getattr(self, name) for name in names if getattr(self, name) is not None}
         if self.ground_motion_version!='legacy_euler_v1':
@@ -348,6 +411,9 @@ class PhysicsConfig:
     def document(self) -> dict[str, object]:
         configuration = asdict(self)
         coupled = self.longitudinal_contact_policy is not None
+        spatial = self.spatial_contact_policy is not None
+        if not spatial:
+            configuration.pop('spatial_contact_policy')
         if not coupled:
             configuration.pop('longitudinal_contact_policy')
         suspension = configuration['independent_suspension_policy']
@@ -359,9 +425,9 @@ class PhysicsConfig:
         if self.spawn_reference=='legacy_vehicle_position_v1':
             configuration.pop('spawn_reference')
         return {
-            "schema_version": 4 if coupled else 3 if road_relative else 1 if self.ground_motion_version=='legacy_euler_v1' and self.spawn_reference=='legacy_vehicle_position_v1' else 2,
+            "schema_version": 5 if spatial else 4 if coupled else 3 if road_relative else 1 if self.ground_motion_version=='legacy_euler_v1' and self.spawn_reference=='legacy_vehicle_position_v1' else 2,
             "validation_scope": "software_research_only",
-            "longitudinal_model": 'coupled_contact_force_rk4_v1' if coupled else "legacy_prescribed_v1" if self.ground_motion_version=='legacy_euler_v1' else 'force_frozen_distance_bicycle_v1',
+            "longitudinal_model": 'spatial_contact_world_momentum_rk4_v1' if spatial else 'coupled_contact_force_rk4_v1' if coupled else "legacy_prescribed_v1" if self.ground_motion_version=='legacy_euler_v1' else 'force_frozen_distance_bicycle_v1',
             **configuration,
             **({'body_clearance_version': 'bounded_patch_planes_v2'} if road_relative else {}),
         }

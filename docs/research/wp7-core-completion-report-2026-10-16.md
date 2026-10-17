@@ -1,6 +1,6 @@
 # WP7 Core Completion Report — 2026-10-16
 
-**Overall: incomplete.** Engineering increments through registered directed-center execution
+**Overall: incomplete.** Engineering increments through supported spatial contact
 have been implemented and reviewed, but seven subsystems remain below 90% and unresolved P0 capabilities
 remain. Software regressions do not establish scientific acceptance. No weights
 or thresholds were changed to improve these scores.
@@ -21,7 +21,8 @@ Base: PR #22 `research/wp7-core-execution-closure-v1`,
 | G registered spawn and executed planar witnesses | `research/wp7-executable-planar-feasibility-v1` | `b24670dff81069979624eca1c4a036615757bd8b` | [#29](https://github.com/onsra520/F1-RL/pull/29) |
 | H road-relative suspension and bounded Ramp proposal | `research/wp7-ramp-force-consistency-v1` | `7094cb2f15af29a6f80ce0dba8c67cdc2b95628b` | [#30](https://github.com/onsra520/F1-RL/pull/30) |
 | I coupled planar contact and actual Ramp proposal | `research/wp7-coupled-ramp-contact-v1` | `11465189291ea47c5b6cc9ef7303e1b47ac018ae` | [#31](https://github.com/onsra520/F1-RL/pull/31) |
-| J registered directed-center execution | `research/wp7-directed-center-feasibility-v1` | latest commit containing this report | stacked Draft PR on #31 |
+| J registered directed-center execution | `research/wp7-directed-center-feasibility-v1` | `4c36ce68b0871286293399af21a907a1808d76ed` | [#32](https://github.com/onsra520/F1-RL/pull/32) |
+| K supported spatial contact | `research/wp7-spatial-ground-contact-v1` | latest commit containing this report | stacked Draft PR on #32 |
 
 No automatic merge. Canonical assets, historical archives and owner decisions
 are unchanged. Owner-contract SHA-256 remains
@@ -170,7 +171,8 @@ No matrix capability or scientific gate is promoted. See
 | G | 2,048 pass / 2 platform skips; 6 real-TRAIN spawn tests and 19 execution/replay/source-boundary tests | 2,050 full and 165 execution/readiness pass each at `b24670d`; run `38946178709` |
 | H | 2,069 pass / 2 platform skips; 21 new force/geometry/boundary and actual Ramp proposal/replay cases | Exact-HEAD Windows/Ubuntu CI required; consult stacked Draft PR checks |
 | I | 2,104 pass / 2 platform skips; 35 new coupled-force, runtime/Gym and actual Ramp/replay cases | 2,106 full and 221 execution/readiness pass each at `1146518`; runs `38988184560` / `38988167074` |
-| J | 2,120 pass / 2 platform skips; 16 new center geometry/execution/Gym/replay/boundary cases | Exact-HEAD Windows/Ubuntu CI required; consult stacked Draft PR checks |
+| J | 2,120 pass / 2 platform skips; 16 new center geometry/execution/Gym/replay/boundary cases | Clean-clone Ubuntu WSL 2,122 pass at `4c36ce6`; hosted Actions blocked before allocation by billing |
+| K | 2,155 pass / 2 platform skips; 35 new spatial/negative/runtime/actual Ramp cases | Exact-HEAD OS evidence recorded in Draft PR/external receipt after verification |
 
 D compileall, dependency compatibility (26 packages), and `git diff --check`
 passed before commit. Two-axis review has no remaining material P0/P1/P2 in
@@ -202,6 +204,12 @@ road/contact/obstacle checks, speed/braking/stop and exact source-bound replay.
 Straight/Slalom also execute in this explicit center contract. This closes the
 nominal Right-turn witness gap, not randomized tracking, physical validation or
 all-TRAIN feasibility. See `wp7-directed-center-feasibility-2026-10-17.md`.
+
+K adds supported spatial force integration with steering, lateral slip and full
+world angular momentum. Actual Ramp/Gym/stop/replay executes in a separate
+unadmitted proposal. Numerical impulse/work and body/contact checks remain
+explicit; partial support/flight and all-track registration are not inferred.
+See `wp7-spatial-ground-contact-2026-10-17.md`.
 
 Remaining engineering: randomized corridor-compliant Right-turn execution; verified ramp/contact
 support; executable speed/braking/boost schedules and tracking on all four tracks;

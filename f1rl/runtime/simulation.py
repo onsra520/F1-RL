@@ -7,6 +7,7 @@ from .physics import PhysicsConfig, PhysicsTransitionAudit
 from ..sandbox.ballistic_flight import FlightStep
 from ..sandbox.center_trajectory import CenterSegment
 from ..sandbox.coupled_longitudinal_dynamics import CoupledGroundAudit
+from ..sandbox.spatial_contact_dynamics import SpatialGroundAudit
 from ..sandbox.grounded_yaw_dynamics import GroundedYawAudit
 from ..sandbox.independent_suspension_dynamics import SuspensionDynamicsResult
 from ..sandbox.partial_wheel_release import GroundSupportStep
@@ -66,6 +67,7 @@ class SimulationSnapshot:
     physics_transition: PhysicsTransitionAudit | None = None
     center_segments: tuple[CenterSegment, ...] = ()
     coupled_ground_telemetry: CoupledGroundAudit | None = None
+    spatial_ground_telemetry: SpatialGroundAudit | None = None
 
 
 class Simulation:
@@ -156,6 +158,7 @@ class Simulation:
             transition,
             result.center_segments,
             result.coupled_ground_telemetry,
+            result.spatial_ground_telemetry,
         )
         self._state = next_state
         self._snapshot = next_snapshot
