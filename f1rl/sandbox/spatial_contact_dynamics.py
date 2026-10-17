@@ -3,11 +3,11 @@
 Position, quaternion, linear velocity and world angular momentum share one
 force field. Tire forces use a friction circle and dissipative lateral slip;
 there is no wheel-spin or static-friction claim. The separate compliant
-lifecycle entry point supports bounded fixed-attitude flight above the atlas.
+lifecycle entry point selects bounded fixed-attitude or world-H rotating flight above the atlas.
 Every accepted RK4 leaf must pass work/impulse and numerical body/road sweeps.
 """
 from dataclasses import dataclass, replace
-from math import asin, atan2, cos, isfinite, sin, tanh, ulp
+from math import asin, atan2, cos, isfinite, pi, sin, tanh, ulp
 
 from .body_collision import VehicleBodyGeometry
 from .center_trajectory import CenterSegment
@@ -145,10 +145,10 @@ def integrate_spatial_lifecycle(previous, physics, body, surfaces, parameters, c
                                 policy, *, dt, modifiers=None, phase_domain='horizontal_v1'):
     """Compliant release/recontact above a continuously covered road atlas.
 
-    Free extension must end before the registered droop stop. Airborne angular
-    motion and road-edge departure remain unsupported in this first domain.
+    Free extension must end before the registered droop stop. Rotating flight
+    requires atlas_rotating_v3; road-edge departure remains unsupported.
     """
-    if phase_domain not in ('horizontal_v1','atlas_gradient_v2'):
+    if phase_domain not in ('horizontal_v1','atlas_gradient_v2','atlas_rotating_v3'):
         raise ValueError('unregistered spatial phase domain')
     if not isinstance(physics,IndependentSuspensionDynamicsPolicy) or physics.force_model != 'road_relative_unilateral_v3':
         raise ValueError('spatial lifecycle requires unilateral contact')
@@ -217,7 +217,7 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
         if contacts is None:
             raise SuspensionResolutionError('spatial wheel support/travel missing')
         compressed=any(preload+physics.spring_stiffness_npm*c.deflection_m>0. for c in contacts)
-        if lifecycle and not compressed and state.angular_velocity.magnitude>1e-9:
+        if lifecycle and phase_domain!='atlas_rotating_v3' and not compressed and state.angular_velocity.magnitude>1e-9:
             raise SuspensionResolutionError('spatial compliant flight requires fixed airborne attitude')
         ground_effect=1. if not lifecycle or compressed else 0.
         drag=state.velocity*(-mass*parameters.rolling_drag*modifiers.rolling_drag_multiplier*ground_effect)
@@ -303,6 +303,12 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
         return tuple(v+h*k for v,k in zip(y,d,strict=True))
 
     def advance(y,start,h,depth,phase_depth=0):
+        if phase_domain=='atlas_rotating_v3' and h*max(policy.max_angular_speed_radps,
+                Vec3(*y[10:13]).magnitude/min(inertia.x,inertia.y,inertia.z))>=pi:
+            if depth>=traction.max_refinements:
+                raise SuspensionResolutionError('spatial rotation interval cannot exclude a full turn')
+            middle=advance(y,start,h/2.,depth+1,phase_depth)
+            return advance(middle,times[-1],h/2.,depth+1,phase_depth)
         a=stage(y)
         b=stage(shifted(y,a.derivative,h/2.))
         c=stage(shifted(y,b.derivative,h/2.))
@@ -365,7 +371,7 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                     secant=(first_point-last_point).dot(gradient)
                     curvature=theta*theta*local.magnitude*gradient.magnitude
                     roundoff=0.
-                    if phase_domain=='atlas_gradient_v2':
+                    if phase_domain!='horizontal_v1':
                         scale=max(1.,*(abs(v) for point in (first_point,last_point)
                                        for v in (point.x,point.y,point.z)))
                         roundoff=64.*ulp(scale)*(abs(gradient.x)+abs(gradient.y)+abs(gradient.z))
@@ -414,7 +420,8 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
         sum(s.energy_residual_j for s in leaves),max(s.linear_impulse_residual_ns for s in leaves),
         max(s.angular_impulse_residual_nms for s in leaves))
     if lifecycle:
-        audit=SpatialLifecycleAudit('spatial_compliant_atlas_lifecycle_rk4_v2' if phase_domain=='atlas_gradient_v2'
+        audit=SpatialLifecycleAudit('spatial_rotating_compliant_lifecycle_rk4_v3' if phase_domain=='atlas_rotating_v3'
+            else 'spatial_compliant_atlas_lifecycle_rk4_v2' if phase_domain=='atlas_gradient_v2'
             else 'spatial_compliant_lifecycle_rk4_v1',audit.substeps,
             audit.actuator_work_j,audit.dissipation_j,audit.energy_residual_j,
             audit.max_linear_impulse_residual_ns,audit.max_angular_impulse_residual_nms,tuple(brackets))

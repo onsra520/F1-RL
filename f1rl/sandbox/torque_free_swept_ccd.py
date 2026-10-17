@@ -15,7 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import acos, isfinite
 
-from .body_collision import VehicleBodyGeometry, _slerp, sweep_body_against_obstacle
+from .body_collision import VehicleBodyGeometry, _slerp, sweep_ballistic_body_against_obstacle
 from .geometry.vector import Vec3
 from .euler_ode_clearance import (
     EulerODEEnclosurePolicy,certify_torque_free_ode_clearance,
@@ -261,21 +261,9 @@ def certify_torque_free_flight_sweep(
         wheel_count+=_wheel_clearance(
             pose_at,h,gravity_mps2,wheels,atlas,sweep,
         )
-        sagitta=gravity_mps2*h*h/8.
         for j,obstacle in enumerate(obstacles):
-            q=obstacle.orientation
-            ax=q.rotate(Vec3(1.,0.,0.))
-            ay=q.rotate(Vec3(0.,1.,0.))
-            az=q.rotate(Vec3(0.,0.,1.))
-            expanded=OrientedBoxVolume(
-                obstacle.center,
-                Vec3(obstacle.half_extents.x+sagitta*abs(ax.y),
-                     obstacle.half_extents.y+sagitta*abs(ay.y),
-                     obstacle.half_extents.z+sagitta*abs(az.y)),
-                q,
-            )
-            verdict=sweep_body_against_obstacle(
-                start,end,body,expanded,
+            verdict=sweep_ballistic_body_against_obstacle(
+                start,end,body,obstacle,duration_s=h,gravity_mps2=gravity_mps2,
                 max_subdivisions=sweep.max_subdivisions,
             )
             obstacle_count+=verdict.checks

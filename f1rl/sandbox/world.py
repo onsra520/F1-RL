@@ -91,11 +91,11 @@ def step_world(
     longitudinal_contact_policy: LongitudinalContactPolicy | None = None,
     spatial_contact_policy: SpatialContactPolicy | None = None,
 ) -> WorldStepResult:
-    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2'):
+    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3'):
         raise ValueError('unregistered ground motion version')
     coupled = ground_motion_version == 'coupled_longitudinal_v1'
-    compliant = ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2')
-    spatial = ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2')
+    compliant = ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3')
+    spatial = ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3')
     if (spatial != (spatial_contact_policy is not None)
             or spatial and (not isinstance(spatial_contact_policy,SpatialContactPolicy)
                 or not isinstance(independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
@@ -195,7 +195,8 @@ def step_world(
             integrate_spatial = integrate_spatial_lifecycle if compliant else integrate_spatial_contact
             result = integrate_spatial(state.vehicle,independent_suspension_policy,
                 body_geometry,track.surfaces,parameters,control,spatial_contact_policy,dt=dt,modifiers=modifiers,
-                **({'phase_domain':'atlas_gradient_v2'} if ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else {}))
+                **({'phase_domain':'atlas_rotating_v3'} if ground_motion_version=='spatial_rotating_compliant_lifecycle_v3'
+                   else {'phase_domain':'atlas_gradient_v2'} if ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else {}))
             spatial_ground_telemetry = result.audit
             if compliant:
                 flight_active = True  # Directed lifecycle race owns timed gate events.
@@ -337,10 +338,19 @@ def step_world(
         # Prospective full-body engine: continuous translation + rotation.
         # Unresolved conservative intervals must block, not tunnel.
         if compliant:
-            for segment,pose in zip(center_segments,swept_poses):
+            for segment,pose,last_pose in zip(center_segments,swept_poses,swept_poses[1:]):
                 if segment.initial_velocity is not None:
-                    _certify_obstacle_arc(pose,segment.end_time_s-segment.start_time_s,
-                        parameters.gravity,body_geometry,tuple(o.volume for o in track.obstacles),1)
+                    duration=segment.end_time_s-segment.start_time_s
+                    if ground_motion_version=='spatial_rotating_compliant_lifecycle_v3':
+                        from .body_collision import sweep_ballistic_body_against_obstacle
+                        for obstacle in track.obstacles:
+                            verdict=sweep_ballistic_body_against_obstacle(pose,last_pose,body_geometry,obstacle.volume,
+                                duration_s=duration,gravity_mps2=parameters.gravity)
+                            if verdict.blocked:
+                                raise FlightPhysicsError('ballistic SLERP obstacle envelope is blocked or unresolved')
+                    else:
+                        _certify_obstacle_arc(pose,duration,parameters.gravity,body_geometry,
+                            tuple(o.volume for o in track.obstacles),1)
         body_hits = []
         for obstacle in track.obstacles:
             for segment_start, segment_end in zip(swept_poses, swept_poses[1:]):

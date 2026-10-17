@@ -190,3 +190,24 @@ def sweep_body_against_obstacle(
     # A witnessed overlap is sufficient evidence of contact; unknown
     # clearance elsewhere does not erase the witnessed collision.
     return SweptCollisionResult(contact, uncertain and not contact, checks)
+
+
+def sweep_ballistic_body_against_obstacle(previous, candidate, body, obstacle, *,
+                                           duration_s, gravity_mps2, max_subdivisions=12):
+    """Bound a gravity parabola between endpoints with shortest-arc SLERP.
+
+    Expand the obstacle along its local axes by the vertical chord sagitta.
+    A clear expanded-obstacle sweep therefore bounds the whole body path.
+    """
+    if (type(duration_s) not in (int,float) or not isfinite(duration_s) or duration_s<=0.
+            or type(gravity_mps2) not in (int,float) or not isfinite(gravity_mps2) or gravity_mps2<=0.
+            or not isinstance(obstacle,OrientedBoxVolume)):
+        raise ValueError('finite positive ballistic duration/gravity and obstacle required')
+    sagitta=gravity_mps2*duration_s*duration_s/8.
+    if not isfinite(sagitta):
+        raise ValueError('ballistic obstacle envelope exceeds finite domain')
+    ax,ay,az=_box_axes(obstacle)
+    e=obstacle.half_extents
+    expanded=OrientedBoxVolume(obstacle.center,
+        Vec3(e.x+sagitta*abs(ax.y),e.y+sagitta*abs(ay.y),e.z+sagitta*abs(az.y)),obstacle.orientation)
+    return sweep_body_against_obstacle(previous,candidate,body,expanded,max_subdivisions=max_subdivisions)
