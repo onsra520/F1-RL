@@ -67,15 +67,17 @@ class PhysicsConfig:
         if (self.spawn_reference not in ('legacy_vehicle_position_v1','authored_horizontal_road_v1')
                 or self.spawn_reference!='legacy_vehicle_position_v1' and self.mode=='legacy_v1'):
             raise ValueError('unregistered research spawn reference')
-        if (self.ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1')
+        if (self.ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1')
                 or self.ground_motion_version=='arc_distance_v1' and self.mode not in ('wp7_suspension_v1','wp7_lifecycle_v1')):
             raise ValueError('unregistered research ground motion version/mode')
         coupled = self.ground_motion_version == 'coupled_longitudinal_v1'
-        spatial = self.ground_motion_version == 'spatial_contact_v1'
+        compliant = self.ground_motion_version == 'spatial_compliant_lifecycle_v1'
+        spatial = self.ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1')
         if (spatial != (self.spatial_contact_policy is not None)
-                or spatial and (self.mode!='wp7_suspension_v1'
+                or spatial and (self.mode!=('wp7_lifecycle_v1' if compliant else 'wp7_suspension_v1')
                     or not isinstance(self.spatial_contact_policy,SpatialContactPolicy)
                     or not isinstance(self.independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
+                    or compliant and self.independent_suspension_policy.force_model!='road_relative_unilateral_v3'
                     or self.independent_suspension_policy.force_model not in ('road_relative_vertical_v2','road_relative_unilateral_v3')
                     or self.independent_suspension_policy.angular_rate_mapping!='yaw_rx_rz_v1')):
             raise ValueError('spatial ground version requires its exclusive supported contact policy')
@@ -111,7 +113,7 @@ class PhysicsConfig:
             raise ValueError("WP7 requires explicit body geometry and independent suspension")
         if suspension.force_model=='road_relative_unilateral_v3' and not spatial:
             raise ValueError('unilateral force model requires spatial contact integration')
-        if suspension.force_model != 'legacy_vertical_v1' and self.mode != 'wp7_suspension_v1':
+        if suspension.force_model != 'legacy_vertical_v1' and self.mode != 'wp7_suspension_v1' and not compliant:
             raise ValueError('road-relative force model requires grounded suspension-only mode')
         if self.ground_motion_version=='arc_distance_v1' and suspension.angular_rate_mapping!='yaw_rx_rz_v1':
             raise ValueError('distance ground version requires exact suspension angular-rate mapping')
@@ -119,13 +121,13 @@ class PhysicsConfig:
             raise ValueError("WP7 owner body must remain 4.0 x 1.8 x 1.2 m")
         flight = self.ballistic_flight_policy
         yaw = self.grounded_yaw_policy
-        if (flight is not None) != (self.mode in ("wp7_ballistic_v1", "wp7_lifecycle_v1")):
+        if (flight is not None) != (self.mode in ("wp7_ballistic_v1", "wp7_lifecycle_v1") and not compliant):
             raise ValueError("ballistic mode requires its explicit flight policy exclusively")
         if (yaw is not None) != (self.mode == "wp7_grounded_yaw_v1"):
             raise ValueError("grounded yaw mode requires its explicit yaw policy exclusively")
         if self.automatic_takeoff_policy is not None and flight is None:
             raise ValueError("automatic takeoff requires ballistic mode")
-        if self.mode == "wp7_lifecycle_v1":
+        if self.mode == "wp7_lifecycle_v1" and not compliant:
             if (suspension.angular_rate_mapping != "yaw_rx_rz_v1"
                     or flight.manifold is None or flight.torque_free is not None
                     or flight.angular_impulse is not None or self.automatic_takeoff_policy is None
@@ -155,7 +157,7 @@ class PhysicsConfig:
             _distance_ground_frame(initial.vehicle,parameters)
         if self.ground_motion_version=='coupled_longitudinal_v1':
             _longitudinal_frame(initial.vehicle,initial.suspension)
-        if self.ground_motion_version=='spatial_contact_v1':
+        if self.ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1'):
             derived = _suspension_state(initial.vehicle)
             if any(abs(getattr(derived,key)-getattr(initial.suspension,key))>1e-8
                    for key in derived.__dataclass_fields__):
@@ -165,7 +167,11 @@ class PhysicsConfig:
             initial.vehicle.position.y, initial.suspension.height_m, rel_tol=0., abs_tol=1e-8,
         ):
             raise ValueError("initial suspension height disagrees with vehicle")
-        if self.ballistic_flight_policy is None:
+        if self.ground_motion_version=='spatial_compliant_lifecycle_v1':
+            if (not isinstance(initial.flight,FlightState) or initial.flight.phase=='takeoff'
+                    or initial.vehicle.grounded!=(initial.flight.phase=='grounded')):
+                raise ValueError('compliant lifecycle requires consistent persistent phase')
+        elif self.ballistic_flight_policy is None:
             if initial.flight is not None or not initial.vehicle.grounded:
                 raise ValueError("airborne state requires registered ballistic mode")
         else:
@@ -220,7 +226,7 @@ class PhysicsConfig:
             not track.surfaces or any(abs(p.normal.x)>1e-10 for p in track.surfaces)
         ):
             raise ValueError('coupled longitudinal contact requires world-Z road slopes')
-        if self.mode == "wp7_lifecycle_v1" and (
+        if self.mode == "wp7_lifecycle_v1" and self.ground_motion_version!='spatial_compliant_lifecycle_v1' and (
             not track.surfaces or any(p.normal != Vec3(0., 1., 0.) for p in track.surfaces)
             or len({p.origin.y for p in track.surfaces}) != 1
         ):
@@ -237,11 +243,12 @@ class PhysicsConfig:
             # previous suspension rates; it is not a registered impulse/recovery.
             raise PhysicsTransitionError("WP7 collision recovery is unregistered; step rejected")
         events = tuple(e for e in result.events if isinstance(e, FlightTransition))
-        if self.ground_motion_version in ('coupled_longitudinal_v1','spatial_contact_v1'):
-            spatial = self.ground_motion_version=='spatial_contact_v1'
+        compliant = self.ground_motion_version=='spatial_compliant_lifecycle_v1'
+        if self.ground_motion_version in ('coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1'):
+            spatial = self.ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1')
             audit = result.spatial_ground_telemetry if spatial else result.coupled_ground_telemetry
             segments = result.center_segments
-            expected_version = 'spatial_contact_world_momentum_rk4_v1' if spatial else 'coupled_longitudinal_rk4_work_v1'
+            expected_version = 'spatial_compliant_lifecycle_rk4_v1' if compliant else 'spatial_contact_world_momentum_rk4_v1' if spatial else 'coupled_longitudinal_rk4_work_v1'
             if audit is not None and any(
                 any(type(v) not in (int,float) or not isfinite(v) for v in
                     (leaf.initial_energy_j,leaf.final_energy_j,leaf.actuator_work_j,leaf.dissipation_j,
@@ -254,7 +261,7 @@ class PhysicsConfig:
                 raise PhysicsTransitionError(f'{"spatial" if spatial else "coupled"} force/time audit requires finite work evidence')
             if (audit is None or audit.version!=expected_version
                     or not audit.substeps or len(segments)!=len(audit.substeps)
-                    or events or result.flight_telemetry is not None
+                    or (events and not compliant) or result.flight_telemetry is not None
                     or abs(segments[0].start_time_s)>1e-9 or abs(segments[-1].end_time_s-dt)>1e-8
                     or (segments[0].start-previous.vehicle.position).magnitude>1e-7
                     or (segments[-1].end-result.state.vehicle.position).magnitude>1e-7
@@ -278,7 +285,16 @@ class PhysicsConfig:
                     return q.rotate(Vec3(suspension.pitch_inertia_kg_m2*omega.x,
                         self.spatial_contact_policy.yaw_inertia_kg_m2*omega.y,
                         suspension.roll_inertia_kg_m2*omega.z))
-                for first,last,leaf in zip(poses,poses[1:],audit.substeps):
+                for first,last,leaf,segment in zip(poses,poses[1:],audit.substeps,segments):
+                    if compliant:
+                        air=not first.grounded and not last.grounded
+                        h=segment.end_time_s-segment.start_time_s
+                        if ((segment.initial_velocity is not None)!=air or air and (
+                                segment.gravity_mps2!=parameters.gravity
+                                or (segment.initial_velocity-first.velocity).magnitude>1e-9
+                                or (last.velocity-first.velocity-Vec3(0.,-parameters.gravity*h,0.)).magnitude>1e-9
+                                or max(first.angular_velocity.magnitude,last.angular_velocity.magnitude)>1e-9)):
+                            raise PhysicsTransitionError('compliant ballistic law differs from accepted states')
                     linear = ((last.velocity-first.velocity)*suspension.mass_kg-leaf.force_impulse_ns).magnitude
                     angular = (momentum(last)-momentum(first)-leaf.torque_impulse_nms).magnitude
                     balance = leaf.final_energy_j-leaf.initial_energy_j-leaf.actuator_work_j+leaf.dissipation_j
@@ -301,7 +317,7 @@ class PhysicsConfig:
             self.validate_state(result.state, parameters)
             first = _horizontal_yaw(previous.vehicle.orientation).rotate(Vec3(0.,0.,1.))
             last = _horizontal_yaw(result.state.vehicle.orientation).rotate(Vec3(0.,0.,1.))
-            if self.ground_motion_version!='spatial_contact_v1' and (first-last).magnitude > 1e-8:
+            if self.ground_motion_version not in ('spatial_contact_v1','spatial_compliant_lifecycle_v1') and (first-last).magnitude > 1e-8:
                 raise PhysicsTransitionError('road-relative reduced driving cannot change yaw')
         distance_yaw_rate = None
         if (self.ground_motion_version=='arc_distance_v1' and previous.vehicle.grounded
@@ -323,7 +339,7 @@ class PhysicsConfig:
                 raise PhysicsTransitionError('accepted ground path exceeds steering curvature')
             distance_yaw_rate = curvature*result.state.vehicle.velocity.dot(last)
             self.validate_state(result.state,parameters,_prescribed_yaw_rate=distance_yaw_rate)
-        if self.mode == "wp7_lifecycle_v1":
+        if self.mode == "wp7_lifecycle_v1" and not compliant:
             segments = result.center_segments
             if (not isinstance(segments,tuple) or not segments
                     or not all(isinstance(s,CenterSegment) for s in segments)
@@ -368,6 +384,19 @@ class PhysicsConfig:
                 for audit in flight.manifold_history:
                     if audit.post_kinetic_energy_j > audit.pre_kinetic_energy_j + self.ballistic_flight_policy.manifold.energy_tolerance_j:
                         raise PhysicsTransitionError("impact energy gain violates lifecycle contract")
+        if compliant:
+            audit=result.spatial_ground_telemetry
+            poses=result.suspension_telemetry.poses
+            changes=[(leaf,'takeoff' if not last.grounded else 'landing')
+                     for first,last,leaf in zip(poses,poses[1:],audit.substeps) if first.grounded!=last.grounded]
+            brackets=getattr(audit,'phase_brackets',None)
+            if not isinstance(brackets,tuple) or len(brackets)!=len(changes) or len(events)!=len(changes):
+                raise PhysicsTransitionError('compliant phase evidence missing')
+            for bracket,(leaf,kind),event in zip(brackets,changes,events):
+                if (bracket.kind!=kind or event.kind!=kind or event.time_s!=bracket.upper_time_s
+                        or bracket.lower_time_s!=leaf.start_time_s or bracket.upper_time_s!=leaf.end_time_s
+                        or not 0.<bracket.upper_time_s-bracket.lower_time_s<=1e-8):
+                    raise PhysicsTransitionError('compliant phase time bracket disagrees with trajectory')
         solvers = []
         if self.ground_motion_version=='arc_distance_v1' and (
             result.partial_support_telemetry is not None
@@ -375,7 +404,7 @@ class PhysicsConfig:
         ):
             solvers.append('arc_distance_ground_v1')
         if result.spatial_ground_telemetry is not None:
-            solvers.append('spatial_contact_world_momentum_rk4_v1')
+            solvers.append(result.spatial_ground_telemetry.version)
         elif result.coupled_ground_telemetry is not None:
             solvers.append('coupled_longitudinal_rk4_work_v1')
         elif result.suspension_telemetry is not None:
@@ -388,7 +417,7 @@ class PhysicsConfig:
             solvers.append("torque_free_rk4_v1" if self.ballistic_flight_policy.torque_free else "ballistic_constant_omega_v1")
             if result.flight_telemetry.manifold_audit is not None:
                 solvers.append("contact_manifold_pgs_v1")
-                if self.mode == "wp7_lifecycle_v1":
+                if self.mode == "wp7_lifecycle_v1" and not compliant:
                     solvers.append("wheel_toi_monotone_v1")
         if result.grounded_yaw_telemetry is not None:
             solvers.append("grounded_dynamic_yaw_v1")
@@ -427,9 +456,9 @@ class PhysicsConfig:
         if self.spawn_reference=='legacy_vehicle_position_v1':
             configuration.pop('spawn_reference')
         return {
-            "schema_version": 5 if spatial else 4 if coupled else 3 if road_relative else 1 if self.ground_motion_version=='legacy_euler_v1' and self.spawn_reference=='legacy_vehicle_position_v1' else 2,
+            "schema_version": 6 if self.ground_motion_version=='spatial_compliant_lifecycle_v1' else 5 if spatial else 4 if coupled else 3 if road_relative else 1 if self.ground_motion_version=='legacy_euler_v1' and self.spawn_reference=='legacy_vehicle_position_v1' else 2,
             "validation_scope": "software_research_only",
-            "longitudinal_model": 'spatial_contact_world_momentum_rk4_v1' if spatial else 'coupled_contact_force_rk4_v1' if coupled else "legacy_prescribed_v1" if self.ground_motion_version=='legacy_euler_v1' else 'force_frozen_distance_bicycle_v1',
+            "longitudinal_model": 'spatial_compliant_lifecycle_rk4_v1' if self.ground_motion_version=='spatial_compliant_lifecycle_v1' else 'spatial_contact_world_momentum_rk4_v1' if spatial else 'coupled_contact_force_rk4_v1' if coupled else "legacy_prescribed_v1" if self.ground_motion_version=='legacy_euler_v1' else 'force_frozen_distance_bicycle_v1',
             **configuration,
             **({'body_clearance_version': 'bounded_patch_planes_v2'} if road_relative else {}),
         }

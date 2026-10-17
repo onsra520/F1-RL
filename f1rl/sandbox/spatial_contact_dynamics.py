@@ -2,10 +2,11 @@
 
 Position, quaternion, linear velocity and world angular momentum share one
 force field. Tire forces use a friction circle and dissipative lateral slip;
-there is no wheel-spin, static-friction, geometric partial-support or flight claim.
+there is no wheel-spin or static-friction claim. The separate compliant
+lifecycle entry point supports bounded fixed-attitude flight above the atlas.
 Every accepted RK4 leaf must pass work/impulse and numerical body/road sweeps.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from math import asin, atan2, cos, isfinite, sin, tanh
 
 from .body_collision import VehicleBodyGeometry
@@ -18,7 +19,7 @@ from .independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy, SuspensionDynamicsResult,
     SuspensionDynamicsState, SuspensionResolutionError, WheelForceSample,
 )
-from .multi_surface_support import _atlas, _contacts, certify_multisurface_support
+from .multi_surface_support import _atlas, _contacts, _intersection, _square, certify_multisurface_support
 from .vehicle import VehicleControl, VehicleParameters, VehicleState
 
 UP, RIGHT, FORWARD = Vec3(0.,1.,0.), Vec3(1.,0.,0.), Vec3(0.,0.,1.)
@@ -81,6 +82,25 @@ class SpatialGroundAudit:
 
 
 @dataclass(frozen=True, slots=True)
+class SpatialPhaseBracket:
+    kind: str
+    lower_time_s: float
+    upper_time_s: float
+
+    def __post_init__(self):
+        if (self.kind not in ('takeoff','landing')
+                or any(type(t) not in (int,float) or not isfinite(t) for t in (self.lower_time_s,self.upper_time_s))
+                or not 0.<=self.lower_time_s<self.upper_time_s
+                or self.upper_time_s-self.lower_time_s>1e-8):
+            raise ValueError('finite bounded compliant phase bracket required')
+
+
+@dataclass(frozen=True, slots=True)
+class SpatialLifecycleAudit(SpatialGroundAudit):
+    phase_brackets: tuple[SpatialPhaseBracket, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class SpatialGroundResult:
     suspension: SuspensionDynamicsResult
     audit: SpatialGroundAudit
@@ -112,10 +132,30 @@ class _Stage:
     dissipation_power: float
     samples: tuple[WheelForceSample, ...]
     contacts: tuple[SpatialWheelAudit, ...]
+    compressed: bool
 
 
 def integrate_spatial_contact(previous, physics, body, surfaces, parameters, control,
                               policy, *, dt, modifiers=None):
+    return _integrate_spatial(previous,physics,body,surfaces,parameters,control,policy,
+                              dt=dt,modifiers=modifiers,lifecycle=False)
+
+
+def integrate_spatial_lifecycle(previous, physics, body, surfaces, parameters, control,
+                                policy, *, dt, modifiers=None):
+    """Compliant release/recontact above a continuously covered road atlas.
+
+    Free extension must end before the registered droop stop. Airborne angular
+    motion and road-edge departure remain unsupported in this first domain.
+    """
+    if not isinstance(physics,IndependentSuspensionDynamicsPolicy) or physics.force_model != 'road_relative_unilateral_v3':
+        raise ValueError('spatial lifecycle requires unilateral contact')
+    return _integrate_spatial(previous,physics,body,surfaces,parameters,control,policy,
+                              dt=dt,modifiers=modifiers,lifecycle=True)
+
+
+def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
+                        policy, *, dt, modifiers, lifecycle):
     """Force-coupled supported motion; world Hdot=tau prevents hidden yaw projection.
 
     Quaternion RK4 is normalized at each accepted candidate. Work refinement
@@ -128,7 +168,7 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
             or not isinstance(control,VehicleControl) or not isinstance(policy,SpatialContactPolicy)
             or type(dt) not in (int,float) or not isfinite(dt) or dt<=0.):
         raise ValueError('registered spatial contact inputs required')
-    if not previous.grounded:
+    if not lifecycle and not previous.grounded:
         raise SuspensionResolutionError('spatial contact requires four supported reference wheels')
     inertia=Vec3(physics.pitch_inertia_kg_m2,policy.yaw_inertia_kg_m2,physics.roll_inertia_kg_m2)
     if 2.*max(inertia.x,inertia.y,inertia.z)>inertia.x+inertia.y+inertia.z+1e-8:
@@ -145,6 +185,8 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
     unilateral=physics.force_model=='road_relative_unilateral_v3'
     if unilateral and (not isfinite(preload) or preload<=0.):
         raise SuspensionResolutionError('unilateral contact requires finite positive nominal preload')
+    if lifecycle and preload/physics.spring_stiffness_npm > physics.contact.max_droop_m:
+        raise SuspensionResolutionError('free spring extension exceeds registered droop stop')
     traction=policy.traction
 
     def body_vector(q,world):
@@ -169,15 +211,19 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
                 or state.speed>parameters.max_ground_speed+1e-8
                 or state.angular_velocity.magnitude>policy.max_angular_speed_radps):
             raise SuspensionResolutionError('spatial state exceeds tilt/speed/angular domain')
-        contacts=_contacts(state,physics.contact,atlas)
+        contacts=_contacts(state,physics.contact,atlas,free_extension=lifecycle)
         if contacts is None:
             raise SuspensionResolutionError('spatial wheel support/travel missing')
-        drag=state.velocity*(-mass*parameters.rolling_drag*modifiers.rolling_drag_multiplier)
-        boost=state.orientation.rotate(FORWARD)*(mass*modifiers.longitudinal_acceleration_bonus)
+        compressed=any(preload+physics.spring_stiffness_npm*c.deflection_m>0. for c in contacts)
+        if lifecycle and not compressed and state.angular_velocity.magnitude>1e-9:
+            raise SuspensionResolutionError('spatial compliant flight requires fixed airborne attitude')
+        ground_effect=1. if not lifecycle or compressed else 0.
+        drag=state.velocity*(-mass*parameters.rolling_drag*modifiers.rolling_drag_multiplier*ground_effect)
+        boost=state.orientation.rotate(FORWARD)*(mass*modifiers.longitudinal_acceleration_bonus*ground_effect)
         force=UP*(-mass*gravity)+drag+boost
-        torque=state.angular_velocity*(-physics.angular_damping_nmsprad)
+        torque=state.angular_velocity*(-physics.angular_damping_nmsprad*ground_effect)
         actuator=boost.dot(state.velocity)
-        dissipation=-drag.dot(state.velocity)+physics.angular_damping_nmsprad*state.angular_velocity.dot(state.angular_velocity)
+        dissipation=-drag.dot(state.velocity)+physics.angular_damping_nmsprad*ground_effect*state.angular_velocity.dot(state.angular_velocity)
         spring_energy=0.
         samples,records=[],[]
         for index,(local,contact) in enumerate(zip(physics.contact.wheels.positions,contacts,strict=True)):
@@ -198,7 +244,7 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
             else:
                 load=max(0.,raw_elastic-physics.damper_nspm*gap_rate)
             normal_force=load/patch.normal.y
-            angle=control.steering*parameters.max_steering_angle if local.z>0. else 0.
+            angle=control.steering*parameters.max_steering_angle if local.z>0. and ground_effect else 0.
             heading=state.orientation.rotate(Vec3(sin(angle),0.,cos(angle))).reject_from(patch.normal)
             if heading.magnitude<1e-8:
                 raise SuspensionResolutionError('wheel tangent direction unresolved')
@@ -226,7 +272,7 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
             spring_energy+=elastic*elastic/(2.*physics.spring_stiffness_npm)
             samples.append(WheelForceSample(contact,load,gap_rate))
             records.append(SpatialWheelAudit(index,patch.id,normal_force,longitudinal,side,speed,slip))
-        if not any(s.upward_force_n>0. for s in samples):
+        if not lifecycle and not any(s.upward_force_n>0. for s in samples):
             raise SuspensionResolutionError('unloaded spatial contact requires airborne solver')
         qw,qx,qy,qz=y[6:10]
         wx,wy,wz=state.angular_velocity.x,state.angular_velocity.y,state.angular_velocity.z
@@ -234,7 +280,7 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
               .5*(-wx*qz+wy*qw+wz*qx),.5*(wx*qy-wy*qx+wz*qw))
         derivative=(state.velocity.x,state.velocity.y,state.velocity.z,
                     force.x/mass,force.y/mass,force.z/mass,*qdot,torque.x,torque.y,torque.z)
-        return _Stage(derivative,force,torque,spring_energy,actuator,dissipation,tuple(samples),tuple(records))
+        return _Stage(derivative,force,torque,spring_energy,actuator,dissipation,tuple(samples),tuple(records),compressed)
 
     def kinetic(y):
         s=vehicle(y)
@@ -249,11 +295,12 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
            previous.velocity.x,previous.velocity.y,previous.velocity.z,
            q.w,q.x,q.y,q.z,momentum.x,momentum.y,momentum.z)
     poses,history,leaves,times=[previous],[],[],[0.]
+    brackets,ballistic_leaves=[],[]
 
     def shifted(y,d,h):
         return tuple(v+h*k for v,k in zip(y,d,strict=True))
 
-    def advance(y,start,h,depth):
+    def advance(y,start,h,depth,phase_depth=0):
         a=stage(y)
         b=stage(shifted(y,a.derivative,h/2.))
         c=stage(shifted(y,b.derivative,h/2.))
@@ -265,6 +312,14 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
         q=Quaternion(*end[6:10])
         end=(*end[:6],q.w,q.x,q.y,q.z,*end[10:13])
         final=stage(end)
+        phase_change=lifecycle and any(f.compressed!=a.compressed for f in (*stages,final))
+        if phase_change and h>1e-8:
+            if phase_depth>=24:
+                raise SuspensionResolutionError('spatial phase time unresolved at refinement limit')
+            middle=advance(y,start,h/2.,depth,phase_depth+1)
+            return advance(middle,times[-1],h/2.,depth,phase_depth+1)
+        if phase_change and a.compressed==final.compressed:
+            raise SuspensionResolutionError('multiple spatial phase changes inside event bracket')
         work=h/6.*sum(w*f.actuator_power for w,f in zip(weights,stages,strict=True))
         lost=h/6.*sum(w*f.dissipation_power for w,f in zip(weights,stages,strict=True))
         e0,e1=energy(y,a),energy(end,final)
@@ -278,9 +333,39 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
             middle=advance(y,start,h/2.,depth+1)
             return advance(middle,times[-1],h/2.,depth+1)
         first,last=vehicle(y),vehicle(end)
+        if lifecycle:
+            first,last=replace(first,grounded=a.compressed),replace(last,grounded=final.compressed)
+        if phase_change:
+            # On one horizontal plane each SLERP wheel gap has second derivative
+            # <= theta^2*|r| in normalized leaf time. A same-sign secant exceeding
+            # half that bound proves every gap monotone, hence one phase crossing.
+            relative=last.orientation*Quaternion(first.orientation.w,-first.orientation.x,
+                                                  -first.orientation.y,-first.orientation.z)
+            theta=2.*atan2(Vec3(relative.x,relative.y,relative.z).magnitude,abs(relative.w))
+            direction=1. if final.compressed else -1.
+            for local in physics.contact.wheels.positions:
+                first_point=first.position+first.orientation.rotate(local)
+                last_point=last.position+last.orientation.rotate(local)
+                radius=(last.position-first.position).magnitude+theta*local.magnitude
+                footprint=_square(first_point.x,first_point.z,radius)
+                crossed=[p for p,poly in zip(*atlas) if _intersection(footprint,poly)]
+                if not crossed or any(p.normal!=UP for p in crossed) or len({p.origin.y for p in crossed})!=1:
+                    raise SuspensionResolutionError('spatial phase uniqueness requires local horizontal road')
+                first_y,last_y=first_point.y,last_point.y
+                if direction*(first_y-last_y)<=.5*theta*theta*local.magnitude:
+                    raise SuspensionResolutionError('spatial phase crossing monotonicity unresolved')
+        ballistic=lifecycle and not any(f.compressed for f in (*stages,final))
         verdict=certify_multisurface_support(first,last,body,physics.contact,surfaces,
-                                            body_clearance_version='bounded_patch_planes_v2')
+                                            body_clearance_version='bounded_patch_planes_v2',
+            contact_domain='unilateral_free_extension_v1' if lifecycle else 'four_supported_v1',
+            ballistic_sag_m=gravity*h*h/8. if ballistic else 0.,
+            maximum_deflection_m=-preload/physics.spring_stiffness_npm if ballistic else None,
+            minimum_support_deflection_m=-preload/physics.spring_stiffness_npm
+                if lifecycle and not ballistic and not phase_change else None)
         if not verdict.valid:
+            if lifecycle and not phase_change and h>1e-8 and phase_depth<24:
+                middle=advance(y,start,h/2.,depth,phase_depth+1)
+                return advance(middle,times[-1],h/2.,depth,phase_depth+1)
             raise SuspensionResolutionError(f'spatial body/contact sweep {verdict.status}: {verdict.reason}')
         impulse=sum((f.force*w for w,f in zip(weights,stages,strict=True)),Vec3(0.,0.,0.))*(h/6.)
         torque_impulse=sum((f.torque*w for w,f in zip(weights,stages,strict=True)),Vec3(0.,0.,0.))*(h/6.)
@@ -292,11 +377,16 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
             raise SuspensionResolutionError('spatial substep budget exhausted')
         leaves.append(SpatialSubstepAudit(start,start+h,impulse,torque_impulse,linear_error,angular_error,
             e0,e1,work,lost,residual,tolerance,tuple(f.contacts for f in stages)))
+        if phase_change:
+            brackets.append(SpatialPhaseBracket('landing' if final.compressed else 'takeoff',start,start+h))
+        ballistic_leaves.append(lifecycle and not any(f.compressed for f in (*stages,final)))
         poses.append(last)
         history.append(a.samples)
         times.append(start+h)
         return end
 
+    if lifecycle and previous.grounded != stage(state).compressed:
+        raise SuspensionResolutionError('spatial lifecycle phase disagrees with spring compression')
     h=dt/physics.integration_substeps
     for _ in range(physics.integration_substeps):
         state=advance(state,times[-1],h,0)
@@ -306,5 +396,10 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
         sum(s.actuator_work_j for s in leaves),sum(s.dissipation_j for s in leaves),
         sum(s.energy_residual_j for s in leaves),max(s.linear_impulse_residual_ns for s in leaves),
         max(s.angular_impulse_residual_nms for s in leaves))
-    centers=tuple(CenterSegment(a,b,p.position,r.position) for a,b,p,r in zip(times,times[1:],poses,poses[1:]))
+    if lifecycle:
+        audit=SpatialLifecycleAudit('spatial_compliant_lifecycle_rk4_v1',audit.substeps,
+            audit.actuator_work_j,audit.dissipation_j,audit.energy_residual_j,
+            audit.max_linear_impulse_residual_ns,audit.max_angular_impulse_residual_nms,tuple(brackets))
+    centers=tuple(CenterSegment(a,b,p.position,r.position,p.velocity if air else None,gravity if air else 0.)
+        for a,b,p,r,air in zip(times[:-1],times[1:],poses[:-1],poses[1:],ballistic_leaves,strict=True))
     return SpatialGroundResult(suspension,audit,centers)

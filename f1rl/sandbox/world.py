@@ -9,7 +9,7 @@ from .coupled_longitudinal_dynamics import (
     CoupledGroundAudit, LongitudinalContactPolicy, integrate_coupled_longitudinal,
 )
 from .geometry.vector import Vec3
-from .spatial_contact_dynamics import SpatialGroundAudit, SpatialContactPolicy, integrate_spatial_contact
+from .spatial_contact_dynamics import SpatialGroundAudit, SpatialContactPolicy, integrate_spatial_contact, integrate_spatial_lifecycle
 from .grounded_yaw_dynamics import (
     GroundedYawPolicy,GroundedYawAudit,advance_grounded_yaw,
 )
@@ -23,7 +23,7 @@ from .partial_wheel_release import (
 )
 from .ballistic_flight import (
     BallisticFlightPolicy, FlightPhysicsError, FlightState,
-    FlightStep, FlightTransition, authorize_takeoff, advance_ballistic_flight,
+    FlightStep, FlightTransition, authorize_takeoff, advance_ballistic_flight, _certify_obstacle_arc,
 )
 from .independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy,
@@ -91,16 +91,20 @@ def step_world(
     longitudinal_contact_policy: LongitudinalContactPolicy | None = None,
     spatial_contact_policy: SpatialContactPolicy | None = None,
 ) -> WorldStepResult:
-    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1'):
+    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1'):
         raise ValueError('unregistered ground motion version')
     coupled = ground_motion_version == 'coupled_longitudinal_v1'
-    spatial = ground_motion_version == 'spatial_contact_v1'
+    compliant = ground_motion_version == 'spatial_compliant_lifecycle_v1'
+    spatial = ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1')
     if (spatial != (spatial_contact_policy is not None)
             or spatial and (not isinstance(spatial_contact_policy,SpatialContactPolicy)
                 or not isinstance(independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
                 or independent_suspension_policy.force_model not in ('road_relative_vertical_v2','road_relative_unilateral_v3')
                 or independent_suspension_policy.angular_rate_mapping!='yaw_rx_rz_v1'
-                or state.flight is not None)):
+                or (not compliant and state.flight is not None)
+                or compliant and (independent_suspension_policy.force_model!='road_relative_unilateral_v3'
+                    or not isinstance(state.flight,FlightState) or state.flight.phase=='takeoff'
+                    or state.vehicle.grounded!=(state.flight.phase=='grounded')))):
         raise ValueError('spatial ground motion requires its exclusive supported contact policy')
     if (coupled != (longitudinal_contact_policy is not None)
             or coupled and (not isinstance(longitudinal_contact_policy,LongitudinalContactPolicy)
@@ -188,9 +192,13 @@ def step_world(
     if coupled or spatial:
         modifiers = resolve_motion_modifiers(current_query)
         if spatial:
-            result = integrate_spatial_contact(state.vehicle,independent_suspension_policy,
+            integrate_spatial = integrate_spatial_lifecycle if compliant else integrate_spatial_contact
+            result = integrate_spatial(state.vehicle,independent_suspension_policy,
                 body_geometry,track.surfaces,parameters,control,spatial_contact_policy,dt=dt,modifiers=modifiers)
             spatial_ground_telemetry = result.audit
+            if compliant:
+                flight_active = True  # Directed lifecycle race owns timed gate events.
+                flight_events = tuple(FlightTransition(b.kind,b.upper_time_s) for b in result.audit.phase_brackets)
         else:
             result = integrate_coupled_longitudinal(state.vehicle,state.suspension,
                 independent_suspension_policy,body_geometry,track.surfaces,parameters,
@@ -327,6 +335,11 @@ def step_world(
             raise ValueError("body_geometry must be VehicleBodyGeometry")
         # Prospective full-body engine: continuous translation + rotation.
         # Unresolved conservative intervals must block, not tunnel.
+        if compliant:
+            for segment,pose in zip(center_segments,swept_poses):
+                if segment.initial_velocity is not None:
+                    _certify_obstacle_arc(pose,segment.end_time_s-segment.start_time_s,
+                        parameters.gravity,body_geometry,tuple(o.volume for o in track.obstacles),1)
         body_hits = []
         for obstacle in track.obstacles:
             for segment_start, segment_end in zip(swept_poses, swept_poses[1:]):
@@ -430,6 +443,7 @@ def step_world(
             state.suspension
         ),
         flight=(
+            FlightState("grounded" if accepted.grounded else "airborne") if compliant else
             flight_telemetry.flight if flight_telemetry is not None
             else FlightState("airborne") if auto_released
             else state.flight

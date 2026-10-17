@@ -127,7 +127,7 @@ def _within_shape(x: float, z: float, shape) -> bool:
     )
 
 
-def _contacts(state, policy, atlas):
+def _contacts(state, policy, atlas, *, free_extension=False):
     patches, polygons = atlas
     found = []
     for name, local in zip(_WHEEL_NAMES, policy.wheels.positions, strict=True):
@@ -138,7 +138,7 @@ def _contacts(state, policy, atlas):
                 continue
             h = _height(p, point.x, point.z)
             d = h - point.y
-            if -policy.max_droop_m - _EPS <= d <= policy.max_bump_m + _EPS:
+            if (free_extension or d >= -policy.max_droop_m - _EPS) and d <= policy.max_bump_m + _EPS:
                 candidates.append((abs(d), p.id, h, d))
         if not candidates:
             return None
@@ -213,20 +213,40 @@ def certify_multisurface_support(
     policy: MultiSurfaceSuspensionPolicy,
     surfaces: tuple[PlanarSurfacePatch, ...],
     *, body_clearance_version: str = 'infinite_patch_planes_v1',
+    contact_domain: str = 'four_supported_v1', ballistic_sag_m: float = 0.,
+    maximum_deflection_m: float | None = None, minimum_support_deflection_m: float | None = None,
 ) -> MultiSurfaceSupportVerdict:
     """Conservative continuous four-wheel / body containment for linear+SLERP sweep.
 
     CLEAR guarantees contact travel and projected whole-body road coverage
     throughout this *prescribed* motion, subject to 2.5D atlas assumptions.
+    The explicit unilateral domain instead allows unloaded free extension;
+    optional deflection bounds certify phase persistence, not spring forces.
     It does not calculate a physically correct chassis pose or spring forces.
     """
+    if contact_domain not in ('four_supported_v1','unilateral_free_extension_v1'):
+        raise ValueError('unregistered geometric contact domain')
+    free_extension = contact_domain == 'unilateral_free_extension_v1'
+    if type(ballistic_sag_m) not in (int,float) or not isfinite(ballistic_sag_m) or ballistic_sag_m < 0.:
+        raise ValueError('finite nonnegative ballistic sag required')
+    if ballistic_sag_m and not free_extension:
+        raise ValueError('ballistic sag requires unilateral free-extension domain')
+    if maximum_deflection_m is not None and (not free_extension
+            or type(maximum_deflection_m) not in (int,float) or not isfinite(maximum_deflection_m)
+            or maximum_deflection_m>policy.max_bump_m):
+        raise ValueError('finite unilateral deflection enclosure required')
+    if minimum_support_deflection_m is not None and (not free_extension
+            or type(minimum_support_deflection_m) not in (int,float) or not isfinite(minimum_support_deflection_m)
+            or maximum_deflection_m is not None):
+        raise ValueError('finite exclusive supported-phase enclosure required')
+    upper_deflection=policy.max_bump_m if maximum_deflection_m is None else maximum_deflection_m
     if body_clearance_version not in ('infinite_patch_planes_v1', 'bounded_patch_planes_v2'):
         raise ValueError('unregistered body/road clearance version')
     if not isinstance(previous, VehicleState) or not isinstance(candidate, VehicleState):
         raise ValueError("previous/candidate must be VehicleState")
     if not isinstance(body, VehicleBodyGeometry) or not isinstance(policy, MultiSurfaceSuspensionPolicy):
         raise ValueError("explicit body and suspension policy required")
-    if not previous.grounded or not candidate.grounded:
+    if not free_extension and (not previous.grounded or not candidate.grounded):
         return MultiSurfaceSupportVerdict("unsupported", 0, "takeoff/landing not registered")
     atlas = _atlas(surfaces, policy.seam_height_tolerance_m)
     if atlas is None:
@@ -249,9 +269,14 @@ def certify_multisurface_support(
         nonlocal checks, numerical_unresolved
         checks += 1
         state = state_at(t)
-        contacts = _contacts(state, policy, atlas)
+        contacts = _contacts(state, policy, atlas, free_extension=free_extension)
+        r_b += ballistic_sag_m
         if contacts is None:
             return False, False, ()
+        if maximum_deflection_m is not None and any(c.deflection_m>maximum_deflection_m for c in contacts):
+            return False, False, contacts
+        if minimum_support_deflection_m is not None and not any(c.deflection_m>minimum_support_deflection_m for c in contacts):
+            return False, False, contacts
         hull = body_xz_polygon(state, body)
         envelope = _inflate(hull, r_b)
         if _uncovered_area(envelope, polygons) > _EPS:
@@ -270,7 +295,9 @@ def certify_multisurface_support(
             if clearance < -_EPS:
                 return False, False, contacts
 
+        compressed_witness=False
         for local in policy.wheels.positions:
+            wheel_compressed=True
             w = state.position + state.orientation.rotate(local)
             swept = _square(w.x, w.z, r_w)
             if _uncovered_area(swept, polygons) > _EPS:
@@ -281,9 +308,14 @@ def certify_multisurface_support(
                 d = _height(patch, w.x, w.z) - w.y
                 slope = hypot(patch.normal.x, patch.normal.z) / patch.normal.y
                 allowance = (1. + slope) * r_w
-                if not (-policy.max_droop_m + allowance - _EPS <= d
-                        <= policy.max_bump_m - allowance + _EPS):
+                if minimum_support_deflection_m is not None and d-allowance<=minimum_support_deflection_m:
+                    wheel_compressed=False
+                if (not free_extension and d < -policy.max_droop_m + allowance - _EPS
+                        or d > upper_deflection - allowance + (0. if maximum_deflection_m is not None else _EPS)):
                     return True, False, contacts
+            compressed_witness |= wheel_compressed
+        if minimum_support_deflection_m is not None and not compressed_witness:
+            return True, False, contacts
         return True, True, contacts
 
     # Endpoint failures are witnessed invalid poses. Midpoint uncertainty
