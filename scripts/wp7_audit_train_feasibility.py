@@ -10,6 +10,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--search-alternatives", action="store_true",
                         help="certify bounded planar candidates separately from authored-path findings")
+    parser.add_argument('--registered-center-gates',action='store_true',
+                        help='explicit owner 5A center-gate search; preserves full-body road/obstacle checks')
+    parser.add_argument('--execute-controls',action='store_true',help='execute source-bound nominal TRAIN control tapes')
     args = parser.parse_args()
     print(json.dumps(audit_train_tracks(Path(__file__).resolve().parents[1],
-                    search_alternatives=args.search_alternatives), indent=2, allow_nan=False))
+                    search_alternatives=args.search_alternatives or args.registered_center_gates,
+                    execute_controls=args.execute_controls,registered_center_gates=args.registered_center_gates), indent=2, allow_nan=False))

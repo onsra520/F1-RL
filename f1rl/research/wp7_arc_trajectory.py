@@ -1,7 +1,8 @@
 """C1 arc-length planar paths with bounded piecewise-constant curvature.
 
 Every continuous body pose is enclosed, including between proof intervals.
-Gate passage checks the plane section of the body, not its whole projection.
+Default gate passage checks the body plane section. Explicit schema v2 uses
+the owner's directed center reference, keeping body/road/obstacle proofs.
 This is geometry/steering evidence, never speed, contact, learning or admission.
 """
 from dataclasses import asdict, dataclass
@@ -137,8 +138,9 @@ def _roots(pieces,gate,height):
     return sorted(set(roots))
 
 
-def certify_arc_trajectory(asset,path,*,parameters=PARAMETERS,interval_m=.05,max_subdivisions=7):
-    """Prove continuous road/obstacle clearance and ordered full-body passages.
+def certify_arc_trajectory(asset,path,*,parameters=PARAMETERS,interval_m=.05,max_subdivisions=7,
+                           gate_contract='whole_body_plane_section_v1'):
+    """Prove continuous road/obstacle clearance and the selected gate contract.
 
     |dp/ds|=1 and |dyaw/ds|=|curvature|. A midpoint OBB enlarged by
     (1+motion_radius*|curvature|)*h/2 encloses all poses on its interval.
@@ -146,6 +148,9 @@ def certify_arc_trajectory(asset,path,*,parameters=PARAMETERS,interval_m=.05,max
     """
     if asset.track_id not in TRAIN_IDS or type(path) is not ArcPath or not isinstance(parameters,VehicleParameters):
         raise ValueError('registered TRAIN identity and exact ArcPath required')
+    if gate_contract not in ('whole_body_plane_section_v1','directed_center_crossing_v1'):
+        raise ValueError('unregistered gate passage contract')
+    center_gates = gate_contract == 'directed_center_crossing_v1'
     if (type(interval_m) not in (int,float) or not isfinite(interval_m) or not .01<=interval_m<=.1
             or type(max_subdivisions) is not int or not 0<=max_subdivisions<=10):
         raise ValueError('invalid certification budget')
@@ -210,6 +215,10 @@ def certify_arc_trajectory(asset,path,*,parameters=PARAMETERS,interval_m=.05,max
                 after = (_path_pose(pieces,bracket[1],height).position-gate.volume.center).dot(normal)
                 if not before < -EPS or not after > EPS:
                     continue
+                if center_gates:
+                    accepted = dict(gate_id=gate.id,crossing_s_m=root,
+                        center_crossing_bracket_s_m=bracket,center_crossing_certified=True)
+                    break
                 index = next((i for i,(p,a,b,_) in enumerate(intervals) if p[0]+a-EPS<=root<=p[0]+b+EPS),None)
                 if index is None:
                     continue
@@ -234,7 +243,7 @@ def certify_arc_trajectory(asset,path,*,parameters=PARAMETERS,interval_m=.05,max
                         passage_start_s_m=first[0]+a,passage_end_s_m=last[0]+b,body_passage_certified=True)
                     break
             if accepted is None:
-                blockers.append(f'full_body_passage_unresolved:{gate.id}')
+                blockers.append(f'{"directed_center_passage" if center_gates else "full_body_passage"}_unresolved:{gate.id}')
                 break
             passages.append(accepted)
             cursor = accepted['center_crossing_bracket_s_m'][1]
@@ -282,6 +291,9 @@ def certify_arc_trajectory(asset,path,*,parameters=PARAMETERS,interval_m=.05,max
         speed_contact_status='unresolved',training_authorized=False,blockers=sorted(set(blockers)),
         remaining_requirements=['speed_braking_schedule','executed_physics_tracking_and_contact',
                                 'curvature_jump_steering_schedule','owner_and_scientific_admission'])
+    if center_gates:
+        document.update(schema_version='wp7_arc_path_certificate_v2',gate_contract=gate_contract,
+            geometry_scope='continuous_body_road_obstacle_and_directed_center_gates_not_dynamics')
     return {**document,'sha256':digest(document)}
 
 
@@ -305,23 +317,29 @@ def _right_turn_path(curvature,theta_degrees,straight_half):
         (straight_half+3,0.)))
 
 
-def search_right_turn_trajectory(asset,*,parameters=PARAMETERS):
+def search_right_turn_trajectory(asset,*,parameters=PARAMETERS,gate_contract='whole_body_plane_section_v1'):
     """Search a finite arc family, retaining every failed execution constraint."""
     if asset.track_id!='right-turn-v1' or not isinstance(parameters,VehicleParameters):
         raise ValueError('Right-turn TRAIN identity and vehicle parameters required')
+    if gate_contract not in ('whole_body_plane_section_v1','directed_center_crossing_v1'):
+        raise ValueError('unregistered gate passage contract')
     available = tan(parameters.max_steering_angle)/parameters.wheelbase
     if not isfinite(available) or available<=0:
         raise ValueError('Right-turn steering curvature outside finite positive numeric domain')
     curvature = min(available,tan(PARAMETERS.max_steering_angle)/PARAMETERS.wheelbase)
+    center_gates = gate_contract == 'directed_center_crossing_v1'
+    if center_gates:
+        curvature = min(curvature,.16)
     if not isfinite(1/curvature):
         raise ValueError('Right-turn radius outside finite numeric domain')
     candidates = []
-    for theta,straight_half in ((23.6,1.6),(24.,1.65),(25.,1.65)):
+    family = ((75.,.2),) if center_gates else ((23.6,1.6),(24.,1.65),(25.,1.65))
+    for theta,straight_half in family:
         try:
             path = _right_turn_path(curvature,theta,straight_half)
         except ValueError as exc:
             raise ValueError('Right-turn arc family outside supported numeric domain') from exc
-        result = certify_arc_trajectory(asset,path,parameters=parameters)
+        result = certify_arc_trajectory(asset,path,parameters=parameters,gate_contract=gate_contract)
         candidates.append(result)
         if result['geometry_status']=='certified_continuous_planar_path' and result['route_corridor']['status']=='clear':
             break

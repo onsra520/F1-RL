@@ -119,14 +119,20 @@ def audit_track(asset, *, parameters=PARAMETERS):
     }
 
 
-def audit_train_tracks(repository_root, *, track_ids=TRAIN_IDS, search_alternatives=False, execute_controls=False):
+def audit_train_tracks(repository_root, *, track_ids=TRAIN_IDS, search_alternatives=False, execute_controls=False,
+                       registered_center_gates=False):
     if type(search_alternatives) is not bool:
         raise ValueError("search_alternatives must be bool")
     if type(execute_controls) is not bool:
         raise ValueError('execute_controls must be bool')
+    if type(registered_center_gates) is not bool or registered_center_gates and not (search_alternatives or execute_controls):
+        raise ValueError('registered center gates require an alternative search or execution audit')
     if track_ids != TRAIN_IDS:
         raise ValueError("audit requires exactly the four TRAIN identities")
     root = Path(repository_root).resolve(strict=True)
+    if registered_center_gates:
+        from ..learning.owner_acceptance import review_preregistered_contract
+        review_preregistered_contract(root/'configs/recovery/wp7-owner-decisions-preregistered-v1.yml')
     manifest_path = root / "assets/tracks/manifest.json"
     entries = {e.track_id: e for e in load_track_manifest(manifest_path).tracks}
     config_path = root / "configs/experiments/ppo-generalization-v1.yml"
@@ -145,17 +151,27 @@ def audit_train_tracks(repository_root, *, track_ids=TRAIN_IDS, search_alternati
         row = audit_track(asset, parameters=VehicleParameters(**asdict(definition.vehicle)))
         if search_alternatives:
             from .wp7_planar_trajectory import search_planar_trajectory
-            row["alternative_trajectory"] = search_planar_trajectory(
-                asset, parameters=VehicleParameters(**asdict(definition.vehicle)))
+            if registered_center_gates and identity=='right-turn-v1':
+                from .wp7_arc_trajectory import search_right_turn_trajectory
+                row['alternative_trajectory'] = search_right_turn_trajectory(asset,
+                    parameters=VehicleParameters(**asdict(definition.vehicle)),gate_contract='directed_center_crossing_v1')
+            else:
+                row["alternative_trajectory"] = search_planar_trajectory(
+                    asset, parameters=VehicleParameters(**asdict(definition.vehicle)))
         if execute_controls:
-            from .wp7_executed_feasibility import certify_planar_execution
-            row['executed_planar_trajectory'] = certify_planar_execution(root,identity)
+            from .wp7_executed_feasibility import certify_planar_execution, certify_registered_center_execution
+            executor = certify_registered_center_execution if registered_center_gates else certify_planar_execution
+            row['executed_planar_trajectory'] = executor(root,identity)
         row.update(source_path=path.relative_to(root).as_posix(), source_sha256=sha256(path.read_bytes()).hexdigest())
         rows.append(row)
-    return {"schema_version": "wp7_body_track_audit_v1", "tracks": rows,
+    report = {"schema_version": "wp7_body_track_audit_v1", "tracks": rows,
             "manifest_sha256": sha256(manifest_path.read_bytes()).hexdigest(),
             "vehicle_config_sha256": sha256(config_path.read_bytes()).hexdigest(),
             "scope": ('authored_geometry_and_executed_numerical_planar_witnesses; no_physical_validation_or_admission'
                       if execute_controls else "authored_geometry_and_bounded_planar_candidates; no dynamic_feasibility_or_admission"
                       if search_alternatives else "authored_geometry_only; no rollout, calibration or alternative-path proof"),
             "training_authorized": False}
+    if registered_center_gates:
+        report.update(schema_version='wp7_body_track_audit_v2',gate_contract='directed_center_crossing_v1',
+            owner_contract_sha256=sha256((root/'configs/recovery/wp7-owner-decisions-preregistered-v1.yml').read_bytes()).hexdigest())
+    return report

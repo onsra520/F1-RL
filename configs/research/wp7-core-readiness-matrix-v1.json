@@ -102,7 +102,7 @@
           "priority": "P0",
           "source": "f1rl/research/wp7_track_feasibility.py",
           "test": "tests/research/test_pv5_track_feasibility.py",
-          "blocker": "Straight/Slalom have nominal executed numerical physics/body/gate/speed/stop witnesses. Right-turn candidates violate the hard 4 m corridor; ramp support and all-track executable feasibility remain unresolved."
+          "blocker": "Straight/Slalom/Right-turn have nominal registered numerical body/road/contact/owner-center-gate/speed/stop witnesses. Registered Ramp and randomized all-track execution remain unresolved; historical stricter body-aperture candidates are separate."
         },
         {
           "id": "speed_trajectory_certified",
@@ -111,7 +111,7 @@
           "priority": "P0",
           "source": "f1rl/research/wp7_track_feasibility.py",
           "test": "tests/research/test_pv5_track_feasibility.py",
-          "blocker": "Straight/Slalom nominal control tapes verify numerical boost/braking/contact execution. Required Right-turn/ramp speed/contact schedules and continuous physical tracking validation remain unresolved."
+          "blocker": "Straight/Slalom/Right-turn nominal control tapes verify numerical steering/braking/contact execution. Registered Ramp speed/contact schedules, randomized full-path execution and continuous physical tracking validation remain unresolved."
         }
       ],
       "compatibility": {

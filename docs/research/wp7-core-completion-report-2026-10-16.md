@@ -1,6 +1,6 @@
 # WP7 Core Completion Report — 2026-10-16
 
-**Overall: incomplete.** Engineering increments through coupled planar contact
+**Overall: incomplete.** Engineering increments through registered directed-center execution
 have been implemented and reviewed, but seven subsystems remain below 90% and unresolved P0 capabilities
 remain. Software regressions do not establish scientific acceptance. No weights
 or thresholds were changed to improve these scores.
@@ -20,7 +20,8 @@ Base: PR #22 `research/wp7-core-execution-closure-v1`,
 | F distance-consistent research ground motion | `research/wp7-distance-ground-motion-v1` | `42e1993f0f2821b34aa95f200483bc51cfc1fe35` | [#28](https://github.com/onsra520/F1-RL/pull/28) |
 | G registered spawn and executed planar witnesses | `research/wp7-executable-planar-feasibility-v1` | `b24670dff81069979624eca1c4a036615757bd8b` | [#29](https://github.com/onsra520/F1-RL/pull/29) |
 | H road-relative suspension and bounded Ramp proposal | `research/wp7-ramp-force-consistency-v1` | `7094cb2f15af29a6f80ce0dba8c67cdc2b95628b` | [#30](https://github.com/onsra520/F1-RL/pull/30) |
-| I coupled planar contact and actual Ramp proposal | `research/wp7-coupled-ramp-contact-v1` | latest commit containing this report | stacked Draft PR on #30 |
+| I coupled planar contact and actual Ramp proposal | `research/wp7-coupled-ramp-contact-v1` | `11465189291ea47c5b6cc9ef7303e1b47ac018ae` | [#31](https://github.com/onsra520/F1-RL/pull/31) |
+| J registered directed-center execution | `research/wp7-directed-center-feasibility-v1` | latest commit containing this report | stacked Draft PR on #31 |
 
 No automatic merge. Canonical assets, historical archives and owner decisions
 are unchanged. Owner-contract SHA-256 remains
@@ -58,12 +59,12 @@ manifest/world/content identities. No HELD-OUT assets were opened.
 |---|---|---|
 | `straight-sprint-v1` | Continuous planar body/steering reference plus nominal executed numerical physics/body/gate/speed/stop witness | Continuous physical ODE/tracking-error validation; randomized full-path execution |
 | `slalom-v1` | C2 alternative geometry plus nominal executed numerical boost/braking/contact/body/gate/stop witness | Continuous physical ODE/tracking-error validation; randomized full-path execution |
-| `right-turn-v1` | Three arc paths certify continuous body/road/obstacle/gate geometry | All three violate hard 4 m corridor; executable speed/contact/steering schedule remains unresolved |
+| `right-turn-v1` | Explicit owner-directed-center C1 arc reference certifies body/road/obstacle/corridor geometry and nominal registered execution, Gym finish, braking/stop and replay | Randomized full-path execution and physical tracking/steering-rate validation; historical stricter body-aperture candidates remain separate |
 | `ramp-v1` | Registered profile remains unsupported; separate reduced-force and coupled planar proposals execute ramp/crest/gates/stop and replay | Registered profile integration, coupled steering/lifecycle and randomized validation |
 
 Straight/slalom reference curves and Right-turn certificates are sufficient geometric proofs within their
 declared planar domains. The reference certificates are not physics rollouts;
-G separately executes Straight/slalom in the registered numerical simulator. Right-turn's three exact
+G separately executes Straight/slalom in the registered numerical simulator. Right-turn's three historical stricter-aperture
 candidates have reproducible hard-corridor violation witnesses; this is not a
 global infeasibility certificate. No asset correction is asserted or approved.
 See `wp7-right-turn-arc-feasibility-2026-10-16.md`. Ramp's planar-candidate aperture failures do not prove the real ramp
@@ -110,7 +111,7 @@ control tapes and independently replay source/config/runtime-bound evidence in
 a fresh exact-root worker. Numerical body/road/obstacle/contact checks, full-body
 gate enclosures, ordered race/corridor checks and stopping all run on actual
 registered assets. These are engineering witnesses, not learned policy or
-randomized robustness evidence. Right-turn/ramp remain unresolved, so matrix
+randomized robustness evidence. At milestone G, Right-turn/Ramp remained unresolved, so matrix
 weights/statuses stay unchanged. See `wp7-executed-planar-feasibility-2026-10-16.md`.
 
 The new isolated worker loads a real, saved **untrained** PPO model and executes
@@ -168,7 +169,8 @@ No matrix capability or scientific gate is promoted. See
 | F | 2,023 pass / 2 platform skips; 112 focused integration/kernel/binding tests pass | 2,025 pass each at `42e1993`; run `38908204431` |
 | G | 2,048 pass / 2 platform skips; 6 real-TRAIN spawn tests and 19 execution/replay/source-boundary tests | 2,050 full and 165 execution/readiness pass each at `b24670d`; run `38946178709` |
 | H | 2,069 pass / 2 platform skips; 21 new force/geometry/boundary and actual Ramp proposal/replay cases | Exact-HEAD Windows/Ubuntu CI required; consult stacked Draft PR checks |
-| I | 2,104 pass / 2 platform skips; 35 new coupled-force, runtime/Gym and actual Ramp/replay cases | Exact-HEAD Windows/Ubuntu CI required; consult stacked Draft PR checks |
+| I | 2,104 pass / 2 platform skips; 35 new coupled-force, runtime/Gym and actual Ramp/replay cases | 2,106 full and 221 execution/readiness pass each at `1146518`; runs `38988184560` / `38988167074` |
+| J | 2,120 pass / 2 platform skips; 16 new center geometry/execution/Gym/replay/boundary cases | Exact-HEAD Windows/Ubuntu CI required; consult stacked Draft PR checks |
 
 D compileall, dependency compatibility (26 packages), and `git diff --check`
 passed before commit. Two-axis review has no remaining material P0/P1/P2 in
@@ -193,7 +195,15 @@ are unverified; CPU success cannot be promoted to universal compatibility.
 | G5 evidence recovery | BLOCKED | Actual private Google Drive archival and independently restored bytes |
 | G6 scientific review | BLOCKED | Authenticated real trust bootstrap, independent reviewer and owner sign-off after G1–G5 |
 
-Remaining engineering: general corridor-compliant Right-turn trajectory search; verified ramp/contact
+J adds an explicit versioned owner-5A directed-center alternative, without changing
+canonical assets or stricter default schemas. It certifies and executes a nominal
+Right-turn path in registered physics, including Gym completion, numerical full-body
+road/contact/obstacle checks, speed/braking/stop and exact source-bound replay.
+Straight/Slalom also execute in this explicit center contract. This closes the
+nominal Right-turn witness gap, not randomized tracking, physical validation or
+all-TRAIN feasibility. See `wp7-directed-center-feasibility-2026-10-17.md`.
+
+Remaining engineering: randomized corridor-compliant Right-turn execution; verified ramp/contact
 support; executable speed/braking/boost schedules and tracking on all four tracks;
 future admitted runner checkpoint observers and research-worker registration;
 CUDA/remaining compatibility evidence. Remaining owner/external decisions:
