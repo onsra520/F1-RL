@@ -27,7 +27,7 @@ def main():
     mode.add_argument('--ramp-coupled-proposal',action='store_true',help='explicit unadmitted coupled force/work profile')
     mode.add_argument('--ramp-spatial-proposal',action='store_true',help='explicit unadmitted spatial force/contact profile')
     parser.add_argument('--expected-sha256')
-    parser.add_argument('--profile',choices=('spatial_ground_v1','spatial_owner_v2'))
+    parser.add_argument('--profile',choices=('spatial_ground_v1','spatial_owner_v2','spatial_rotating_owner_v3'))
     parser.add_argument('--seed-index',type=int)
     parser.add_argument('--reset-rank',type=int)
     parser.add_argument('--reset-index',type=int)

@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser.add_argument('--registered-center-gates',action='store_true',
                         help='explicit owner 5A center-gate search; preserves full-body road/obstacle checks')
     parser.add_argument('--execute-controls',action='store_true',help='execute source-bound nominal TRAIN control tapes')
-    parser.add_argument('--profile',choices=('pv5_v1','spatial_ground_v1','spatial_owner_v2'),default='pv5_v1')
+    parser.add_argument('--profile',choices=('pv5_v1','spatial_ground_v1','spatial_owner_v2','spatial_rotating_owner_v3'),default='pv5_v1')
     args = parser.parse_args()
     print(json.dumps(audit_train_tracks(Path(__file__).resolve().parents[1],
                     search_alternatives=args.search_alternatives or args.registered_center_gates,

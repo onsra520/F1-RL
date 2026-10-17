@@ -1,0 +1,79 @@
+{
+  "schema_version": "wp7_experiment_registration_v4",
+  "status": "draft_not_authorized",
+  "simulator_version": "f1rl-0.1.0/wp7-spatial-rotating-owner-v3",
+  "training_profile": "configs/recovery/wp7-pilot-200k.yml",
+  "seed_roster": [
+    {
+      "ppo": 0,
+      "sampling": 0,
+      "perturbation": 1000
+    },
+    {
+      "ppo": 1,
+      "sampling": 1,
+      "perturbation": 1001
+    },
+    {
+      "ppo": 2,
+      "sampling": 2,
+      "perturbation": 1002
+    }
+  ],
+  "cohorts": [
+    "singletrack_each_train",
+    "multitrack_uniform_reset"
+  ],
+  "evaluation": {
+    "strata": [
+      "nominal",
+      "randomized_train"
+    ],
+    "episodes_per_cell": 60,
+    "confidence": 0.95,
+    "minimum_lower_bound": 0.9,
+    "interval": "exact_one_sided_clopper_pearson",
+    "multiplicity": "per_cell_no_familywise_claim_owner_review_required",
+    "policy_actions": "stochastic",
+    "episode_seed_protocol": "sha256(protocol,policy,track,stratum,episode)_uint32_v1",
+    "checkpoint_selection": "final_model_primary_all_checkpoints_diagnostic_no_best_selection",
+    "invalid_episode": "abort_cell_preserve_invalid_evidence_no_redraw_or_success_credit"
+  },
+  "engineering_suspension": {
+    "mass_kg": 1200.0,
+    "pitch_inertia_kg_m2": 1800.0,
+    "roll_inertia_kg_m2": 600.0,
+    "spring_stiffness_npm": 30000.0,
+    "damper_nspm": 2000.0,
+    "angular_damping_nmsprad": 150.0,
+    "max_abs_tilt_rad": 0.2,
+    "integration_substeps": 16,
+    "force_model": "road_relative_unilateral_v3"
+  },
+  "required_domains": [
+    "grounded",
+    "partial_support",
+    "takeoff",
+    "flight",
+    "landing",
+    "recovery"
+  ],
+  "calibration": "provisional_engineering_values_require_measured_reference_and_independent_review",
+  "source_policy": "exact_commit_clean_tree_and_actual_file_hashes_at_training_start",
+  "approval": "separate_independently_verified_owner_contract_required",
+  "engineering_spatial_contact": {
+    "traction": {
+      "traction_mu": 0.8,
+      "max_drive_power_w": 100000.0,
+      "brake_speed_scale_mps": 0.05,
+      "energy_relative_tolerance": 1e-08,
+      "energy_absolute_tolerance_j": 1e-07,
+      "max_refinements": 20
+    },
+    "yaw_inertia_kg_m2": 1800.0,
+    "lateral_damping_nspm": 12000.0,
+    "max_angular_speed_radps": 10.0
+  },
+  "owner_outcome_contract": "configs/research/wp7-hard-route-outcome-v2.json",
+  "ground_motion_version": "spatial_rotating_compliant_lifecycle_v3"
+}

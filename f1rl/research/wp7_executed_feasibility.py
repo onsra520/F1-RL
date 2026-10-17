@@ -109,7 +109,7 @@ def _validate_selection(selection):
     if selection is None:
         return
     if (type(selection) is not dict or set(selection)!={'profile','seed_index','reset_rank','reset_index'}
-            or type(selection['profile']) is not str or selection['profile'] not in ('spatial_ground_v1','spatial_owner_v2')
+            or type(selection['profile']) is not str or selection['profile'] not in ('spatial_ground_v1','spatial_owner_v2','spatial_rotating_owner_v3')
             or any(type(selection[k]) is not int or not 0<=selection[k]<2**32 for k in ('seed_index','reset_rank'))
             or (selection['reset_index'] is not None and
                 (type(selection['reset_index']) is not int or not 0<=selection['reset_index']<2**32))):
@@ -376,7 +376,7 @@ def _execute_planar(repository_root,track_id,*,controls=None,ramp_profile=False,
             paired_seed_index=selection['seed_index'],reset_rank=selection['reset_rank'],
             reset_index=selection['reset_index'],reset_metadata=None,
             scope='registered_spatial_numerical_TRAIN_execution_not_calibrated_or_scientific_evidence')
-    if selection is not None and profile=='spatial_owner_v2':
+    if selection is not None and profile in ('spatial_owner_v2','spatial_rotating_owner_v3'):
         result.update(schema_version='wp7_executed_spatial_profile_feasibility_v2',
             scope='registered_compliant_lifecycle_owner_v2_numerical_TRAIN_execution_not_physical_or_scientific_validation',
             lifecycle_transitions=[])
@@ -435,10 +435,10 @@ def _execute_planar(repository_root,track_id,*,controls=None,ramp_profile=False,
             try:
                 snapshot = sim.step(control)
                 poses = snapshot.suspension_telemetry.poses
-                if profile!='spatial_owner_v2' and any(not p.grounded for p in poses):
+                if profile not in ('spatial_owner_v2','spatial_rotating_owner_v3') and any(not p.grounded for p in poses):
                     raise RuntimeError('executed planar witness cannot include airborne states')
                 race = advance_directed_race(factory.track,route,authored,progress,snapshot,factory.race_config)
-                if selection is not None and profile=='spatial_owner_v2':
+                if selection is not None and profile in ('spatial_owner_v2','spatial_rotating_owner_v3'):
                     result['lifecycle_transitions'].extend(dict(kind=e.kind,
                         time_s=snapshot.physics_transition.start_time_s+e.time_s)
                         for e in snapshot.physics_transition.events)
