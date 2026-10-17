@@ -5,6 +5,9 @@ from typing import TypeAlias
 
 from .body_collision import VehicleBodyGeometry, sweep_body_against_obstacle
 from .center_trajectory import CenterSegment, linear_center_segments
+from .coupled_longitudinal_dynamics import (
+    CoupledGroundAudit, LongitudinalContactPolicy, integrate_coupled_longitudinal,
+)
 from .geometry.vector import Vec3
 from .grounded_yaw_dynamics import (
     GroundedYawPolicy,GroundedYawAudit,advance_grounded_yaw,
@@ -64,6 +67,7 @@ class WorldStepResult:
     partial_support_telemetry: GroundSupportStep | None = None
     grounded_yaw_telemetry: GroundedYawAudit | None = None
     center_segments: tuple[CenterSegment, ...] = ()
+    coupled_ground_telemetry: CoupledGroundAudit | None = None
 
 
 def step_world(
@@ -82,9 +86,17 @@ def step_world(
     automatic_takeoff_policy: AutomaticTakeoffPolicy | None = None,
     grounded_yaw_policy: GroundedYawPolicy | None = None,
     ground_motion_version: str = 'legacy_euler_v1',
+    longitudinal_contact_policy: LongitudinalContactPolicy | None = None,
 ) -> WorldStepResult:
-    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1'):
+    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1'):
         raise ValueError('unregistered ground motion version')
+    coupled = ground_motion_version == 'coupled_longitudinal_v1'
+    if (coupled != (longitudinal_contact_policy is not None)
+            or coupled and (not isinstance(longitudinal_contact_policy,LongitudinalContactPolicy)
+                or not isinstance(independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
+                or independent_suspension_policy.force_model != 'road_relative_vertical_v2'
+                or state.flight is not None)):
+        raise ValueError('coupled ground motion requires its exclusive contact policy and grounded force model')
     if (isinstance(independent_suspension_policy, IndependentSuspensionDynamicsPolicy)
             and independent_suspension_policy.force_model != 'legacy_vertical_v1'
             and (ballistic_flight_policy is not None or automatic_takeoff_policy is not None
@@ -158,9 +170,20 @@ def step_world(
     suspension_telemetry: SuspensionDynamicsResult | None = None
     suspension_override: SuspensionDynamicsState | None = None
     grounded_yaw_telemetry: GroundedYawAudit | None = None
+    coupled_ground_telemetry: CoupledGroundAudit | None = None
     flight_active = (ballistic_flight_policy is not None
                      and state.flight.phase in ("takeoff", "airborne"))
-    if flight_active:
+    if coupled:
+        modifiers = resolve_motion_modifiers(current_query)
+        result = integrate_coupled_longitudinal(state.vehicle,state.suspension,
+            independent_suspension_policy,body_geometry,track.surfaces,parameters,
+            control,longitudinal_contact_policy,dt=dt,modifiers=modifiers)
+        suspension_telemetry = result.suspension
+        coupled_ground_telemetry = result.audit
+        candidate = suspension_telemetry.vehicle
+        swept_poses = suspension_telemetry.poses
+        center_segments = result.center_segments
+    elif flight_active:
         modifiers = MotionModifiers()  # air cannot receive ground boost or drag
         start_air = state.vehicle
         if state.flight.phase == "takeoff":
@@ -409,4 +432,5 @@ def step_world(
         partial_support_telemetry,
         grounded_yaw_telemetry,
         center_segments if not obstacle_events else (),
+        coupled_ground_telemetry if not obstacle_events else None,
     )

@@ -20,6 +20,7 @@ from ..learning.route_navigation import AuthoredRoute
 from ..learning.wp7_race import advance_directed_race
 from ..runtime.simulation import Simulation
 from ..sandbox.body_collision import _slerp
+from ..sandbox.coupled_longitudinal_dynamics import LongitudinalContactPolicy
 from ..sandbox.geometry.vector import Vec3
 from ..sandbox.interactions.resolver import resolve_motion_modifiers
 from ..sandbox.track.volume import OrientedBoxVolume
@@ -76,7 +77,12 @@ def certify_ramp_execution(repository_root,*,controls=None):
     return _certify_execution(repository_root, 'ramp-v1', controls=controls, ramp_profile=True)
 
 
-def _certify_execution(repository_root,track_id,*,controls,ramp_profile):
+def certify_coupled_ramp_execution(repository_root,*,controls=None):
+    """Unadmitted planar force/work proposal on the actual TRAIN Ramp."""
+    return _certify_execution(repository_root,'ramp-v1',controls=controls,ramp_profile=True,coupled_profile=True)
+
+
+def _certify_execution(repository_root,track_id,*,controls,ramp_profile,coupled_profile=False):
     """Run fresh exact-root code; parent module state cannot mint a source pin."""
     if track_id not in TRAIN_IDS:
         raise ValueError('registered TRAIN identity required')
@@ -88,7 +94,8 @@ def _certify_execution(repository_root,track_id,*,controls,ramp_profile):
             or sha256(Path(__file__).read_bytes()).hexdigest()!=_LOADED_SOURCE_SHA256):
         raise ValueError('execution source origin or loaded wrapper bytes differ')
     source = _execution_sources(root)
-    payload = json.dumps(dict(track_id=track_id,controls=controls,source=source,ramp_profile=ramp_profile),allow_nan=False)
+    payload = json.dumps(dict(track_id=track_id,controls=controls,source=source,ramp_profile=ramp_profile,
+                              coupled_profile=coupled_profile),allow_nan=False)
     bootstrap = ('import sys;sys.path.insert(0,sys.argv[1]);'
                  'from f1rl.research.wp7_executed_feasibility import _worker;_worker()')
     # A fresh cache prefix prevents stale checkout pyc files from supplying code.
@@ -112,7 +119,8 @@ def _worker():
         raise ValueError('worker source origin or import-time source bytes differ')
     _verify_module_origins(root)
     runtime = asdict(_capture_runtime_provenance())
-    result = _execute_planar(root,payload['track_id'],controls=payload['controls'],ramp_profile=payload['ramp_profile'])
+    result = _execute_planar(root,payload['track_id'],controls=payload['controls'],ramp_profile=payload['ramp_profile'],
+                             coupled_profile=payload['coupled_profile'])
     _verify_module_origins(root)
     if (_execution_sources(root)!=payload['source']
             or build_protocol(root)['sha256']!=result['protocol_sha256']
@@ -208,7 +216,7 @@ def _gate_segment_clear(first,last,gate):
     return True
 
 
-def _execute_planar(repository_root,track_id,*,controls=None,ramp_profile=False):
+def _execute_planar(repository_root,track_id,*,controls=None,ramp_profile=False,coupled_profile=False):
     """Execute a reference controller or an exact control tape on a real TRAIN asset.
 
     Nominal spawn only, no RNG/policy/model, no redraw or asset changes. Execution
@@ -229,7 +237,9 @@ def _execute_planar(repository_root,track_id,*,controls=None,ramp_profile=False)
         suspension = replace(factory.physics_config.independent_suspension_policy,
             force_model='road_relative_vertical_v2',max_abs_tilt_rad=RAMP_CONTROLLER['max_abs_tilt_rad'])
         factory = replace(factory,physics_config=replace(factory.physics_config,
-            independent_suspension_policy=suspension,ground_motion_version='legacy_euler_v1'))
+            independent_suspension_policy=suspension,
+            ground_motion_version='coupled_longitudinal_v1' if coupled_profile else 'legacy_euler_v1',
+            longitudinal_contact_policy=LongitudinalContactPolicy(.8,100000.) if coupled_profile else None))
     asset = load_track_asset(root/f'assets/tracks/training/{track_id}.json')
     expected = next(t for t in protocol['tracks'] if t['track_id']==track_id)
     if asset.world_sha256!=expected['world_sha256'] or asset.content_sha256!=expected['content_sha256']:
@@ -253,6 +263,12 @@ def _execute_planar(repository_root,track_id,*,controls=None,ramp_profile=False)
             registered_physics_sha256=registered_physics_sha256,controller=dict(RAMP_CONTROLLER),
             scope='nominal_grounded_reduced_suspension_and_legacy_longitudinal_proposal_not_registered_PPO_or_physical_validation',
             reference_geometry_sha256=digest(dict(navigation=asdict(factory.navigation),horizontal_curvature_per_m=0.)))
+    if coupled_profile:
+        result.update(schema_version='wp7_executed_coupled_ramp_proposal_v1',
+            scope='nominal_coupled_world_Z_heave_pitch_numerical_proposal_not_registered_PPO_or_measured_physics',
+            coupled_work_audit=dict(accepted_substeps=0,actuator_work_j=0.,dissipation_j=0.,
+                energy_residual_j=0.,max_energy_residual_fraction=0.,
+                max_linear_impulse_residual_ns=0.,max_angular_impulse_residual_nms=0.))
     if not ramp_profile and geometry['geometry_status']!='certified_continuous_planar_path':
         result['blockers'].append('reference_geometry_unresolved')
     if track_id=='right-turn-v1':
@@ -295,6 +311,17 @@ def _execute_planar(repository_root,track_id,*,controls=None,ramp_profile=False)
                 result['trajectory_sha256'] = digest([result['trajectory_sha256'],
                     json.loads(json.dumps(asdict(snapshot.world),default=sorted)),
                     asdict(snapshot.physics_transition),[asdict(p) for p in poses]])
+                if coupled_profile:
+                    audit = snapshot.coupled_ground_telemetry
+                    result['trajectory_sha256'] = digest([result['trajectory_sha256'],asdict(audit)])
+                    summary = result['coupled_work_audit']
+                    summary['accepted_substeps'] += len(audit.substeps)
+                    for name in ('actuator_work_j','dissipation_j','energy_residual_j'):
+                        summary[name] += getattr(audit,name)
+                    for name in ('max_linear_impulse_residual_ns','max_angular_impulse_residual_nms'):
+                        summary[name] = max(summary[name],getattr(audit,name))
+                    summary['max_energy_residual_fraction'] = max(summary['max_energy_residual_fraction'],
+                        *(abs(s.energy_residual_j)/s.energy_tolerance_j for s in audit.substeps))
             except (ValueError,RuntimeError) as error:
                 result['blockers'].append(f'{type(error).__name__}:{error}')
                 break
@@ -323,7 +350,9 @@ def replay_planar_execution(repository_root,document,*,expected_sha256):
     if (not isinstance(document,dict) or document.get('sha256')!=expected_sha256
             or digest({k:v for k,v in document.items() if k!='sha256'})!=expected_sha256):
         raise ValueError('independent certificate identity differs')
-    if document.get('schema_version') == 'wp7_executed_ramp_proposal_v1':
+    if document.get('schema_version') == 'wp7_executed_coupled_ramp_proposal_v1':
+        restored = certify_coupled_ramp_execution(repository_root,controls=document.get('controls'))
+    elif document.get('schema_version') == 'wp7_executed_ramp_proposal_v1':
         restored = certify_ramp_execution(repository_root,controls=document.get('controls'))
     else:
         restored = certify_planar_execution(repository_root,document.get('track_id'),controls=document.get('controls'))

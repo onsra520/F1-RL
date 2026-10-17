@@ -1,6 +1,7 @@
 """Versioned research physics registration; never scientific training admission.
 
-Longitudinal motion is explicitly legacy Euler or force-frozen distance bicycle.
+Longitudinal motion is versioned: legacy Euler, force-frozen distance bicycle,
+or coupled world-Z/heave/pitch contact forces with numerical work balance.
 Contacts are suspension reference points, not tire hubs/patches. No physical
 constants are inferred.
 """
@@ -13,6 +14,7 @@ from math import isclose, atan2, sin, tan
 
 from ..sandbox.ballistic_flight import BallisticFlightPolicy, FlightState, FlightTransition
 from ..sandbox.center_trajectory import CenterSegment
+from ..sandbox.coupled_longitudinal_dynamics import LongitudinalContactPolicy, _longitudinal_frame
 from ..sandbox.dynamics.integrator import _distance_ground_frame
 from ..sandbox.body_collision import VehicleBodyGeometry
 from ..sandbox.grounded_yaw_dynamics import GroundedYawPolicy
@@ -56,14 +58,22 @@ class PhysicsConfig:
     contact_geometry: str = "suspension_reference_points_v1"
     ground_motion_version: str = 'legacy_euler_v1'
     spawn_reference: str = 'legacy_vehicle_position_v1'
+    longitudinal_contact_policy: LongitudinalContactPolicy | None = None
 
     def __post_init__(self) -> None:
         if (self.spawn_reference not in ('legacy_vehicle_position_v1','authored_horizontal_road_v1')
                 or self.spawn_reference!='legacy_vehicle_position_v1' and self.mode=='legacy_v1'):
             raise ValueError('unregistered research spawn reference')
-        if (self.ground_motion_version not in ('legacy_euler_v1','arc_distance_v1')
+        if (self.ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1')
                 or self.ground_motion_version=='arc_distance_v1' and self.mode not in ('wp7_suspension_v1','wp7_lifecycle_v1')):
             raise ValueError('unregistered research ground motion version/mode')
+        coupled = self.ground_motion_version == 'coupled_longitudinal_v1'
+        if (coupled != (self.longitudinal_contact_policy is not None)
+                or coupled and (self.mode != 'wp7_suspension_v1'
+                    or not isinstance(self.longitudinal_contact_policy,LongitudinalContactPolicy)
+                    or not isinstance(self.independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
+                    or self.independent_suspension_policy.force_model != 'road_relative_vertical_v2')):
+            raise ValueError('coupled ground version requires its exclusive grounded contact policy')
         if self.mode not in (
             "legacy_v1", "wp7_suspension_v1", "wp7_ballistic_v1", "wp7_grounded_yaw_v1",
             "wp7_lifecycle_v1",
@@ -130,6 +140,8 @@ class PhysicsConfig:
             raise ValueError("WP7 requires persistent suspension state")
         if self.ground_motion_version=='arc_distance_v1' and initial.vehicle.grounded:
             _distance_ground_frame(initial.vehicle,parameters)
+        if self.ground_motion_version=='coupled_longitudinal_v1':
+            _longitudinal_frame(initial.vehicle,initial.suspension)
         if initial.vehicle.grounded and not isclose(
             initial.vehicle.position.y, initial.suspension.height_m, rel_tol=0., abs_tol=1e-8,
         ):
@@ -185,6 +197,10 @@ class PhysicsConfig:
             raise ValueError('research chassis spawn must match authored road plus ride height')
 
     def validate_track(self, track: TrackWorld) -> None:
+        if self.ground_motion_version=='coupled_longitudinal_v1' and (
+            not track.surfaces or any(abs(p.normal.x)>1e-10 for p in track.surfaces)
+        ):
+            raise ValueError('coupled longitudinal contact requires world-Z road slopes')
         if self.mode == "wp7_lifecycle_v1" and (
             not track.surfaces or any(p.normal != Vec3(0., 1., 0.) for p in track.surfaces)
             or len({p.origin.y for p in track.surfaces}) != 1
@@ -202,6 +218,22 @@ class PhysicsConfig:
             # previous suspension rates; it is not a registered impulse/recovery.
             raise PhysicsTransitionError("WP7 collision recovery is unregistered; step rejected")
         events = tuple(e for e in result.events if isinstance(e, FlightTransition))
+        if self.ground_motion_version=='coupled_longitudinal_v1':
+            audit,segments = result.coupled_ground_telemetry,result.center_segments
+            if (audit is None or audit.version!='coupled_longitudinal_rk4_work_v1'
+                    or not audit.substeps or len(segments)!=len(audit.substeps)
+                    or events or result.flight_telemetry is not None
+                    or abs(segments[0].start_time_s)>1e-9 or abs(segments[-1].end_time_s-dt)>1e-8
+                    or (segments[0].start-previous.vehicle.position).magnitude>1e-7
+                    or (segments[-1].end-result.state.vehicle.position).magnitude>1e-7
+                    or any(abs(a.end_time_s-b.start_time_s)>1e-9 or (a.end-b.start).magnitude>1e-7
+                           for a,b in zip(segments,segments[1:]))
+                    or any(s.start_time_s!=a.start_time_s or s.end_time_s!=a.end_time_s
+                           or not abs(a.energy_residual_j)<=a.energy_tolerance_j
+                           or not a.linear_impulse_residual_ns<=1e-7
+                           or not a.angular_impulse_residual_nms<=1e-7
+                           for s,a in zip(segments,audit.substeps))):
+                raise PhysicsTransitionError('coupled force/time audit missing or inconsistent')
         if self.independent_suspension_policy.force_model != 'legacy_vertical_v1':
             self.validate_state(result.state, parameters)
             first = _horizontal_yaw(previous.vehicle.orientation).rotate(Vec3(0.,0.,1.))
@@ -279,7 +311,9 @@ class PhysicsConfig:
             or result.suspension_telemetry is not None and result.flight_telemetry is None
         ):
             solvers.append('arc_distance_ground_v1')
-        if result.suspension_telemetry is not None:
+        if result.coupled_ground_telemetry is not None:
+            solvers.append('coupled_longitudinal_rk4_work_v1')
+        elif result.suspension_telemetry is not None:
             solvers.append("road_relative_vertical_suspension_v2" if
                 self.independent_suspension_policy.force_model == 'road_relative_vertical_v2'
                 else "independent_suspension_v1")
@@ -304,6 +338,7 @@ class PhysicsConfig:
         names = (
             "body_geometry", "independent_suspension_policy", "ballistic_flight_policy",
             "automatic_takeoff_policy", "grounded_yaw_policy",
+            "longitudinal_contact_policy",
         )
         options = {name: getattr(self, name) for name in names if getattr(self, name) is not None}
         if self.ground_motion_version!='legacy_euler_v1':
@@ -312,6 +347,9 @@ class PhysicsConfig:
 
     def document(self) -> dict[str, object]:
         configuration = asdict(self)
+        coupled = self.longitudinal_contact_policy is not None
+        if not coupled:
+            configuration.pop('longitudinal_contact_policy')
         suspension = configuration['independent_suspension_policy']
         road_relative = suspension is not None and suspension['force_model'] != 'legacy_vertical_v1'
         if suspension is not None and not road_relative:
@@ -321,9 +359,9 @@ class PhysicsConfig:
         if self.spawn_reference=='legacy_vehicle_position_v1':
             configuration.pop('spawn_reference')
         return {
-            "schema_version": 3 if road_relative else 1 if self.ground_motion_version=='legacy_euler_v1' and self.spawn_reference=='legacy_vehicle_position_v1' else 2,
+            "schema_version": 4 if coupled else 3 if road_relative else 1 if self.ground_motion_version=='legacy_euler_v1' and self.spawn_reference=='legacy_vehicle_position_v1' else 2,
             "validation_scope": "software_research_only",
-            "longitudinal_model": "legacy_prescribed_v1" if self.ground_motion_version=='legacy_euler_v1' else 'force_frozen_distance_bicycle_v1',
+            "longitudinal_model": 'coupled_contact_force_rk4_v1' if coupled else "legacy_prescribed_v1" if self.ground_motion_version=='legacy_euler_v1' else 'force_frozen_distance_bicycle_v1',
             **configuration,
             **({'body_clearance_version': 'bounded_patch_planes_v2'} if road_relative else {}),
         }

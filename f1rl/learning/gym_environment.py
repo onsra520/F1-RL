@@ -107,7 +107,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             raise ValueError('physics_config must be PhysicsConfig or None')
         research = body_geometry is not None or (physics_config is not None and physics_config.mode!='legacy_v1')
         if (research and self._action_contract.version=='steering-throttle-brake-v2'
-                and (physics_config is None or physics_config.ground_motion_version!='arc_distance_v1')):
+                and (physics_config is None or physics_config.ground_motion_version not in ('arc_distance_v1','coupled_longitudinal_v1'))):
             raise ValueError('research braking requires distance ground integration')
         values = (
             (track, TrackWorld, "track"),
@@ -349,6 +349,8 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 ("transition", snapshot.physics_transition),
             )
         }
+        if snapshot.coupled_ground_telemetry is not None:
+            telemetry['coupled_ground'] = asdict(snapshot.coupled_ground_telemetry)
         return {"physics": {
             "configuration": self._physics_config.document(),
             "sha256": self._physics_config.sha256,

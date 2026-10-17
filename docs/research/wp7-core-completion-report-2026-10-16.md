@@ -1,7 +1,7 @@
 # WP7 Core Completion Report — 2026-10-16
 
-**Overall: incomplete.** Four engineering increments have been implemented and
-reviewed, with additional Right-turn geometry, distance-ground-motion and executed planar feasibility increments, but seven subsystems remain below 90% and unresolved P0 capabilities
+**Overall: incomplete.** Engineering increments through coupled planar contact
+have been implemented and reviewed, but seven subsystems remain below 90% and unresolved P0 capabilities
 remain. Software regressions do not establish scientific acceptance. No weights
 or thresholds were changed to improve these scores.
 
@@ -19,7 +19,8 @@ Base: PR #22 `research/wp7-core-execution-closure-v1`,
 | E Right-turn arc geometry and corridor witnesses | `research/wp7-general-planar-path-v1` | `a14cecfac0183fa75beef37c3bae4a55db6f775c` | [#27](https://github.com/onsra520/F1-RL/pull/27) |
 | F distance-consistent research ground motion | `research/wp7-distance-ground-motion-v1` | `42e1993f0f2821b34aa95f200483bc51cfc1fe35` | [#28](https://github.com/onsra520/F1-RL/pull/28) |
 | G registered spawn and executed planar witnesses | `research/wp7-executable-planar-feasibility-v1` | `b24670dff81069979624eca1c4a036615757bd8b` | [#29](https://github.com/onsra520/F1-RL/pull/29) |
-| H road-relative suspension and bounded Ramp proposal | `research/wp7-ramp-force-consistency-v1` | latest commit containing this report | stacked Draft PR on #29 |
+| H road-relative suspension and bounded Ramp proposal | `research/wp7-ramp-force-consistency-v1` | `7094cb2f15af29a6f80ce0dba8c67cdc2b95628b` | [#30](https://github.com/onsra520/F1-RL/pull/30) |
+| I coupled planar contact and actual Ramp proposal | `research/wp7-coupled-ramp-contact-v1` | latest commit containing this report | stacked Draft PR on #30 |
 
 No automatic merge. Canonical assets, historical archives and owner decisions
 are unchanged. Owner-contract SHA-256 remains
@@ -58,7 +59,7 @@ manifest/world/content identities. No HELD-OUT assets were opened.
 | `straight-sprint-v1` | Continuous planar body/steering reference plus nominal executed numerical physics/body/gate/speed/stop witness | Continuous physical ODE/tracking-error validation; randomized full-path execution |
 | `slalom-v1` | C2 alternative geometry plus nominal executed numerical boost/braking/contact/body/gate/stop witness | Continuous physical ODE/tracking-error validation; randomized full-path execution |
 | `right-turn-v1` | Three arc paths certify continuous body/road/obstacle/gate geometry | All three violate hard 4 m corridor; executable speed/contact/steering schedule remains unresolved |
-| `ramp-v1` | Registered profile remains unsupported; separate nominal reduced-force engineering proposal executes ramp/crest/gates/stop and replay | Registered profile integration, coupled drive/reaction physics, lifecycle and randomized validation |
+| `ramp-v1` | Registered profile remains unsupported; separate reduced-force and coupled planar proposals execute ramp/crest/gates/stop and replay | Registered profile integration, coupled steering/lifecycle and randomized validation |
 
 Straight/slalom reference curves and Right-turn certificates are sufficient geometric proofs within their
 declared planar domains. The reference certificates are not physics rollouts;
@@ -143,6 +144,18 @@ dynamics, without coupled traction/drive-work or spatial-inertia validation;
 it does not close the registered Ramp capability or change readiness scores.
 See `wp7-ramp-force-consistency-2026-10-17.md`.
 
+I adds a separate world-Z/heave/pitch force-coupled numerical model: all normal
+reactions, bounded tangent actuation, gravity, damping and COM drag/boost enter
+one RK4 state update with per-leaf Newton/Euler impulse and work-balance audits.
+Actual Ramp seam force jumps trigger bounded refinement without loosening
+energy tolerance. The new proposal executes the real Ramp and is tested through
+Simulation, three-action Gym race completion and pinned source-bound replay.
+It remains outside registered PPO physics, with provisional friction/power and
+no steering/roll/partial-support/flight support. Schema-4 physics and a distinct
+certificate bind its actual parameters; prior documents/defaults stay unchanged.
+No matrix capability or scientific gate is promoted. See
+`wp7-coupled-ramp-contact-2026-10-17.md`.
+
 ## Verification and compatibility
 
 | Increment | Local full Windows | Exact-HEAD Windows + Ubuntu CI |
@@ -155,6 +168,7 @@ See `wp7-ramp-force-consistency-2026-10-17.md`.
 | F | 2,023 pass / 2 platform skips; 112 focused integration/kernel/binding tests pass | 2,025 pass each at `42e1993`; run `38908204431` |
 | G | 2,048 pass / 2 platform skips; 6 real-TRAIN spawn tests and 19 execution/replay/source-boundary tests | 2,050 full and 165 execution/readiness pass each at `b24670d`; run `38946178709` |
 | H | 2,069 pass / 2 platform skips; 21 new force/geometry/boundary and actual Ramp proposal/replay cases | Exact-HEAD Windows/Ubuntu CI required; consult stacked Draft PR checks |
+| I | 2,104 pass / 2 platform skips; 35 new coupled-force, runtime/Gym and actual Ramp/replay cases | Exact-HEAD Windows/Ubuntu CI required; consult stacked Draft PR checks |
 
 D compileall, dependency compatibility (26 packages), and `git diff --check`
 passed before commit. Two-axis review has no remaining material P0/P1/P2 in
