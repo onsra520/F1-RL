@@ -98,7 +98,7 @@ def step_world(
     if (spatial != (spatial_contact_policy is not None)
             or spatial and (not isinstance(spatial_contact_policy,SpatialContactPolicy)
                 or not isinstance(independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
-                or independent_suspension_policy.force_model!='road_relative_vertical_v2'
+                or independent_suspension_policy.force_model not in ('road_relative_vertical_v2','road_relative_unilateral_v3')
                 or independent_suspension_policy.angular_rate_mapping!='yaw_rx_rz_v1'
                 or state.flight is not None)):
         raise ValueError('spatial ground motion requires its exclusive supported contact policy')

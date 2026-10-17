@@ -76,7 +76,7 @@ class PhysicsConfig:
                 or spatial and (self.mode!='wp7_suspension_v1'
                     or not isinstance(self.spatial_contact_policy,SpatialContactPolicy)
                     or not isinstance(self.independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
-                    or self.independent_suspension_policy.force_model!='road_relative_vertical_v2'
+                    or self.independent_suspension_policy.force_model not in ('road_relative_vertical_v2','road_relative_unilateral_v3')
                     or self.independent_suspension_policy.angular_rate_mapping!='yaw_rx_rz_v1')):
             raise ValueError('spatial ground version requires its exclusive supported contact policy')
         if (coupled != (self.longitudinal_contact_policy is not None)
@@ -109,6 +109,8 @@ class PhysicsConfig:
         suspension = self.independent_suspension_policy
         if body is None or suspension is None:
             raise ValueError("WP7 requires explicit body geometry and independent suspension")
+        if suspension.force_model=='road_relative_unilateral_v3' and not spatial:
+            raise ValueError('unilateral force model requires spatial contact integration')
         if suspension.force_model != 'legacy_vertical_v1' and self.mode != 'wp7_suspension_v1':
             raise ValueError('road-relative force model requires grounded suspension-only mode')
         if self.ground_motion_version=='arc_distance_v1' and suspension.angular_rate_mapping!='yaw_rx_rz_v1':

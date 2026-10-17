@@ -2,7 +2,7 @@
 
 Position, quaternion, linear velocity and world angular momentum share one
 force field. Tire forces use a friction circle and dissipative lateral slip;
-there is no wheel-spin, static-friction, partial-support or flight claim.
+there is no wheel-spin, static-friction, geometric partial-support or flight claim.
 Every accepted RK4 leaf must pass work/impulse and numerical body/road sweeps.
 """
 from dataclasses import dataclass
@@ -123,7 +123,7 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
     Missing wheel support or an uncertain swept certificate rejects the step.
     """
     if (not isinstance(previous,VehicleState) or not isinstance(physics,IndependentSuspensionDynamicsPolicy)
-            or physics.force_model!='road_relative_vertical_v2'
+            or physics.force_model not in ('road_relative_vertical_v2','road_relative_unilateral_v3')
             or not isinstance(body,VehicleBodyGeometry) or not isinstance(parameters,VehicleParameters)
             or not isinstance(control,VehicleControl) or not isinstance(policy,SpatialContactPolicy)
             or type(dt) not in (int,float) or not isfinite(dt) or dt<=0.):
@@ -142,6 +142,9 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
         raise ValueError('motion modifiers required')
     mass,gravity=physics.mass_kg,parameters.gravity
     preload=mass*gravity/4.
+    unilateral=physics.force_model=='road_relative_unilateral_v3'
+    if unilateral and (not isfinite(preload) or preload<=0.):
+        raise SuspensionResolutionError('unilateral contact requires finite positive nominal preload')
     traction=policy.traction
 
     def body_vector(q,world):
@@ -185,7 +188,15 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
             gap_rate=gradient.dot(point_velocity)
             raw_elastic=preload+physics.spring_stiffness_npm*contact.deflection_m
             elastic=max(0.,raw_elastic)
-            load=max(0.,raw_elastic-physics.damper_nspm*gap_rate)
+            if unilateral:
+                # Hunt-Crossley vanishes at zero compression; d=c/preload preserves
+                # the registered damper's small-velocity slope at nominal load.
+                factor=1.-(physics.damper_nspm/preload)*gap_rate if elastic>0. else 0.
+                if not isfinite(factor):
+                    raise SuspensionResolutionError('unilateral dissipation factor is nonfinite')
+                load=elastic*max(0.,factor)
+            else:
+                load=max(0.,raw_elastic-physics.damper_nspm*gap_rate)
             normal_force=load/patch.normal.y
             angle=control.steering*parameters.max_steering_angle if local.z>0. else 0.
             heading=state.orientation.rotate(Vec3(sin(angle),0.,cos(angle))).reject_from(patch.normal)

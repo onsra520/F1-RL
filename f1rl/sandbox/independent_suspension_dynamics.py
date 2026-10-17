@@ -54,8 +54,8 @@ class IndependentSuspensionDynamicsPolicy:
     force_model: str = "legacy_vertical_v1"
 
     def __post_init__(self) -> None:
-        if (self.force_model not in ('legacy_vertical_v1', 'road_relative_vertical_v2')
-                or self.force_model == 'road_relative_vertical_v2' and self.angular_rate_mapping != 'yaw_rx_rz_v1'):
+        if (self.force_model not in ('legacy_vertical_v1', 'road_relative_vertical_v2', 'road_relative_unilateral_v3')
+                or self.force_model != 'legacy_vertical_v1' and self.angular_rate_mapping != 'yaw_rx_rz_v1'):
             raise ValueError('unregistered suspension force model/rate mapping')
         if self.angular_rate_mapping not in ("small_angle_v1", "yaw_rx_rz_v1"):
             raise ValueError("unregistered suspension angular-rate mapping")
@@ -193,6 +193,8 @@ def integrate_independent_suspension(
     if (isinstance(gravity_mps2, bool) or not isinstance(gravity_mps2, (int, float))
             or not isfinite(gravity_mps2) or gravity_mps2 <= 0.):
         raise ValueError("gravity_mps2 must be finite positive")
+    if policy.force_model=='road_relative_unilateral_v3':
+        raise SuspensionResolutionError('unilateral force model requires spatial contact integration')
     if not previous.grounded or not path_candidate.grounded:
         raise SuspensionResolutionError("airborne and landing dynamics not registered")
     atlas = _atlas(surfaces, policy.contact.seam_height_tolerance_m)
