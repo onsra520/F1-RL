@@ -28,10 +28,15 @@ def _verify_software(root, protocol):
              "tests/research/test_pv5_track_feasibility.py", "tests/integration/test_pv5_outcomes.py",
              "tests/research/test_pv5_protocol.py", "tests/learning/training/test_pv5_backend_admission.py",
              "tests/integration/test_wp7_race_contract.py", "tests/integration/test_wp7_train_reset.py"]
-    spatial = protocol_profile(protocol)=='spatial_ground_v1'
+    spatial = protocol_profile(protocol) in ('spatial_ground_v1','spatial_owner_v2')
     if spatial:
         paths.extend(['tests/research/test_wp7_spatial_profile.py','tests/research/test_wp7_spatial_profile_execution.py',
                       'tests/research/test_wp7_spatial_ramp_tracking.py'])
+    if protocol_profile(protocol)=='spatial_owner_v2':
+        paths.extend(['tests/research/test_wp7_owner_profile.py','tests/research/test_wp7_owner_profile_execution.py',
+                      'tests/integration/test_hard_route_terminal_v2.py',
+                      'tests/learning/test_hard_route_exit.py','tests/sandbox/test_spatial_compliant_lifecycle.py',
+                      'tests/integration/test_spatial_compliant_gym.py'])
     command = [sys.executable, "-B", "-m", "pytest", "-p", "no:cacheprovider", *paths, "-q"]
     environment = {**os.environ, "PYTHONPATH": str(root), "PYTHONDONTWRITEBYTECODE": "1"}
     environment.pop("PYTEST_ADDOPTS", None)

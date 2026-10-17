@@ -87,7 +87,9 @@ def test_owner_contract_is_versioned_and_cannot_grant_training_or_change_reward(
     from f1rl.learning.hard_route_outcome import owner_outcome_contract
     root=Path(__file__).resolve().parents[2]
     old=root/'configs/recovery/wp7-owner-decisions-preregistered-v1.yml'
-    assert sha256(old.read_bytes()).hexdigest()=='d9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1'
+    assert sha256(old.read_bytes()).hexdigest() in {
+        'd9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1',
+        '04c7200f30a76460db2b5ca9a4b29ac8ccf2fe20b3d88556e2a14b2cb6315eeb'}
     approved=owner_outcome_contract(root/'configs/research/wp7-hard-route-outcome-v2.json')
     for key,value in [('terminal_penalty',1.),('training_permitted',True),('outcome','successful_finish')]:
         document=dict(approved['configuration']);document[key]=value
@@ -172,4 +174,20 @@ def test_owner_contract_cannot_hash_different_bytes_from_the_validated_document(
         return changed if path.name=='wp7-hard-route-outcome-v2.json' else original(path)
     monkeypatch.setattr(Path,'read_bytes',read)
     with pytest.raises(ValueError,match='owner-v2'):
+        owner_outcome_contract()
+
+
+@pytest.mark.parametrize("line_ending", [b"\n", b"\r\n"])
+def test_owner_parent_identity_accepts_exact_git_and_windows_checkout_bytes(monkeypatch, line_ending):
+    from pathlib import Path
+    from f1rl.learning.hard_route_outcome import owner_outcome_contract
+    original=Path.read_bytes
+    parent=Path(__file__).resolve().parents[2]/"configs/recovery/wp7-owner-decisions-preregistered-v1.yml"
+    checkout=original(parent).replace(b"\r\n", b"\n").replace(b"\n", line_ending)
+    def read(path):
+        return checkout if path==parent else original(path)
+    monkeypatch.setattr(Path,"read_bytes",read)
+    assert owner_outcome_contract()["configuration"]["training_permitted"] is False
+    checkout+=b"# changed historical source\n"
+    with pytest.raises(ValueError,match="historical parent"):
         owner_outcome_contract()

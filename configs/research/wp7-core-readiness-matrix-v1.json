@@ -147,11 +147,11 @@
         {
           "id": "hard_route_failure_approved",
           "weight": 25,
-          "status": "blocked",
+          "status": "implemented",
           "priority": "P0",
           "source": "f1rl/learning/wp7_race.py",
-          "test": "tests/integration/test_hard_route_terminal_v2.py",
-          "blocker": "Owner-v2 valid terminal failure and unchanged valid-prefix reward are decided and implemented in opt-in versions. Full exact-HEAD regression and registered execution-profile migration remain pending; historical v1 semantics stay unchanged."
+          "test": "tests/research/test_wp7_owner_profile.py",
+          "blocker": null
         }
       ],
       "compatibility": {

@@ -107,7 +107,15 @@ def owner_outcome_contract(path=None) -> dict:
             or any(type(document[k]) is not type(v) or document[k]!=v for k,v in expected.items())):
         raise ValueError('owner-v2 outcome choices changed or unauthorized permission asserted')
     parent=root/'configs/recovery/wp7-owner-decisions-preregistered-v1.yml'
-    if sha256(parent.read_bytes()).hexdigest()!=expected['parent_owner_contract_sha256']:
-        raise ValueError('owner-v2 historical parent identity changed')
+    _validate_owner_parent_identity(parent)
     return {'configuration':expected,'source_sha256':sha256(source).hexdigest(),'sha256':sha256(json.dumps(expected,sort_keys=True,
         separators=(',',':'),allow_nan=False).encode('utf-8')).hexdigest()}
+
+
+def _validate_owner_parent_identity(parent):
+    from hashlib import sha256
+    # Pin both exact historical checkouts; accept no other source bytes.
+    hashes={'d9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1',
+            '04c7200f30a76460db2b5ca9a4b29ac8ccf2fe20b3d88556e2a14b2cb6315eeb'}
+    if sha256(parent.read_bytes()).hexdigest() not in hashes:
+        raise ValueError('owner-v2 historical parent identity changed')

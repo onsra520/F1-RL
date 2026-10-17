@@ -1,7 +1,8 @@
 """Executable registration preparation, never training authorization.
 
-The instantiated candidate is grounded-only. Required flight/race/reset
-integration is explicitly incomplete; registering its gap cannot certify it.
+Historical registrations retain their original domains. The explicit owner-v2
+profile binds bounded compliant lifecycle/race/reset; broader required domains
+and independent scientific admission remain incomplete.
 """
 from dataclasses import asdict, replace
 from hashlib import sha256
@@ -24,6 +25,8 @@ from ..learning.training.env_factory import TrainingScenario, TrainingScenarioSe
 from ..learning.train_reset import TrainResetConfig
 from ..learning.action import ActionContract
 from ..learning.wp7_race import WP7RaceConfig
+from ..learning.hard_route_outcome import owner_outcome_contract, _validate_owner_parent_identity
+from ..sandbox.ballistic_flight import FlightState
 from ..runtime.physics import PhysicsConfig
 from ..sandbox.geometry.vector import Vec3
 from ..sandbox.independent_suspension_dynamics import IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState
@@ -48,44 +51,55 @@ def _unique(pairs):
     return result
 
 
-PROFILES = ('pv5_v1','spatial_ground_v1')
+PROFILES = ('pv5_v1','spatial_ground_v1','spatial_owner_v2')
 
 
 def _registration_path(root,profile):
     if type(profile) is not str or profile not in PROFILES:
         raise ValueError('unregistered execution profile')
-    return root / ('configs/research/wp7-spatial-ground-protocol-v1.json' if profile=='spatial_ground_v1'
+    return root / ('configs/research/wp7-owner-execution-protocol-v2.json' if profile=='spatial_owner_v2'
+                   else 'configs/research/wp7-spatial-ground-protocol-v1.json' if profile=='spatial_ground_v1'
                    else 'configs/research/wp7-pv5-protocol-v1.json')
 
 
 def protocol_profile(protocol):
-    if not isinstance(protocol,dict) or protocol.get('schema_version') not in ('wp7_bound_protocol_v1','wp7_bound_protocol_v2'):
+    schemas={'wp7_bound_protocol_v1':'pv5_v1','wp7_bound_protocol_v2':'spatial_ground_v1',
+             'wp7_bound_protocol_v3':'spatial_owner_v2'}
+    if not isinstance(protocol,dict) or type(protocol.get('schema_version')) is not str or protocol['schema_version'] not in schemas:
         raise ValueError('unregistered protocol profile schema')
-    return 'spatial_ground_v1' if protocol['schema_version']=='wp7_bound_protocol_v2' else 'pv5_v1'
+    return schemas[protocol['schema_version']]
 
 
 def load_registration(root,*,profile='pv5_v1'):
     path = _registration_path(root,profile)
-    spatial = profile=='spatial_ground_v1'
+    owner = profile=='spatial_owner_v2'
+    spatial = profile in ('spatial_ground_v1','spatial_owner_v2')
     doc = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique)
     keys = {"schema_version", "status", "simulator_version", "training_profile", "seed_roster",
             "cohorts", "evaluation", "engineering_suspension", "required_domains", "calibration",
             "source_policy", "approval"}
     if spatial:
         keys.add('engineering_spatial_contact')
+    if owner:
+        keys.add('owner_outcome_contract')
     if not isinstance(doc, dict) or set(doc) != keys:
         raise ValueError("protocol registration requires exact fields")
     fixed = {
-        "schema_version": "wp7_experiment_registration_v2" if spatial else "wp7_experiment_registration_v1", "status": "draft_not_authorized",
-        "simulator_version": "f1rl-0.1.0/wp7-spatial-ground-v1" if spatial else "f1rl-0.1.0/wp7-pv5", "training_profile": "configs/recovery/wp7-pilot-200k.yml",
+        "schema_version": "wp7_experiment_registration_v3" if owner else "wp7_experiment_registration_v2" if spatial else "wp7_experiment_registration_v1", "status": "draft_not_authorized",
+        "simulator_version": "f1rl-0.1.0/wp7-spatial-owner-v2" if owner else "f1rl-0.1.0/wp7-spatial-ground-v1" if spatial else "f1rl-0.1.0/wp7-pv5", "training_profile": "configs/recovery/wp7-pilot-200k.yml",
         "cohorts": ["singletrack_each_train", "multitrack_uniform_reset"],
         "required_domains": ["grounded", "partial_support", "takeoff", "flight", "landing", "recovery"],
         "calibration": "provisional_engineering_values_require_measured_reference_and_independent_review",
         "source_policy": "exact_commit_clean_tree_and_actual_file_hashes_at_training_start",
         "approval": "separate_independently_verified_owner_contract_required",
     }
+    if owner:
+        fixed['owner_outcome_contract']='configs/research/wp7-hard-route-outcome-v2.json'
     if any(doc[key] != value for key, value in fixed.items()):
         raise ValueError("unregistered protocol contract")
+    if owner:
+        owner_outcome_contract(root/doc['owner_outcome_contract'])
+        _validate_owner_parent_identity(root/'configs/recovery/wp7-owner-decisions-preregistered-v1.yml')
     seeds = doc["seed_roster"]
     if not isinstance(seeds, list) or len(seeds) < 3:
         raise ValueError("protocol requires at least three paired seeds")
@@ -116,7 +130,7 @@ def load_registration(root,*,profile='pv5_v1'):
     }
     if spatial:
         suspension_keys.add('force_model')
-        if suspension.get('force_model')!='road_relative_vertical_v2':
+        if suspension.get('force_model')!=('road_relative_unilateral_v3' if owner else 'road_relative_vertical_v2'):
             raise ValueError('spatial registration requires road-relative force model')
         contact = doc['engineering_spatial_contact']
         if (not isinstance(contact,dict) or set(contact)!={'traction','yaw_inertia_kg_m2','lateral_damping_nspm','max_angular_speed_radps'}
@@ -142,16 +156,18 @@ def prepare_scenarios(root, registration, *, seed_index: int):
     baseline = build_training_scenarios(candidate)
     entries = {e.track_id: e for e in load_track_manifest(root / "assets/tracks/manifest.json").tracks}
     registry = tuple(entries[identity] for identity in TRAIN_IDS)
-    reset = TrainResetConfig(seeds[seed_index]["perturbation"], registry)
+    owner = registration['schema_version']=='wp7_experiment_registration_v3'
+    reset = TrainResetConfig(seeds[seed_index]["perturbation"], registry,
+        **({'version':'wp7_train_reset_lifecycle_research_v1'} if owner else {}))
     wheels = WheelContactPoints(Vec3(-.75,-.5,1.5), Vec3(.75,-.5,1.5),
                                 Vec3(-.75,-.5,-1.5), Vec3(.75,-.5,-1.5))
     contact = MultiSurfaceSuspensionPolicy(wheels, .12, .12)
     suspension = IndependentSuspensionDynamicsPolicy(contact, **registration["engineering_suspension"],
                                                      angular_rate_mapping="yaw_rx_rz_v1")
-    spatial = registration['schema_version']=='wp7_experiment_registration_v2'
+    spatial = registration['schema_version'] in ('wp7_experiment_registration_v2','wp7_experiment_registration_v3')
     spatial_policy = registration.get('engineering_spatial_contact')
-    physics = PhysicsConfig("wp7_suspension_v1", BODY, suspension,
-        ground_motion_version='spatial_contact_v1' if spatial else 'arc_distance_v1',
+    physics = PhysicsConfig("wp7_lifecycle_v1" if owner else "wp7_suspension_v1", BODY, suspension,
+        ground_motion_version='spatial_compliant_lifecycle_v1' if owner else 'spatial_contact_v1' if spatial else 'arc_distance_v1',
         spawn_reference='authored_horizontal_road_v1',spatial_contact_policy=(
             SpatialContactPolicy(**{**spatial_policy,'traction':LongitudinalContactPolicy(**spatial_policy['traction'])})
             if spatial else None))
@@ -164,9 +180,11 @@ def prepare_scenarios(root, registration, *, seed_index: int):
             raise ValueError('registered TRAIN spawn requires horizontal authored road')
         position = initial.vehicle.position+Vec3(0.,row.factory.vehicle_parameters.ride_height,0.)
         initial = replace(initial,vehicle=replace(initial.vehicle,position=position),
-                          suspension=SuspensionDynamicsState(position.y))
+                          suspension=SuspensionDynamicsState(position.y),
+                          **({'flight':FlightState('grounded')} if owner else {}))
         factory = replace(row.factory, offtrack_config=None, physics_config=physics,
-            race_config=WP7RaceConfig(), reset_config=reset, reset_track_id=row.track_id,
+            race_config=WP7RaceConfig(version='wp7_directed_lifecycle_owner_v2',hard_violation='terminate_valid_failure')
+                if owner else WP7RaceConfig(), reset_config=reset, reset_track_id=row.track_id,
             reward_composer=rewards, initial_state=initial,
             action_contract=ActionContract('steering-throttle-brake-v2') if spatial else None)
         scenarios.append(TrainingScenario(row.track_id, factory))
@@ -199,9 +217,11 @@ def build_protocol(repository_root,*,profile='pv5_v1'):
         root / "configs/recovery/wp7-c2-candidate.yml", root / "configs/recovery/wp7-owner-decisions-preregistered-v1.yml",
         root / "assets/tracks/manifest.json",
         *(root / f"assets/tracks/training/{t}.json" for t in TRAIN_IDS)])
+    if profile=='spatial_owner_v2':
+        files.append(root/registration['owner_outcome_contract'])
     source = {p.relative_to(root).as_posix(): sha256(p.read_bytes()).hexdigest() for p in files}
     document = {
-        "schema_version": "wp7_bound_protocol_v2" if profile=='spatial_ground_v1' else "wp7_bound_protocol_v1", "registration": registration,
+        "schema_version": "wp7_bound_protocol_v3" if profile=='spatial_owner_v2' else "wp7_bound_protocol_v2" if profile=='spatial_ground_v1' else "wp7_bound_protocol_v1", "registration": registration,
         "source": asdict(_capture_git_provenance(root)), "source_files": source,
         "physics": reference.physics_config.document(), "physics_sha256": reference.physics_config.sha256,
         "tracks": tracks,
@@ -221,8 +241,11 @@ def build_protocol(repository_root,*,profile='pv5_v1'):
         "minimum_evaluation_episodes": len(policies)*len(TRAIN_IDS)*2*60,
         "evaluator": "f1rl.learning.evaluation.evaluator:evaluate_episode/stochastic",
         "split_identity": "four_train_only_no_heldout_rollout",
-        "registration_blockers": ["flight_race_reset_integration_missing", "owner_failure_policy_missing",
-                                  "cohort_and_multiplicity_review_required", "engineering_parameters_uncalibrated"],
+        "registration_blockers": (["broader_lifecycle_domains_and_profile_robustness_unverified",
+                                   "cohort_and_multiplicity_review_required", "engineering_parameters_uncalibrated"]
+                                  if profile=='spatial_owner_v2' else
+                                  ["flight_race_reset_integration_missing", "owner_failure_policy_missing",
+                                   "cohort_and_multiplicity_review_required", "engineering_parameters_uncalibrated"]),
         "training_authorized": False,
     }
     document = json.loads(json.dumps(document, allow_nan=False))

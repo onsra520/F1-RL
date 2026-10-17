@@ -97,9 +97,9 @@ def certify_registered_center_execution(repository_root,track_id,*,controls=None
     return _certify_execution(repository_root,track_id,controls=controls,ramp_profile=False,center_gates=True)
 
 
-def certify_spatial_profile_execution(repository_root,track_id,*,seed_index=0,reset_rank=0,reset_index=None,controls=None):
+def certify_spatial_profile_execution(repository_root,track_id,*,seed_index=0,reset_rank=0,reset_index=None,controls=None,profile='spatial_ground_v1'):
     """Execute one declared spatial TRAIN selection without scientific admission."""
-    selection = dict(profile='spatial_ground_v1',seed_index=seed_index,reset_rank=reset_rank,reset_index=reset_index)
+    selection = dict(profile=profile,seed_index=seed_index,reset_rank=reset_rank,reset_index=reset_index)
     _validate_selection(selection)
     return _certify_execution(repository_root,track_id,controls=controls,ramp_profile=False,
                               center_gates=True,selection=selection)
@@ -109,7 +109,7 @@ def _validate_selection(selection):
     if selection is None:
         return
     if (type(selection) is not dict or set(selection)!={'profile','seed_index','reset_rank','reset_index'}
-            or selection['profile']!='spatial_ground_v1'
+            or type(selection['profile']) is not str or selection['profile'] not in ('spatial_ground_v1','spatial_owner_v2')
             or any(type(selection[k]) is not int or not 0<=selection[k]<2**32 for k in ('seed_index','reset_rank'))
             or (selection['reset_index'] is not None and
                 (type(selection['reset_index']) is not int or not 0<=selection['reset_index']<2**32))):
@@ -376,6 +376,10 @@ def _execute_planar(repository_root,track_id,*,controls=None,ramp_profile=False,
             paired_seed_index=selection['seed_index'],reset_rank=selection['reset_rank'],
             reset_index=selection['reset_index'],reset_metadata=None,
             scope='registered_spatial_numerical_TRAIN_execution_not_calibrated_or_scientific_evidence')
+    if selection is not None and profile=='spatial_owner_v2':
+        result.update(schema_version='wp7_executed_spatial_profile_feasibility_v2',
+            scope='registered_compliant_lifecycle_owner_v2_numerical_TRAIN_execution_not_physical_or_scientific_validation',
+            lifecycle_transitions=[])
     if selection is not None and ramp_reference:
         result['controller'] = {k:v for k,v in RAMP_CONTROLLER.items() if k!='steering'}
         result['controller'].update(version='spatial_ramp_route_speed_stop_v1',
@@ -431,9 +435,15 @@ def _execute_planar(repository_root,track_id,*,controls=None,ramp_profile=False,
             try:
                 snapshot = sim.step(control)
                 poses = snapshot.suspension_telemetry.poses
-                if any(not p.grounded for p in poses):
+                if profile!='spatial_owner_v2' and any(not p.grounded for p in poses):
                     raise RuntimeError('executed planar witness cannot include airborne states')
                 race = advance_directed_race(factory.track,route,authored,progress,snapshot,factory.race_config)
+                if selection is not None and profile=='spatial_owner_v2':
+                    result['lifecycle_transitions'].extend(dict(kind=e.kind,
+                        time_s=snapshot.physics_transition.start_time_s+e.time_s)
+                        for e in snapshot.physics_transition.events)
+                    if race.terminal_failure:
+                        raise RuntimeError('valid hard-route terminal failure is not a feasible completion witness')
                 if not center_gates:
                     for first,last in zip(poses,poses[1:]):
                         if any(not _gate_segment_clear(first,last,g.volume) for g in gates):
@@ -492,10 +502,10 @@ def replay_planar_execution(repository_root,document,*,expected_sha256):
     if (not isinstance(document,dict) or document.get('sha256')!=expected_sha256
             or digest({k:v for k,v in document.items() if k!='sha256'})!=expected_sha256):
         raise ValueError('independent certificate identity differs')
-    if document.get('schema_version') == 'wp7_executed_spatial_profile_feasibility_v1':
+    if document.get('schema_version') in ('wp7_executed_spatial_profile_feasibility_v1','wp7_executed_spatial_profile_feasibility_v2'):
         restored = certify_spatial_profile_execution(repository_root,document.get('track_id'),
             seed_index=document.get('paired_seed_index'),reset_rank=document.get('reset_rank'),
-            reset_index=document.get('reset_index'),controls=document.get('controls'))
+            reset_index=document.get('reset_index'),controls=document.get('controls'),profile=document.get('execution_profile'))
     elif document.get('schema_version') == 'wp7_executed_spatial_ramp_proposal_v1':
         restored = certify_spatial_ramp_execution(repository_root,controls=document.get('controls'))
     elif document.get('schema_version') == 'wp7_executed_registered_center_feasibility_v1':
