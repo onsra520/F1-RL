@@ -91,11 +91,11 @@ def step_world(
     longitudinal_contact_policy: LongitudinalContactPolicy | None = None,
     spatial_contact_policy: SpatialContactPolicy | None = None,
 ) -> WorldStepResult:
-    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1'):
+    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2'):
         raise ValueError('unregistered ground motion version')
     coupled = ground_motion_version == 'coupled_longitudinal_v1'
-    compliant = ground_motion_version == 'spatial_compliant_lifecycle_v1'
-    spatial = ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1')
+    compliant = ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2')
+    spatial = ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2')
     if (spatial != (spatial_contact_policy is not None)
             or spatial and (not isinstance(spatial_contact_policy,SpatialContactPolicy)
                 or not isinstance(independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
@@ -194,7 +194,8 @@ def step_world(
         if spatial:
             integrate_spatial = integrate_spatial_lifecycle if compliant else integrate_spatial_contact
             result = integrate_spatial(state.vehicle,independent_suspension_policy,
-                body_geometry,track.surfaces,parameters,control,spatial_contact_policy,dt=dt,modifiers=modifiers)
+                body_geometry,track.surfaces,parameters,control,spatial_contact_policy,dt=dt,modifiers=modifiers,
+                **({'phase_domain':'atlas_gradient_v2'} if ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else {}))
             spatial_ground_telemetry = result.audit
             if compliant:
                 flight_active = True  # Directed lifecycle race owns timed gate events.

@@ -7,7 +7,7 @@ lifecycle entry point supports bounded fixed-attitude flight above the atlas.
 Every accepted RK4 leaf must pass work/impulse and numerical body/road sweeps.
 """
 from dataclasses import dataclass, replace
-from math import asin, atan2, cos, isfinite, sin, tanh
+from math import asin, atan2, cos, isfinite, sin, tanh, ulp
 
 from .body_collision import VehicleBodyGeometry
 from .center_trajectory import CenterSegment
@@ -142,20 +142,22 @@ def integrate_spatial_contact(previous, physics, body, surfaces, parameters, con
 
 
 def integrate_spatial_lifecycle(previous, physics, body, surfaces, parameters, control,
-                                policy, *, dt, modifiers=None):
+                                policy, *, dt, modifiers=None, phase_domain='horizontal_v1'):
     """Compliant release/recontact above a continuously covered road atlas.
 
     Free extension must end before the registered droop stop. Airborne angular
     motion and road-edge departure remain unsupported in this first domain.
     """
+    if phase_domain not in ('horizontal_v1','atlas_gradient_v2'):
+        raise ValueError('unregistered spatial phase domain')
     if not isinstance(physics,IndependentSuspensionDynamicsPolicy) or physics.force_model != 'road_relative_unilateral_v3':
         raise ValueError('spatial lifecycle requires unilateral contact')
     return _integrate_spatial(previous,physics,body,surfaces,parameters,control,policy,
-                              dt=dt,modifiers=modifiers,lifecycle=True)
+                              dt=dt,modifiers=modifiers,lifecycle=True,phase_domain=phase_domain)
 
 
 def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
-                        policy, *, dt, modifiers, lifecycle):
+                        policy, *, dt, modifiers, lifecycle, phase_domain='horizontal_v1'):
     """Force-coupled supported motion; world Hdot=tau prevents hidden yaw projection.
 
     Quaternion RK4 is normalized at each accepted candidate. Work refinement
@@ -336,9 +338,9 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
         if lifecycle:
             first,last=replace(first,grounded=a.compressed),replace(last,grounded=final.compressed)
         if phase_change:
-            # On one horizontal plane each SLERP wheel gap has second derivative
-            # <= theta^2*|r| in normalized leaf time. A same-sign secant exceeding
-            # half that bound proves every gap monotone, hence one phase crossing.
+            # A SLERP wheel/plane gap has normalized second derivative bounded
+            # by theta^2*|r|*|gradient|. Its secant exceeds every derivative's
+            # deviation by half this bound, proving a unique phase crossing.
             relative=last.orientation*Quaternion(first.orientation.w,-first.orientation.x,
                                                   -first.orientation.y,-first.orientation.z)
             theta=2.*atan2(Vec3(relative.x,relative.y,relative.z).magnitude,abs(relative.w))
@@ -349,11 +351,26 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                 radius=(last.position-first.position).magnitude+theta*local.magnitude
                 footprint=_square(first_point.x,first_point.z,radius)
                 crossed=[p for p,poly in zip(*atlas) if _intersection(footprint,poly)]
-                if not crossed or any(p.normal!=UP for p in crossed) or len({p.origin.y for p in crossed})!=1:
-                    raise SuspensionResolutionError('spatial phase uniqueness requires local horizontal road')
-                first_y,last_y=first_point.y,last_point.y
-                if direction*(first_y-last_y)<=.5*theta*theta*local.magnitude:
-                    raise SuspensionResolutionError('spatial phase crossing monotonicity unresolved')
+                if phase_domain=='horizontal_v1':
+                    if not crossed or any(p.normal!=UP for p in crossed) or len({p.origin.y for p in crossed})!=1:
+                        raise SuspensionResolutionError('spatial phase uniqueness requires local horizontal road')
+                    gradients=(UP,)
+                else:
+                    if not crossed:
+                        raise SuspensionResolutionError('spatial phase atlas coverage unresolved')
+                    gradients=tuple(p.normal/p.normal.y for p in crossed)
+                # Continuous atlas heights agree at seams. Every potentially
+                # crossed plane must have the same strict gap direction.
+                for gradient in gradients:
+                    secant=(first_point-last_point).dot(gradient)
+                    curvature=theta*theta*local.magnitude*gradient.magnitude
+                    roundoff=0.
+                    if phase_domain=='atlas_gradient_v2':
+                        scale=max(1.,*(abs(v) for point in (first_point,last_point)
+                                       for v in (point.x,point.y,point.z)))
+                        roundoff=64.*ulp(scale)*(abs(gradient.x)+abs(gradient.y)+abs(gradient.z))
+                    if direction*secant<=.5*curvature+roundoff:
+                        raise SuspensionResolutionError('spatial phase crossing monotonicity unresolved')
         ballistic=lifecycle and not any(f.compressed for f in (*stages,final))
         verdict=certify_multisurface_support(first,last,body,physics.contact,surfaces,
                                             body_clearance_version='bounded_patch_planes_v2',
@@ -397,7 +414,8 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
         sum(s.energy_residual_j for s in leaves),max(s.linear_impulse_residual_ns for s in leaves),
         max(s.angular_impulse_residual_nms for s in leaves))
     if lifecycle:
-        audit=SpatialLifecycleAudit('spatial_compliant_lifecycle_rk4_v1',audit.substeps,
+        audit=SpatialLifecycleAudit('spatial_compliant_atlas_lifecycle_rk4_v2' if phase_domain=='atlas_gradient_v2'
+            else 'spatial_compliant_lifecycle_rk4_v1',audit.substeps,
             audit.actuator_work_j,audit.dissipation_j,audit.energy_residual_j,
             audit.max_linear_impulse_residual_ns,audit.max_angular_impulse_residual_nms,tuple(brackets))
     centers=tuple(CenterSegment(a,b,p.position,r.position,p.velocity if air else None,gravity if air else 0.)

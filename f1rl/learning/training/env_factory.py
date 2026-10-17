@@ -73,7 +73,7 @@ class F1RLEnvFactory:
             self.physics_config.validate_state(self.initial_state, self.vehicle_parameters)
         if (self.requires_scientific_admission and self.action_contract is not None
                 and self.action_contract.version=='steering-throttle-brake-v2'
-                and (self.physics_config is None or self.physics_config.ground_motion_version not in ('arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1'))):
+                and (self.physics_config is None or self.physics_config.ground_motion_version not in ('arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2'))):
             raise ValueError('research braking requires distance ground integration')
         if self.race_config is not None:
             if not isinstance(self.race_config, WP7RaceConfig):

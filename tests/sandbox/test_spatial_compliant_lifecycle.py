@@ -35,7 +35,8 @@ def test_actual_release_and_landing_have_bounded_phase_brackets_without_impulse(
     assert r.audit.substeps[-1].final_energy_j <= initial_energy+1e-5
 
 
-def test_a_narrow_continuous_ridge_cannot_hide_contact_between_rk_stages():
+@pytest.mark.parametrize('phase_domain',['horizontal_v1','atlas_gradient_v2'])
+def test_a_narrow_continuous_ridge_cannot_hide_contact_between_rk_stages(phase_domain):
     from math import hypot
     from f1rl.sandbox.track.patch import PlanarSurfacePatch
     from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
@@ -53,7 +54,7 @@ def test_a_narrow_continuous_ridge_cannot_hide_contact_between_rk_stages():
     # attitude domain. It previously passed as one force-free ballistic leaf.
     with pytest.raises(SuspensionResolutionError):
         integrate_spatial_lifecycle(state,s,f.physics_config.body_geometry,tuple(patches),
-            f.vehicle_parameters,VehicleControl(0.,0.,0.),policy,dt=.1)
+            f.vehicle_parameters,VehicleControl(0.,0.,0.),policy,dt=.1,phase_domain=phase_domain)
 
 
 def test_airborne_actions_and_ground_modifiers_cannot_create_propulsion_or_drag():
@@ -90,7 +91,8 @@ def test_unsupported_lifecycle_domains_reject_instead_of_falling_back(case):
             SpatialContactPolicy(LongitudinalContactPolicy(.8,100000.),1800.,12000.),dt=.1)
 
 
-def test_simultaneous_narrow_road_valleys_cannot_hide_a_ground_to_air_transition():
+@pytest.mark.parametrize('phase_domain',['horizontal_v1','atlas_gradient_v2'])
+def test_simultaneous_narrow_road_valleys_cannot_hide_a_ground_to_air_transition(phase_domain):
     from math import hypot
     from f1rl.sandbox.track.patch import PlanarSurfacePatch
     from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
@@ -106,7 +108,7 @@ def test_simultaneous_narrow_road_valleys_cannot_hide_a_ground_to_air_transition
     try:
         r=integrate_spatial_lifecycle(state,s,f.physics_config.body_geometry,tuple(patches),
             replace(f.vehicle_parameters,rolling_drag=0.),VehicleControl(0.,0.,0.),
-            SpatialContactPolicy(LongitudinalContactPolicy(.8,100000.),1800.,12000.),dt=.1)
+            SpatialContactPolicy(LongitudinalContactPolicy(.8,100000.),1800.,12000.),dt=.1,phase_domain=phase_domain)
     except SuspensionResolutionError:
         return  # Unproved or rotating recontact must reject, never manufacture support.
     assert any(b.kind=='takeoff' for b in r.audit.phase_brackets)
