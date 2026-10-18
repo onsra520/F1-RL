@@ -34,7 +34,8 @@ def _run_cell(payload,*,registered):
             evaluation_seed(protocol,payload['policy_id'],payload['track_id'],payload['stratum'],0)
             admission=_registered_cell_admission(root,protocol,payload['policy_id'],
                 model_sha256=payload.get('expected_model_sha256'),
-                run_manifest_sha256=payload.get('expected_run_manifest_sha256'))
+                run_manifest_sha256=payload.get('expected_run_manifest_sha256'),
+                run_manifest=payload.get('run_manifest'), review_envelope=payload.get('review_envelope'))
             blob,model=_registered_model_snapshot(protocol=protocol,policy_id=payload['policy_id'],
                 model_path=Path(payload['model_path']),expected_model_sha256=payload['expected_model_sha256'],
                 run_manifest=payload['run_manifest'],expected_run_manifest_sha256=payload['expected_run_manifest_sha256'],

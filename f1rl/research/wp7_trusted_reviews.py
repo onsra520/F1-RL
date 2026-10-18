@@ -5,8 +5,9 @@ source. Keys embedded in review envelopes are never trust anchors.
 """
 from datetime import datetime, timezone
 import json
+from pathlib import Path
 
-from .wp7_protocol import digest
+from .wp7_protocol import digest, _unique
 
 
 def _fields(value, expected):
@@ -34,6 +35,18 @@ def review_message(payload):
     """Stable domain-separated bytes signed by both independent reviewers."""
     return b'F1-RL/WP7/run-review/v1\x00' + json.dumps(
         payload, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False).encode('ascii')
+
+
+def verify_repository_run_reviews(repository_root, envelope, *, protocol_sha256,
+                                  run_manifest_sha256, now=None):
+    """Use repository trust anchors, never keys or verification booleans in a report."""
+    root = Path(repository_root).resolve(strict=True)
+    path = root / 'configs/research/wp7-trusted-reviewers-v1.json'
+    if path.is_symlink() or not path.resolve(strict=True).is_relative_to(root):
+        raise ValueError('trust registry must remain inside the repository')
+    registry = json.loads(path.read_text(encoding='utf-8'), object_pairs_hook=_unique)
+    return verify_run_reviews(envelope, registry, protocol_sha256=protocol_sha256,
+                              run_manifest_sha256=run_manifest_sha256, now=now)
 
 
 def verify_run_reviews(envelope, trust_registry, *, protocol_sha256, run_manifest_sha256, now=None):

@@ -246,7 +246,8 @@ class TrainingRunner:
         """Pre-execution capture, including denied attempts; never proof of training."""
         return deepcopy(self._registered_run_manifest)
 
-    def run_registered(self, binding: object) -> TrainingRunResult:
+    def run_registered(self, binding: object, *, run_manifest: dict | None = None,
+                       review_envelope: dict | None = None) -> TrainingRunResult:
         """Validate a policy-bound WP7 execution before any model/artifact creation.
 
         This does not waive the independent research admission guard.
@@ -256,12 +257,25 @@ class TrainingRunner:
         if not isinstance(binding, PolicyBoundTrainingConfig):
             raise ValueError("registered execution requires PolicyBoundTrainingConfig")
         binding.validate(self._config, binding.scenarios)
-        from ...research.wp7_run_manifest import capture_registered_run
-        self._registered_run_manifest = capture_registered_run(binding, run_id=uuid4().hex)
+        from ...research.wp7_run_manifest import capture_registered_run, verify_run_preparation
+        from ...research.wp7_protocol import validate_runtime_manifest
+        if review_envelope is not None and run_manifest is None:
+            raise ValueError('prepared run manifest required for a reviewed registered run')
+        if run_manifest is None:
+            run_manifest = capture_registered_run(binding, run_id=uuid4().hex)
+        else:
+            request = verify_run_preparation(run_manifest, expected_sha256=run_manifest.get('sha256'))
+            if (request['state'] != 'preparation_verified'
+                    or request['protocol_sha256'] != binding.protocol_sha256
+                    or request['policy_id'] != binding.policy_id or run_manifest['receipt'] != binding.receipt):
+                raise ValueError('prepared registered run identity differs from binding')
+            validate_runtime_manifest(run_manifest['runtime_manifest'], run_manifest['protocol'], binding.root)
+        self._registered_run_manifest = deepcopy(run_manifest)
         if any(s.factory.requires_scientific_admission for s in binding.scenarios.scenarios):
             from ...research.wp7_admission import reject_research_training
             reject_research_training('registered research execution remains blocked before model/artifact allocation',
-                                     repository_root=binding.root,profile=binding.profile)
+                                     repository_root=binding.root,profile=binding.profile,
+                                     run_manifest=self._registered_run_manifest, review_envelope=review_envelope)
         if len(binding.scenarios.scenarios) == 1:
             return self.run_single(binding.scenarios.scenarios[0].factory)
         return self.run_multi(binding.scenarios)

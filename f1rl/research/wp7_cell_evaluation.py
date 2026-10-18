@@ -199,9 +199,11 @@ def _spawn_ppo_cell(repository_root,payload,*,timeout_s,evidence_path):
     return record
 
 
-def _registered_cell_admission(root,protocol,policy_id,*,model_sha256,run_manifest_sha256):
+def _registered_cell_admission(root,protocol,policy_id,*,model_sha256,run_manifest_sha256,
+                               run_manifest=None, review_envelope=None):
     validate_protocol(protocol,root)
-    report=evaluate_admission(root,capture_runtime=True,profile=protocol_profile(protocol))
+    report=evaluate_admission(root,capture_runtime=True,profile=protocol_profile(protocol),
+                              run_manifest=run_manifest, review_envelope=review_envelope)
     authorization=report['authorization']
     if (report['training_authorized'] is not True or authorization['verified'] is not True
             or report['owner_permissions']['training_permitted'] is not True):
@@ -210,7 +212,16 @@ def _registered_cell_admission(root,protocol,policy_id,*,model_sha256,run_manife
                   model_sha256=model_sha256,run_manifest_sha256=run_manifest_sha256)
     if any(value is None or authorization.get(key)!=value for key,value in expected.items()):
         raise ScientificAdmissionError('research cell run/model binding is not independently admitted',report)
-    return report
+    from .wp7_trusted_reviews import verify_repository_run_reviews
+    try:
+        verify_repository_run_reviews(root, authorization['run_review_envelope'],
+            protocol_sha256=protocol['sha256'], run_manifest_sha256=run_manifest_sha256)
+    except (KeyError, ValueError, TypeError, OSError) as exc:
+        raise ScientificAdmissionError('research cell requires authenticated run reviews',report) from exc
+    # Authentic scientific reviews are explicitly non-authorizing. No owner
+    # permit contract has been approved, so even a forged positive report must
+    # not turn those signatures into execution permission.
+    raise ScientificAdmissionError('authenticated training permit contract remains blocked', report)
 
 
 def _registered_model_snapshot(*,protocol,policy_id,model_path,expected_model_sha256,
@@ -245,6 +256,7 @@ def evaluate_registered_cell(
     policy_for_seed: Callable[[int], EvaluationPolicy] | None = None,
     expected_model_sha256: str | None = None, run_manifest: dict | None = None,
     expected_run_manifest_sha256: str | None = None, artifact_directory: Path | None = None,
+    review_envelope: dict | None = None,
     timeout_s: float = 3600., evidence_path: Path | None = None,
 ) -> dict:
     """Run-bound isolated inference; parent and child independently require admission.
@@ -255,7 +267,8 @@ def evaluate_registered_cell(
     root=Path(repository_root).resolve(strict=True)
     evaluation_seed(protocol,policy_id,track_id,stratum,0)
     _registered_cell_admission(root,protocol,policy_id,model_sha256=expected_model_sha256,
-                               run_manifest_sha256=expected_run_manifest_sha256)
+                               run_manifest_sha256=expected_run_manifest_sha256,
+                               run_manifest=run_manifest, review_envelope=review_envelope)
     if policy_for_seed is not None:
         raise ValueError('registered inference forbids caller-supplied policy callbacks')
     if type(timeout_s) not in (int,float) or not 0.<timeout_s<=86400.:
@@ -266,6 +279,7 @@ def evaluate_registered_cell(
     payload=dict(worker_kind='registered',protocol=protocol,policy_id=policy_id,track_id=track_id,stratum=stratum,
         model_bytes=blob,model=model,run_manifest=run_manifest,artifact_directory=str(artifact_directory),
         model_path=str(model_path),expected_run_manifest_sha256=expected_run_manifest_sha256,
+        review_envelope=review_envelope,
         expected_model_sha256=expected_model_sha256,episodes=protocol['registration']['evaluation']['episodes_per_cell'],
         device=protocol['requested_device'])
     return _spawn_ppo_cell(root,payload,timeout_s=timeout_s,evidence_path=evidence_path)

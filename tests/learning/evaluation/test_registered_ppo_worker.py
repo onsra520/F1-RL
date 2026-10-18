@@ -60,6 +60,23 @@ def test_parent_boolean_cannot_admit_the_independent_worker_or_publish_evidence(
         owner_permissions=dict(training_permitted=True))
     monkeypatch.setattr(module,'evaluate_admission',lambda *a,**k:fake)
     output=tmp_path/'must-not-exist.json'
-    with pytest.raises(RuntimeError,match='ScientificAdmissionError'):
+    monkeypatch.setattr(module, '_spawn_ppo_cell', lambda *a, **k: pytest.fail('unsigned report must not start worker'))
+    with pytest.raises(ScientificAdmissionError,match='authenticated'):
         evaluate_registered_cell(ROOT,**args,track_id='ramp-v1',stratum='nominal',evidence_path=output)
     assert not output.exists()
+
+
+def test_child_rechecks_signatures_even_if_its_report_booleans_are_forged(monkeypatch):
+    import f1rl.research.wp7_cell_evaluation as module
+    from scripts.wp7_ppo_fixture_worker import run_registered
+    protocol = build_protocol(ROOT, profile=PROFILE)
+    fake = dict(training_authorized=True, authorization=dict(verified=True,
+        protocol_sha256=protocol['sha256'], policy_id='multitrack-seed1',
+        model_sha256='a' * 64, run_manifest_sha256='b' * 64),
+        owner_permissions=dict(training_permitted=True))
+    monkeypatch.setattr(module, 'evaluate_admission', lambda *a, **k: fake)
+    result = run_registered(dict(protocol=protocol, policy_id='multitrack-seed1',
+        track_id='ramp-v1', stratum='nominal', expected_model_sha256='a' * 64,
+        expected_run_manifest_sha256='b' * 64, model_bytes=b'never deserialize'))
+    assert result[0:2] == ('error', 'ScientificAdmissionError')
+    assert 'authenticated' in result[2]

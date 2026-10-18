@@ -48,6 +48,31 @@ def bind_run_artifacts(prepared, directory):
     return {**document, 'sha256':digest(document)}
 
 
+def verify_run_preparation(document, *, expected_sha256):
+    """Check the prepared identity without opening model or restored artifact bytes.
+
+    An artifacts-bound envelope still needs verify_run_manifest with its actual
+    directory at the later artifact boundary. This is not restore verification.
+    """
+    _checked_digest(document)
+    if document['sha256'] != expected_sha256:
+        raise ValueError('run manifest external identity differs')
+    prepared = deepcopy(document)
+    bound = document.get('state') == 'artifacts_bound'
+    if bound:
+        if not isinstance(document.get('artifacts'), dict):
+            raise ValueError('bound artifact inventory required')
+        prepared.update(state='prepared_not_started', artifacts=None, prepared_sha256=None)
+        prepared.pop('sha256')
+        prepared['sha256'] = digest(prepared)
+    verify_run_manifest(prepared, None,
+        expected_sha256=document['prepared_sha256'] if bound else expected_sha256)
+    return dict(state='preparation_verified_artifacts_unchecked' if bound else 'preparation_verified',
+        run_id=document['run_id'], policy_id=document['receipt']['policy_id'],
+        protocol_sha256=document['protocol_sha256'], run_manifest_sha256=document['sha256'],
+        artifact_bytes_verified=False, training_authorized=False)
+
+
 def verify_run_manifest(document, directory, *, expected_sha256):
     """Independently check the hash chain and a restored exact artifact set.
 
