@@ -58,20 +58,20 @@
         {
           "id": "ramp_domain",
           "weight": 30,
-          "status": "blocked",
+          "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/runtime/physics.py",
-          "test": "tests/research/test_pv5_track_feasibility.py",
-          "blocker": "requires additional verified engineering or independent approval"
+          "source": "f1rl/sandbox/spatial_contact_dynamics.py",
+          "test": "tests/integration/test_canonical_ramp_recovery.py",
+          "blocker": null
         },
         {
           "id": "mixed_normal_recovery",
           "weight": 25,
-          "status": "blocked",
+          "status": "implemented",
           "priority": "P1",
-          "source": "f1rl/sandbox/contact_manifold.py",
-          "test": "tests/sandbox/test_contact_manifold.py",
-          "blocker": "requires additional verified engineering or independent approval"
+          "source": "f1rl/sandbox/spatial_contact_dynamics.py",
+          "test": "tests/integration/test_canonical_ramp_recovery.py",
+          "blocker": null
         }
       ],
       "compatibility": {

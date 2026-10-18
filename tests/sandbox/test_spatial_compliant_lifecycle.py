@@ -35,7 +35,7 @@ def test_actual_release_and_landing_have_bounded_phase_brackets_without_impulse(
     assert r.audit.substeps[-1].final_energy_j <= initial_energy+1e-5
 
 
-@pytest.mark.parametrize('phase_domain',['horizontal_v1','atlas_gradient_v2'])
+@pytest.mark.parametrize('phase_domain',['horizontal_v1','atlas_gradient_v2','atlas_rotating_v3'])
 def test_a_narrow_continuous_ridge_cannot_hide_contact_between_rk_stages(phase_domain):
     from math import hypot
     from f1rl.sandbox.track.patch import PlanarSurfacePatch
@@ -91,7 +91,7 @@ def test_unsupported_lifecycle_domains_reject_instead_of_falling_back(case):
             SpatialContactPolicy(LongitudinalContactPolicy(.8,100000.),1800.,12000.),dt=.1)
 
 
-@pytest.mark.parametrize('phase_domain',['horizontal_v1','atlas_gradient_v2'])
+@pytest.mark.parametrize('phase_domain',['horizontal_v1','atlas_gradient_v2','atlas_rotating_v3'])
 def test_simultaneous_narrow_road_valleys_cannot_hide_a_ground_to_air_transition(phase_domain):
     from math import hypot
     from f1rl.sandbox.track.patch import PlanarSurfacePatch
