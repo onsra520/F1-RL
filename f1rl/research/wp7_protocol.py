@@ -339,6 +339,21 @@ def prepare_evaluation_factory(repository_root, protocol, policy_id, track_id, s
                      "deterministic_prediction": False, "training_authorized": False}
 
 
+def _cpu_model():
+    model = platform.processor().strip() or os.environ.get('PROCESSOR_IDENTIFIER', '').strip()
+    if model:
+        return model
+    if platform.system() == 'Linux':
+        try:
+            for line in Path('/proc/cpuinfo').read_text(encoding='utf-8', errors='replace').splitlines():
+                key, separator, value = line.partition(':')
+                if separator and key.strip() == 'model name' and value.strip():
+                    return value.strip()
+        except OSError:
+            pass
+    return 'unavailable'
+
+
 def _runtime():
     packages = {name: metadata.version(name) for name in
                 ("numpy", "gymnasium", "stable-baselines3", "torch", "PyYAML")}
@@ -347,7 +362,7 @@ def _runtime():
     gpu = json.loads(result.stdout)
     return {"python_version": platform.python_version(), "implementation": platform.python_implementation(),
             "os": platform.system(), "os_release": platform.release(), "packages": packages,
-            "cpu": {"architecture": platform.machine(), "model": platform.processor() or os.environ.get("PROCESSOR_IDENTIFIER", "unavailable"),
+            "cpu": {"architecture": platform.machine(), "model": _cpu_model(),
                     "logical_processors": os.cpu_count()},
             **gpu}
 
