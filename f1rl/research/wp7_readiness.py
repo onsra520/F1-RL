@@ -83,7 +83,7 @@ def evaluate_readiness(repository_root: Path | str, *, verify: bool = False) -> 
         env = {**os.environ, "PYTHONPATH": str(root), "PYTHONDONTWRITEBYTECODE": "1"}
         env.pop("PYTEST_ADDOPTS", None)
         command = [sys.executable, "-B", "-m", "pytest", "-p", "no:cacheprovider", "-q", *tests]
-        completed = subprocess.run(command, cwd=root, env=env, capture_output=True, text=True, timeout=240)
+        completed = subprocess.run(command, cwd=root, env=env, capture_output=True, text=True, timeout=1200)
         receipt = {
             "command": command, "returncode": completed.returncode,
             "stdout_sha256": sha256(completed.stdout.encode()).hexdigest(),

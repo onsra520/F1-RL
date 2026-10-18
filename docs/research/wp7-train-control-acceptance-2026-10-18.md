@@ -1,0 +1,23 @@
+# Fixed TRAIN path and control acceptance
+
+`scripts/wp7_train_acceptance.py --output <new-external-directory>` preserves the previously executed software acceptance pipeline in checked source. It uses the existing spatial_rotating_owner_v3 profile and the canonical four TRAIN tracks. The fixed cohort is the Cartesian product of four tracks and paired seed indices0/1/2, with reset rank0 and reset index0. It is a scripted numerical acceptance cohort, not PPO learning, HELD-OUT evaluation, the preregistered120cell/7200episode stochastic study, or scientific authorization.
+
+Each case generates a genuine source-bound finish-and-stop certificate, saves it without overwrite, replays the full record, then checks the actual public Gym finish prefix. The Gym check requires current protocol/physics/world identities, exact reset metadata, finite valid actions/observations/rewards, ordered checkpoint/finish passage, speed limits and every accepted leaf's energy/dissipation/linear/angular impulse audit. It records action/observation hashes, accepted leaf counts and mixed-normal loaded frames. Loaded F1RL module origins are checked before environment construction and after close, before returning evidence. The command also checks loaded origins before evidence allocation and final publication.
+
+Gym uses float32 actions and terminates at finish. Simulation's certificate separately continues through braking-to-stop. These are distinct accepted executions; bit-identical Gym and float64 certificate trajectories are not asserted. The existing numerical sweeps certify their declared chord/SLERP paths. They do not establish an analytic continuous-force tracking-error bound or empirical physical accuracy. Alternate Slalom/Right-turn paths and canonical assets remain unchanged.
+
+A new external output directory is required. Every certificate, Gym result and case result is exclusively created. Failures retain their case identity/error without redraw; final all_pass requires all12 cases, unchanged source/protocol and all cases passed. Interrupted exclusive writes may leave incomplete JSON, which is not valid evidence and is never silently repaired/overwritten. Completed records carry checksums; a final summary is absent or incomplete if the process does not finish. No input boolean or numerical PASS grants any scientific permission.
+
+## Acceptance traceability
+
+| Existing capability | Actual positive/integration verification | Negative/boundary coverage |
+|---|---|---|
+| all_train_feasible,30 | Checked12case cert/replay/Gym runner; real four-track cases in `test_wp7_rotating_owner_execution.py` | TRAIN-only selection, source/protocol/config mismatch and body/road/obstacle/gate rejection tests in existing feasibility/execution suites |
+| speed_trajectory_certified,25 | Existing trajectory search plus actual speed/brake/stop certificates and exact replay; Gym speed/action/work checks | Curvature/turning, control-tape, speed/traction/work and source/evidence forgery cases in existing planar/spatial execution suites |
+| required_track_control_feasible,25 | Same registered action3/steering/throttle/brake through Simulation and Gym on all four tracks | `test_wp7_train_acceptance.py` invalid certificate/output/overwrite/source-origin cases; existing action-contract, airborne-action and invalid-transition tests |
+
+Existing weights, IDs, denominators and thresholds remain unchanged. Source tests retain actual Straight/Ramp cases and add Slalom/Right-turn, plus a real Gym fault injection after close to verify rejection of a foreign loaded module before evidence publication. This complements entry rejection without mocking the physical trajectory. Positive/negative/boundary suites remain required alongside actual checked-runner evidence and final exact-HEAD regression.
+
+The readiness verification timeout increases from240 to1200seconds because its selected test inventory now includes full four-track certificate/Gym executions. This is an operational budget for more real checks; no test is removed and no scientific/cohort threshold changes. Existing CP95 lower bound0.90,60episodes/cell,three paired seeds,two strata and120cells remain unchanged.
+
+The prior immutable8644db5 corpus contains12 actual finish/stop certificates,12 exact replays and12 Gym successes with declared reset metadata. New acceptance evidence must be generated against the final acceptance HEAD; prior receipts are preserved, not relabeled. Capability inventory promotion and final acceptance require successful source verification/review. Compatibility, measured calibration, independent recovery and scientific sign-off are separate gates. Training/heldout/scientific-freeze/WP8 permissions remain false.

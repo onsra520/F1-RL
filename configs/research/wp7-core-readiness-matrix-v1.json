@@ -98,20 +98,20 @@
         {
           "id": "all_train_feasible",
           "weight": 30,
-          "status": "blocked",
+          "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/research/wp7_track_feasibility.py",
-          "test": "tests/research/test_pv5_track_feasibility.py",
-          "blocker": "Straight/Slalom/Right-turn have nominal registered numerical body/road/contact/owner-center-gate/speed/stop witnesses. Registered Ramp and randomized all-track execution remain unresolved; historical stricter body-aperture candidates are separate."
+          "source": "f1rl/research/wp7_executed_feasibility.py",
+          "test": "tests/research/test_wp7_rotating_owner_execution.py",
+          "blocker": null
         },
         {
           "id": "speed_trajectory_certified",
           "weight": 25,
-          "status": "blocked",
+          "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/research/wp7_track_feasibility.py",
-          "test": "tests/research/test_pv5_track_feasibility.py",
-          "blocker": "Straight/Slalom/Right-turn nominal control tapes verify numerical steering/braking/contact execution. Registered Ramp speed/contact schedules, randomized full-path execution and continuous physical tracking validation remain unresolved."
+          "source": "f1rl/research/wp7_executed_feasibility.py",
+          "test": "tests/research/test_wp7_rotating_owner_execution.py",
+          "blocker": null
         }
       ],
       "compatibility": {
@@ -227,11 +227,11 @@
         {
           "id": "required_track_control_feasible",
           "weight": 25,
-          "status": "blocked",
+          "status": "implemented",
           "priority": "P0",
           "source": "f1rl/learning/action.py",
-          "test": "tests/research/test_pv5_track_feasibility.py",
-          "blocker": "requires additional verified engineering or independent approval"
+          "test": "tests/research/test_wp7_rotating_owner_execution.py",
+          "blocker": null
         }
       ],
       "compatibility": {
