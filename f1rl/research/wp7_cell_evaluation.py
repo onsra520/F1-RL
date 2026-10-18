@@ -171,39 +171,101 @@ def execute_saved_ppo_fixture_cell(
     payload = dict(protocol=protocol,policy_id=policy_id,track_id=track_id,stratum=stratum,
                    factory=factory,fixture=_fixture_identity(factory),model_bytes=blob,
                    model=model,episodes=episodes,device=device)
-    root = Path(repository_root).resolve(strict=True)
-    worker = root / "scripts/wp7_ppo_fixture_worker.py"
+    return _spawn_ppo_cell(repository_root,payload,timeout_s=timeout_s,evidence_path=evidence_path)
+
+
+def _spawn_ppo_cell(repository_root,payload,*,timeout_s,evidence_path):
+    root=Path(repository_root).resolve(strict=True)
+    worker=root/'scripts/wp7_ppo_fixture_worker.py'
+    bootstrap='import sys,runpy;sys.path.insert(0,sys.argv[1]);runpy.run_path(sys.argv[2],run_name="__main__")'
     try:
-        completed = subprocess.run([sys.executable,"-B",str(worker)],input=pickle.dumps(payload),
-            capture_output=True,timeout=timeout_s,cwd=root,
-            env={**os.environ,"PYTHONPATH":str(root),"PYTHONDONTWRITEBYTECODE":"1"})
+        with tempfile.TemporaryDirectory(prefix='wp7-ppo-worker-') as cache:
+            completed=subprocess.run([sys.executable,'-I','-B','-X',f'pycache_prefix={cache}',
+                '-c',bootstrap,str(root),str(worker)],input=pickle.dumps(payload),capture_output=True,
+                timeout=timeout_s,cwd=root,env={**os.environ,'PYTHONDONTWRITEBYTECODE':'1'})
     except subprocess.TimeoutExpired as exc:
-        raise TimeoutError("isolated PPO software worker timed out") from exc
-    if completed.returncode != 0:
-        raise RuntimeError("isolated PPO software worker failed: "+completed.stderr.decode(errors="replace")[-2000:])
-    message = pickle.loads(completed.stdout)
-    if message[0] != "ok":
-        raise RuntimeError(f"isolated PPO software worker failed: {message[1]}: {message[2]}")
-    record = message[1]
-    if record["sha256"] != digest({k:v for k,v in record.items() if k != "sha256"}):
-        raise ValueError("isolated worker evidence checksum mismatch")
+        raise TimeoutError('isolated PPO worker timed out') from exc
+    if completed.returncode!=0:
+        raise RuntimeError('isolated PPO worker failed: '+completed.stderr.decode(errors='replace')[-2000:])
+    message=pickle.loads(completed.stdout)
+    if message[0]!='ok':
+        raise RuntimeError(f'isolated PPO worker failed: {message[1]}: {message[2]}')
+    record=message[1]
+    if record['sha256']!=digest({k:v for k,v in record.items() if k!='sha256'}):
+        raise ValueError('isolated worker evidence checksum mismatch')
+    validate_protocol(payload['protocol'],root)
     if evidence_path is not None:
         save_cell_evidence(record,evidence_path)
     return record
 
 
+def _registered_cell_admission(root,protocol,policy_id,*,model_sha256,run_manifest_sha256):
+    validate_protocol(protocol,root)
+    report=evaluate_admission(root,capture_runtime=True,profile=protocol_profile(protocol))
+    authorization=report['authorization']
+    if (report['training_authorized'] is not True or authorization['verified'] is not True
+            or report['owner_permissions']['training_permitted'] is not True):
+        raise ScientificAdmissionError('research cell evaluation remains blocked',report)
+    expected=dict(protocol_sha256=protocol['sha256'],policy_id=policy_id,
+                  model_sha256=model_sha256,run_manifest_sha256=run_manifest_sha256)
+    if any(value is None or authorization.get(key)!=value for key,value in expected.items()):
+        raise ScientificAdmissionError('research cell run/model binding is not independently admitted',report)
+    return report
+
+
+def _registered_model_snapshot(*,protocol,policy_id,model_path,expected_model_sha256,
+                               run_manifest,expected_run_manifest_sha256,artifact_directory):
+    """Verify a run-bound immutable archive snapshot; this grants no permission."""
+    from .wp7_run_manifest import verify_run_manifest
+    from ..learning.training.runner import _artifact_stem
+    if not isinstance(artifact_directory,Path) or not isinstance(model_path,Path):
+        raise ValueError('registered artifact directory and model Paths required')
+    verify_run_manifest(run_manifest,artifact_directory,expected_sha256=expected_run_manifest_sha256)
+    if run_manifest['protocol_sha256']!=protocol['sha256'] or run_manifest['receipt']['policy_id']!=policy_id:
+        raise ValueError('model run protocol or policy identity mismatch')
+    receipt=run_manifest['receipt']
+    mode='multitrack' if len(receipt['training_track_ids'])>1 else 'singletrack'
+    stem=_artifact_stem(mode,receipt['seed_bundle']['ppo'],receipt['sampling_seed'] if mode=='multitrack' else None)
+    relative=model_path.resolve(strict=True).relative_to(artifact_directory.resolve(strict=True)).as_posix()
+    if relative!=stem+'-final-model.zip':
+        raise ValueError('registered primary final model selection differs')
+    blob=_model_bytes(model_path)
+    identity=dict(sha256=sha256(blob).hexdigest(),size_bytes=len(blob))
+    entry=next((row for row in run_manifest['artifacts']['entries'] if row['path']==relative),None)
+    if (identity['sha256']!=expected_model_sha256 or entry is None
+            or any(entry[key]!=value for key,value in identity.items())):
+        raise ValueError('registered model archive identity mismatch')
+    return blob,{**identity,'run_manifest_sha256':expected_run_manifest_sha256,
+                 'policy_id':policy_id,'artifact_path':relative}
+
+
 def evaluate_registered_cell(
     repository_root: Path, protocol: dict, *, policy_id: str, track_id: str,
     stratum: str, model_path: Path,
-    policy_for_seed: Callable[[int], EvaluationPolicy],
-    evidence_path: Path | None = None,
+    policy_for_seed: Callable[[int], EvaluationPolicy] | None = None,
+    expected_model_sha256: str | None = None, run_manifest: dict | None = None,
+    expected_run_manifest_sha256: str | None = None, artifact_directory: Path | None = None,
+    timeout_s: float = 3600., evidence_path: Path | None = None,
 ) -> dict:
-    """Research entrypoint requires independently verified approval and worker."""
-    validate_protocol(protocol, repository_root)
-    evaluation_seed(protocol, policy_id, track_id, stratum, 0)
-    report = evaluate_admission(repository_root, capture_runtime=True,profile=protocol_profile(protocol))
-    if (not report["training_authorized"]
-            or not report["authorization"]["verified"]
-            or not report["owner_permissions"]["training_permitted"]):
-        raise ScientificAdmissionError("research cell evaluation remains blocked", report)
-    raise RuntimeError("independently reviewed isolated PPO stochastic worker is not registered")
+    """Run-bound isolated inference; parent and child independently require admission.
+
+    The legacy callable argument remains accepted for denied callers. Admitted
+    execution must use immutable model bytes and cannot inject a policy callback.
+    """
+    root=Path(repository_root).resolve(strict=True)
+    evaluation_seed(protocol,policy_id,track_id,stratum,0)
+    _registered_cell_admission(root,protocol,policy_id,model_sha256=expected_model_sha256,
+                               run_manifest_sha256=expected_run_manifest_sha256)
+    if policy_for_seed is not None:
+        raise ValueError('registered inference forbids caller-supplied policy callbacks')
+    if type(timeout_s) not in (int,float) or not 0.<timeout_s<=86400.:
+        raise ValueError('registered worker timeout must be within (0,86400]')
+    blob,model=_registered_model_snapshot(protocol=protocol,policy_id=policy_id,model_path=model_path,
+        expected_model_sha256=expected_model_sha256,run_manifest=run_manifest,
+        expected_run_manifest_sha256=expected_run_manifest_sha256,artifact_directory=artifact_directory)
+    payload=dict(worker_kind='registered',protocol=protocol,policy_id=policy_id,track_id=track_id,stratum=stratum,
+        model_bytes=blob,model=model,run_manifest=run_manifest,artifact_directory=str(artifact_directory),
+        model_path=str(model_path),expected_run_manifest_sha256=expected_run_manifest_sha256,
+        expected_model_sha256=expected_model_sha256,episodes=protocol['registration']['evaluation']['episodes_per_cell'],
+        device=protocol['requested_device'])
+    return _spawn_ppo_cell(root,payload,timeout_s=timeout_s,evidence_path=evidence_path)

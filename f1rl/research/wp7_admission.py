@@ -43,9 +43,17 @@ def _verify_software(root, protocol):
     command = [sys.executable, "-B", "-m", "pytest", "-p", "no:cacheprovider", *paths, "-q"]
     environment = {**os.environ, "PYTHONPATH": str(root), "PYTHONDONTWRITEBYTECODE": "1"}
     environment.pop("PYTEST_ADDOPTS", None)
-    result = subprocess.run(command, cwd=root, env=environment, capture_output=True, text=True, timeout=1200 if spatial else 120)
+    timeout_s=1200 if spatial else 120
+    timed_out=False
+    try:
+        result=subprocess.run(command,cwd=root,env=environment,capture_output=True,text=True,timeout=timeout_s)
+    except subprocess.TimeoutExpired as exc:
+        timed_out=True
+        output=exc.stdout.decode(errors='replace') if isinstance(exc.stdout,bytes) else exc.stdout or ''
+        error=exc.stderr.decode(errors='replace') if isinstance(exc.stderr,bytes) else exc.stderr or ''
+        result=subprocess.CompletedProcess(command,124,output,error+f'\nsoftware verification exceeded {timeout_s}s')
     current = build_protocol(root,profile=protocol_profile(protocol))
-    return {"command": command, "returncode": result.returncode,
+    return {"command": command, "returncode": result.returncode, "timed_out":timed_out,"timeout_s":timeout_s,
             "source_unchanged": current["sha256"] == protocol["sha256"],
             "stdout_sha256": sha256(result.stdout.encode()).hexdigest(),
             "stderr_sha256": sha256(result.stderr.encode()).hexdigest(),
