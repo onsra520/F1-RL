@@ -4,9 +4,24 @@ Restore verification compares recorded identities, not the verifier host's
 runtime. Retain the expected manifest digest through an independent channel.
 """
 from copy import deepcopy
+import json
 
 from ..learning.evidence_backup import build_evidence_manifest, verify_evidence_manifest
 from .wp7_protocol import build_protocol, capture_runtime_manifest, digest
+
+
+def read_json(path):
+    """Decode unambiguous finite evidence JSON for both CLI entrypoints."""
+    def unique(pairs):
+        document = {}
+        for key, value in pairs:
+            if key in document:
+                raise ValueError('duplicate JSON key')
+            document[key] = value
+        return document
+    def nonfinite(value):
+        raise ValueError('nonfinite JSON value')
+    return json.loads(path.read_text(encoding='utf-8'), object_pairs_hook=unique, parse_constant=nonfinite)
 
 
 def _checked_digest(document):

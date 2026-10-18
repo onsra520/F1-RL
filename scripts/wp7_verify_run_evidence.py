@@ -6,21 +6,8 @@ import argparse
 import json
 from pathlib import Path
 
-from f1rl.research.wp7_run_manifest import verify_run_manifest
+from f1rl.research.wp7_run_manifest import read_json, verify_run_manifest
 from f1rl.research.wp7_trusted_reviews import verify_run_reviews
-
-
-def read_json(path):
-    def unique(pairs):
-        document = {}
-        for key, value in pairs:
-            if key in document:
-                raise ValueError('duplicate JSON key')
-            document[key] = value
-        return document
-    def nonfinite(value):
-        raise ValueError('nonfinite JSON value')
-    return json.loads(path.read_text(encoding='utf-8'), object_pairs_hook=unique, parse_constant=nonfinite)
 
 
 def main():

@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 from f1rl.research.wp7_admission import evaluate_admission
-from scripts.wp7_verify_run_evidence import read_json
+from f1rl.research.wp7_run_manifest import read_json
 
 
 if __name__ == "__main__":

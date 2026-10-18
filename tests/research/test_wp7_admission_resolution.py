@@ -214,3 +214,24 @@ def test_execution_summary_accepts_only_complete_current_non_authorizing_cohort(
         with pytest.raises(ValueError):
             admission._verify_executed_train(ROOT, protocol, tmp_path/'not-created')
 
+
+
+def test_direct_admission_cli_does_not_require_importable_scripts_package():
+    import subprocess
+    import sys
+    # An editable installation exposes f1rl, not the repository's scripts
+    # namespace. Isolate that supported direct-script invocation explicitly.
+    bootstrap = '''import importlib.util,runpy,sys
+from pathlib import Path
+root=Path(sys.argv[1])
+spec=importlib.util.spec_from_file_location('f1rl',root/'f1rl/__init__.py',submodule_search_locations=[str(root/'f1rl')])
+module=importlib.util.module_from_spec(spec)
+sys.modules['f1rl']=module
+spec.loader.exec_module(module)
+sys.argv=[str(root/'scripts/wp7_training_admission.py'),'--help']
+runpy.run_path(sys.argv[0],run_name='__main__')
+'''
+    result = subprocess.run([sys.executable, '-I', '-B', '-c', bootstrap, str(ROOT)],
+        capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    assert '--verify-execution' in result.stdout
