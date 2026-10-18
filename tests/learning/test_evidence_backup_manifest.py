@@ -90,3 +90,15 @@ def test_corrupted_hash_does_not_verify(tmp_path):
     report["entries"][0]["sha256"]="0"*64
     with pytest.raises(ValueError,match="restore differs"):
         verify_evidence_manifest(root,report)
+
+
+@pytest.mark.parametrize("path", ["C:/outside.zip", "C:outside.zip", "model.zip:stream",
+    "models/policy.zip.", "models/policy.zip ", "NUL", "models/COM1.zip", "models/COM¹.zip", "LPT²", "a/../b",
+    "models/bad?.zip", "models/bad\x01.zip"])
+def test_manifest_rejects_nonportable_names_before_file_access(tmp_path, path):
+    root=tmp_path/"restore"
+    root.mkdir()
+    report={"schema_version":1,"algorithm":"sha256",
+            "entries":[{"path":path,"size_bytes":0,"sha256":"0"*64}]}
+    with pytest.raises(ValueError,match="manifest|path|escapes"):
+        verify_evidence_manifest(root,report)

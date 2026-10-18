@@ -26,6 +26,12 @@ def _checked_relpath(value: str) -> Path:
     path=PurePosixPath(value)
     if path.is_absolute() or any(item in ("", ".", "..") for item in value.split("/")):
         raise ValueError("manifest entry escapes evidence directory")
+    # POSIX-relative syntax alone does not exclude Windows drives, streams or aliases.
+    for part in path.parts:
+        if (part.endswith((".", " ")) or any(ord(c)<32 or c in '<>:"|?*' for c in part)
+                or part.split(".",1)[0].upper() in
+                {"CON","PRN","AUX","NUL",*(f"COM{i}" for i in "123456789¹²³"),*(f"LPT{i}" for i in "123456789¹²³")}):
+            raise ValueError("manifest paths must use portable file names")
     return Path(*path.parts)
 
 
