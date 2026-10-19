@@ -28,7 +28,7 @@ def test_root_v2_still_loads_old_general_training_contract():
 
 def test_exploratory_permit_settings_come_from_one_yaml():
     current = resolve(ROOT)
-    assert current["limits"]["learning_timesteps"] == 8192
+    assert current["limits"]["learning_timesteps"] == 16384
     assert current["limits"]["checkpoint_steps"] == 1024
     assert current["seeds"]["training_reset"] == 1000
     assert current["seeds"]["evaluation"] == list(range(10000, 10002))

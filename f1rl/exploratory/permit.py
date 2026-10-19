@@ -110,6 +110,7 @@ def prepare(root, output):
         output_directory=str(output), limits=settings['limits'], seeds=settings['seeds'],
         ppo=settings['ppo'], evaluation=settings['evaluation'],
         execution=settings['execution'], logging=settings['logging'],
+        demo_training=settings['demo_training'],
         artifacts_root=settings['artifacts_root'],
         scientific_permissions_unchanged=True, training_authorized=False,
         exploratory_execution_authorized=False)
@@ -254,6 +255,9 @@ class Session:
             if datetime.now(timezone.utc) >= _utc(self.envelope['payload']['expires_at_utc']):
                 raise PilotStopped('execution authorization expired')
             result = original_step(action)
+            if learning:
+                from .reward import REGISTERED, apply_training_curriculum
+                result = apply_training_curriculum(env, result, self.permit.get('demo_training', REGISTERED))
             episode_return += float(result[1])
             if result[2] or result[3]:
                 if learning and self.episode_observer:

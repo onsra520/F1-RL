@@ -66,3 +66,50 @@ no unapproved optimization/training workload is used for profiling.
 Every learning run requires fresh direct owner approval bound to its committed
 source, configuration, runtime, output path and exact one-use permit. Scientific
 admission and HELD-OUT restrictions remain unchanged.
+
+## Stage A result and revised Stage B
+
+Stage A (`b3378a4`) stopped at 4,244 attempted steps, 4,243 accepted learning
+steps and 640 optimizer steps. It did not finish its 8,192-step budget.
+The invalid sample and all checkpoints remain intact. Latest checkpoint:
+4,096 timesteps / 600 optimizer steps; tuning progress 16.26% / 18.59%, 0/2
+successes. This is below the prespecified improvement threshold. Reserved
+seeds have not been evaluated or used for tuning.
+
+Measured Stage A PPO.learn time: 266.884 s, including 264.560 s in rollout
+collection and 1.890 s in optimizer updates. Total supervised run: 270.391 s.
+
+The support-domain failure is reproducible on the original task without
+training: seed 10000, constant steering 0.2 / throttle 1 / brake 0 causes
+`invalid endpoint body or wheel support` at step 28. Steering 0.6, 0.8 and 1
+also reproduce it. Full evidence is in `support-domain-diagnostics.json`.
+The original failure had no step-state dump, so these are deterministic
+same-class reproductions, not a claim to replay the exact Stage A transition.
+Do not suppress these invalid samples or relax physics/support validation.
+
+Proposed Stage B is a fresh, independently authorized 16,384-step run with
+`straight_route_stability_demo_v1`, a **different demo-only training task**:
+
+- Registered environment, physics, action mapping, observations, reset domain,
+  reward calculation, race outcome and scientific admission remain unchanged.
+- Only the exploratory learning Session applies the wrapper. Evaluation and
+  saved-model demonstration always run the original registered task.
+- After a successful physics step, if authored horizontal route distance exceeds
+  2 m, terminate the demo training episode. Preserve the original
+  `research_outcome`; record a separate `demo_training.curriculum_terminal`.
+- Training reward = registered reward minus `2 * distance_m^2 * fixed_dt` and
+  minus 25 on a curriculum stop or registered hard-route failure.
+- Record registered and modified rewards and each penalty separately. Never
+  report a curriculum stop as a registered failure or successful finish.
+- Any actual physics/support exception still aborts the run; no retry, redraw
+  or relabeling as an ordinary terminal sample is permitted.
+
+The 2 m training corridor is intended to keep exploration away from the
+reproduced unsupported body-edge region. Its regression stops the exact
+constant-input reproduction before step 28. It is not a proof that every
+possible invalid physical transition is excluded.
+
+Training returns are not comparable to the original reward protocol. Driving
+metrics remain comparable because paired final evaluation uses the same
+original task. All other Stage B settings and the acceptance criterion above
+remain unchanged, with new exact permit and direct owner consent required.

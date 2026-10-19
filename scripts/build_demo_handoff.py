@@ -74,6 +74,7 @@ def main(argv=None):
         'git_commit': permit['source'], 'config_sha256': permit['config_sha256'],
         'run_id': run.parent.name, 'seeds': permit['seeds'], 'limits': permit['limits'],
         'learning': summary, 'runtime': permit['runtime'], 'contracts': contracts,
+        'training_task': permit.get('demo_training', {'version': 'registered'}),
         'scientific_evidence': False})
     packages = permit['runtime']['packages']
     (dest/'requirements.txt').write_text(''.join(f'{name}=={version}\n' for name, version in packages.items()), encoding='utf-8')
@@ -84,6 +85,8 @@ Training completion does not imply successful autonomous driving; inspect eviden
 The supplied {summary['learning_timesteps']:,}-step model completed
 {sum(row['success'] for row in trained_rows)}/{len(trained_rows)} evaluation episodes successfully.
 Recorded progress: {progress}. All outcomes and failure reasons are preserved in the evaluation summary.
+Training task: {permit.get('demo_training', {'version': 'registered'})}.
+Evaluation and demonstration use the original registered task, without training-only penalties or corridor stops.
 
 Use Python {permit['runtime']['python']} (Windows CPU tested). From this extracted directory:
 

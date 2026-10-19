@@ -198,7 +198,8 @@ def worker(root, permit, envelope):
 
     def episode_row(step, reward, info):
         append_json(output/'learning-episodes.jsonl', dict(step=step, episode_return=reward,
-            outcome=info.get('research_outcome'), progress_m=info.get('route_highwater_meters')))
+            outcome=info.get('research_outcome'), demo_training=info.get('demo_training'),
+            progress_m=info.get('route_highwater_meters')))
 
     try:
         session = Session(root, permit, envelope, budget, episode_observer=episode_row)

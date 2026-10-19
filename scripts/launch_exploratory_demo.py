@@ -98,6 +98,7 @@ def main():
     print("Training:", limits["learning_timesteps"], "steps | checkpoint:", limits["checkpoint_steps"])
     print("CPU:", limits["threads"], "threads | GPU disabled | envs:", limits["n_envs"])
     print("Evaluation:", permit["evaluation"]["episodes_per_policy"], "episodes per policy")
+    print("Training reward/curriculum:", permit.get('demo_training', {'version': 'registered'}))
     print("Timeout:", limits["wall_seconds"], "seconds | TRAIN-only; HELD-OUT sealed")
     print("Output:", output, flush=True)
 

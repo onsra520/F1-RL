@@ -78,8 +78,11 @@ def resolve(root):
     if type(document["schema_version"]) is not int or document["schema_version"] != 2:
         raise ValueError("config schema_version 2 required")
     exp = _mapping(document["exploratory"],
-        {"experiment", "resources", "training", "ppo", "vector_env", "evaluation", "execution", "logging"},
+        {"experiment", "resources", "training", "ppo", "vector_env", "evaluation", "execution", "logging"}
+            | ({'demo_training'} if isinstance(document['exploratory'], dict) and 'demo_training' in document['exploratory'] else set()),
         "exploratory")
+    from .reward import REGISTERED, validate
+    demo_training = validate(exp.get('demo_training', REGISTERED))
     identity = _mapping(exp["experiment"], {"mode", "track", "physics_profile"}, "experiment")
     if identity != {"mode": "exploratory", "track": TRACK, "physics_profile": PROFILE}:
         raise ValueError("exploratory scope is limited to registered TRAIN Straight physics")
@@ -144,6 +147,7 @@ def resolve(root):
         raise ValueError("evidence-producing logging may not be disabled")
 
     return dict(
+        demo_training=demo_training,
         config_sha256=sha256(raw).hexdigest(), track=TRACK, profile=PROFILE,
         policy=f"singletrack-{TRACK}-seed0",
         limits=dict(learning_timesteps=steps, checkpoint_steps=checkpoint,
