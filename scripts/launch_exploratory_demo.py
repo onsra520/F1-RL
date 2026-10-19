@@ -16,6 +16,9 @@ from uuid import uuid4
 
 
 ROOT = Path(__file__).resolve().parents[1]
+# Always import this checkout, never a stale installed F1-RL from another worktree.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 BOOTSTRAP = ROOT / "scripts" / "exploratory_ppo.py"
 
 
@@ -80,6 +83,7 @@ def main():
     evidence = ROOT.parent / ".evidence" / "F1-RL" / "demo" / run_id
     output = evidence / "run"
     evidence.mkdir(parents=True, exist_ok=False)
+    print("[PREFLIGHT] Checking clean source, runtime and TRAIN-only permit...", flush=True)
     permit = prepare(ROOT, output)
     permit_path = evidence / "permit.json"
     approval_path = evidence / "local-owner-consent.json"
