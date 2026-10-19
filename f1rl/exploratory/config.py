@@ -78,7 +78,7 @@ def resolve(root):
     if type(document["schema_version"]) is not int or document["schema_version"] != 2:
         raise ValueError("config schema_version 2 required")
     exp = _mapping(document["exploratory"],
-        {"experiment", "resources", "training", "vector_env", "evaluation", "execution", "logging"},
+        {"experiment", "resources", "training", "ppo", "vector_env", "evaluation", "execution", "logging"},
         "exploratory")
     identity = _mapping(exp["experiment"], {"mode", "track", "physics_profile"}, "experiment")
     if identity != {"mode": "exploratory", "track": TRACK, "physics_profile": PROFILE}:
@@ -102,7 +102,7 @@ def resolve(root):
     if vector != {"n_envs": 1, "backend": "dummy", "start_method": "spawn"}:
         raise ValueError("exploratory admission currently permits only one dummy environment")
 
-    ppo = _mapping(document["ppo"], {"learning_rate", "n_steps", "batch_size", "n_epochs",
+    ppo = _mapping(exp["ppo"], {"learning_rate", "n_steps", "batch_size", "n_epochs",
         "gamma", "gae_lambda", "clip_range", "ent_coef", "vf_coef", "max_grad_norm",
         "seed", "device"}, "ppo")
     validated_ppo = PPOConfig(**ppo)

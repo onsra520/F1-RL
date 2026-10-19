@@ -8,10 +8,11 @@ in it.
 
 - `training`, `ppo`, `vector_env` are the existing general training profile.
   They remain compatible with WP6/WP7 recovery and scientific readers.
-- `exploratory.*` scopes local Straight settings. It inherits the **root**
-  `ppo` mapping, rather than redefining PPO parameters in multiple YAML files.
-  It has its own explicit `training` and `vector_env` sections because its
-  budgets differ from the general 50k / 8-env training profile.
+- `exploratory.*` scopes local Straight settings with its **own** `ppo`,
+  `training` and `vector_env` mappings. They live in the same `config.yml` but
+  never inherit the general profile's runtime parameters. This deliberate
+  profile isolation prevents local tuning from silently changing WP6/WP7
+  recovery behavior. Within either profile, every setting has one owner.
 - `configs/recovery/*` and `configs/research/*` are frozen/registered
   scientific inputs and are not mutable runtime overrides.
 - No implicit environment-variable or CLI override wins over a resolved pilot

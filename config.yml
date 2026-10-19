@@ -7,7 +7,7 @@ training:
   sampling_seed: 0
   artifacts_root: artifacts/runs
 
-# Canonical PPO hyperparameters. Exploratory uses the same source of truth.
+# General PPO hyperparameters. Exploratory has its own isolated profile below.
 ppo:
   learning_rate: 0.0003
   n_steps: 256
@@ -43,6 +43,19 @@ exploratory:
     checkpoint_every_steps: 8192
     sampling_seed: 1000
     artifacts_root: artifacts/runs
+  ppo:
+    learning_rate: 0.0003
+    n_steps: 256
+    batch_size: 64
+    n_epochs: 10
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_range: 0.2
+    ent_coef: 0.0
+    vf_coef: 0.5
+    max_grad_norm: 0.5
+    seed: 0
+    device: cpu
   vector_env:
     n_envs: 1
     backend: dummy

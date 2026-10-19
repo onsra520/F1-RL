@@ -36,6 +36,16 @@ def test_exploratory_permit_settings_come_from_one_yaml():
     assert current["limits"]["device"] == "cpu"
 
 
+def test_exploratory_ppo_is_isolated_from_legacy_training(tmp_path):
+    def tune(data):
+        data["exploratory"]["ppo"]["learning_rate"] = 0.0001
+    path = _write(tmp_path, tune)
+    legacy = TrainingRunConfig.from_yaml(path / "config.yml")
+    local = resolve(path)
+    assert legacy.ppo.learning_rate == pytest.approx(0.0003)
+    assert local["ppo"]["learning_rate"] == pytest.approx(0.0001)
+
+
 def test_auto_and_explicit_cpu_resources(tmp_path, monkeypatch):
     monkeypatch.setattr("f1rl.exploratory.config.os.cpu_count", lambda: 12)
     auto = resolve(_write(tmp_path, lambda data: None))
