@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 from dataclasses import asdict, replace
+from math import atan2
 
 import gymnasium as gym
 import numpy as np
@@ -201,6 +202,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         )
         self._progress: RaceProgressState | None = None
         self._needs_reset = True
+        self._training_telemetry_enabled = False
 
         self._last_research_outcome: dict[str, object] | None = None
 
@@ -336,6 +338,45 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             return {}
         from copy import deepcopy
         return {"train_reset": deepcopy(self._reset_metadata)}
+
+    def set_training_telemetry_enabled(self, enabled: bool) -> None:
+        if type(enabled) is not bool:
+            raise ValueError("training telemetry flag must be bool")
+        self._training_telemetry_enabled = enabled
+
+    def _training_state_info(
+        self,
+        snapshot: SimulationSnapshot,
+        progress: RaceProgressState,
+        route_highwater_meters: float,
+    ) -> dict[str, object]:
+        if not self._training_telemetry_enabled:
+            return {}
+        vehicle = snapshot.world.vehicle
+        forward = vehicle.orientation.rotate(Vec3(0.0, 0.0, 1.0))
+        heading = None if forward.x * forward.x + forward.z * forward.z <= 1e-18 else atan2(forward.x, forward.z)
+        projection = None if self._authored_route is None else self._authored_route.project(
+            vehicle.position, next_checkpoint_index=progress.next_checkpoint_index
+        )
+        return {"training_telemetry": {
+            "schema_version": "f1rl_training_state_v1",
+            "track_id": self._reset_track_id,
+            "seed_identity": self._reset_metadata,
+            "observation_schema": {
+                "version": "f1rl_observation_features_v1",
+                "feature_names": list(self._observation_encoder.feature_names),
+            },
+            "position": _vec3_tuple(vehicle.position),
+            "velocity": _vec3_tuple(vehicle.velocity),
+            "speed": float(vehicle.speed),
+            "grounded": bool(vehicle.grounded),
+            "heading_rad": heading,
+            "yaw_rate_radps": float(vehicle.angular_velocity.y),
+            "lateral_route_deviation_m": None if projection is None else projection.off_path_meters,
+            "route_progress_m": None if projection is None else projection.progress_meters,
+            "route_highwater_m": float(route_highwater_meters),
+            "action_contract_version": self._action_contract.version,
+        }}
 
     def _race_info(self) -> dict[str, object]:
         if self._race_config is None:
@@ -474,6 +515,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 progress_result,
                 reward_result,
                 query_before,
+                next_highwater,
             )
             if race_step is not None:
                 info.update(self._race_info())
@@ -549,6 +591,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         progress_result: RaceProgressResult,
         reward_result: RewardResult,
         query_before: TrackQuery,
+        route_highwater_meters: float,
     ) -> dict[str, object]:
         boost_ids, slow_ids = _applied_modifier_ids(query_before)
         return {
@@ -570,5 +613,8 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 obstacle_hit_ids=_obstacle_hit_ids(snapshot),
                 applied_boost_pad_ids=boost_ids,
                 applied_slow_zone_ids=slow_ids,
+            ),
+            **self._training_state_info(
+                snapshot, progress_result.state, route_highwater_meters
             ),
         }

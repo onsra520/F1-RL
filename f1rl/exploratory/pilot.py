@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 
+from ..learning.training.telemetry import TrainingTelemetryRecorder
 from .permit import Budget, PilotStopped, Session, authorize, read_json, _utc
 
 
@@ -176,11 +177,12 @@ def worker(root, permit, envelope):
     configure_cpu_runtime(permit['limits']['threads'], permit['limits']['interop_threads'])
 
     output = Path(permit['output_directory'])
-    model = env = hook = None
+    model = env = None
     optimizer_steps = 0
     learning_completed = False
     phase = 'initialization'
     timings = {}
+    telemetry = None
 
     def state(status, **extra):
         write_json(output/'state.json', dict(status=status, phase=phase,
@@ -201,6 +203,20 @@ def worker(root, permit, envelope):
         model.set_csv_logger(output/'learning')
         before = weights_sha256(model)
         untrained_archive = save_checkpoint(model, output, 'untrained', 0, 0)
+        telemetry = TrainingTelemetryRecorder(
+            output/'training-telemetry.jsonl',
+            run_identity=dict(
+                run_id=permit['sha256'], source_commit=permit['source']['commit_sha'],
+                policy_id=permit['policy'], split='TRAIN', track_ids=[permit['track']],
+                seed_identity={'ppo': permit['seeds']['ppo'],
+                               'training_reset': permit['seeds']['training_reset']}),
+            max_timesteps=permit['limits']['learning_timesteps'],
+        )
+        telemetry.record_checkpoint(
+            untrained_archive.name, timestep=0,
+            archive_sha256=sha256(untrained_archive.read_bytes()).hexdigest(),
+            policy_weights_sha256=before,
+        )
         schedule = permit['execution']['schedule']
         random_rows = untrained_rows = None
         if schedule == 'baseline_first':
@@ -220,8 +236,6 @@ def worker(root, permit, envelope):
             optimizer_steps += 1
             budget.check()
 
-        hook = model.register_optimizer_step_hook(optimizer_step)
-
         def progress(step):
             budget.check()
             if step % permit['logging']['progress_every_steps'] == 0:
@@ -230,16 +244,27 @@ def worker(root, permit, envelope):
                 state('running')
             if step % permit['limits']['checkpoint_steps'] == 0:
                 session.validate()
-                save_checkpoint(model, output, f'checkpoint-{step}', model._model._n_updates, optimizer_steps)
+                checkpoint = save_checkpoint(
+                    model, output, f'checkpoint-{step}', model._model._n_updates, optimizer_steps
+                )
+                telemetry.record_checkpoint(
+                    checkpoint.name, timestep=step,
+                    archive_sha256=sha256(checkpoint.read_bytes()).hexdigest(),
+                    policy_weights_sha256=weights_sha256(model),
+                )
 
         timed_call(model.learn, timings, 'PPO_learn')(
-            permit['limits']['learning_timesteps'], progress_hook=progress)
-        hook.remove()
-        hook = None
+            permit['limits']['learning_timesteps'], progress_hook=progress,
+            telemetry_observer=telemetry, optimizer_step_hook=optimizer_step)
         after = weights_sha256(model)
         if model.num_timesteps != permit['limits']['learning_timesteps'] or optimizer_steps <= 0 or before == after:
             raise RuntimeError('genuine learning evidence missing')
         final = save_checkpoint(model, output, 'trained-final', model._model._n_updates, optimizer_steps)
+        telemetry.record_checkpoint(
+            final.name, timestep=model.num_timesteps,
+            archive_sha256=sha256(final.read_bytes()).hexdigest(),
+            policy_weights_sha256=after,
+        )
         write_json(output/'learning-summary.json', dict(
             status='learning_completed', final_checkpoint=final.name,
             initial_weights_sha256=before, final_weights_sha256=after,
@@ -283,7 +308,9 @@ def worker(root, permit, envelope):
         if model is not None:
             timings.update(getattr(model._model, 'runtime_timings', {}))
         write_json(output/'runtime-timings.json', timings)
-        if hook is not None:
-            hook.remove()
+        if telemetry is not None:
+            telemetry.close()
+            write_json(output/'training-telemetry-manifest.json',
+                       telemetry.manifest(complete=learning_completed))
         if env is not None:
             env.close()

@@ -211,6 +211,20 @@ def test_sampled_wrapper_preserves_nested_telemetry_alongside_track_id() -> None
         wrapper.close()
 
 
+def test_sampled_wrapper_applies_training_telemetry_enabled_before_first_reset() -> None:
+    wrapper = vector_env._SampledF1RLEnv(_scenario_set(), 123, 0)
+    try:
+        wrapper.set_training_telemetry_enabled(True)
+        assert wrapper._active_env is None
+        wrapper.reset()
+        assert wrapper._active_env is not None
+        assert wrapper._active_env._training_telemetry_enabled is True
+        _, _, _, _, info = wrapper.step(np.array([0.0, 1.0], dtype=np.float32))
+        assert "training_telemetry" in info
+    finally:
+        wrapper.close()
+
+
 def test_sampled_wrapper_reset_seed_does_not_change_selection_stream() -> None:
     assert _sample_ids(123, 0, 8, reset_seed=True) == _sample_ids(123, 0, 8)
 

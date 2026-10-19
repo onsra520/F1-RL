@@ -29,12 +29,16 @@ MAX_SEED = 2**32 - 1
 
 
 class _ProgressHookCallback(BaseCallback):
-    def __init__(self, hook: Callable[[int], None]) -> None:
+    def __init__(self, hook: Callable[[int], None] | None, telemetry_observer=None) -> None:
         super().__init__(verbose=0)
         self._hook = hook
+        self._telemetry_observer = telemetry_observer
 
     def _on_step(self) -> bool:
-        self._hook(int(self.model.num_timesteps))
+        if self._telemetry_observer is not None:
+            self._telemetry_observer.on_step(self.locals, self.model)
+        if self._hook is not None:
+            self._hook(int(self.model.num_timesteps))
         return True
 
 
@@ -219,9 +223,13 @@ class PPO(_SB3PPO):
     def train(self):
         started = time.perf_counter()
         try:
-            return super().train()
+            result = super().train()
         finally:
             self.runtime_timings['optimizer_updates'] = self.runtime_timings.get('optimizer_updates', 0.) + time.perf_counter()-started
+        observer = getattr(self, "_training_telemetry_observer", None)
+        if observer is not None:
+            observer.on_update(PPOModel(self))
+        return result
 
     def learn(self, *args, **kwargs):
         env = self.get_env()
@@ -321,6 +329,8 @@ class PPOModel:
         total_timesteps: int,
         *,
         progress_hook: Callable[[int], None] | None = None,
+        telemetry_observer=None,
+        optimizer_step_hook: Callable[[], None] | None = None,
     ) -> "PPOModel":
         if isinstance(total_timesteps, bool) or not isinstance(total_timesteps, int):
             raise ValueError("total_timesteps must be a positive integer")
@@ -328,6 +338,12 @@ class PPOModel:
             raise ValueError("total_timesteps must be a positive integer")
         if progress_hook is not None and not callable(progress_hook):
             raise ValueError("progress_hook must be callable or None")
+        if telemetry_observer is not None and not all(callable(getattr(telemetry_observer, name, None))
+                                                     for name in ("on_training_start", "on_step",
+                                                                  "on_optimizer_step", "on_update")):
+            raise ValueError("telemetry_observer does not implement the training observer contract")
+        if optimizer_step_hook is not None and not callable(optimizer_step_hook):
+            raise ValueError("optimizer_step_hook must be callable or None")
         env = self._model.get_env()
         if env is None:
             raise RuntimeError("an environment is required to continue learning")
@@ -337,9 +353,35 @@ class PPOModel:
             "total_timesteps": total_timesteps,
             "reset_num_timesteps": False,
         }
-        if progress_hook is not None:
-            kwargs["callback"] = _ProgressHookCallback(progress_hook)
-        self._model.learn(**kwargs)
+        if progress_hook is not None or telemetry_observer is not None:
+            kwargs["callback"] = _ProgressHookCallback(progress_hook, telemetry_observer)
+        observer_started = False
+        optimizer_hook = None
+        try:
+            if telemetry_observer is not None:
+                if not isinstance(env, VecEnv):
+                    raise ValueError("training telemetry requires a vector environment")
+                telemetry_observer.on_training_start(
+                    self, total_timesteps=total_timesteps, n_envs=env.num_envs
+                )
+                observer_started = True
+                env.env_method("set_training_telemetry_enabled", True)
+                self._model._training_telemetry_observer = telemetry_observer
+            if telemetry_observer is not None or optimizer_step_hook is not None:
+                def optimizer_step(*args, **kwargs):
+                    if telemetry_observer is not None:
+                        telemetry_observer.on_optimizer_step()
+                    if optimizer_step_hook is not None:
+                        optimizer_step_hook()
+                optimizer_hook = self._model.policy.optimizer.register_step_post_hook(optimizer_step)
+            self._model.learn(**kwargs)
+        finally:
+            if optimizer_hook is not None:
+                optimizer_hook.remove()
+            if observer_started:
+                if hasattr(self._model, "_training_telemetry_observer"):
+                    del self._model._training_telemetry_observer
+                env.env_method("set_training_telemetry_enabled", False)
         return self
 
     @staticmethod
