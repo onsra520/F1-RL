@@ -17,6 +17,10 @@ does not turn that registration into training authority.
 
 From the final clean source checkout:
 
+Use Python 3.11+ with the repository's `rl` and `science` extras installed.
+The final report pins the interpreter and actually verified package versions;
+this preparation does not claim compatibility across every dependency version.
+
 ```powershell
 python -B scripts/exploratory_ppo.py preflight --output-directory D:/Projects/.evidence/F1-RL/exploratory-straight-pilot-v1/run-001 --permit D:/Projects/.evidence/F1-RL/exploratory-straight-preflight-v1/permit.json
 ```

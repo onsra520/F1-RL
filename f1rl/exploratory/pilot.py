@@ -33,15 +33,17 @@ def reserve(permit):
 
 
 def claim(permit):
+    """Return a fixed monotonic deadline; initialization cannot extend it."""
     output = Path(permit['output_directory'])
     lease = read_json(output/'lease.json')
     if (set(lease) != {'permit_sha256', 'started_epoch'} or lease['permit_sha256'] != permit['sha256']
             or type(lease['started_epoch']) not in (int, float)
             or not 0 <= time.time()-lease['started_epoch'] < 3600):
         raise ValueError('invalid, future or expired execution lease')
+    deadline = time.monotonic()+lease['started_epoch']+3600-time.time()-.05
     with (output/'worker.claim').open('x', encoding='utf-8') as stream:
         json.dump(dict(permit_sha256=permit['sha256'], pid=os.getpid()), stream)
-    return max(0., lease['started_epoch']+3600-time.time())
+    return deadline
 
 
 def supervise(root, permit, envelope):
@@ -86,6 +88,7 @@ def evaluate_episode(session, model, name, episode):
     rng = np.random.default_rng(seed)
     trace = sha256()
     total, collisions, off_route, steps = 0., 0, 0, 0
+    info, error = {}, None
     try:
         observation, _ = env.reset(seed=seed)
         while True:
@@ -100,16 +103,18 @@ def evaluate_episode(session, model, name, episode):
                 reward=float(reward), terminated=terminated, truncated=truncated, info=info),
                 sort_keys=True, allow_nan=False).encode())
             if terminated or truncated:
-                outcome = info.get('research_outcome', {})
-                if outcome.get('valid_sample') is not True:
-                    raise ValueError('invalid simulator outcome; preserve evidence, no replacement episode')
-                return dict(policy=name, episode=episode, environment_seed=seed,
-                    success=outcome.get('kind') == 'successful_finish',
-                    progress=min(1., info.get('route_highwater_meters', 0.)/env._authored_route.total_meters),
-                    collisions=collisions, off_route_events=off_route, duration_s=info['elapsed_time'],
-                    steps=steps, **{'return':total}, outcome=outcome, trace_sha256=trace.hexdigest())
+                break
+    except Exception as exc:
+        error = f'{type(exc).__name__}: {exc}'
     finally:
         env.close()
+    outcome = (getattr(env, 'last_research_outcome', None) if error else info.get('research_outcome')) or {}
+    valid = error is None and outcome.get('valid_sample') is True
+    return dict(policy=name, episode=episode, environment_seed=seed, valid_sample=valid,
+        success=valid and outcome.get('kind') == 'successful_finish',
+        progress=min(1., info.get('route_highwater_meters', 0.)/env._authored_route.total_meters),
+        collisions=collisions, off_route_events=off_route, duration_s=info.get('elapsed_time', 0.),
+        steps=steps, **{'return':total}, outcome=outcome, error=error, trace_sha256=trace.hexdigest())
 
 
 def evaluate_roster(session, model, name, output):
@@ -117,6 +122,8 @@ def evaluate_roster(session, model, name, output):
     for episode in range(32):
         row = evaluate_episode(session, model, name, episode)
         append_json(Path(output)/'evaluation.jsonl', row)
+        if row.get('valid_sample') is False:
+            raise RuntimeError(f'invalid/aborted evaluation episode {episode}: {row.get("error") or row.get("outcome")}')
         rows.append(row)
     return rows
 
@@ -143,9 +150,9 @@ def weights_sha256(model):
 def worker(root, permit, envelope):
     """No auto-resume. A consumed run requires a fresh owner-bound permit."""
     authorize(root, permit, envelope)
-    remaining = claim(permit)
+    deadline = claim(permit)
     expiry_remaining = (_utc(envelope['payload']['expires_at_utc'])-datetime.now(timezone.utc)).total_seconds()
-    budget = Budget(deadline=time.monotonic()+min(remaining, expiry_remaining))
+    budget = Budget(deadline=min(deadline, time.monotonic()+expiry_remaining-.05))
     import torch
     torch.set_num_threads(4)
     torch.set_num_interop_threads(1)
@@ -188,8 +195,8 @@ def worker(root, permit, envelope):
 
         def optimizer_step(*args, **kwargs):
             nonlocal optimizer_steps
-            budget.check()
             optimizer_steps += 1
+            budget.check()
 
         hook = model._model.policy.optimizer.register_step_post_hook(optimizer_step)
 
@@ -227,7 +234,8 @@ def worker(root, permit, envelope):
         state('completed', initial_weights_sha256=before, final_weights_sha256=after)
         return 0
     except BaseException as exc:
-        state('failed', error=f'{type(exc).__name__}: {exc}')
+        state('failed', error=f'{type(exc).__name__}: {exc}',
+              last_learning_outcome=None if env is None else getattr(env, 'last_research_outcome', None))
         raise
     finally:
         if hook is not None:

@@ -151,3 +151,31 @@ def test_supervisor_does_not_spawn_after_validation_consumes_wall_budget(tmp_pat
     monkeypatch.setattr(p.subprocess, 'run', lambda *a, **kw: pytest.fail('expired budget spawned worker'))
     with pytest.raises(RuntimeError, match='deadline'):
         p.supervise(tmp_path, permit, {})
+
+
+def test_invalid_episode_is_preserved_and_never_redrawn(tmp_path, monkeypatch):
+    p = pilot()
+    calls = []
+    row = dict(policy='untrained', episode=0, environment_seed=10000, valid_sample=False,
+        outcome={'kind':'invalid', 'reason':'domain_error'}, steps=3, **{'return':2.}, trace_sha256='a'*64)
+    def invalid(*args):
+        calls.append(args[-1])
+        return row
+    monkeypatch.setattr(p, 'evaluate_episode', invalid)
+    with pytest.raises(RuntimeError, match='invalid'):
+        p.evaluate_roster(None, None, 'untrained', tmp_path)
+    assert calls == [0]
+    assert json.loads((tmp_path/'evaluation.jsonl').read_text()) == row
+
+
+def test_claim_returns_fixed_monotonic_deadline_not_stale_duration(tmp_path, monkeypatch):
+    p = pilot()
+    monkeypatch.setattr(p, 'time', SimpleNamespace(time=lambda:200., monotonic=lambda:100.))
+    permit = {'sha256':'a'*64, 'output_directory':str(tmp_path/'run')}
+    p.reserve(permit)
+    deadline = p.claim(permit)
+    assert 3699. <= deadline <= 3700.
+    # Later initialization consumes time; it must not extend the lease.
+    later = 120.
+    budget = p.Budget(deadline=deadline, clock=lambda:later)
+    assert 3579. <= budget.deadline-budget.clock() <= 3580.
