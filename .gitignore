@@ -34,6 +34,7 @@ wandb/
 tensorboard/
 
 # Generated RL artifacts
+/models/ppo-straight-trained.zip
 artifacts/checkpoints/*
 !artifacts/checkpoints/README.md
 artifacts/policies/*
