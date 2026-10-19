@@ -212,6 +212,8 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedu
     backend = SimpleNamespace(policy=SimpleNamespace(optimizer=optimizer), _n_updates=0,
         set_logger=lambda logger: None)
     model = SimpleNamespace(num_timesteps=0, _model=backend, learned=False)
+    model.set_csv_logger = lambda directory: PPOModel.set_csv_logger(model, directory)
+    model.register_optimizer_step_hook = lambda callback: PPOModel.register_optimizer_step_hook(model, callback)
     events = []
     def learn(steps, progress_hook):
         events.append(('learn', 'start'))

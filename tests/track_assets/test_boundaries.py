@@ -16,8 +16,6 @@ EXPECTED_PUBLIC_API = {
     "build_initial_world_state",
 }
 EXPECTED_SB3_OWNERS = {
-    Path("f1rl/exploratory/permit.py"),
-    Path("f1rl/exploratory/pilot.py"),
     Path("f1rl/learning/algorithms/ppo.py"),
     Path("f1rl/learning/training/vector_env.py"),
 }
@@ -82,13 +80,13 @@ def test_stable_baselines3_import_owners_are_explicit():
     assert owners == EXPECTED_SB3_OWNERS
 
 
-def test_torch_imports_are_limited_to_exploratory_resource_guards():
+def test_production_has_no_direct_torch_imports():
     offenders = [
         path
         for path in PRODUCTION.rglob("*.py")
         if _imports_prefix(path, ("torch",))
     ]
-    assert set(offenders) == {Path('f1rl/exploratory/permit.py'), Path('f1rl/exploratory/pilot.py')}
+    assert offenders == []
 
 
 def test_production_has_no_mock_or_fake_identifiers():

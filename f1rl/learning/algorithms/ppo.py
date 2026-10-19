@@ -5,6 +5,7 @@ from dataclasses import dataclass, fields
 from math import isfinite
 from numbers import Real
 from pathlib import Path
+from hashlib import sha256
 from typing import Any
 import time
 
@@ -15,6 +16,8 @@ try:
     from stable_baselines3 import PPO as _SB3PPO
     from stable_baselines3.common.callbacks import BaseCallback
     from stable_baselines3.common.vec_env import VecEnv
+    from stable_baselines3.common import utils as _sb3_utils
+    from stable_baselines3.common.logger import configure
 except ImportError as error:
     raise ImportError(
         "PPO support requires the optional RL dependencies; install f1-rl with the `rl` extra."
@@ -138,6 +141,26 @@ class PPOConfig:
 PPOTrainingEnv = F1RLEnv | VecEnv
 
 
+def configure_cpu_runtime(threads: int, interop_threads: int) -> None:
+    # Use the same runtime as SB3; framework integration stays in this adapter.
+    runtime = _sb3_utils.th
+    runtime.set_num_threads(threads)
+    runtime.set_num_interop_threads(interop_threads)
+    runtime.use_deterministic_algorithms(True)
+
+
+def validate_cpu_runtime(max_threads: int) -> None:
+    runtime = _sb3_utils.th
+    if runtime.get_num_threads() > max_threads or runtime.get_num_interop_threads() > max_threads:
+        raise ValueError('exploratory CPU thread budget exceeded')
+
+
+def single_vec_env_child(env: object):
+    if isinstance(env, VecEnv) and hasattr(env, 'envs') and len(env.envs) == 1:
+        return env.envs[0].unwrapped
+    return None
+
+
 def _validate_rollout_size(env: PPOTrainingEnv, n_steps: int, batch_size: int) -> None:
     if isinstance(env, F1RLEnv):
         num_envs = 1
@@ -214,6 +237,19 @@ class PPO(_SB3PPO):
 class PPOModel:
     def __init__(self, model: PPO) -> None:
         self._model = model
+
+    def set_csv_logger(self, directory: str | Path) -> None:
+        self._model.set_logger(configure(str(directory), ['csv']))
+
+    def register_optimizer_step_hook(self, callback):
+        return self._model.policy.optimizer.register_step_post_hook(callback)
+
+    def weights_sha256(self) -> str:
+        value = sha256()
+        for name, tensor in sorted(self._model.policy.state_dict().items()):
+            value.update(name.encode())
+            value.update(tensor.detach().cpu().numpy().tobytes())
+        return value.hexdigest()
 
     @classmethod
     def create(cls, env: PPOTrainingEnv, config: PPOConfig) -> "PPOModel":

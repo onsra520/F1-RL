@@ -37,3 +37,20 @@ Vectorized environments, multi-track sampling, training orchestration, callbacks
 `PPOModel.create()` and environment-bound `load()` accept either one concrete `F1RLEnv` or an SB3 `VecEnv`. Rollout validation uses `n_steps * num_envs`, so vector-valid batch sizes are checked only when a model is bound to an environment.
 
 Public `PPOModel.predict()` deliberately remains a **single-observation** API: one observation produces one action. Vectorized training does not make batched inference part of the F1-RL adapter contract.
+
+## Framework runtime boundary
+
+Direct Stable-Baselines3 imports belong only in `ppo.py` and the vector environment
+adapter. The rest of `f1rl`, including exploratory orchestration and permits,
+does not import SB3 or PyTorch directly.
+
+This adapter owns CPU thread/determinism configuration and validation, CSV logger
+setup, removable optimizer-step hooks and policy-weight hashing. Runtime controls
+use the existing `stable_baselines3.common.utils.th` runtime from the supported
+SB3 2.9 series; a regression checks that it is the same PyTorch runtime used by
+SB3. This is not an alternative dynamic import path or a separate runtime.
+
+Exploratory code still owns authorization, one-use sessions, budget checks and
+optimizer-step accounting. The vector-child adapter only unwraps a single actual
+`VecEnv` child; it cannot create admission or accept flags as capabilities.
+Prediction-only loading continues to grant no learning permission.

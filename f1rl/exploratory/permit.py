@@ -182,7 +182,7 @@ class Budget:
 def admitted(env):
     """Recognize only live, specifically issued env capabilities, never flags."""
     from ..learning.gym_environment import F1RLEnv
-    from stable_baselines3.common.vec_env import VecEnv
+    from ..learning.algorithms.ppo import single_vec_env_child
     if isinstance(env, F1RLEnv):
         entry = _sessions.get(env)
         if entry is None or not entry[1]:
@@ -190,10 +190,8 @@ def admitted(env):
         session = entry[0]
         session.validate()
         return True
-    if isinstance(env, VecEnv) and hasattr(env, 'envs'):
-        children = env.envs
-        return len(children) == 1 and admitted(children[0].unwrapped)
-    return False
+    child = single_vec_env_child(env)
+    return child is not None and admitted(child)
 
 
 class Session:
@@ -221,10 +219,8 @@ class Session:
     def validate(self):
         self.budget.check()
         authorize(self.root, self.permit, self.envelope)
-        import torch
-        allowed_threads = self.permit['limits']['threads']
-        if torch.get_num_threads() > allowed_threads or torch.get_num_interop_threads() > allowed_threads:
-            raise ValueError('exploratory CPU thread budget exceeded')
+        from ..learning.algorithms.ppo import validate_cpu_runtime
+        validate_cpu_runtime(self.permit['limits']['threads'])
 
     def create_env(self, *, learning=False, episode=None):
         from dataclasses import replace

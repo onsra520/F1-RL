@@ -152,11 +152,7 @@ def save_checkpoint(model, output, name, updates, optimizer_steps):
 
 
 def weights_sha256(model):
-    value = sha256()
-    for name, tensor in sorted(model._model.policy.state_dict().items()):
-        value.update(name.encode())
-        value.update(tensor.detach().cpu().numpy().tobytes())
-    return value.hexdigest()
+    return model.weights_sha256()
 
 
 def timed_call(function, totals, name):
@@ -176,12 +172,8 @@ def worker(root, permit, envelope):
     expiry_remaining = (_utc(envelope['payload']['expires_at_utc'])-datetime.now(timezone.utc)).total_seconds()
     budget = Budget(deadline=min(deadline, time.monotonic()+expiry_remaining-.05),
                     learning_limit=permit['limits']['learning_timesteps'])
-    import torch
-    torch.set_num_threads(permit['limits']['threads'])
-    torch.set_num_interop_threads(permit['limits']['interop_threads'])
-    torch.use_deterministic_algorithms(True)
-    from stable_baselines3.common.logger import configure
-    from ..learning.algorithms.ppo import PPOConfig, PPOModel
+    from ..learning.algorithms.ppo import PPOConfig, PPOModel, configure_cpu_runtime
+    configure_cpu_runtime(permit['limits']['threads'], permit['limits']['interop_threads'])
 
     output = Path(permit['output_directory'])
     model = env = hook = None
@@ -206,7 +198,7 @@ def worker(root, permit, envelope):
         env = session.create_env(learning=True)
         config = PPOConfig(**permit['ppo'])
         model = PPOModel.create(env, config)
-        model._model.set_logger(configure(str(output/'learning'), ['csv']))
+        model.set_csv_logger(output/'learning')
         before = weights_sha256(model)
         untrained_archive = save_checkpoint(model, output, 'untrained', 0, 0)
         schedule = permit['execution']['schedule']
@@ -228,7 +220,7 @@ def worker(root, permit, envelope):
             optimizer_steps += 1
             budget.check()
 
-        hook = model._model.policy.optimizer.register_step_post_hook(optimizer_step)
+        hook = model.register_optimizer_step_hook(optimizer_step)
 
         def progress(step):
             budget.check()
