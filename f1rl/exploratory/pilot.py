@@ -88,6 +88,7 @@ def evaluate_episode(session, model, name, episode):
     rng = np.random.default_rng(seed)
     trace = sha256()
     total, collisions, off_route, steps = 0., 0, 0, 0
+    completed_checkpoint_ids, directed_crossings = [], []
     info, error = {}, None
     try:
         observation, _ = env.reset(seed=seed)
@@ -97,6 +98,9 @@ def evaluate_episode(session, model, name, episode):
             observation, reward, terminated, truncated, info = env.step(action)
             steps += 1
             total += float(reward)
+            race = info.get('race') or {}
+            completed_checkpoint_ids.extend(race.get('completed_checkpoint_ids', ()))
+            directed_crossings.extend(race.get('directed_crossings', ()))
             collisions += len(info['telemetry']['obstacle_hit_ids'])
             off_route += int(info.get('race', {}).get('terminal_failure') is True)
             trace.update(json.dumps(dict(action=action.tolist(), observation=observation.tolist(),
@@ -113,6 +117,7 @@ def evaluate_episode(session, model, name, episode):
     return dict(policy=name, episode=episode, environment_seed=seed, valid_sample=valid,
         success=valid and outcome.get('kind') == 'successful_finish',
         progress=min(1., info.get('route_highwater_meters', 0.)/env._authored_route.total_meters),
+        completed_checkpoint_ids=completed_checkpoint_ids, directed_crossings=directed_crossings,
         collisions=collisions, off_route_events=off_route, duration_s=info.get('elapsed_time', 0.),
         steps=steps, **{'return':total}, outcome=outcome, error=error, trace_sha256=trace.hexdigest())
 

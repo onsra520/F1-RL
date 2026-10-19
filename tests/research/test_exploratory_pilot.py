@@ -63,7 +63,9 @@ def test_evaluation_records_autonomous_failures_and_replay(monkeypatch, tmp_path
             return np.array([1.], dtype=np.float32), 2., True, False, {
                 'research_outcome': {'kind':'valid_terminal_failure', 'valid_sample':True,
                                      'reason':'hard_route_violation'},
-                'race': {'terminal_failure':True},
+                'race': {'terminal_failure':True,
+                         'completed_checkpoint_ids':('cp-1',),
+                         'directed_crossings':('cp-1','cp-uncompleted')},
                 'telemetry': {'obstacle_hit_ids':('wall',)},
                 'route_highwater_meters':25., 'elapsed_time':0.02}
         def close(self): pass
@@ -75,6 +77,93 @@ def test_evaluation_records_autonomous_failures_and_replay(monkeypatch, tmp_path
     assert first['success'] is False and first['off_route_events'] == 1
     assert first['collisions'] == 1 and first['progress'] == .25
     assert first['duration_s'] == .02 and first['steps'] == 1
+    assert first['completed_checkpoint_ids'] == ['cp-1']
+    assert first['directed_crossings'] == ['cp-1','cp-uncompleted']
+
+
+def test_evaluation_preserves_order_and_separates_completed_from_observed_crossings():
+    p = pilot()
+    infos = [
+        {'research_outcome': {'kind':'active', 'valid_sample':True},
+         'race': {'completed_checkpoint_ids':('cp-1',),
+                  'directed_crossings':('cp-1','cp-3')},
+         'telemetry': {'obstacle_hit_ids':()}, 'route_highwater_meters':10., 'elapsed_time':.1},
+        {'research_outcome': {'kind':'successful_finish', 'valid_sample':True},
+         'race': {'completed_checkpoint_ids':('cp-2',),
+                  'directed_crossings':('cp-2','finish')},
+         'telemetry': {'obstacle_hit_ids':()}, 'route_highwater_meters':100., 'elapsed_time':.2},
+    ]
+    class Env:
+        action_space = SimpleNamespace(low=np.array([-1., 0., 0.]), high=np.array([1., 1., 1.]))
+        _authored_route = SimpleNamespace(total_meters=100.)
+        def __init__(self): self.index = 0
+        def reset(self, seed): return np.array([0.], dtype=np.float32), {}
+        def step(self, action):
+            info = infos[self.index]
+            terminated = self.index == 1
+            self.index += 1
+            return np.array([1.], dtype=np.float32), 1., terminated, False, info
+        def close(self): pass
+    env = Env()
+    session = SimpleNamespace(create_env=lambda **kw: env)
+    model = SimpleNamespace(predict=lambda obs, deterministic: np.array([0., 0.5, 0.]))
+
+    row = p.evaluate_episode(session, model, 'trained_final', 0)
+
+    assert row['success'] is True
+    assert row['completed_checkpoint_ids'] == ['cp-1','cp-2']
+    assert row['directed_crossings'] == ['cp-1','cp-3','cp-2','finish']
+
+
+def test_incomplete_episode_keeps_crossings_without_promoting_them_to_completed():
+    p = pilot()
+    info = {'research_outcome': {'kind':'valid_truncation', 'valid_sample':True, 'reason':'step_limit'},
+            'race': {'completed_checkpoint_ids':(), 'directed_crossings':('cp-2','cp-3')},
+            'telemetry': {'obstacle_hit_ids':()}, 'route_highwater_meters':20., 'elapsed_time':1.}
+    class Env:
+        action_space = SimpleNamespace(low=np.array([-1., 0., 0.]), high=np.array([1., 1., 1.]))
+        _authored_route = SimpleNamespace(total_meters=100.)
+        def reset(self, seed): return np.array([0.], dtype=np.float32), {}
+        def step(self, action): return np.array([1.], dtype=np.float32), 1., False, True, info
+        def close(self): pass
+    session = SimpleNamespace(create_env=lambda **kw: Env())
+    model = SimpleNamespace(predict=lambda obs, deterministic: np.array([0., 0.5, 0.]))
+
+    row = p.evaluate_episode(session, model, 'trained_final', 0)
+
+    assert row['success'] is False
+    assert row['completed_checkpoint_ids'] == []
+    assert row['directed_crossings'] == ['cp-2','cp-3']
+
+
+def test_aborted_episode_persists_prior_crossings_as_jsonl_before_rejection(tmp_path):
+    p = pilot()
+    info = {'research_outcome': {'kind':'active', 'valid_sample':True},
+            'race': {'completed_checkpoint_ids':('cp-1',), 'directed_crossings':('cp-1','cp-3')},
+            'telemetry': {'obstacle_hit_ids':()}, 'route_highwater_meters':10., 'elapsed_time':.1}
+    class Env:
+        action_space = SimpleNamespace(low=np.array([-1., 0., 0.]), high=np.array([1., 1., 1.]))
+        _authored_route = SimpleNamespace(total_meters=100.)
+        def __init__(self): self.steps = 0; self.last_research_outcome = None
+        def reset(self, seed): return np.array([0.], dtype=np.float32), {}
+        def step(self, action):
+            self.steps += 1
+            if self.steps == 1: return np.array([1.], dtype=np.float32), 1., False, False, info
+            self.last_research_outcome = {'kind':'invalid_environment_transition', 'valid_sample':False,
+                                          'reason':'aborted'}
+            raise RuntimeError('aborted evaluation')
+        def close(self): pass
+    env = Env()
+    session = SimpleNamespace(create_env=lambda **kw: env)
+    model = SimpleNamespace(predict=lambda obs, deterministic: np.array([0., 0.5, 0.]))
+
+    with pytest.raises(RuntimeError, match='invalid/aborted evaluation episode'):
+        p.evaluate_roster(session, model, 'trained_final', tmp_path)
+
+    row = json.loads((tmp_path/'evaluation.jsonl').read_text())
+    assert row['valid_sample'] is False and row['error'] == 'RuntimeError: aborted evaluation'
+    assert row['completed_checkpoint_ids'] == ['cp-1']
+    assert row['directed_crossings'] == ['cp-1','cp-3']
 
 
 def test_pilot_phases_do_not_select_best_checkpoint(tmp_path, monkeypatch):
