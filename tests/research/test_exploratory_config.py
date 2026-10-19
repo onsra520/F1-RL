@@ -28,8 +28,8 @@ def test_root_v2_still_loads_old_general_training_contract():
 
 def test_exploratory_permit_settings_come_from_one_yaml():
     current = resolve(ROOT)
-    assert current["limits"]["learning_timesteps"] == 4096
-    assert current["limits"]["checkpoint_steps"] == 512
+    assert current["limits"]["learning_timesteps"] == 8192
+    assert current["limits"]["checkpoint_steps"] == 1024
     assert current["seeds"]["training_reset"] == 1000
     assert current["seeds"]["evaluation"] == list(range(10000, 10002))
     assert current["limits"]["n_envs"] == 1
@@ -48,7 +48,10 @@ def test_exploratory_ppo_is_isolated_from_legacy_training(tmp_path):
 
 def test_auto_and_explicit_cpu_resources(tmp_path, monkeypatch):
     monkeypatch.setattr("f1rl.exploratory.config.os.cpu_count", lambda: 12)
-    auto = resolve(_write(tmp_path, lambda data: None))
+    def automatic(data):
+        data['exploratory']['resources']['cpu']['threads'] = 'auto'
+        data['exploratory']['resources']['cpu']['blas_threads'] = 'auto'
+    auto = resolve(_write(tmp_path, automatic))
     assert (auto["limits"]["threads"], auto["limits"]["blas_threads"]) == (12, 12)
     def limited(data):
         data["exploratory"]["resources"]["cpu"]["threads"] = 8

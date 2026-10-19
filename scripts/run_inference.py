@@ -13,10 +13,13 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--model', type=Path, default=ROOT/'models/ppo-straight-trained.zip')
     parser.add_argument('--episodes', type=int, default=2)
+    parser.add_argument('--seed-start', type=int, default=10000)
     parser.add_argument('--output', type=Path)
     args = parser.parse_args(argv)
     if not 1 <= args.episodes <= 32:
         parser.error('episodes must be between 1 and 32')
+    if not 0 <= args.seed_start <= 2**32-args.episodes:
+        parser.error('seed roster must fit uint32')
     from launch_exploratory_demo import ensure_runtime
     alternate_result = ensure_runtime([str(Path(__file__).resolve()), *sys.argv[1:]])
     if alternate_result is not None:
@@ -33,12 +36,12 @@ def main(argv=None):
     model = PPOModel.load(args.model, device='cpu')
 
     class InferenceSession:
-        permit = {'seeds': {'evaluation': list(range(10000, 10000+args.episodes))}}
+        permit = {'seeds': {'evaluation': list(range(args.seed_start, args.seed_start+args.episodes))}}
 
         def create_env(self, *, learning, episode):
             if learning:
                 raise ValueError('demonstration is inference only')
-            env = replace(factory, reset_config=replace(factory.reset_config, seed=10000+episode)).create()
+            env = replace(factory, reset_config=replace(factory.reset_config, seed=args.seed_start+episode)).create()
             original_step = env.step
             steps = 0
 

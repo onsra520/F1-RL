@@ -247,11 +247,15 @@ def test_scoped_scalar_and_vector_guards_reauthenticate_revocation(tmp_path, mon
     with pytest.raises(ValueError, match='revoked'): _validate_training_admission(vector)
 
 
-def test_exploratory_threads_match_available_processors():
+def test_exploratory_threads_match_config_and_available_processors():
     from f1rl.exploratory.config import resolve
     from pathlib import Path
     config = resolve(Path(__file__).resolve().parents[2])
-    assert config['limits']['threads'] == max(1, os.cpu_count() or 1)
+    import yaml
+    document = yaml.safe_load((Path(__file__).resolve().parents[2]/'config.yml').read_text())
+    requested = document['exploratory']['resources']['cpu']['threads']
+    assert config['limits']['threads'] == (max(1, os.cpu_count() or 1) if requested == 'auto' else requested)
+    assert config['limits']['threads'] <= max(1, os.cpu_count() or 1)
 
 
 def test_session_rejects_cpu_threads_above_permit(monkeypatch):

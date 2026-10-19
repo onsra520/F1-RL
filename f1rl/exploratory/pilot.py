@@ -139,13 +139,15 @@ def evaluate_roster(session, model, name, output):
 
 
 def save_checkpoint(model, output, name, updates, optimizer_steps):
+    started = time.perf_counter()
     temporary = output/(name+'.pending.zip')
     final = output/(name+'.zip')
     model.save(temporary)
     os.replace(temporary, final)
     append_json(output/'artifacts.jsonl', dict(path=final.name,
         sha256=sha256(final.read_bytes()).hexdigest(), timesteps=model.num_timesteps,
-        ppo_epoch_updates=updates, optimizer_steps=optimizer_steps))
+        ppo_epoch_updates=updates, optimizer_steps=optimizer_steps,
+        serialization_seconds=time.perf_counter()-started))
     return final
 
 
@@ -155,6 +157,16 @@ def weights_sha256(model):
         value.update(name.encode())
         value.update(tensor.detach().cpu().numpy().tobytes())
     return value.hexdigest()
+
+
+def timed_call(function, totals, name):
+    def measured(*args, **kwargs):
+        started = time.perf_counter()
+        try:
+            return function(*args, **kwargs)
+        finally:
+            totals[name] = totals.get(name, 0.) + time.perf_counter()-started
+    return measured
 
 
 def worker(root, permit, envelope):
@@ -176,6 +188,7 @@ def worker(root, permit, envelope):
     optimizer_steps = 0
     learning_completed = False
     phase = 'initialization'
+    timings = {}
 
     def state(status, **extra):
         write_json(output/'state.json', dict(status=status, phase=phase,
@@ -226,7 +239,8 @@ def worker(root, permit, envelope):
                 session.validate()
                 save_checkpoint(model, output, f'checkpoint-{step}', model._model._n_updates, optimizer_steps)
 
-        model.learn(permit['limits']['learning_timesteps'], progress_hook=progress)
+        timed_call(model.learn, timings, 'PPO_learn')(
+            permit['limits']['learning_timesteps'], progress_hook=progress)
         hook.remove()
         hook = None
         after = weights_sha256(model)
@@ -273,6 +287,9 @@ def worker(root, permit, envelope):
               last_learning_outcome=None if env is None else getattr(env, 'last_research_outcome', None))
         raise
     finally:
+        if model is not None:
+            timings.update(getattr(model._model, 'runtime_timings', {}))
+        write_json(output/'runtime-timings.json', timings)
         if hook is not None:
             hook.remove()
         if env is not None:

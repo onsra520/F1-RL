@@ -6,6 +6,7 @@ from math import isfinite
 from numbers import Real
 from pathlib import Path
 from typing import Any
+import time
 
 import numpy as np
 import yaml
@@ -176,6 +177,7 @@ class PPO(_SB3PPO):
     """Project backend: prediction-only loading never grants learning admission."""
 
     def __init__(self, policy, env, **kwargs):
+        self.runtime_timings = {}
         # SB3 load reconstructs with setup disabled, including inference envs.
         if env is not None and kwargs.get("_init_setup_model", True):
             _validate_training_admission(env)
@@ -183,6 +185,20 @@ class PPO(_SB3PPO):
             if admitted(env) and kwargs.get('device', 'auto') != 'cpu':
                 raise ValueError('exploratory PPO requires explicit CPU device')
         super().__init__(policy, env, **kwargs)
+
+    def collect_rollouts(self, *args, **kwargs):
+        started = time.perf_counter()
+        try:
+            return super().collect_rollouts(*args, **kwargs)
+        finally:
+            self.runtime_timings['collect_rollouts'] = self.runtime_timings.get('collect_rollouts', 0.) + time.perf_counter()-started
+
+    def train(self):
+        started = time.perf_counter()
+        try:
+            return super().train()
+        finally:
+            self.runtime_timings['optimizer_updates'] = self.runtime_timings.get('optimizer_updates', 0.) + time.perf_counter()-started
 
     def learn(self, *args, **kwargs):
         env = self.get_env()

@@ -11,7 +11,7 @@ class Vec3:
     z: float
 
     def __post_init__(self) -> None:
-        if not all(isfinite(value) for value in (self.x, self.y, self.z)):
+        if not (isfinite(self.x) and isfinite(self.y) and isfinite(self.z)):
             raise ValueError("Vec3 components must be finite")
 
     def __add__(self, other: Vec3) -> Vec3:
