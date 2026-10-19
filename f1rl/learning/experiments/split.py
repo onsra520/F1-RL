@@ -23,7 +23,7 @@ def resolve_track_split(config: TrackExperimentConfig) -> ResolvedTrackSplit:
     if not isinstance(config, TrackExperimentConfig):
         raise ValueError("config must be TrackExperimentConfig")
 
-    manifest = load_track_manifest(config.manifest)
+    manifest = load_track_manifest(config.manifest, validate_asset_ids=config.training_ids)
     by_id = {entry.track_id: entry for entry in manifest.tracks}
     def resolve(ids: tuple[str, ...], partition: str) -> tuple[TrackManifestEntry, ...]:
         entries: list[TrackManifestEntry] = []

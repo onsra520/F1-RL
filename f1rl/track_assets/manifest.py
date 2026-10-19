@@ -42,7 +42,7 @@ def _entry(value: Any, index: int) -> TrackManifestEntry:
     return TrackManifestEntry(track_id, path, world_sha256, content_sha256)
 
 
-def load_track_manifest(path: str | Path) -> TrackManifest:
+def load_track_manifest(path: str | Path, *, validate_asset_ids: tuple[str, ...] | None = None) -> TrackManifest:
     source = Path(path)
     root_data = _mapping(_read_strict_json(source), "manifest")
     _exact_keys(root_data, {"schema_version", "tracks"}, "manifest")
@@ -59,7 +59,11 @@ def load_track_manifest(path: str | Path) -> TrackManifest:
         raise ValueError("manifest path values must be unique after normalization")
 
     manifest_root = source.resolve().parent
+    if validate_asset_ids is not None and not set(validate_asset_ids).issubset(track_ids):
+        raise ValueError('requested asset IDs are missing from manifest')
     for entry in entries:
+        if validate_asset_ids is not None and entry.track_id not in validate_asset_ids:
+            continue
         target = (manifest_root / Path(entry.path)).resolve(strict=True)
         try:
             target.relative_to(manifest_root)

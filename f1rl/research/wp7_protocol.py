@@ -159,7 +159,8 @@ def prepare_scenarios(root, registration, *, seed_index: int):
         raise ValueError("explicit registered seed_index required for TRAIN scenarios")
     candidate = RecoveryCandidate.from_yaml(root / "configs/recovery/wp7-c2-candidate.yml")
     baseline = build_training_scenarios(candidate)
-    entries = {e.track_id: e for e in load_track_manifest(root / "assets/tracks/manifest.json").tracks}
+    entries = {e.track_id: e for e in load_track_manifest(
+        root / "assets/tracks/manifest.json", validate_asset_ids=TRAIN_IDS).tracks}
     registry = tuple(entries[identity] for identity in TRAIN_IDS)
     owner = registration['schema_version'] in ('wp7_experiment_registration_v3','wp7_experiment_registration_v4')
     reset = TrainResetConfig(seeds[seed_index]["perturbation"], registry,
