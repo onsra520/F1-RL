@@ -52,3 +52,45 @@ def test_demo_training_stops_before_reproducible_invalid_support_boundary():
             pytest.fail('curriculum did not stop before the known invalid support input')
     finally:
         env.close()
+
+
+def test_curriculum_v2_requires_exactly_three_meters_and_records_versioned_scope():
+    config = validate({**CONFIG, 'version':'straight_route_stability_demo_v2',
+                       'training_corridor_m':3.})
+    original = (np.zeros(16), 1., False, False,
+        {'research_outcome':{'kind':'active','reason':'accepted_step','valid_sample':True}})
+    env = SimpleNamespace(_authored_route=SimpleNamespace(horizontal_distance=lambda position:3.1),
+        _simulation=SimpleNamespace(snapshot=SimpleNamespace(world=SimpleNamespace(vehicle=SimpleNamespace(position=Vec3(3.1,.5,10.))))),
+        _simulation_config=SimpleNamespace(fixed_dt=.1))
+    result = apply_training_curriculum(env, original, config)
+    assert result[2] is True
+    assert result[4]['demo_training']['version'] == 'straight_route_stability_demo_v2'
+    assert result[4]['demo_training']['training_corridor_m'] == 3.
+    assert result[4]['research_outcome']['reason'] == 'accepted_step'
+
+
+def test_v2_does_not_reclassify_registered_four_meter_hard_route_failure():
+    config = validate({**CONFIG, 'version':'straight_route_stability_demo_v2',
+                       'training_corridor_m':3.})
+    original_info = {'research_outcome':{'kind':'failure','reason':'hard_route_violation',
+                                         'valid_sample':True}}
+    original = (np.zeros(16), -1., True, False, original_info)
+    env = SimpleNamespace(_authored_route=SimpleNamespace(horizontal_distance=lambda position:4.1),
+        _simulation=SimpleNamespace(snapshot=SimpleNamespace(world=SimpleNamespace(vehicle=SimpleNamespace(position=Vec3(4.1,.5,10.))))),
+        _simulation_config=SimpleNamespace(fixed_dt=.1))
+    result = apply_training_curriculum(env, original, config)
+    assert result[2] is True
+    assert result[4]['research_outcome']['reason'] == 'hard_route_violation'
+    assert result[4]['demo_training']['curriculum_terminal'] is False
+    assert result[4]['demo_training']['training_corridor_m'] == 3.
+
+
+@pytest.mark.parametrize('version,corridor', [
+    ('straight_route_stability_demo_v1',3.),
+    ('straight_route_stability_demo_v2',2.),
+    ('straight_route_stability_demo_v2',3.0001),
+    ('straight_route_stability_demo_v2',4.),
+])
+def test_demo_curriculum_versions_reject_cross_version_or_boundary_changes(version,corridor):
+    with pytest.raises(ValueError):
+        validate({**CONFIG, 'version':version, 'training_corridor_m':corridor})

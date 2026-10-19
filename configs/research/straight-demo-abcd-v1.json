@@ -1,0 +1,42 @@
+{
+  "schema_version": "f1rl_abcd_experiment_manifest_v1",
+  "status": "DRAFT — NOT PREREGISTERED — NOT AUTHORIZED",
+  "split": "TRAIN",
+  "evaluation": {
+    "task": "registered_original_task",
+    "hard_route_boundary_m": 4.0,
+    "semantics_unchanged": true
+  },
+  "training": {
+    "learning_timesteps_per_candidate_seed": 16384,
+    "checkpoint_every_timesteps": 1024,
+    "physics_unchanged": true,
+    "observation_action_contracts_unchanged": true,
+    "selection": "final_checkpoint_only",
+    "approval_state": "proposal_only"
+  },
+  "statistical_protocol": {
+    "version": "wp2_abcd_statistical_protocol_v1",
+    "tuning_seed_blocks": 3,
+    "confirmation_seed_blocks": 12,
+    "tuning_seed_bundles": [[0, 0, 1000], [1, 1, 1001], [2, 2, 1002]],
+    "confirmation_seed_bundle_rule": {"ppo_start": 100, "sampling_start": 200, "training_reset_start": 1100, "count": 12},
+    "episodes_per_track_stratum_per_model": 60,
+    "evaluation_tracks": ["straight-sprint-v1", "slalom-v1", "right-turn-v1", "ramp-v1"],
+    "evaluation_strata": ["nominal", "randomized_train"],
+    "primary_endpoint": "valid_autonomous_finish_probability",
+    "primary_contrasts": ["reward_main_effect", "corridor_main_effect", "interaction"],
+    "effect_interval": "two_sided_95_percent_seed_block_cluster_bootstrap_10000",
+    "multiplicity": "holm_three_primary_contrasts_alpha_0.05",
+    "evaluation_seed_derivation": "sha256_manifest_track_stratum_episode_candidate_independent",
+    "robustness_rule": "each_model_track_stratum_one_sided_95_percent_clopper_pearson_lower_at_least_0.90",
+    "invalid_episode_rule": "abort_cell_no_redraw",
+    "approval_state": "proposal_only"
+  },
+  "candidates": [
+    {"candidate_id":"A", "lateral_penalty_per_m2_s":2.0, "demo_training":{"version":"straight_route_stability_demo_v1", "training_corridor_m":2.0, "lateral_penalty_per_m2_s":2.0, "terminal_penalty":25.0}},
+    {"candidate_id":"B", "lateral_penalty_per_m2_s":4.0, "demo_training":{"version":"straight_route_stability_demo_v1", "training_corridor_m":2.0, "lateral_penalty_per_m2_s":4.0, "terminal_penalty":25.0}},
+    {"candidate_id":"C", "lateral_penalty_per_m2_s":2.0, "demo_training":{"version":"straight_route_stability_demo_v2", "training_corridor_m":3.0, "lateral_penalty_per_m2_s":2.0, "terminal_penalty":25.0}},
+    {"candidate_id":"D", "lateral_penalty_per_m2_s":4.0, "demo_training":{"version":"straight_route_stability_demo_v2", "training_corridor_m":3.0, "lateral_penalty_per_m2_s":4.0, "terminal_penalty":25.0}}
+  ]
+}

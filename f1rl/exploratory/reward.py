@@ -8,9 +8,15 @@ def validate(value):
     if value == REGISTERED:
         return dict(REGISTERED)
     expected = {'version', 'training_corridor_m', 'lateral_penalty_per_m2_s', 'terminal_penalty'}
-    if (not isinstance(value, dict) or set(value) != expected
-            or value['version'] != 'straight_route_stability_demo_v1'
-            or type(value['training_corridor_m']) not in (int, float) or value['training_corridor_m'] != 2.):
+    if not isinstance(value, dict) or set(value) != expected:
+        raise ValueError('unsupported demo-only reward/curriculum version')
+    corridor_by_version = {
+        'straight_route_stability_demo_v1': 2.,
+        'straight_route_stability_demo_v2': 3.,
+    }
+    if (value['version'] not in corridor_by_version
+            or type(value['training_corridor_m']) not in (int, float)
+            or value['training_corridor_m'] != corridor_by_version[value['version']]):
         raise ValueError('unsupported demo-only reward/curriculum version')
     for name, maximum in (('lateral_penalty_per_m2_s', 10.), ('terminal_penalty', 100.)):
         number = value[name]
@@ -31,6 +37,7 @@ def apply_training_curriculum(env, result, config):
     reward = float(registered_reward)-lateral_penalty-terminal_penalty
     info = {**original_info, 'demo_training': {
         'version': config['version'], 'registered_reward': float(registered_reward),
+        'training_corridor_m': float(config['training_corridor_m']),
         'lateral_distance_m': distance, 'lateral_penalty': lateral_penalty,
         'terminal_penalty': terminal_penalty, 'reward': reward,
         'curriculum_terminal': stop, 'scientific_evidence': False}}
