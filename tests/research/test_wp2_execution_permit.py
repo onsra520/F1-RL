@@ -1,6 +1,4 @@
 from datetime import datetime, timezone
-import hashlib
-import json
 
 import pytest
 from cryptography.hazmat.primitives import serialization
@@ -78,6 +76,17 @@ def test_permit_requires_two_distinct_roles_and_atomic_single_use_claim(tmp_path
     claim_wp2_execution_permit(envelope, registry, expected=identity(), replay_directory=tmp_path, now=NOW)
     with pytest.raises(FileExistsError):
         claim_wp2_execution_permit(envelope, registry, expected=identity(), replay_directory=tmp_path, now=NOW)
+
+
+def test_tampered_signature_and_overlong_lifetime_are_rejected():
+    envelope, registry = signed_permit()
+    envelope['signatures'][0]['signature_hex'] = '0' * 128
+    with pytest.raises(ValueError, match='signature'):
+        verify_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
+    envelope, registry = signed_permit()
+    envelope['payload']['expires_at_utc'] = '2026-10-21T12:00:00+00:00'
+    with pytest.raises(ValueError, match='24-hour'):
+        verify_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
 
 
 def test_repository_trust_registry_is_empty_and_cannot_authenticate_permits():

@@ -2,6 +2,7 @@
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import json
+import os
 from pathlib import Path
 
 from .wp7_protocol import digest
@@ -147,6 +148,7 @@ def _claim_verified(verified, replay_directory):
         json.dump(record, stream, sort_keys=True, separators=(',', ':'), allow_nan=False)
         stream.write('\n')
         stream.flush()
+        os.fsync(stream.fileno())
     return claim_path
 
 
