@@ -189,14 +189,15 @@ def test_pilot_phases_do_not_select_best_checkpoint(tmp_path, monkeypatch):
     assert calls == [('untrained', i) for i in range(7)]
 
 
+@pytest.mark.parametrize('evaluation_fails', [False, True])
 @pytest.mark.parametrize('schedule', ['learning_first', 'baseline_first'])
-def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedule):
+def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedule, evaluation_fails):
     p = pilot()
     from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
     from dataclasses import asdict
     import torch
     permit = dict(sha256='a'*64, output_directory=str(tmp_path/'run'),
-                  limits={'threads': 32, 'interop_threads': 1, 'learning_timesteps': 32768,
+                  limits={'device': 'cpu', 'threads': 32, 'interop_threads': 1, 'learning_timesteps': 32768,
                           'checkpoint_steps': 8192, 'wall_seconds': 3600},
                   logging={'progress_every_steps': 256},
                   evaluation={'episodes_per_policy': 32, 'replay_episode': 0},
@@ -237,9 +238,18 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedu
     monkeypatch.setattr(p, 'Session', lambda *a, **kw: SimpleNamespace(
         create_env=lambda **kw: env, validate=lambda: None, permit=permit))
     def evaluation(session, evaluated_model, name, ep):
+        if evaluation_fails and name == 'trained_final':
+            raise RuntimeError('evaluation interrupted')
         events.append(('evaluate', name, getattr(evaluated_model, 'snapshot', 'live')))
         return {'success':False, 'progress':0., 'policy':name, 'episode':ep}
     monkeypatch.setattr(p, 'evaluate_episode', evaluation)
+    if evaluation_fails:
+        with pytest.raises(RuntimeError, match='evaluation interrupted'):
+            p.worker(tmp_path, permit, envelope)
+        assert saved[-1] == 'trained-final'
+        assert json.loads((output/'learning-summary.json').read_text())['status'] == 'learning_completed'
+        assert json.loads((output/'state.json').read_text())['status'] == 'learning_completed_evaluation_incomplete'
+        return
     assert p.worker(tmp_path, permit, envelope) == 0
     comparison = json.loads((output/'comparison.json').read_text())
     assert comparison['timesteps'] == 32768 and comparison['optimizer_steps'] == 4

@@ -78,6 +78,8 @@ def supervise(root, permit, envelope):
     except BaseException:
         write_json(output/'supervisor.json', dict(status='interrupted', training_authorized=False))
         raise
+    if code != 0 and (output/'learning-summary.json').is_file() and (output/'trained-final.zip').is_file():
+        status = 'learning_completed_evaluation_incomplete'
     write_json(output/'supervisor.json', dict(status=status, returncode=code,
         elapsed_seconds=time.monotonic()-started, training_authorized=False,
         scientific_acceptance=False))
@@ -172,6 +174,7 @@ def worker(root, permit, envelope):
     output = Path(permit['output_directory'])
     model = env = hook = None
     optimizer_steps = 0
+    learning_completed = False
     phase = 'initialization'
 
     def state(status, **extra):
@@ -236,6 +239,7 @@ def worker(root, permit, envelope):
             learning_timesteps=model.num_timesteps, optimizer_steps=optimizer_steps,
             ppo_epoch_updates=model._model._n_updates,
             scientific_evidence=False, autonomous_completion_observed=False))
+        learning_completed = True
         phase = 'learning_completed'
         state('learning_completed', final_checkpoint=final.name)
         phase = 'trained_evaluation'
@@ -264,7 +268,8 @@ def worker(root, permit, envelope):
         state('completed', initial_weights_sha256=before, final_weights_sha256=after)
         return 0
     except BaseException as exc:
-        state('failed', error=f'{type(exc).__name__}: {exc}',
+        state('learning_completed_evaluation_incomplete' if learning_completed else 'failed',
+              error=f'{type(exc).__name__}: {exc}',
               last_learning_outcome=None if env is None else getattr(env, 'last_research_outcome', None))
         raise
     finally:
