@@ -165,6 +165,9 @@ def _validate_training_admission(env: object) -> None:
     else:
         raise ValueError("unregistered training environment")
     if blocked:
+        from ...exploratory.permit import admitted
+        if admitted(env):
+            return
         from ...research.wp7_admission import reject_research_training
         reject_research_training("research physics training is blocked until scientific admission is reviewed")
 
@@ -176,6 +179,9 @@ class PPO(_SB3PPO):
         # SB3 load reconstructs with setup disabled, including inference envs.
         if env is not None and kwargs.get("_init_setup_model", True):
             _validate_training_admission(env)
+            from ...exploratory.permit import admitted
+            if admitted(env) and kwargs.get('device', 'auto') != 'cpu':
+                raise ValueError('exploratory PPO requires explicit CPU device')
         super().__init__(policy, env, **kwargs)
 
     def learn(self, *args, **kwargs):
@@ -183,6 +189,9 @@ class PPO(_SB3PPO):
         if env is None:
             raise RuntimeError("an environment is required to continue learning")
         _validate_training_admission(env)
+        from ...exploratory.permit import admitted
+        if admitted(env) and self.device.type != 'cpu':
+            raise ValueError('exploratory learning requires CPU model parameters')
         return super().learn(*args, **kwargs)
 
 
