@@ -11,7 +11,9 @@ sys.path.insert(0, str(ROOT))
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--model', type=Path, default=ROOT/'models/ppo-straight-trained.zip')
+    preferred = ROOT/'models/ppo-straight-improved-16384.zip'
+    parser.add_argument('--model', type=Path,
+        default=preferred if preferred.is_file() else ROOT/'models/ppo-straight-trained.zip')
     parser.add_argument('--episodes', type=int, default=2)
     parser.add_argument('--seed-start', type=int, default=10000)
     parser.add_argument('--output', type=Path)

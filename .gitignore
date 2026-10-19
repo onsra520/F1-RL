@@ -35,6 +35,7 @@ tensorboard/
 
 # Generated RL artifacts
 /models/ppo-straight-trained.zip
+/models/ppo-straight-improved-16384.zip
 artifacts/checkpoints/*
 !artifacts/checkpoints/README.md
 artifacts/policies/*

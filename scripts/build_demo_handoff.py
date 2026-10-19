@@ -18,6 +18,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run', required=True, type=Path)
     parser.add_argument('--destination', required=True, type=Path)
+    parser.add_argument('--comparison-directory', type=Path)
     args = parser.parse_args(argv)
     run, dest = args.run.resolve(), args.destination.resolve()
     summary = json.loads((run/'learning-summary.json').read_text())
@@ -31,6 +32,12 @@ def main(argv=None):
         raise ValueError('genuine final learning evidence required')
     if dest.exists() or dest.with_suffix('.zip').exists():
         raise ValueError('handoff destination/archive must be fresh')
+    paired = None
+    if args.comparison_directory:
+        paired = json.loads((args.comparison_directory/'comparison.json').read_text())
+        if (paired['models']['candidate']['model_sha256'] != checksum
+                or paired['passes_prespecified_improvement'] is not True):
+            raise ValueError('paired improvement evidence must match this model')
     import torch
     torch.set_num_threads(1)
     from f1rl.learning.algorithms.ppo import PPOModel
@@ -62,6 +69,9 @@ def main(argv=None):
         shutil.copy2(source, target)
     for name in ('models', 'evidence', 'config'):
         (dest/name).mkdir()
+    if paired:
+        for name in ('comparison.json', 'original-episodes.jsonl', 'candidate-episodes.jsonl'):
+            shutil.copy2(args.comparison_directory/name, dest/'evidence'/('paired-'+name))
     shutil.copy2(model, dest/'models/ppo-straight-trained.zip')
     shutil.copy2(ROOT/'config.yml', dest/'config/demo-config.yml')
     shutil.copy2(run/'learning-summary.json', dest/'evidence/training-summary.json')
@@ -77,6 +87,16 @@ def main(argv=None):
         'training_task': permit.get('demo_training', {'version': 'registered'}),
         'scientific_evidence': False})
     packages = permit['runtime']['packages']
+    comparison_text = ''
+    if paired:
+        old, new = paired['models']['original'], paired['models']['candidate']
+        comparison_text = f"""
+Paired original-task evaluation (all eight seeds, including six reserved from tuning):
+- Original: mean {old['all']['mean_progress']:.1%}, median {old['all']['median_progress']:.1%}, worst {old['all']['worst_progress']:.1%} progress; {old['all']['successes']}/8 finishes.
+- Supplied model: mean {new['all']['mean_progress']:.1%}, median {new['all']['median_progress']:.1%}, worst {new['all']['worst_progress']:.1%} progress; {new['all']['successes']}/8 finishes.
+- Reserved-seed mean progress: {old['reserved']['mean_progress']:.1%} to {new['reserved']['mean_progress']:.1%}.
+- This model drives farther but still fails to finish. All eight outcomes, errors and comparison rules are in evidence/paired-comparison.json and paired episode logs.
+"""
     (dest/'requirements.txt').write_text(''.join(f'{name}=={version}\n' for name, version in packages.items()), encoding='utf-8')
     (dest/'README.md').write_text(f'''# F1-RL lecturer demo
 
@@ -87,6 +107,7 @@ The supplied {summary['learning_timesteps']:,}-step model completed
 Recorded progress: {progress}. All outcomes and failure reasons are preserved in the evaluation summary.
 Training task: {permit.get('demo_training', {'version': 'registered'})}.
 Evaluation and demonstration use the original registered task, without training-only penalties or corridor stops.
+{comparison_text}
 
 Use Python {permit['runtime']['python']} (Windows CPU tested). From this extracted directory:
 
