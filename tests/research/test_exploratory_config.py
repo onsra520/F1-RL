@@ -28,10 +28,10 @@ def test_root_v2_still_loads_old_general_training_contract():
 
 def test_exploratory_permit_settings_come_from_one_yaml():
     current = resolve(ROOT)
-    assert current["limits"]["learning_timesteps"] == 32768
-    assert current["limits"]["checkpoint_steps"] == 8192
+    assert current["limits"]["learning_timesteps"] == 4096
+    assert current["limits"]["checkpoint_steps"] == 512
     assert current["seeds"]["training_reset"] == 1000
-    assert current["seeds"]["evaluation"] == list(range(10000, 10032))
+    assert current["seeds"]["evaluation"] == list(range(10000, 10002))
     assert current["limits"]["n_envs"] == 1
     assert current["limits"]["device"] == "cpu"
 
@@ -62,14 +62,14 @@ def test_auto_and_explicit_cpu_resources(tmp_path, monkeypatch):
 def test_editing_yaml_changes_resolved_permit_binding(tmp_path):
     first = resolve(_write(tmp_path, lambda d: None))
     def different(d):
-        d["exploratory"]["training"]["total_timesteps"] = 16384
+        d["exploratory"]["training"]["total_timesteps"] = 2048
         d["exploratory"]["evaluation"]["episodes_per_policy"] = 4
         d["exploratory"]["evaluation"]["seed_start"] = 12000
         d["exploratory"]["execution"]["wall_seconds"] = 600
         d["exploratory"]["logging"]["progress_every_steps"] = 128
     second = resolve(_write(tmp_path, different))
     assert first["config_sha256"] != second["config_sha256"]
-    assert second["limits"]["learning_timesteps"] == 16384
+    assert second["limits"]["learning_timesteps"] == 2048
     assert second["limits"]["wall_seconds"] == 600
     assert second["seeds"]["evaluation"] == [12000, 12001, 12002, 12003]
     assert second["logging"]["progress_every_steps"] == 128
@@ -82,7 +82,7 @@ def test_editing_yaml_changes_resolved_permit_binding(tmp_path):
     ("evaluation", "seed_start", True),
     ("evaluation", "deterministic", False),
     ("execution", "wall_seconds", 7200),
-    ("execution", "schedule", "learning_first"),
+    ("execution", "schedule", "invalid_mode"),
     ("logging", "progress_every_steps", 17),
     ("logging", "save_metrics", False),
     ("vector_env", "n_envs", 8),
@@ -112,3 +112,11 @@ def test_duplicate_yaml_keys_fail_closed(tmp_path):
     (tmp_path / "config.yml").write_text(contents + "\nppo: {}\n", encoding="utf-8")
     with pytest.raises(ValueError, match="duplicate"):
         resolve(tmp_path)
+
+def test_both_schedules_are_validated(tmp_path):
+    default = resolve(_write(tmp_path, lambda d: None))
+    assert default["execution"]["schedule"] == "learning_first"
+    def previous_mode(d):
+        d["exploratory"]["execution"]["schedule"] = "baseline_first"
+    old = resolve(_write(tmp_path, previous_mode))
+    assert old["execution"]["schedule"] == "baseline_first"

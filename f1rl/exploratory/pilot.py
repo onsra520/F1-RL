@@ -191,13 +191,18 @@ def worker(root, permit, envelope):
         model = PPOModel.create(env, config)
         model._model.set_logger(configure(str(output/'learning'), ['csv']))
         before = weights_sha256(model)
-        save_checkpoint(model, output, 'untrained', 0, 0)
-        phase = 'random_baseline'
-        state('running')
-        random_rows = evaluate_roster(session, model, 'random', output)
-        phase = 'untrained_baseline'
-        state('running')
-        untrained_rows = evaluate_roster(session, model, 'untrained', output)
+        untrained_archive = save_checkpoint(model, output, 'untrained', 0, 0)
+        schedule = permit['execution']['schedule']
+        random_rows = untrained_rows = None
+        if schedule == 'baseline_first':
+            phase = 'random_baseline'
+            state('running')
+            random_rows = evaluate_roster(session, model, 'random', output)
+            phase = 'untrained_baseline'
+            state('running')
+            untrained_rows = evaluate_roster(session, model, 'untrained', output)
+        elif schedule != 'learning_first':
+            raise ValueError('unrecognized scoped execution schedule')
         phase = 'learning'
         state('running')
 
@@ -225,10 +230,26 @@ def worker(root, permit, envelope):
         if model.num_timesteps != permit['limits']['learning_timesteps'] or optimizer_steps <= 0 or before == after:
             raise RuntimeError('genuine learning evidence missing')
         final = save_checkpoint(model, output, 'trained-final', model._model._n_updates, optimizer_steps)
+        write_json(output/'learning-summary.json', dict(
+            status='learning_completed', final_checkpoint=final.name,
+            initial_weights_sha256=before, final_weights_sha256=after,
+            learning_timesteps=model.num_timesteps, optimizer_steps=optimizer_steps,
+            ppo_epoch_updates=model._model._n_updates,
+            scientific_evidence=False, autonomous_completion_observed=False))
+        phase = 'learning_completed'
+        state('learning_completed', final_checkpoint=final.name)
         phase = 'trained_evaluation'
         state('running')
         loaded = PPOModel.load(final, device=permit['limits']['device'])
         trained_rows = evaluate_roster(session, loaded, 'trained_final', output)
+        if schedule == 'learning_first':
+            phase = 'random_baseline'
+            state('running')
+            random_rows = evaluate_roster(session, model, 'random', output)
+            phase = 'untrained_baseline'
+            state('running')
+            untrained_model = PPOModel.load(untrained_archive, device=permit['limits']['device'])
+            untrained_rows = evaluate_roster(session, untrained_model, 'untrained', output)
         phase = 'replay'
         replay_index = permit['evaluation']['replay_episode']
         replay = evaluate_episode(session, loaded, 'trained_final', replay_index)

@@ -129,8 +129,8 @@ def resolve(root):
     execution = _mapping(exp["execution"],
         {"wall_seconds", "schedule", "preserve_checkpoints_on_failure"}, "execution")
     wall = _positive(execution["wall_seconds"], "execution.wall_seconds", maximum=MAX_WALL_SECONDS)
-    if execution["schedule"] != "baseline_first":
-        raise ValueError("only baseline_first implemented; learning_first needs separate validated change")
+    if execution["schedule"] not in ("baseline_first", "learning_first"):
+        raise ValueError("execution.schedule must be baseline_first or learning_first")
     if _boolean(execution["preserve_checkpoints_on_failure"], "execution.preserve_checkpoints_on_failure") is not True:
         raise ValueError("checkpoint survival is mandatory")
 

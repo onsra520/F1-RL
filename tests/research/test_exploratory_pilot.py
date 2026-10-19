@@ -46,7 +46,7 @@ def test_timeout_marks_supervisor_and_keeps_checkpoint(tmp_path, monkeypatch):
         assert 0 < kwargs['timeout'] <= 3600
         assert kwargs['env']['OMP_NUM_THREADS'] == str(permit['limits']['threads'])
         assert all(kwargs['env'][name] == str(permit['limits']['blas_threads']) for name in
-            ('OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS',
+            ('MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS',
              'NUMEXPR_NUM_THREADS', 'VECLIB_MAXIMUM_THREADS'))
         assert kwargs['env']['CUDA_VISIBLE_DEVICES'] == ''
         raise subprocess.TimeoutExpired(command, kwargs['timeout'])
@@ -189,7 +189,8 @@ def test_pilot_phases_do_not_select_best_checkpoint(tmp_path, monkeypatch):
     assert calls == [('untrained', i) for i in range(7)]
 
 
-def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch):
+@pytest.mark.parametrize('schedule', ['learning_first', 'baseline_first'])
+def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedule):
     p = pilot()
     from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
     from dataclasses import asdict
@@ -199,7 +200,7 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch):
                           'checkpoint_steps': 8192, 'wall_seconds': 3600},
                   logging={'progress_every_steps': 256},
                   evaluation={'episodes_per_policy': 32, 'replay_episode': 0},
-                  ppo=asdict(PPOConfig()))
+                  execution={'schedule': schedule}, ppo=asdict(PPOConfig()))
     envelope = {'payload':{'expires_at_utc':'2099-01-01T00:00:00+00:00'}}
     output = p.reserve(permit)
     monkeypatch.setattr(p, 'authorize', lambda *a: {})
@@ -210,7 +211,9 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch):
     backend = SimpleNamespace(policy=SimpleNamespace(optimizer=optimizer), _n_updates=0,
         set_logger=lambda logger: None)
     model = SimpleNamespace(num_timesteps=0, _model=backend, learned=False)
+    events = []
     def learn(steps, progress_hook):
+        events.append(('learn', 'start'))
         assert steps == 32768
         for step in range(8192, steps+1, 8192):
             model.num_timesteps = step
@@ -220,7 +223,10 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch):
         model.learned = True
     model.learn = learn
     monkeypatch.setattr(PPOModel, 'create', lambda *a: model)
-    monkeypatch.setattr(PPOModel, 'load', lambda *a, **kw: model)
+    def load_model(path, **kwargs):
+        events.append(('load', Path(path).stem))
+        return SimpleNamespace(snapshot=Path(path).stem)
+    monkeypatch.setattr(PPOModel, 'load', load_model)
     monkeypatch.setattr(p, 'weights_sha256', lambda m: 'after' if m.learned else 'before')
     saved = []
     def save(m, directory, name, updates, optimizer_steps):
@@ -230,12 +236,24 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch):
     env = SimpleNamespace(close=lambda: None)
     monkeypatch.setattr(p, 'Session', lambda *a, **kw: SimpleNamespace(
         create_env=lambda **kw: env, validate=lambda: None, permit=permit))
-    monkeypatch.setattr(p, 'evaluate_episode', lambda session, model, name, ep:
-        {'success':False, 'progress':0., 'policy':name, 'episode':ep})
+    def evaluation(session, evaluated_model, name, ep):
+        events.append(('evaluate', name, getattr(evaluated_model, 'snapshot', 'live')))
+        return {'success':False, 'progress':0., 'policy':name, 'episode':ep}
+    monkeypatch.setattr(p, 'evaluate_episode', evaluation)
     assert p.worker(tmp_path, permit, envelope) == 0
     comparison = json.loads((output/'comparison.json').read_text())
     assert comparison['timesteps'] == 32768 and comparison['optimizer_steps'] == 4
     assert comparison['learning_proven'] is True and comparison['autonomous_completion_observed'] is False
+    assert json.loads((output/'learning-summary.json').read_text())['status'] == 'learning_completed'
+    observations = [x for x in events if x[0] == 'evaluate']
+    assert len(observations) == 3 * permit['evaluation']['episodes_per_policy'] + 1
+    if schedule == 'learning_first':
+        assert events.index(('learn', 'start')) < events.index(('evaluate', 'trained_final', 'trained-final'))
+        assert observations[0] == ('evaluate', 'trained_final', 'trained-final')
+        assert ('evaluate', 'untrained', 'untrained') in observations
+    else:
+        assert observations[0] == ('evaluate', 'random', 'live')
+        assert events.index(('evaluate', 'untrained', 'live')) < events.index(('learn', 'start'))
     assert saved == ['untrained', 'checkpoint-8192', 'checkpoint-16384', 'checkpoint-24576', 'checkpoint-32768', 'trained-final']
     assert json.loads((output/'state.json').read_text())['status'] == 'completed'
 

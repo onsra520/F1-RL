@@ -31,13 +31,17 @@ magically parallelize a single Gym environment.
 `checkpoint_every_steps` must align with `ppo.n_steps`. The exploratory
 profile remains CPU-only, one dummy environment, registered TRAIN Straight
 physics, no HELD-OUT, with a maximum 32,768 interactions, 3,600-second wall
-clock, and 32 evaluation episodes per policy. Those ceilings are **guardrails
+clock, and 32 evaluation episodes per policy. For the imminent demo, the
+checked-in settings intentionally start with **4,096 learning interactions,
+512-step checkpoints and 2 evaluation episodes per policy**; tune the YAML
+and make a fresh permit for a longer pilot. Those ceilings are **guardrails
 in code**, not arbitrary tunables that confer research permission.
 
-`execution.schedule` currently accepts only `baseline_first`: although a
-`learning_first` schedule is desirable, it requires its own tested
-orchestration change and fresh owner approval. A YAML switch must not claim to
-activate unimplemented scheduling.
+`execution.schedule` accepts `baseline_first` and `learning_first`.
+The default is `learning_first`: save the original untrained snapshot,
+train PPO, save trained-final plus learning-summary, evaluate trained first,
+then random and the **reloaded immutable untrained snapshot**. An incomplete
+evaluation never claims a complete comparison or scientific acceptance.
 
 ## Preflight and provenance
 

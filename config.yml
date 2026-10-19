@@ -39,8 +39,8 @@ exploratory:
       interop_threads: 1
       blas_threads: auto
   training:
-    total_timesteps: 32768
-    checkpoint_every_steps: 8192
+    total_timesteps: 4096
+    checkpoint_every_steps: 512
     sampling_seed: 1000
     artifacts_root: artifacts/runs
   ppo:
@@ -61,14 +61,14 @@ exploratory:
     backend: dummy
     start_method: spawn
   evaluation:
-    episodes_per_policy: 32
+    episodes_per_policy: 2
     seed_start: 10000
     policies: [random, untrained, trained_final]
     deterministic: true
     replay_episode: 0
   execution:
     wall_seconds: 3600
-    schedule: baseline_first
+    schedule: learning_first
     preserve_checkpoints_on_failure: true
   logging:
     progress_every_steps: 256
