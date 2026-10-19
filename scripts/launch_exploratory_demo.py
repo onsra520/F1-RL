@@ -61,13 +61,13 @@ def _interpreter_candidates():
     return directories
 
 
-def ensure_runtime():
+def ensure_runtime(command=None):
     if _runtime_ready(sys.executable):
         return None
     for interpreter in _interpreter_candidates():
         if str(interpreter).lower() != sys.executable.lower() and _runtime_ready(interpreter):
             print("[ENV] Using installed F1-RL Python:", interpreter, flush=True)
-            return subprocess.call([str(interpreter), "-B", str(Path(__file__).resolve())], cwd=ROOT)
+            return subprocess.call([str(interpreter), "-B", *(command or [str(Path(__file__).resolve())])], cwd=ROOT)
     raise ImportError("No Python interpreter with F1-RL RL/science dependencies was found")
 
 

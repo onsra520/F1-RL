@@ -4,7 +4,6 @@ from hashlib import sha256
 import json
 from pathlib import Path
 import shutil
-import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,7 +31,7 @@ def main(argv=None):
         raise ValueError('handoff destination/archive must be fresh')
     dest.mkdir(parents=True)
     paths = [*ROOT.joinpath('f1rl').rglob('*.py'),
-        ROOT/'scripts/run_inference.py', ROOT/'START-DEMO.cmd',
+        ROOT/'scripts/run_inference.py', ROOT/'scripts/launch_exploratory_demo.py', ROOT/'START-DEMO.cmd',
         ROOT/'config.yml', ROOT/'assets/tracks/manifest.json',
         *ROOT.joinpath('assets/tracks/training').glob('*.json'),
         ROOT/'configs/research/wp7-rotating-owner-protocol-v3.json',

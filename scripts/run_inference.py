@@ -17,6 +17,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if not 1 <= args.episodes <= 32:
         parser.error('episodes must be between 1 and 32')
+    from launch_exploratory_demo import ensure_runtime
+    alternate_result = ensure_runtime([str(Path(__file__).resolve()), *sys.argv[1:]])
+    if alternate_result is not None:
+        return alternate_result
     import torch
     torch.set_num_threads(1)
     from f1rl.learning.algorithms.ppo import PPOModel
@@ -42,7 +46,7 @@ def main(argv=None):
                 nonlocal steps
                 result = original_step(action)
                 steps += 1
-                if steps % 100 == 0 or result[2] or result[3]:
+                if steps % 10 == 0 or result[2] or result[3]:
                     print(json.dumps({'episode': episode, 'step': steps,
                         'progress_m': result[4].get('route_highwater_meters'),
                         'elapsed_time': result[4].get('elapsed_time')}), flush=True)
