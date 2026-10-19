@@ -1,12 +1,14 @@
 """Bounded, versioned observations of PPO learning; never a policy input."""
 from __future__ import annotations
 
+from copy import deepcopy
 from hashlib import sha256
 import json
 import math
 import os
 from pathlib import Path
 import re
+import shutil
 
 import numpy as np
 
@@ -16,7 +18,8 @@ _TRAIN_TRACKS = {"straight-sprint-v1", "right-turn-v1", "slalom-v1", "ramp-v1"}
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _COMMIT = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 _MAX_RECORD_BYTES = 16 * 1024
-_MAX_LOG_BYTES = 256 * 1024 * 1024
+_MAX_LOG_BYTES = 4 * 1024 * 1024 * 1024
+_AUXILIARY_RESERVE_BYTES = 1024 * 1024
 _METRIC_KEYS = (
     "train/approx_kl", "train/clip_fraction", "train/clip_range",
     "train/entropy_loss", "train/ent_coef", "train/explained_variance",
@@ -44,7 +47,8 @@ class TrainingTelemetryRecorder:
     def __init__(self, path: str | Path, *, run_identity: dict, max_timesteps: int) -> None:
         if type(max_timesteps) is not int or max_timesteps <= 0:
             raise ValueError("max_timesteps must be a positive integer")
-        required = {"run_id", "source_commit", "policy_id", "split", "track_ids", "seed_identity"}
+        required = {"run_id", "source_commit", "policy_id", "split", "track_ids",
+                    "seed_identity", "reset_contracts"}
         if not isinstance(run_identity, dict) or set(run_identity) != required:
             raise ValueError("run_identity has unexpected fields")
         if (not all(isinstance(run_identity[k], str) and run_identity[k].strip()
@@ -53,17 +57,40 @@ class TrainingTelemetryRecorder:
                 or run_identity["split"] != "TRAIN"
                 or not isinstance(run_identity["track_ids"], (list, tuple))
                 or not run_identity["track_ids"]
+                or any(not isinstance(track, str) for track in run_identity["track_ids"])
+                or len(set(run_identity["track_ids"])) != len(run_identity["track_ids"])
                 or any(track not in _TRAIN_TRACKS for track in run_identity["track_ids"])
                 or not isinstance(run_identity["seed_identity"], dict)
-                or not run_identity["seed_identity"]):
+                or type(run_identity["seed_identity"].get("training_reset")) is not int
+                or not 0 <= run_identity["seed_identity"]["training_reset"] <= 2**32 - 1
+                or not isinstance(run_identity["reset_contracts"], dict)
+                or set(run_identity["reset_contracts"]) != set(run_identity["track_ids"])):
             raise ValueError("training telemetry requires an identified TRAIN run")
+        for track_id, contract in run_identity["reset_contracts"].items():
+            if (not isinstance(contract, dict)
+                    or set(contract) != {"version", "seed", "configuration_sha256", "world_sha256"}
+                    or contract["version"] not in ("wp7_train_reset_research_v1",
+                                                      "wp7_train_reset_lifecycle_research_v1")
+                    or type(contract["seed"]) is not int
+                    or contract["seed"] != run_identity["seed_identity"]["training_reset"]
+                    or not isinstance(contract["configuration_sha256"], str)
+                    or _DIGEST.fullmatch(contract["configuration_sha256"]) is None
+                    or not isinstance(contract["world_sha256"], str)
+                    or _DIGEST.fullmatch(contract["world_sha256"]) is None):
+                raise ValueError(f"declared training reset seed or contract is invalid for {track_id}")
         self.path = Path(path)
         if not self.path.parent.is_dir():
             raise ValueError("telemetry output directory must already exist")
-        self._stream = self.path.open("x", encoding="utf-8", newline="\n")
-        self._run = dict(run_identity)
+        self._run = deepcopy(run_identity)
         self._max_timesteps = max_timesteps
-        self._max_bytes = min(_MAX_LOG_BYTES, max_timesteps * _MAX_RECORD_BYTES)
+        required_capacity = max_timesteps * _MAX_RECORD_BYTES + _AUXILIARY_RESERVE_BYTES
+        if required_capacity > _MAX_LOG_BYTES:
+            raise ValueError("requested telemetry timestep budget exceeds the 4 GiB capacity bound")
+        self._max_bytes = required_capacity
+        if shutil.disk_usage(self.path.parent).free < self._max_bytes:
+            raise OSError(f"insufficient free space for telemetry capacity bound: {self._max_bytes} bytes")
+        self._stream = self.path.open("x", encoding="utf-8", newline="\n")
+        self._content_hash = sha256()
         self._bytes = 0
         self._events = 0
         self.step_rows = 0
@@ -77,8 +104,18 @@ class TrainingTelemetryRecorder:
         self._checkpoint = None
         self._observation_schema = None
         self._closed = False
-        self._append({"event_type": "run", "schema_version": _SCHEMA,
-                      **self._run, "max_timesteps": max_timesteps})
+        self._total_timesteps = None
+        try:
+            self._append({"event_type": "run", "schema_version": _SCHEMA,
+                          **self._run, "max_timesteps": max_timesteps})
+        except BaseException:
+            self._stream.close()
+            self._closed = True
+            try:
+                self.path.unlink()
+            except OSError:
+                pass
+            raise
 
     def _append(self, record: dict) -> None:
         if self._closed:
@@ -88,6 +125,7 @@ class TrainingTelemetryRecorder:
         if size > _MAX_RECORD_BYTES or self._bytes + size > self._max_bytes:
             raise ValueError("training telemetry storage bound exceeded")
         self._stream.write(line)
+        self._content_hash.update(line.encode("utf-8"))
         self._bytes += size
         self._events += 1
         if self._events % 256 == 0:
@@ -104,6 +142,7 @@ class TrainingTelemetryRecorder:
             raise ValueError("requested timestep budget exceeds telemetry bound")
         if type(n_envs) is not int or n_envs <= 0:
             raise ValueError("n_envs must be positive")
+        self._total_timesteps = total_timesteps
         self._n_envs = n_envs
         self._episodes = {i: 0 for i in range(n_envs)}
         self._weight_sha256 = _digest(model.weights_sha256(), "policy weight identity")
@@ -152,6 +191,20 @@ class TrainingTelemetryRecorder:
                 raise ValueError("transition reset seed identity is missing or inconsistent")
             if track_id not in self._run["track_ids"] or track_id not in _TRAIN_TRACKS:
                 raise ValueError("transition track is outside the preregistered TRAIN set")
+            from ..train_reset import derive_train_reset_draw_seed
+            contract = self._run["reset_contracts"].get(track_id)
+            if (contract is None
+                    or reset_identity.get("seed") != contract["seed"]
+                    or reset_identity.get("rank") != index
+                    or reset_identity.get("reset_index") != self._episodes[index]
+                    or reset_identity.get("track_id") != track_id
+                    or reset_identity.get("version") != contract["version"]
+                    or reset_identity.get("configuration_sha256") != contract["configuration_sha256"]
+                    or reset_identity.get("world_sha256") != contract["world_sha256"]
+                    or reset_identity.get("draw_seed") != derive_train_reset_draw_seed(
+                        version=contract["version"], seed=contract["seed"], rank=index,
+                        track_id=track_id, reset_index=self._episodes[index])):
+                raise ValueError("declared training reset seed or identity does not match transition")
             schema = state.get("observation_schema")
             if not isinstance(schema, dict) or not schema.get("feature_names"):
                 raise ValueError("observation schema identity is missing")
@@ -263,8 +316,44 @@ class TrainingTelemetryRecorder:
             raise RuntimeError("close telemetry before creating its manifest")
         if type(complete) is not bool:
             raise ValueError("complete must be bool")
+        digest = sha256()
+        byte_count = event_count = step_rows = update_rows = training_starts = run_rows = 0
+        with self.path.open("rb") as stream:
+            while True:
+                line = stream.readline(_MAX_RECORD_BYTES + 1)
+                if not line:
+                    break
+                if len(line) > _MAX_RECORD_BYTES or not line.endswith(b"\n"):
+                    raise ValueError("telemetry JSONL contains an oversized or incomplete record")
+                try:
+                    record = json.loads(line, parse_constant=lambda value: (_ for _ in ()).throw(
+                        ValueError(f"invalid JSON constant: {value}")))
+                except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+                    raise ValueError("telemetry JSONL contains a corrupt record") from exc
+                if not isinstance(record, dict) or record.get("schema_version") != _SCHEMA:
+                    raise ValueError("telemetry JSONL record schema is corrupt")
+                if record.get("event_type") not in {
+                    "run", "training_start", "step", "ppo_update", "checkpoint",
+                }:
+                    raise ValueError("telemetry JSONL event type is corrupt")
+                event_count += 1
+                step_rows += record.get("event_type") == "step"
+                update_rows += record.get("event_type") == "ppo_update"
+                training_starts += record.get("event_type") == "training_start"
+                run_rows += record.get("event_type") == "run"
+                digest.update(line)
+                byte_count += len(line)
+        if (byte_count != self._bytes or event_count != self._events
+                or step_rows != self.step_rows or update_rows != self.update_rows
+                or digest.hexdigest() != self._content_hash.hexdigest()
+                or self.path.stat().st_size != byte_count):
+            raise ValueError("telemetry JSONL integrity counters or checksum do not match")
+        if complete:
+            if self._n_envs is None or self._total_timesteps is None or training_starts != 1 or run_rows != 1:
+                raise ValueError("complete telemetry requires one run and one training-start record")
+            if not self._total_timesteps <= step_rows <= self._total_timesteps + self._n_envs - 1:
+                raise ValueError("complete telemetry step count does not match the declared budget")
         return {"schema_version": _SCHEMA, "path": self.path.name,
-                "sha256": sha256(self.path.read_bytes()).hexdigest(),
-                "bytes": self.path.stat().st_size, "events": self._events,
+                "sha256": digest.hexdigest(), "bytes": byte_count, "events": event_count,
                 "step_rows": self.step_rows, "update_rows": self.update_rows,
                 "optimizer_steps": self.optimizer_steps, "complete": complete}

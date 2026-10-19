@@ -209,7 +209,8 @@ def worker(root, permit, envelope):
                 run_id=permit['sha256'], source_commit=permit['source']['commit_sha'],
                 policy_id=permit['policy'], split='TRAIN', track_ids=[permit['track']],
                 seed_identity={'ppo': permit['seeds']['ppo'],
-                               'training_reset': permit['seeds']['training_reset']}),
+                               'training_reset': permit['seeds']['training_reset']},
+                reset_contracts={permit['track']: env.training_reset_contract}),
             max_timesteps=permit['limits']['learning_timesteps'],
         )
         telemetry.record_checkpoint(

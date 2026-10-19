@@ -237,6 +237,13 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         """Rejected research steps raise; their classification remains inspectable."""
         return None if self._last_research_outcome is None else dict(self._last_research_outcome)
 
+    @property
+    def training_reset_contract(self) -> dict[str, object] | None:
+        """Expected reset identity for this TRAIN environment, if configured."""
+        if self._reset_config is None:
+            return None
+        return self._reset_config.identity_for_track(self._reset_track_id)
+
     def _record_research_outcome(self, kind: str, valid: bool, reason: str) -> None:
         if self.requires_scientific_admission:
             self._last_research_outcome = {

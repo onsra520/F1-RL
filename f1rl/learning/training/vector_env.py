@@ -75,6 +75,16 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
     def requires_scientific_admission(self) -> bool:
         return any(s.factory.requires_scientific_admission for s in self._scenarios.scenarios)
 
+    @property
+    def training_reset_contracts(self) -> dict[str, dict[str, object]]:
+        contracts = {}
+        for scenario in self._scenarios.scenarios:
+            config = scenario.factory.reset_config
+            if config is None:
+                raise ValueError("sampled TRAIN telemetry requires reset contracts for every scenario")
+            contracts[scenario.track_id] = config.identity_for_track(scenario.track_id)
+        return contracts
+
     def set_training_telemetry_enabled(self, enabled: bool) -> None:
         if type(enabled) is not bool:
             raise ValueError("training telemetry flag must be bool")
