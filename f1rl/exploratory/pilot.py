@@ -56,8 +56,9 @@ def supervise(root, permit, envelope):
     write_json(output/'permit.json', permit)
     write_json(output/'authorization.json', envelope)
     write_json(output/'supervisor.json', dict(status='running', training_authorized=False))
-    env = dict(os.environ, CUDA_VISIBLE_DEVICES='', OMP_NUM_THREADS='4', MKL_NUM_THREADS='4',
-        OPENBLAS_NUM_THREADS='4', NUMEXPR_NUM_THREADS='4', VECLIB_MAXIMUM_THREADS='4',
+    thread_limit = str(permit['limits']['threads'])
+    env = dict(os.environ, CUDA_VISIBLE_DEVICES='', OMP_NUM_THREADS=thread_limit, MKL_NUM_THREADS=thread_limit,
+        OPENBLAS_NUM_THREADS=thread_limit, NUMEXPR_NUM_THREADS=thread_limit, VECLIB_MAXIMUM_THREADS=thread_limit,
         PYTHONPATH=str(Path(root).resolve()), PYTHONDONTWRITEBYTECODE='1')
     command = [sys.executable, '-B', str(Path(root)/'scripts/exploratory_ppo.py'),
         '_worker', '--permit', str(output/'permit.json'), '--authorization', str(output/'authorization.json')]
@@ -159,7 +160,7 @@ def worker(root, permit, envelope):
     expiry_remaining = (_utc(envelope['payload']['expires_at_utc'])-datetime.now(timezone.utc)).total_seconds()
     budget = Budget(deadline=min(deadline, time.monotonic()+expiry_remaining-.05))
     import torch
-    torch.set_num_threads(4)
+    torch.set_num_threads(permit['limits']['threads'])
     torch.set_num_interop_threads(1)
     torch.use_deterministic_algorithms(True)
     from dataclasses import replace

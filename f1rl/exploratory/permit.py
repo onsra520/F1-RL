@@ -21,6 +21,7 @@ from ..research.wp7_trusted_reviews import _fields, _hex, _utc
 TRACK = 'straight-sprint-v1'
 PROFILE = 'spatial_rotating_owner_v3'
 POLICY = f'singletrack-{TRACK}-seed0'
+CPU_THREADS = max(1, os.cpu_count() or 1)
 KEYS = 'configs/exploratory/straight-owner-keys-v1.json'
 _sessions = WeakKeyDictionary()
 _issued_sessions = set()
@@ -80,7 +81,7 @@ def runtime_identity():
     from ..research.wp7_protocol import _cpu_model
     return dict(python=platform.python_version(), implementation=platform.python_implementation(),
         system=platform.system(), release=platform.release(), architecture=platform.machine(),
-        cpu=_cpu_model(), packages={p: metadata.version(p) for p in
+        cpu=_cpu_model(), logical_processors=CPU_THREADS, packages={p: metadata.version(p) for p in
             ('numpy', 'gymnasium', 'torch', 'stable-baselines3', 'PyYAML', 'cryptography')})
 
 
@@ -104,7 +105,7 @@ def prepare(root, output):
         policy=POLICY, source=protocol['source'], protocol_sha256=protocol['sha256'],
         source_files=protocol['source_files'], physics_sha256=protocol['physics_sha256'],
         runtime=runtime_identity(), owner_registry_sha256=sha256(path.read_bytes()).hexdigest(),
-        output_directory=str(output), limits=dict(learning_timesteps=32768, threads=4,
+        output_directory=str(output), limits=dict(learning_timesteps=32768, threads=CPU_THREADS,
             wall_seconds=3600, device='cpu', n_envs=1, checkpoint_steps=8192),
         seeds=dict(ppo=0, training_reset=1000, evaluation=list(range(10000, 10032))),
         ppo=protocol['policies'][0]['ppo'], evaluation=dict(episodes_per_policy=32,
@@ -132,7 +133,7 @@ def verify_local_owner_approval(envelope, *, permit_sha256, now=None):
     now = datetime.now(timezone.utc) if now is None else now
     _fields(envelope, 'approval_mode acknowledgement payload')
     if (envelope['approval_mode'] != 'local_owner_consent_v1'
-            or envelope['acknowledgement'] != 'APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU4_60M'):
+            or envelope['acknowledgement'] != 'APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU_ALL_60M'):
         raise ValueError('explicit scoped local owner approval required')
     payload = envelope['payload']
     _fields(payload, 'schema_version purpose permit_sha256 issued_at_utc expires_at_utc')
@@ -217,7 +218,8 @@ class Session:
         self.budget.check()
         authorize(self.root, self.permit, self.envelope)
         import torch
-        if torch.get_num_threads() > 4 or torch.get_num_interop_threads() > 4:
+        allowed_threads = self.permit['limits']['threads']
+        if torch.get_num_threads() > allowed_threads or torch.get_num_interop_threads() > allowed_threads:
             raise ValueError('exploratory CPU thread budget exceeded')
 
     def create_env(self, *, learning=False, episode=None):

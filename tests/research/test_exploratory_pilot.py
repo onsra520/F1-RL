@@ -28,13 +28,17 @@ def test_worker_claim_is_single_use(tmp_path):
 
 def test_timeout_marks_supervisor_and_keeps_checkpoint(tmp_path, monkeypatch):
     p = pilot()
-    permit = {'sha256': 'a'*64, 'output_directory': str(tmp_path/'run')}
+    permit = {'sha256': 'a'*64, 'output_directory': str(tmp_path/'run'),
+              'limits': {'threads': 32}}
     monkeypatch.setattr(p, 'authorize', lambda *a: {})
     def timeout(command, **kwargs):
         root = Path(permit['output_directory'])
         (root/'checkpoint-8192.zip').write_bytes(b'opaque fixture, not a PPO model')
         assert 0 < kwargs['timeout'] <= 3600
-        assert kwargs['env']['OMP_NUM_THREADS'] == '4'
+        assert kwargs['env']['OMP_NUM_THREADS'] == str(permit['limits']['threads'])
+        assert all(kwargs['env'][name] == str(permit['limits']['threads']) for name in
+            ('OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS',
+             'NUMEXPR_NUM_THREADS', 'VECLIB_MAXIMUM_THREADS'))
         assert kwargs['env']['CUDA_VISIBLE_DEVICES'] == ''
         raise subprocess.TimeoutExpired(command, kwargs['timeout'])
     monkeypatch.setattr(p.subprocess, 'run', timeout)
@@ -181,7 +185,8 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch):
     from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
     from dataclasses import asdict
     import torch
-    permit = dict(sha256='a'*64, output_directory=str(tmp_path/'run'), ppo=asdict(PPOConfig()))
+    permit = dict(sha256='a'*64, output_directory=str(tmp_path/'run'),
+                  limits={'threads': 32}, ppo=asdict(PPOConfig()))
     envelope = {'payload':{'expires_at_utc':'2099-01-01T00:00:00+00:00'}}
     output = p.reserve(permit)
     monkeypatch.setattr(p, 'authorize', lambda *a: {})

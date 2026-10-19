@@ -3,6 +3,8 @@ from copy import deepcopy
 from datetime import datetime, timezone
 import importlib
 import json
+import os
+from types import SimpleNamespace
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -69,7 +71,7 @@ def test_local_owner_consent_is_exactly_one_scoped_hour_without_signing_key():
         issued_at_utc='2026-10-19T01:00:00+00:00',
         expires_at_utc='2026-10-19T01:59:00+00:00')
     envelope = dict(approval_mode='local_owner_consent_v1',
-        acknowledgement='APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU4_60M', payload=payload)
+        acknowledgement='APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU_ALL_60M', payload=payload)
     now = datetime(2026, 10, 19, 1, 30, tzinfo=timezone.utc)
     assert p.verify_local_owner_approval(envelope, permit_sha256='a'*64, now=now) == payload
     with pytest.raises(ValueError):
@@ -83,6 +85,9 @@ def test_local_owner_consent_is_exactly_one_scoped_hour_without_signing_key():
         p.verify_local_owner_approval(bad, permit_sha256='a'*64, now=now)
     bad = deepcopy(envelope)
     bad['acknowledgement'] = 'yes'
+    with pytest.raises(ValueError):
+        p.verify_local_owner_approval(bad, permit_sha256='a'*64, now=now)
+    bad['acknowledgement'] = 'APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU4_60M'
     with pytest.raises(ValueError):
         p.verify_local_owner_approval(bad, permit_sha256='a'*64, now=now)
     bad = deepcopy(envelope)
@@ -100,7 +105,7 @@ def test_local_consent_branch_does_not_require_owner_key_registry(tmp_path, monk
         issued_at_utc='2020-01-01T00:00:00+00:00',
         expires_at_utc='2099-01-01T00:00:00+00:00')
     envelope = dict(approval_mode='local_owner_consent_v1',
-        acknowledgement='APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU4_60M', payload=payload)
+        acknowledgement='APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU_ALL_60M', payload=payload)
     # An approval spanning years is rejected, even when the digest matches.
     with pytest.raises(ValueError, match='one-hour'):
         p.authorize(tmp_path, permit, envelope)
@@ -216,7 +221,8 @@ def test_scoped_scalar_and_vector_guards_reauthenticate_revocation(tmp_path, mon
     path = tmp_path/p.KEYS
     path.parent.mkdir(parents=True)
     path.write_text(json.dumps(registry), encoding='utf-8')
-    permit = {'sha256':'a'*64, 'output_directory':str(tmp_path/'run')}
+    permit = {'sha256':'a'*64, 'output_directory':str(tmp_path/'run'),
+              'limits': {'threads': 32}}
     monkeypatch.setattr(p, 'prepare', lambda *a: permit)
     monkeypatch.setattr(torch, 'get_num_threads', lambda: 1)
     monkeypatch.setattr(torch, 'get_num_interop_threads', lambda: 1)
@@ -236,6 +242,26 @@ def test_scoped_scalar_and_vector_guards_reauthenticate_revocation(tmp_path, mon
     path.write_text(json.dumps(registry), encoding='utf-8')
     with pytest.raises(ValueError, match='revoked'): _validate_training_admission(env)
     with pytest.raises(ValueError, match='revoked'): _validate_training_admission(vector)
+
+
+def test_exploratory_threads_match_available_processors():
+    assert api().CPU_THREADS == max(1, os.cpu_count() or 1)
+
+
+def test_session_rejects_cpu_threads_above_permit(monkeypatch):
+    import torch
+    p = api()
+    session = object.__new__(p.Session)
+    session.budget = SimpleNamespace(check=lambda: None)
+    session.root, session.envelope = '.', {}
+    session.permit = {'limits': {'threads': 32}}
+    monkeypatch.setattr(p, 'authorize', lambda *a: None)
+    monkeypatch.setattr(torch, 'get_num_interop_threads', lambda: 1)
+    monkeypatch.setattr(torch, 'get_num_threads', lambda: 32)
+    session.validate()
+    monkeypatch.setattr(torch, 'get_num_threads', lambda: 33)
+    with pytest.raises(ValueError, match='thread budget exceeded'):
+        session.validate()
 
 
 def test_cuda_loaded_model_cannot_learn_in_exploratory_context(monkeypatch):
