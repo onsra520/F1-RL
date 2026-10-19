@@ -71,7 +71,7 @@ def test_local_owner_consent_is_exactly_one_scoped_hour_without_signing_key():
         issued_at_utc='2026-10-19T01:00:00+00:00',
         expires_at_utc='2026-10-19T01:59:00+00:00')
     envelope = dict(approval_mode='local_owner_consent_v1',
-        acknowledgement='APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU_ALL_60M', payload=payload)
+        acknowledgement='APPROVE_ONE_LOCAL_EXPLORATORY_RUN', payload=payload)
     now = datetime(2026, 10, 19, 1, 30, tzinfo=timezone.utc)
     assert p.verify_local_owner_approval(envelope, permit_sha256='a'*64, now=now) == payload
     with pytest.raises(ValueError):
@@ -98,14 +98,15 @@ def test_local_owner_consent_is_exactly_one_scoped_hour_without_signing_key():
 
 def test_local_consent_branch_does_not_require_owner_key_registry(tmp_path, monkeypatch):
     p = api()
-    permit = {'sha256': 'a'*64, 'output_directory':str(tmp_path/'run')}
+    permit = {'sha256': 'a'*64, 'output_directory':str(tmp_path/'run'),
+              'limits': {'wall_seconds': 3600}}
     monkeypatch.setattr(p, 'validate_permit', lambda *a: None)
     payload = dict(schema_version='straight_exploratory_execution_v1',
         purpose='execute_exploratory_only', permit_sha256='a'*64,
         issued_at_utc='2020-01-01T00:00:00+00:00',
         expires_at_utc='2099-01-01T00:00:00+00:00')
     envelope = dict(approval_mode='local_owner_consent_v1',
-        acknowledgement='APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU_ALL_60M', payload=payload)
+        acknowledgement='APPROVE_ONE_LOCAL_EXPLORATORY_RUN', payload=payload)
     # An approval spanning years is rejected, even when the digest matches.
     with pytest.raises(ValueError, match='one-hour'):
         p.authorize(tmp_path, permit, envelope)
@@ -121,7 +122,7 @@ def test_budget_stops_before_excess_step():
 
 
 def test_wall_budget_applies_to_baselines_too():
-    budget = api().Budget(deadline=10., clock=lambda: 10.)
+    budget = api().Budget(deadline=10., learning_limit=2, clock=lambda: 10.)
     with pytest.raises(api().PilotStopped, match='deadline'): budget.before_step(learning=False)
 
 
@@ -199,7 +200,7 @@ def test_session_requires_claimed_execution_not_just_a_signed_grant(tmp_path, mo
     monkeypatch.setattr(api(), 'authorize', lambda *a: {})
     permit = {'sha256':'a'*64, 'output_directory':str(tmp_path/'run')}
     with pytest.raises((ValueError, OSError)):
-        api().Session(tmp_path, permit, {}, api().Budget(deadline=1e20))
+        api().Session(tmp_path, permit, {}, api().Budget(deadline=1e20, learning_limit=32768))
 
 
 def test_scoped_scalar_and_vector_guards_reauthenticate_revocation(tmp_path, monkeypatch, signed):
@@ -222,13 +223,14 @@ def test_scoped_scalar_and_vector_guards_reauthenticate_revocation(tmp_path, mon
     path.parent.mkdir(parents=True)
     path.write_text(json.dumps(registry), encoding='utf-8')
     permit = {'sha256':'a'*64, 'output_directory':str(tmp_path/'run'),
-              'limits': {'threads': 32}}
+              'limits': {'threads': 32, 'wall_seconds': 3600, 'learning_timesteps': 32768}}
     monkeypatch.setattr(p, 'prepare', lambda *a: permit)
     monkeypatch.setattr(torch, 'get_num_threads', lambda: 1)
     monkeypatch.setattr(torch, 'get_num_interop_threads', lambda: 1)
     reserve(permit)
     claim(permit)
-    session = p.Session(tmp_path, permit, envelope, p.Budget(deadline=time.monotonic()+60))
+    session = p.Session(tmp_path, permit, envelope,
+                        p.Budget(deadline=time.monotonic()+60, learning_limit=32768))
     env = object.__new__(F1RLEnv)
     env._requires_scientific_admission = True
     env.observation_space = Box(-1., 1., shape=(1,), dtype=np.float32)
@@ -245,7 +247,10 @@ def test_scoped_scalar_and_vector_guards_reauthenticate_revocation(tmp_path, mon
 
 
 def test_exploratory_threads_match_available_processors():
-    assert api().CPU_THREADS == max(1, os.cpu_count() or 1)
+    from f1rl.exploratory.config import resolve
+    from pathlib import Path
+    config = resolve(Path(__file__).resolve().parents[2])
+    assert config['limits']['threads'] == max(1, os.cpu_count() or 1)
 
 
 def test_session_rejects_cpu_threads_above_permit(monkeypatch):

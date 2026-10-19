@@ -17,11 +17,10 @@ from weakref import WeakKeyDictionary
 from ..research.wp7_protocol import digest
 from ..research.wp7_run_manifest import read_json
 from ..research.wp7_trusted_reviews import _fields, _hex, _utc
+from .config import resolve, TRACK, PROFILE
 
-TRACK = 'straight-sprint-v1'
-PROFILE = 'spatial_rotating_owner_v3'
 POLICY = f'singletrack-{TRACK}-seed0'
-CPU_THREADS = max(1, os.cpu_count() or 1)
+LOCAL_ACKNOWLEDGEMENT = 'APPROVE_ONE_LOCAL_EXPLORATORY_RUN'
 KEYS = 'configs/exploratory/straight-owner-keys-v1.json'
 _sessions = WeakKeyDictionary()
 _issued_sessions = set()
@@ -81,7 +80,7 @@ def runtime_identity():
     from ..research.wp7_protocol import _cpu_model
     return dict(python=platform.python_version(), implementation=platform.python_implementation(),
         system=platform.system(), release=platform.release(), architecture=platform.machine(),
-        cpu=_cpu_model(), logical_processors=CPU_THREADS, packages={p: metadata.version(p) for p in
+        cpu=_cpu_model(), logical_processors=os.cpu_count(), packages={p: metadata.version(p) for p in
             ('numpy', 'gymnasium', 'torch', 'stable-baselines3', 'PyYAML', 'cryptography')})
 
 
@@ -91,7 +90,8 @@ def prepare(root, output):
     root, output = Path(root).resolve(strict=True), Path(output).resolve()
     if output.is_relative_to(root):
         raise ValueError('pilot output must be external to source checkout')
-    protocol = build_protocol(root, profile=PROFILE)
+    settings = resolve(root)
+    protocol = build_protocol(root, profile=settings['profile'])
     if protocol['source']['dirty']:
         raise ValueError('clean committed source required for exploratory preparation')
     path = root / KEYS
@@ -101,16 +101,16 @@ def prepare(root, output):
     if set(registry) != {'schema_version', 'owners'} or registry['schema_version'] != 'straight_exploratory_owner_keys_v1':
         raise ValueError('invalid owner registry')
     doc = dict(schema_version='straight_exploratory_permit_v1', state='prepared_not_authorized',
-        purpose='exploratory_only_not_scientific_evidence', track=TRACK, profile=PROFILE,
-        policy=POLICY, source=protocol['source'], protocol_sha256=protocol['sha256'],
+        purpose='exploratory_only_not_scientific_evidence', track=settings['track'],
+        profile=settings['profile'], policy=settings['policy'],
+        config_sha256=settings['config_sha256'], source=protocol['source'],
+        protocol_sha256=protocol['sha256'],
         source_files=protocol['source_files'], physics_sha256=protocol['physics_sha256'],
         runtime=runtime_identity(), owner_registry_sha256=sha256(path.read_bytes()).hexdigest(),
-        output_directory=str(output), limits=dict(learning_timesteps=32768, threads=CPU_THREADS,
-            wall_seconds=3600, device='cpu', n_envs=1, checkpoint_steps=8192),
-        seeds=dict(ppo=0, training_reset=1000, evaluation=list(range(10000, 10032))),
-        ppo=protocol['policies'][0]['ppo'], evaluation=dict(episodes_per_policy=32,
-            policies=['random', 'untrained', 'trained_final'], actions='deterministic_for_PPO',
-            selection='final_only_intermediate_diagnostic', replay='first_trained_episode'),
+        output_directory=str(output), limits=settings['limits'], seeds=settings['seeds'],
+        ppo=settings['ppo'], evaluation=settings['evaluation'],
+        execution=settings['execution'], logging=settings['logging'],
+        artifacts_root=settings['artifacts_root'],
         scientific_permissions_unchanged=True, training_authorized=False,
         exploratory_execution_authorized=False)
     return {**doc, 'sha256': digest(doc)}
@@ -122,7 +122,7 @@ def validate_permit(root, permit):
         raise ValueError('exploratory permit/source/runtime/scope drift')
 
 
-def verify_local_owner_approval(envelope, *, permit_sha256, now=None):
+def verify_local_owner_approval(envelope, *, permit_sha256, wall_seconds=3600, now=None):
     """Local-only owner consent: auditable scope, not a cryptographic identity claim.
 
     A person approving an exploratory run on their own Windows machine can use
@@ -133,7 +133,7 @@ def verify_local_owner_approval(envelope, *, permit_sha256, now=None):
     now = datetime.now(timezone.utc) if now is None else now
     _fields(envelope, 'approval_mode acknowledgement payload')
     if (envelope['approval_mode'] != 'local_owner_consent_v1'
-            or envelope['acknowledgement'] != 'APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU_ALL_60M'):
+            or envelope['acknowledgement'] != LOCAL_ACKNOWLEDGEMENT):
         raise ValueError('explicit scoped local owner approval required')
     payload = envelope['payload']
     _fields(payload, 'schema_version purpose permit_sha256 issued_at_utc expires_at_utc')
@@ -142,7 +142,7 @@ def verify_local_owner_approval(envelope, *, permit_sha256, now=None):
             or payload['permit_sha256'] != permit_sha256):
         raise ValueError('local owner approval scope or permit differs')
     issued, expires = _utc(payload['issued_at_utc']), _utc(payload['expires_at_utc'])
-    if not issued <= now < expires or (expires-issued).total_seconds() > 3600:
+    if not issued <= now < expires or (expires-issued).total_seconds() > wall_seconds:
         raise ValueError('local owner approval outside its one-hour window')
     return dict(payload)
 
@@ -150,7 +150,8 @@ def verify_local_owner_approval(envelope, *, permit_sha256, now=None):
 def authorize(root, permit, envelope):
     validate_permit(root, permit)
     if isinstance(envelope, dict) and envelope.get('approval_mode') == 'local_owner_consent_v1':
-        return verify_local_owner_approval(envelope, permit_sha256=permit['sha256'])
+        return verify_local_owner_approval(envelope, permit_sha256=permit['sha256'],
+                                           wall_seconds=permit['limits']['wall_seconds'])
     return verify_authorization(envelope, read_json(Path(root)/KEYS), permit_sha256=permit['sha256'])
 
 
@@ -161,7 +162,7 @@ class PilotStopped(RuntimeError):
 @dataclass
 class Budget:
     deadline: float
-    learning_limit: int = 32768
+    learning_limit: int
     clock: object = time.monotonic
     learning_steps: int = 0
 
@@ -203,11 +204,13 @@ class Session:
         claim = read_json(output/'worker.claim')
         lease = read_json(output/'lease.json')
         identity = (os.getpid(), str(output), permit['sha256'])
-        remaining = lease['started_epoch']+3600-time.time()
+        limits = permit['limits']
+        remaining = lease['started_epoch']+limits['wall_seconds']-time.time()
         if (claim != dict(permit_sha256=permit['sha256'], pid=os.getpid())
-                or lease['permit_sha256'] != permit['sha256'] or not 0 < remaining <= 3600
+                or lease['permit_sha256'] != permit['sha256']
+                or not 0 < remaining <= limits['wall_seconds']
                 or identity in _issued_sessions or type(budget.learning_limit) is not int
-                or budget.learning_limit != 32768 or budget.learning_steps != 0
+                or budget.learning_limit != limits['learning_timesteps'] or budget.learning_steps != 0
                 or budget.clock is not time.monotonic
                 or not time.monotonic() < budget.deadline <= time.monotonic()+remaining):
             raise ValueError('claimed one-use execution and bounded fresh budget required')
@@ -228,14 +231,17 @@ class Session:
         self.validate()
         if type(learning) is not bool:
             raise ValueError('explicit learning/inference environment purpose required')
-        protocol = build_protocol(self.root, profile=PROFILE)
-        scenarios, _ = prepare_training_scenarios(self.root, protocol, POLICY)
+        protocol = build_protocol(self.root, profile=self.permit['profile'])
+        scenarios, _ = prepare_training_scenarios(self.root, protocol, self.permit['policy'])
         factory = scenarios.scenarios[0].factory
         if tuple(s.track_id for s in scenarios.scenarios) != (TRACK,):
             raise ValueError('Straight-only scope required')
-        if not learning:
-            if type(episode) is not int or not 0 <= episode < 32:
-                raise ValueError('fixed evaluation episode roster required')
+        if learning:
+            factory = replace(factory, reset_config=replace(factory.reset_config,
+                seed=self.permit['seeds']['training_reset']))
+        else:
+            if type(episode) is not int or not 0 <= episode < self.permit['evaluation']['episodes_per_policy']:
+                raise ValueError('configured evaluation episode roster required')
             factory = replace(factory, reset_config=replace(factory.reset_config,
                 seed=self.permit['seeds']['evaluation'][episode]))
         env = factory.create()

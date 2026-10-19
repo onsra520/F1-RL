@@ -122,7 +122,10 @@ class TrainingRunConfig:
 
         if not isinstance(document, dict):
             raise ValueError("configuration root must be a mapping")
-        if set(document) != {"training", "ppo", "vector_env"}:
+        if document.get("schema_version") == 2:
+            if set(document) != {"schema_version", "training", "ppo", "vector_env", "exploratory"}:
+                raise ValueError("invalid schema v2 runtime configuration sections")
+        elif set(document) != {"training", "ppo", "vector_env"}:
             raise ValueError("configuration root must contain exactly training, ppo, and vector_env")
         raw_training: Any = document["training"]
         raw_ppo: Any = document["ppo"]

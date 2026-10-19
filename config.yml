@@ -1,9 +1,13 @@
+schema_version: 2
+
+# Existing general training profile; retained for WP6/WP7 compatibility.
 training:
   total_timesteps: 50000
   checkpoint_every_steps: 25000
   sampling_seed: 0
   artifacts_root: artifacts/runs
 
+# Canonical PPO hyperparameters. Exploratory uses the same source of truth.
 ppo:
   learning_rate: 0.0003
   n_steps: 256
@@ -22,3 +26,38 @@ vector_env:
   n_envs: 8
   backend: dummy
   start_method: spawn
+
+# Bounded local pilot; these values NEVER grant scientific authorization.
+exploratory:
+  experiment:
+    mode: exploratory
+    track: straight-sprint-v1
+    physics_profile: spatial_rotating_owner_v3
+  resources:
+    cpu:
+      threads: auto
+      interop_threads: 1
+      blas_threads: auto
+  training:
+    total_timesteps: 32768
+    checkpoint_every_steps: 8192
+    sampling_seed: 1000
+    artifacts_root: artifacts/runs
+  vector_env:
+    n_envs: 1
+    backend: dummy
+    start_method: spawn
+  evaluation:
+    episodes_per_policy: 32
+    seed_start: 10000
+    policies: [random, untrained, trained_final]
+    deterministic: true
+    replay_episode: 0
+  execution:
+    wall_seconds: 3600
+    schedule: baseline_first
+    preserve_checkpoints_on_failure: true
+  logging:
+    progress_every_steps: 256
+    save_metrics: true
+    save_episode_results: true

@@ -38,9 +38,9 @@ def claim(permit):
     lease = read_json(output/'lease.json')
     if (set(lease) != {'permit_sha256', 'started_epoch'} or lease['permit_sha256'] != permit['sha256']
             or type(lease['started_epoch']) not in (int, float)
-            or not 0 <= time.time()-lease['started_epoch'] < 3600):
+            or not 0 <= time.time()-lease['started_epoch'] < permit['limits']['wall_seconds']):
         raise ValueError('invalid, future or expired execution lease')
-    deadline = time.monotonic()+lease['started_epoch']+3600-time.time()-.05
+    deadline = time.monotonic()+lease['started_epoch']+permit['limits']['wall_seconds']-time.time()-.05
     with (output/'worker.claim').open('x', encoding='utf-8') as stream:
         json.dump(dict(permit_sha256=permit['sha256'], pid=os.getpid()), stream)
     return deadline
@@ -50,23 +50,25 @@ def supervise(root, permit, envelope):
     """Parent enforces a hard process deadline including all baselines/evaluations."""
     started = time.monotonic()
     authorize(root, permit, envelope)
-    if time.monotonic()-started >= 3600:
+    wall_seconds = permit['limits']['wall_seconds']
+    if time.monotonic()-started >= wall_seconds:
         raise PilotStopped('pilot deadline reached during authorization')
     output = reserve(permit)
     write_json(output/'permit.json', permit)
     write_json(output/'authorization.json', envelope)
     write_json(output/'supervisor.json', dict(status='running', training_authorized=False))
     thread_limit = str(permit['limits']['threads'])
-    env = dict(os.environ, CUDA_VISIBLE_DEVICES='', OMP_NUM_THREADS=thread_limit, MKL_NUM_THREADS=thread_limit,
-        OPENBLAS_NUM_THREADS=thread_limit, NUMEXPR_NUM_THREADS=thread_limit, VECLIB_MAXIMUM_THREADS=thread_limit,
+    blas_limit = str(permit['limits']['blas_threads'])
+    env = dict(os.environ, CUDA_VISIBLE_DEVICES='', OMP_NUM_THREADS=thread_limit, MKL_NUM_THREADS=blas_limit,
+        OPENBLAS_NUM_THREADS=blas_limit, NUMEXPR_NUM_THREADS=blas_limit, VECLIB_MAXIMUM_THREADS=blas_limit,
         PYTHONPATH=str(Path(root).resolve()), PYTHONDONTWRITEBYTECODE='1')
     command = [sys.executable, '-B', str(Path(root)/'scripts/exploratory_ppo.py'),
         '_worker', '--permit', str(output/'permit.json'), '--authorization', str(output/'authorization.json')]
     try:
         with (output/'worker.stdout.log').open('w', encoding='utf-8') as stdout, (output/'worker.stderr.log').open('w', encoding='utf-8') as stderr:
-            remaining = 3600-(time.monotonic()-started)
+            remaining = wall_seconds-(time.monotonic()-started)
             if remaining <= 0:
-                raise subprocess.TimeoutExpired(command, 3600)
+                raise subprocess.TimeoutExpired(command, wall_seconds)
             result = subprocess.run(command, cwd=root, env=env, stdout=stdout, stderr=stderr,
                 timeout=remaining, check=False)
         code = result.returncode
@@ -85,7 +87,7 @@ def supervise(root, permit, envelope):
 def evaluate_episode(session, model, name, episode):
     import numpy as np
     env = session.create_env(learning=False, episode=episode)
-    seed = 10000+episode
+    seed = session.permit['seeds']['evaluation'][episode]
     rng = np.random.default_rng(seed)
     trace = sha256()
     total, collisions, off_route, steps = 0., 0, 0, 0
@@ -125,7 +127,7 @@ def evaluate_episode(session, model, name, episode):
 
 def evaluate_roster(session, model, name, output):
     rows = []
-    for episode in range(32):
+    for episode in range(session.permit['evaluation']['episodes_per_policy']):
         row = evaluate_episode(session, model, name, episode)
         append_json(Path(output)/'evaluation.jsonl', row)
         if row.get('valid_sample') is False:
@@ -158,12 +160,12 @@ def worker(root, permit, envelope):
     authorize(root, permit, envelope)
     deadline = claim(permit)
     expiry_remaining = (_utc(envelope['payload']['expires_at_utc'])-datetime.now(timezone.utc)).total_seconds()
-    budget = Budget(deadline=min(deadline, time.monotonic()+expiry_remaining-.05))
+    budget = Budget(deadline=min(deadline, time.monotonic()+expiry_remaining-.05),
+                    learning_limit=permit['limits']['learning_timesteps'])
     import torch
     torch.set_num_threads(permit['limits']['threads'])
-    torch.set_num_interop_threads(1)
+    torch.set_num_interop_threads(permit['limits']['interop_threads'])
     torch.use_deterministic_algorithms(True)
-    from dataclasses import replace
     from stable_baselines3.common.logger import configure
     from ..learning.algorithms.ppo import PPOConfig, PPOModel
 
@@ -185,7 +187,7 @@ def worker(root, permit, envelope):
     try:
         session = Session(root, permit, envelope, budget, episode_observer=episode_row)
         env = session.create_env(learning=True)
-        config = replace(PPOConfig(**permit['ppo']), device='cpu', seed=0)
+        config = PPOConfig(**permit['ppo'])
         model = PPOModel.create(env, config)
         model._model.set_logger(configure(str(output/'learning'), ['csv']))
         before = weights_sha256(model)
@@ -208,19 +210,19 @@ def worker(root, permit, envelope):
 
         def progress(step):
             budget.check()
-            if step % 256 == 0:
+            if step % permit['logging']['progress_every_steps'] == 0:
                 append_json(output/'learning-steps.jsonl', dict(step=step,
                     ppo_epoch_updates=model._model._n_updates, optimizer_steps=optimizer_steps))
                 state('running')
-            if step % 8192 == 0:
+            if step % permit['limits']['checkpoint_steps'] == 0:
                 session.validate()
                 save_checkpoint(model, output, f'checkpoint-{step}', model._model._n_updates, optimizer_steps)
 
-        model.learn(32768, progress_hook=progress)
+        model.learn(permit['limits']['learning_timesteps'], progress_hook=progress)
         hook.remove()
         hook = None
         after = weights_sha256(model)
-        if model.num_timesteps != 32768 or optimizer_steps <= 0 or before == after:
+        if model.num_timesteps != permit['limits']['learning_timesteps'] or optimizer_steps <= 0 or before == after:
             raise RuntimeError('genuine learning evidence missing')
         final = save_checkpoint(model, output, 'trained-final', model._model._n_updates, optimizer_steps)
         phase = 'trained_evaluation'
@@ -228,9 +230,10 @@ def worker(root, permit, envelope):
         loaded = PPOModel.load(final, device='cpu')
         trained_rows = evaluate_roster(session, loaded, 'trained_final', output)
         phase = 'replay'
-        replay = evaluate_episode(session, loaded, 'trained_final', 0)
-        write_json(output/'replay.json', dict(equal=replay == trained_rows[0], episode=replay))
-        if replay != trained_rows[0]:
+        replay_index = permit['evaluation']['replay_episode']
+        replay = evaluate_episode(session, loaded, 'trained_final', replay_index)
+        write_json(output/'replay.json', dict(equal=replay == trained_rows[replay_index], episode=replay))
+        if replay != trained_rows[replay_index]:
             raise RuntimeError('deterministic replay mismatch')
         write_json(output/'comparison.json', dict(random=random_rows, untrained=untrained_rows,
             trained_final=trained_rows, initial_weights_sha256=before, final_weights_sha256=after,

@@ -13,14 +13,23 @@ def pilot():
     return importlib.import_module('f1rl.exploratory.pilot')
 
 
+def fake_session(factory=None, count=32):
+    return SimpleNamespace(
+        create_env=factory or (lambda **kw: None),
+        permit={'seeds': {'evaluation': list(range(10000, 10000+count))},
+                'evaluation': {'episodes_per_policy': count}})
+
+
 def test_run_directory_cannot_be_reused(tmp_path):
-    permit = {'sha256': 'a'*64, 'output_directory': str(tmp_path/'run')}
+    permit = {'sha256': 'a'*64, 'output_directory': str(tmp_path/'run'),
+              'limits': {'wall_seconds': 3600}}
     pilot().reserve(permit)
     with pytest.raises(FileExistsError): pilot().reserve(permit)
 
 
 def test_worker_claim_is_single_use(tmp_path):
-    permit = {'sha256': 'a'*64, 'output_directory': str(tmp_path/'run')}
+    permit = {'sha256': 'a'*64, 'output_directory': str(tmp_path/'run'),
+              'limits': {'wall_seconds': 3600}}
     pilot().reserve(permit)
     pilot().claim(permit)
     with pytest.raises(FileExistsError): pilot().claim(permit)
@@ -29,14 +38,14 @@ def test_worker_claim_is_single_use(tmp_path):
 def test_timeout_marks_supervisor_and_keeps_checkpoint(tmp_path, monkeypatch):
     p = pilot()
     permit = {'sha256': 'a'*64, 'output_directory': str(tmp_path/'run'),
-              'limits': {'threads': 32}}
+              'limits': {'threads': 32, 'blas_threads': 16, 'wall_seconds': 3600}}
     monkeypatch.setattr(p, 'authorize', lambda *a: {})
     def timeout(command, **kwargs):
         root = Path(permit['output_directory'])
         (root/'checkpoint-8192.zip').write_bytes(b'opaque fixture, not a PPO model')
         assert 0 < kwargs['timeout'] <= 3600
         assert kwargs['env']['OMP_NUM_THREADS'] == str(permit['limits']['threads'])
-        assert all(kwargs['env'][name] == str(permit['limits']['threads']) for name in
+        assert all(kwargs['env'][name] == str(permit['limits']['blas_threads']) for name in
             ('OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS',
              'NUMEXPR_NUM_THREADS', 'VECLIB_MAXIMUM_THREADS'))
         assert kwargs['env']['CUDA_VISIBLE_DEVICES'] == ''
@@ -73,7 +82,7 @@ def test_evaluation_records_autonomous_failures_and_replay(monkeypatch, tmp_path
                 'telemetry': {'obstacle_hit_ids':('wall',)},
                 'route_highwater_meters':25., 'elapsed_time':0.02}
         def close(self): pass
-    session = SimpleNamespace(create_env=lambda **kw: Env())
+    session = fake_session(lambda **kw: Env())
     model = SimpleNamespace(predict=lambda obs, deterministic: np.array([0., 0.5, 0.]))
     first = p.evaluate_episode(session, model, 'trained_final', 0)
     second = p.evaluate_episode(session, model, 'trained_final', 0)
@@ -109,7 +118,7 @@ def test_evaluation_preserves_order_and_separates_completed_from_observed_crossi
             return np.array([1.], dtype=np.float32), 1., terminated, False, info
         def close(self): pass
     env = Env()
-    session = SimpleNamespace(create_env=lambda **kw: env)
+    session = fake_session(lambda **kw: env)
     model = SimpleNamespace(predict=lambda obs, deterministic: np.array([0., 0.5, 0.]))
 
     row = p.evaluate_episode(session, model, 'trained_final', 0)
@@ -130,7 +139,7 @@ def test_incomplete_episode_keeps_crossings_without_promoting_them_to_completed(
         def reset(self, seed): return np.array([0.], dtype=np.float32), {}
         def step(self, action): return np.array([1.], dtype=np.float32), 1., False, True, info
         def close(self): pass
-    session = SimpleNamespace(create_env=lambda **kw: Env())
+    session = fake_session(lambda **kw: Env())
     model = SimpleNamespace(predict=lambda obs, deterministic: np.array([0., 0.5, 0.]))
 
     row = p.evaluate_episode(session, model, 'trained_final', 0)
@@ -158,7 +167,7 @@ def test_aborted_episode_persists_prior_crossings_as_jsonl_before_rejection(tmp_
             raise RuntimeError('aborted evaluation')
         def close(self): pass
     env = Env()
-    session = SimpleNamespace(create_env=lambda **kw: env)
+    session = fake_session(lambda **kw: env)
     model = SimpleNamespace(predict=lambda obs, deterministic: np.array([0., 0.5, 0.]))
 
     with pytest.raises(RuntimeError, match='invalid/aborted evaluation episode'):
@@ -175,9 +184,9 @@ def test_pilot_phases_do_not_select_best_checkpoint(tmp_path, monkeypatch):
     calls = []
     monkeypatch.setattr(p, 'evaluate_episode', lambda session, model, name, ep: calls.append((name, ep)) or {
         'success':False, 'progress':0., 'return':0., 'trace_sha256':'a'*64})
-    rows = p.evaluate_roster(None, None, 'untrained', tmp_path)
-    assert len(rows) == 32
-    assert calls == [('untrained', i) for i in range(32)]
+    rows = p.evaluate_roster(fake_session(count=7), None, 'untrained', tmp_path)
+    assert len(rows) == 7
+    assert calls == [('untrained', i) for i in range(7)]
 
 
 def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch):
@@ -186,7 +195,11 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch):
     from dataclasses import asdict
     import torch
     permit = dict(sha256='a'*64, output_directory=str(tmp_path/'run'),
-                  limits={'threads': 32}, ppo=asdict(PPOConfig()))
+                  limits={'threads': 32, 'interop_threads': 1, 'learning_timesteps': 32768,
+                          'checkpoint_steps': 8192, 'wall_seconds': 3600},
+                  logging={'progress_every_steps': 256},
+                  evaluation={'episodes_per_policy': 32, 'replay_episode': 0},
+                  ppo=asdict(PPOConfig()))
     envelope = {'payload':{'expires_at_utc':'2099-01-01T00:00:00+00:00'}}
     output = p.reserve(permit)
     monkeypatch.setattr(p, 'authorize', lambda *a: {})
@@ -216,7 +229,7 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch):
     monkeypatch.setattr(p, 'save_checkpoint', save)
     env = SimpleNamespace(close=lambda: None)
     monkeypatch.setattr(p, 'Session', lambda *a, **kw: SimpleNamespace(
-        create_env=lambda **kw: env, validate=lambda: None))
+        create_env=lambda **kw: env, validate=lambda: None, permit=permit))
     monkeypatch.setattr(p, 'evaluate_episode', lambda session, model, name, ep:
         {'success':False, 'progress':0., 'policy':name, 'episode':ep})
     assert p.worker(tmp_path, permit, envelope) == 0
@@ -229,7 +242,8 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch):
 
 def test_expired_lease_cannot_be_claimed(tmp_path):
     p = pilot()
-    permit = {'sha256':'a'*64, 'output_directory':str(tmp_path/'run')}
+    permit = {'sha256':'a'*64, 'output_directory':str(tmp_path/'run'),
+              'limits': {'wall_seconds': 3600}}
     output = p.reserve(permit)
     p.write_json(output/'lease.json', {'permit_sha256':'a'*64, 'started_epoch':0.})
     with pytest.raises(ValueError): p.claim(permit)
@@ -238,7 +252,8 @@ def test_expired_lease_cannot_be_claimed(tmp_path):
 
 def test_supervisor_does_not_spawn_after_validation_consumes_wall_budget(tmp_path, monkeypatch):
     p = pilot()
-    permit = {'sha256':'a'*64, 'output_directory':str(tmp_path/'run')}
+    permit = {'sha256':'a'*64, 'output_directory':str(tmp_path/'run'),
+              'limits': {'wall_seconds': 3600}}
     moments = iter([0., 3601., 3601.])
     monkeypatch.setattr(p.time, 'monotonic', lambda: next(moments))
     monkeypatch.setattr(p, 'authorize', lambda *a: {})
@@ -257,7 +272,7 @@ def test_invalid_episode_is_preserved_and_never_redrawn(tmp_path, monkeypatch):
         return row
     monkeypatch.setattr(p, 'evaluate_episode', invalid)
     with pytest.raises(RuntimeError, match='invalid'):
-        p.evaluate_roster(None, None, 'untrained', tmp_path)
+        p.evaluate_roster(fake_session(), None, 'untrained', tmp_path)
     assert calls == [0]
     assert json.loads((tmp_path/'evaluation.jsonl').read_text()) == row
 
@@ -265,11 +280,12 @@ def test_invalid_episode_is_preserved_and_never_redrawn(tmp_path, monkeypatch):
 def test_claim_returns_fixed_monotonic_deadline_not_stale_duration(tmp_path, monkeypatch):
     p = pilot()
     monkeypatch.setattr(p, 'time', SimpleNamespace(time=lambda:200., monotonic=lambda:100.))
-    permit = {'sha256':'a'*64, 'output_directory':str(tmp_path/'run')}
+    permit = {'sha256':'a'*64, 'output_directory':str(tmp_path/'run'),
+              'limits': {'wall_seconds': 3600}}
     p.reserve(permit)
     deadline = p.claim(permit)
     assert 3699. <= deadline <= 3700.
     # Later initialization consumes time; it must not extend the lease.
     later = 120.
-    budget = p.Budget(deadline=deadline, clock=lambda:later)
+    budget = p.Budget(deadline=deadline, learning_limit=32768, clock=lambda:later)
     assert 3579. <= budget.deadline-budget.clock() <= 3580.
