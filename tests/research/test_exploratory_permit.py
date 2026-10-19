@@ -73,27 +73,27 @@ def test_local_owner_consent_is_exactly_one_scoped_hour_without_signing_key():
     envelope = dict(approval_mode='local_owner_consent_v1',
         acknowledgement='APPROVE_ONE_LOCAL_EXPLORATORY_RUN', payload=payload)
     now = datetime(2026, 10, 19, 1, 30, tzinfo=timezone.utc)
-    assert p.verify_local_owner_approval(envelope, permit_sha256='a'*64, now=now) == payload
+    assert p.verify_local_owner_approval(envelope, permit_sha256='a'*64, wall_seconds=3600, now=now) == payload
     with pytest.raises(ValueError):
-        p.verify_local_owner_approval(envelope, permit_sha256='b'*64, now=now)
+        p.verify_local_owner_approval(envelope, permit_sha256='b'*64, wall_seconds=3600, now=now)
     with pytest.raises(ValueError):
-        p.verify_local_owner_approval(envelope, permit_sha256='a'*64,
+        p.verify_local_owner_approval(envelope, permit_sha256='a'*64, wall_seconds=3600,
             now=datetime(2026, 10, 19, 2, tzinfo=timezone.utc))
     bad = deepcopy(envelope)
     bad['payload']['purpose'] = 'scientific_run_review'
     with pytest.raises(ValueError):
-        p.verify_local_owner_approval(bad, permit_sha256='a'*64, now=now)
+        p.verify_local_owner_approval(bad, permit_sha256='a'*64, wall_seconds=3600, now=now)
     bad = deepcopy(envelope)
     bad['acknowledgement'] = 'yes'
     with pytest.raises(ValueError):
-        p.verify_local_owner_approval(bad, permit_sha256='a'*64, now=now)
+        p.verify_local_owner_approval(bad, permit_sha256='a'*64, wall_seconds=3600, now=now)
     bad['acknowledgement'] = 'APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU4_60M'
     with pytest.raises(ValueError):
-        p.verify_local_owner_approval(bad, permit_sha256='a'*64, now=now)
+        p.verify_local_owner_approval(bad, permit_sha256='a'*64, wall_seconds=3600, now=now)
     bad = deepcopy(envelope)
     bad['payload']['expires_at_utc'] = '2026-10-19T02:01:00+00:00'
     with pytest.raises(ValueError):
-        p.verify_local_owner_approval(bad, permit_sha256='a'*64, now=now)
+        p.verify_local_owner_approval(bad, permit_sha256='a'*64, wall_seconds=3600, now=now)
 
 
 def test_local_consent_branch_does_not_require_owner_key_registry(tmp_path, monkeypatch):
@@ -149,11 +149,11 @@ def test_strict_json_rejects_duplicates(tmp_path):
     with pytest.raises(ValueError): api().read_json(p)
 
 
-@pytest.mark.parametrize('change', ['profile', 'track', 'source', 'runtime', 'limits', 'boolean_integer'])
+@pytest.mark.parametrize('change', ['profile', 'track', 'source', 'runtime', 'limits', 'config_sha256', 'boolean_integer'])
 def test_permit_drift_is_rejected(tmp_path, monkeypatch, change):
     p = api()
     expected = dict(sha256='a'*64, output_directory=str(tmp_path/'run'),
-        profile=p.PROFILE, track=p.TRACK, source={'commit_sha':'a'*40},
+        profile=p.PROFILE, track=p.TRACK, config_sha256='f'*64, source={'commit_sha':'a'*40},
         runtime={'python':'3.12'}, limits={'n_envs':1, 'learning_timesteps':32768})
     actual = deepcopy(expected)
     if change == 'profile': actual['profile'] = 'legacy_v1'
@@ -161,6 +161,7 @@ def test_permit_drift_is_rejected(tmp_path, monkeypatch, change):
     elif change == 'source': actual['source']['commit_sha'] = 'b'*40
     elif change == 'runtime': actual['runtime']['python'] = '3.11'
     elif change == 'limits': actual['limits']['learning_timesteps'] += 1
+    elif change == 'config_sha256': actual['config_sha256'] = 'b'*64
     elif change == 'boolean_integer': actual['limits']['n_envs'] = True
     monkeypatch.setattr(p, 'prepare', lambda *args: expected)
     with pytest.raises(ValueError): p.validate_permit(tmp_path, actual)

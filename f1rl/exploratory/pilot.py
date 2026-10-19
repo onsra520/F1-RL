@@ -227,7 +227,7 @@ def worker(root, permit, envelope):
         final = save_checkpoint(model, output, 'trained-final', model._model._n_updates, optimizer_steps)
         phase = 'trained_evaluation'
         state('running')
-        loaded = PPOModel.load(final, device='cpu')
+        loaded = PPOModel.load(final, device=permit['limits']['device'])
         trained_rows = evaluate_roster(session, loaded, 'trained_final', output)
         phase = 'replay'
         replay_index = permit['evaluation']['replay_episode']

@@ -122,7 +122,7 @@ def validate_permit(root, permit):
         raise ValueError('exploratory permit/source/runtime/scope drift')
 
 
-def verify_local_owner_approval(envelope, *, permit_sha256, wall_seconds=3600, now=None):
+def verify_local_owner_approval(envelope, *, permit_sha256, wall_seconds, now=None):
     """Local-only owner consent: auditable scope, not a cryptographic identity claim.
 
     A person approving an exploratory run on their own Windows machine can use
