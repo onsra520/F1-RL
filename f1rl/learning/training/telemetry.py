@@ -17,6 +17,12 @@ _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _COMMIT = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 _MAX_RECORD_BYTES = 16 * 1024
 _MAX_LOG_BYTES = 256 * 1024 * 1024
+_METRIC_KEYS = (
+    "train/approx_kl", "train/clip_fraction", "train/clip_range",
+    "train/entropy_loss", "train/ent_coef", "train/explained_variance",
+    "train/learning_rate", "train/loss", "train/n_updates",
+    "train/policy_gradient_loss", "train/std", "train/value_loss",
+)
 
 
 def _digest(value: object, name: str) -> str:
@@ -48,7 +54,8 @@ class TrainingTelemetryRecorder:
                 or not isinstance(run_identity["track_ids"], (list, tuple))
                 or not run_identity["track_ids"]
                 or any(track not in _TRAIN_TRACKS for track in run_identity["track_ids"])
-                or not isinstance(run_identity["seed_identity"], dict)):
+                or not isinstance(run_identity["seed_identity"], dict)
+                or not run_identity["seed_identity"]):
             raise ValueError("training telemetry requires an identified TRAIN run")
         self.path = Path(path)
         if not self.path.parent.is_dir():
@@ -66,7 +73,7 @@ class TrainingTelemetryRecorder:
         self._episodes: dict[int, int] = {}
         self._weight_sha256 = None
         self._update_index = 0
-        self._metrics: dict[str, float] = {}
+        self._metrics: dict[str, float | None] = {key: None for key in _METRIC_KEYS}
         self._checkpoint = None
         self._observation_schema = None
         self._closed = False
@@ -129,6 +136,20 @@ class TrainingTelemetryRecorder:
             if not isinstance(state, dict) or state.get("schema_version") != "f1rl_training_state_v1":
                 raise ValueError("environment training telemetry is missing or has an unsupported schema")
             track_id = info.get("track_id") or state.get("track_id")
+            reset_identity = info.get("train_reset")
+            if (not isinstance(reset_identity, dict) or not reset_identity
+                    or state.get("seed_identity") != reset_identity
+                    or type(reset_identity.get("seed")) is not int
+                    or type(reset_identity.get("rank")) is not int
+                    or type(reset_identity.get("reset_index")) is not int
+                    or type(reset_identity.get("draw_seed")) is not int
+                    or min(reset_identity["seed"], reset_identity["rank"],
+                           reset_identity["reset_index"], reset_identity["draw_seed"]) < 0
+                    or not isinstance(reset_identity.get("track_id"), str)
+                    or reset_identity.get("track_id") != track_id
+                    or not isinstance(reset_identity.get("configuration_sha256"), str)
+                    or _DIGEST.fullmatch(reset_identity.get("configuration_sha256", "")) is None):
+                raise ValueError("transition reset seed identity is missing or inconsistent")
             if track_id not in self._run["track_ids"] or track_id not in _TRAIN_TRACKS:
                 raise ValueError("transition track is outside the preregistered TRAIN set")
             schema = state.get("observation_schema")
@@ -169,7 +190,7 @@ class TrainingTelemetryRecorder:
                 "env_index": index, "episode_id": f"{self._run['run_id']}/env-{index}/episode-{episode_index}",
                 "episode_index": episode_index, "track_id": track_id,
                 "seed_identity": {"run": self._run["seed_identity"],
-                                  "train_reset": info.get("train_reset")},
+                                  "train_reset": reset_identity},
                 "observation_schema_version": schema["version"],
                 "observation_feature_names": schema["feature_names"],
                 "observation_schema_sha256": schema_digest,
@@ -208,7 +229,7 @@ class TrainingTelemetryRecorder:
 
     def on_update(self, model) -> None:
         backend = model._model
-        metrics = {}
+        metrics: dict[str, float | None] = {key: None for key in _METRIC_KEYS}
         for key, value in backend.logger.name_to_value.items():
             if key.startswith("train/"):
                 metrics[key] = _number(value, key)

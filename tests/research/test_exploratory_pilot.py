@@ -234,10 +234,14 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedu
                 'dones': np.array([False]),
                 'infos': [{
                     'track_id': 'straight-sprint-v1',
-                    'train_reset': {'seed': 1000, 'track_id': 'straight-sprint-v1'},
+                    'train_reset': {'seed': 1000, 'rank': 0, 'reset_index': 0, 'draw_seed': 2000,
+                                    'track_id': 'straight-sprint-v1', 'configuration_sha256': 'd'*64},
                     'reward_components': {'progress': 0.5},
                     'training_telemetry': {
                         'schema_version':'f1rl_training_state_v1',
+                        'track_id':'straight-sprint-v1',
+                        'seed_identity': {'seed':1000, 'rank':0, 'reset_index':0, 'draw_seed':2000,
+                                          'track_id':'straight-sprint-v1', 'configuration_sha256':'d'*64},
                         'observation_schema': {'version':'f1rl_observation_features_v1',
                                                'feature_names':['target_x','target_z']},
                         'position':(0.,0.,float(step)), 'velocity':(0.,0.,1.), 'speed':1.,

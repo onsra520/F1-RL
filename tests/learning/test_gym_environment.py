@@ -165,13 +165,16 @@ def test_learning_observer_enables_training_info_only_during_learn(monkeypatch) 
                                  "clipped_actions": actions, "rewards": rewards,
                                  "dones": dones, "infos": infos})
         assert callback.on_step()
+        optimizer_handle.callback(backend.policy.optimizer, (), {})
         assert "training_telemetry" not in env.envs[0]._reset_info()
 
     backend.learn = fake_learn
     model = PPOModel(backend)
     monkeypatch.setattr(PPOModel, "weights_sha256", lambda self: "a" * 64)
-    model.learn(1, telemetry_observer=Observer())
-    assert observed == [("start", 1, 1), ("step", "f1rl_training_state_v1")]
+    model.learn(1, telemetry_observer=Observer(),
+                optimizer_step_hook=lambda: observed.append(("budget",)))
+    assert observed == [("start", 1, 1), ("step", "f1rl_training_state_v1"),
+                       ("optimizer",), ("budget",)]
     assert env.get_attr("_training_telemetry_enabled") == [False]
     assert optimizer_handle.removed
     env.close()
