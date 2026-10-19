@@ -62,6 +62,50 @@ def test_authorization_denials(signed, mutation):
     with pytest.raises(ValueError): verify(envelope, registry)
 
 
+def test_local_owner_consent_is_exactly_one_scoped_hour_without_signing_key():
+    p = api()
+    payload = dict(schema_version='straight_exploratory_execution_v1',
+        purpose='execute_exploratory_only', permit_sha256='a'*64,
+        issued_at_utc='2026-10-19T01:00:00+00:00',
+        expires_at_utc='2026-10-19T01:59:00+00:00')
+    envelope = dict(approval_mode='local_owner_consent_v1',
+        acknowledgement='APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU4_60M', payload=payload)
+    now = datetime(2026, 10, 19, 1, 30, tzinfo=timezone.utc)
+    assert p.verify_local_owner_approval(envelope, permit_sha256='a'*64, now=now) == payload
+    with pytest.raises(ValueError):
+        p.verify_local_owner_approval(envelope, permit_sha256='b'*64, now=now)
+    with pytest.raises(ValueError):
+        p.verify_local_owner_approval(envelope, permit_sha256='a'*64,
+            now=datetime(2026, 10, 19, 2, tzinfo=timezone.utc))
+    bad = deepcopy(envelope)
+    bad['payload']['purpose'] = 'scientific_run_review'
+    with pytest.raises(ValueError):
+        p.verify_local_owner_approval(bad, permit_sha256='a'*64, now=now)
+    bad = deepcopy(envelope)
+    bad['acknowledgement'] = 'yes'
+    with pytest.raises(ValueError):
+        p.verify_local_owner_approval(bad, permit_sha256='a'*64, now=now)
+    bad = deepcopy(envelope)
+    bad['payload']['expires_at_utc'] = '2026-10-19T02:01:00+00:00'
+    with pytest.raises(ValueError):
+        p.verify_local_owner_approval(bad, permit_sha256='a'*64, now=now)
+
+
+def test_local_consent_branch_does_not_require_owner_key_registry(tmp_path, monkeypatch):
+    p = api()
+    permit = {'sha256': 'a'*64, 'output_directory':str(tmp_path/'run')}
+    monkeypatch.setattr(p, 'validate_permit', lambda *a: None)
+    payload = dict(schema_version='straight_exploratory_execution_v1',
+        purpose='execute_exploratory_only', permit_sha256='a'*64,
+        issued_at_utc='2020-01-01T00:00:00+00:00',
+        expires_at_utc='2099-01-01T00:00:00+00:00')
+    envelope = dict(approval_mode='local_owner_consent_v1',
+        acknowledgement='APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU4_60M', payload=payload)
+    # An approval spanning years is rejected, even when the digest matches.
+    with pytest.raises(ValueError, match='one-hour'):
+        p.authorize(tmp_path, permit, envelope)
+
+
 def test_budget_stops_before_excess_step():
     budget = api().Budget(deadline=10., learning_limit=2, clock=lambda: 1.)
     budget.before_step(learning=True)

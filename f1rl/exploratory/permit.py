@@ -121,8 +121,35 @@ def validate_permit(root, permit):
         raise ValueError('exploratory permit/source/runtime/scope drift')
 
 
+def verify_local_owner_approval(envelope, *, permit_sha256, now=None):
+    """Local-only owner consent: auditable scope, not a cryptographic identity claim.
+
+    A person approving an exploratory run on their own Windows machine can use
+    a one-use, SHA-bound acknowledgement without the separate Ed25519 PKI.
+    This cannot grant scientific admission; the worker, environment and PPO
+    retain their existing capability and compute-budget guards.
+    """
+    now = datetime.now(timezone.utc) if now is None else now
+    _fields(envelope, 'approval_mode acknowledgement payload')
+    if (envelope['approval_mode'] != 'local_owner_consent_v1'
+            or envelope['acknowledgement'] != 'APPROVE_ONE_LOCAL_STRAIGHT_PPO_32768_CPU4_60M'):
+        raise ValueError('explicit scoped local owner approval required')
+    payload = envelope['payload']
+    _fields(payload, 'schema_version purpose permit_sha256 issued_at_utc expires_at_utc')
+    if (payload['schema_version'] != 'straight_exploratory_execution_v1'
+            or payload['purpose'] != 'execute_exploratory_only'
+            or payload['permit_sha256'] != permit_sha256):
+        raise ValueError('local owner approval scope or permit differs')
+    issued, expires = _utc(payload['issued_at_utc']), _utc(payload['expires_at_utc'])
+    if not issued <= now < expires or (expires-issued).total_seconds() > 3600:
+        raise ValueError('local owner approval outside its one-hour window')
+    return dict(payload)
+
+
 def authorize(root, permit, envelope):
     validate_permit(root, permit)
+    if isinstance(envelope, dict) and envelope.get('approval_mode') == 'local_owner_consent_v1':
+        return verify_local_owner_approval(envelope, permit_sha256=permit['sha256'])
     return verify_authorization(envelope, read_json(Path(root)/KEYS), permit_sha256=permit['sha256'])
 
 
