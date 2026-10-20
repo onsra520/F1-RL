@@ -134,13 +134,64 @@ def verify_wp2_execution_permit(envelope, trust_registry, *, expected, now=None)
     return {**body, 'sha256': digest(body)}
 
 
-def _claim_verified(verified, replay_directory):
+def _replay_ledger_directory():
+    if os.name == 'nt':
+        return Path.home() / 'AppData' / 'Local' / 'F1-RL' / 'wp2-permit-ledger'
+    return Path.home() / '.local' / 'state' / 'F1-RL' / 'wp2-permit-ledger'
+
+
+def _reject_replay_path_redirect(path):
+    current = Path(path.anchor)
+    for part in path.parts[1:]:
+        current /= part
+        is_junction = getattr(current, 'is_junction', lambda: False)()
+        if current.is_symlink() or is_junction:
+            raise ValueError('replay ledger path may not contain a symlink or junction')
+
+
+def _fsync_directory(path):
+    if os.name == 'nt':
+        import ctypes
+
+        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        kernel32.CreateFileW.restype = ctypes.c_void_p
+        kernel32.CreateFileW.argtypes = [ctypes.c_wchar_p, ctypes.c_uint32, ctypes.c_uint32,
+                                         ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32,
+                                         ctypes.c_void_p]
+        kernel32.FlushFileBuffers.argtypes = [ctypes.c_void_p]
+        kernel32.FlushFileBuffers.restype = ctypes.c_int
+        kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+        handle = kernel32.CreateFileW(str(path), 0x40000000, 0x7, None, 3, 0x02000000, None)
+        if handle in (None, ctypes.c_void_p(-1).value):
+            error = ctypes.get_last_error()
+            raise OSError(error, 'could not open replay-ledger directory for durable flush', str(path))
+        try:
+            if not kernel32.FlushFileBuffers(handle):
+                error = ctypes.get_last_error()
+                raise OSError(error, 'could not durably flush replay-ledger directory', str(path))
+        finally:
+            kernel32.CloseHandle(handle)
+        return
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _claim_verified(verified):
     payload = verified['payload']
-    directory = Path(replay_directory)
-    if directory.is_symlink():
-        raise ValueError('replay ledger directory may not be a symlink')
+    directory = _replay_ledger_directory()
+    _reject_replay_path_redirect(directory)
     directory.mkdir(parents=True, exist_ok=True)
+    _reject_replay_path_redirect(directory)
     directory = directory.resolve(strict=True)
+    home = Path.home().resolve(strict=True)
+    if not directory.is_relative_to(home):
+        raise ValueError('replay ledger must remain inside the current user profile')
+    for parent in [home, *reversed(directory.parents)]:
+        if parent.is_relative_to(home):
+            _fsync_directory(parent)
     claim_path = directory / f"{payload['nonce']}.json"
     record = dict(permit_sha256=verified['permit_sha256'], run_manifest_sha256=payload['run_manifest_sha256'],
                   run_id=payload['run_id'], claimed_at_utc=datetime.now(timezone.utc).isoformat())
@@ -149,18 +200,17 @@ def _claim_verified(verified, replay_directory):
         stream.write('\n')
         stream.flush()
         os.fsync(stream.fileno())
+    _fsync_directory(directory)
     return claim_path
 
 
-def claim_wp2_execution_permit(envelope, trust_registry, *, expected, replay_directory, now=None):
+def claim_wp2_execution_permit(envelope, trust_registry, *, expected, now=None):
     """Authenticate and atomically consume a nonce before any candidate work."""
     verified = verify_wp2_execution_permit(envelope, trust_registry, expected=expected, now=now)
-    return verified, _claim_verified(verified, replay_directory)
+    return verified, _claim_verified(verified)
 
 
-def claim_repository_wp2_execution_permit(repository_root, envelope, *, expected,
-                                          replay_directory, now=None):
+def claim_repository_wp2_execution_permit(repository_root, envelope, *, expected, now=None):
     """Production boundary: load the committed trust anchors, then verify and consume."""
     registry = load_repository_signers(repository_root)
-    return claim_wp2_execution_permit(envelope, registry, expected=expected,
-                                      replay_directory=replay_directory, now=now)
+    return claim_wp2_execution_permit(envelope, registry, expected=expected, now=now)

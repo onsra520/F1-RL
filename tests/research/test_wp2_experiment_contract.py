@@ -54,12 +54,15 @@ def test_prepared_run_manifest_binds_clean_source_candidate_and_statistical_desi
         verify_candidate_run_manifest(ROOT, bad)
 
 
-def test_draft_run_cannot_reach_worker_authorization_or_create_replay_claim(tmp_path):
+def test_draft_run_cannot_reach_worker_authorization_or_create_replay_claim(tmp_path, monkeypatch):
+    import f1rl.research.wp2_execution_permit as permit_module
+
+    ledger = tmp_path / 'replay-ledger'
+    monkeypatch.setattr(permit_module, '_replay_ledger_directory', lambda: ledger)
     run = build_candidate_run_manifest(ROOT, candidate_id='A', run_id='a-seed-100',
         seed_bundle={'ppo':100, 'sampling':200, 'training_reset':1100})
-    ledger = tmp_path / 'replay-ledger'
     with pytest.raises(ValueError):
-        authorize_candidate_run(ROOT, run, {'payload':{}, 'signatures':[]}, ledger)
+        authorize_candidate_run(ROOT, run, {'payload':{}, 'signatures':[]})
     assert not ledger.exists()
 
 

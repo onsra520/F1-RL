@@ -57,7 +57,7 @@ def validate_abcd_manifest(value):
         raise ValueError('unapproved or scope-escalated A/B/C/D training settings')
     statistics = value['statistical_protocol']
     expected_statistics = {
-        'version': 'wp2_abcd_statistical_protocol_v1',
+        'version': 'wp2_abcd_statistical_protocol_v2',
         'tuning_seed_blocks': 3,
         'confirmation_seed_blocks': 12,
         'tuning_seed_bundles': [[0, 0, 1000], [1, 1, 1001], [2, 2, 1002]],
@@ -69,6 +69,10 @@ def validate_abcd_manifest(value):
         'primary_endpoint': 'valid_autonomous_finish_probability',
         'primary_contrasts': ['reward_main_effect', 'corridor_main_effect', 'interaction'],
         'effect_interval': 'two_sided_95_percent_seed_block_cluster_bootstrap_10000',
+        'primary_test': 'two_sided_seed_block_sign_flip_4096',
+        'primary_test_assumption': 'independent_seed_blocks_and_sign_exchangeability_under_zero_effect',
+        'analysis_bootstrap_resamples': 10000,
+        'analysis_bootstrap_seed': 0,
         'multiplicity': 'holm_three_primary_contrasts_alpha_0.05',
         'minimum_meaningful_effect_risk_difference': None,
         'power_target': None,
@@ -197,9 +201,8 @@ def verify_candidate_run_manifest(repository_root, run_manifest):
             'run_manifest_sha256': run_manifest['sha256']}
 
 
-def authorize_candidate_run(repository_root, run_manifest, envelope, replay_directory, *, now=None):
+def authorize_candidate_run(repository_root, run_manifest, envelope, *, now=None):
     """First-side-effect gate for a future A/B/C/D worker; no runner is enabled here."""
     from ..research.wp2_execution_permit import claim_repository_wp2_execution_permit
     expected = verify_candidate_run_manifest(repository_root, run_manifest)
-    return claim_repository_wp2_execution_permit(repository_root, envelope, expected=expected,
-        replay_directory=replay_directory, now=now)
+    return claim_repository_wp2_execution_permit(repository_root, envelope, expected=expected, now=now)

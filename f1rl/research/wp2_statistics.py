@@ -1,6 +1,7 @@
 """Small offline helpers for the draft WP2 factorial analysis plan."""
 from dataclasses import dataclass
 from math import ceil, isclose, isfinite, sqrt
+from pathlib import Path
 from random import Random
 from statistics import NormalDist
 
@@ -12,18 +13,23 @@ _CANDIDATES = ("A", "B", "C", "D")
 _CONTRASTS = ("reward_main_effect", "corridor_main_effect", "interaction")
 _BLOCK_COUNT = 12
 _EPISODES_PER_CELL = 60
+_ANALYSIS_BOOTSTRAP_RESAMPLES = 10_000
+_ANALYSIS_BOOTSTRAP_SEED = 0
 _T_CRITICAL_DF_11_95 = 2.200985160091638
 
 
 @dataclass(frozen=True, slots=True)
 class CellResult:
-    """Validated-input record for one candidate/track/stratum evaluation cell."""
+    """Unverified summary carrying caller-supplied candidate, seed and manifest labels."""
 
     successes: int
     episodes: int
     invalid_episodes: int
     aborted: bool
     evaluation_roster_sha256: str
+    candidate_id: str
+    seed_bundle: tuple[int, int, int]
+    run_manifest_sha256: str
 
 
 def _finite_number(value, name):
@@ -32,21 +38,45 @@ def _finite_number(value, name):
     return float(value)
 
 
+def _confirmation_seed_bundles():
+    from ..exploratory.abcd import load_abcd_manifest
+
+    manifest = load_abcd_manifest(Path(__file__).resolve().parents[2])
+    protocol = manifest["statistical_protocol"]
+    rule = protocol["confirmation_seed_bundle_rule"]
+    return tuple((rule["ppo_start"] + index, rule["sampling_start"] + index,
+                  rule["training_reset_start"] + index) for index in range(rule["count"]))
+
+
 def _validated_estimates(estimates):
     if not isinstance(estimates, (tuple, list)) or len(estimates) != _BLOCK_COUNT:
         raise ValueError("exactly twelve paired seed-block estimates are required")
     rows = []
-    ids = set()
+    seed_bundles = set()
+    run_manifest_digests = set()
+    expected_bundles = set(_confirmation_seed_bundles())
     for row in estimates:
-        if (not isinstance(row, dict) or set(row) != {"seed_block", "candidate_finish_probability", "contrasts"}
-                or not isinstance(row["seed_block"], str) or not row["seed_block"].strip()
-                or row["seed_block"] in ids
+        bundle = row.get("seed_bundle") if isinstance(row, dict) else None
+        if (not isinstance(row, dict) or set(row) != {
+                "seed_bundle", "candidate_finish_probability", "candidate_run_manifest_sha256", "contrasts"}
+                or not isinstance(bundle, list) or len(bundle) != 3
+                or any(type(value) is not int or not 0 <= value <= 2**32 - 1 for value in bundle)
+                or tuple(bundle) not in expected_bundles or tuple(bundle) in seed_bundles
                 or not isinstance(row["candidate_finish_probability"], dict)
                 or set(row["candidate_finish_probability"]) != set(_CANDIDATES)
+                or not isinstance(row["candidate_run_manifest_sha256"], dict)
+                or set(row["candidate_run_manifest_sha256"]) != set(_CANDIDATES)
                 or not isinstance(row["contrasts"], dict)
                 or set(row["contrasts"]) != set(_CONTRASTS)):
-            raise ValueError("invalid or duplicate paired seed-block estimate")
-        ids.add(row["seed_block"])
+            raise ValueError("invalid, duplicate or unregistered paired confirmation seed-bundle estimate")
+        seed_bundles.add(tuple(bundle))
+        run_digests = tuple(row["candidate_run_manifest_sha256"][candidate] for candidate in _CANDIDATES)
+        if (any(not isinstance(value, str) or len(value) != 64
+                or any(char not in "0123456789abcdef" for char in value) for value in run_digests)
+                or len(set(run_digests)) != len(_CANDIDATES)
+                or run_manifest_digests.intersection(run_digests)):
+            raise ValueError("each candidate estimate requires its distinct run-manifest SHA-256")
+        run_manifest_digests.update(run_digests)
         probabilities = {candidate: _finite_number(row["candidate_finish_probability"][candidate],
                                                     "candidate finish probability")
                          for candidate in _CANDIDATES}
@@ -62,27 +92,35 @@ def _validated_estimates(estimates):
         if any(not isclose(contrasts[name], value, rel_tol=0., abs_tol=1e-12)
                for name, value in expected.items()):
             raise ValueError("seed-block contrasts differ from the candidate finish probabilities")
-        rows.append(contrasts)
-    return rows
+        rows.append((tuple(bundle), contrasts))
+    if seed_bundles != expected_bundles:
+        raise ValueError("paired estimates must use the complete reserved confirmation seed bundles")
+    return [contrasts for _, contrasts in sorted(rows)]
 
 
 def confirmatory_factorial_contrasts(blocks):
-    """Validate and estimate the three factorial contrasts within each paired seed block."""
+    """Calculate proposed-design contrasts; caller-supplied run labels are not authenticated."""
     if not isinstance(blocks, dict) or len(blocks) != _BLOCK_COUNT:
         raise ValueError("exactly twelve independent confirmatory seed blocks are required")
+    expected_bundles = set(_confirmation_seed_bundles())
+    if set(blocks) != expected_bundles:
+        raise ValueError("blocks must be keyed by the twelve reserved confirmation seed bundles")
     roster_sha256 = None
     estimates = []
-    for block_id, candidates in blocks.items():
-        if not isinstance(block_id, str) or not block_id.strip():
-            raise ValueError("seed-block identity is required")
+    all_run_manifest_digests = set()
+    for seed_bundle in sorted(expected_bundles):
+        candidates = blocks[seed_bundle]
         if not isinstance(candidates, dict) or set(candidates) != set(_CANDIDATES):
             raise ValueError("each seed block must contain candidates A, B, C and D")
         probabilities = {}
+        candidate_run_manifest_digests = {}
+        run_manifest_digests = set()
         for candidate in _CANDIDATES:
             cells = candidates[candidate]
             if not isinstance(cells, dict) or set(cells) != _CELLS:
                 raise ValueError("each candidate must contain the exact eight registered task-cell keys")
             rates = []
+            run_manifest_sha256 = None
             for cell_key, cell in cells.items():
                 if not isinstance(cell_key, tuple) or len(cell_key) != 2:
                     raise ValueError("task-cell keys must be (track, stratum) pairs")
@@ -96,6 +134,15 @@ def confirmatory_factorial_contrasts(blocks):
                         or cell.aborted
                         or not 0 <= cell.successes <= cell.episodes):
                     raise ValueError("confirmatory estimates reject invalid or aborted cells")
+                if (cell.candidate_id != candidate or cell.seed_bundle != seed_bundle
+                        or not isinstance(cell.run_manifest_sha256, str)
+                        or len(cell.run_manifest_sha256) != 64
+                        or any(char not in "0123456789abcdef" for char in cell.run_manifest_sha256)):
+                    raise ValueError("cell provenance differs from its candidate, confirmation seeds or run manifest")
+                if run_manifest_sha256 is None:
+                    run_manifest_sha256 = cell.run_manifest_sha256
+                elif cell.run_manifest_sha256 != run_manifest_sha256:
+                    raise ValueError("candidate task cells must share one run-manifest identity")
                 digest = cell.evaluation_roster_sha256
                 if (not isinstance(digest, str) or len(digest) != 64
                         or any(char not in "0123456789abcdef" for char in digest)):
@@ -105,11 +152,19 @@ def confirmatory_factorial_contrasts(blocks):
                 elif digest != roster_sha256:
                     raise ValueError("all confirmatory cells require one paired evaluation roster")
                 rates.append(cell.successes / cell.episodes)
+            if run_manifest_sha256 in run_manifest_digests:
+                raise ValueError("candidate run-manifest identities must be distinct within a seed block")
+            if run_manifest_sha256 in all_run_manifest_digests:
+                raise ValueError("candidate run-manifest identities must be unique across confirmation blocks")
+            run_manifest_digests.add(run_manifest_sha256)
+            all_run_manifest_digests.add(run_manifest_sha256)
+            candidate_run_manifest_digests[candidate] = run_manifest_sha256
             probabilities[candidate] = sum(rates) / len(rates)
         a, b, c, d = (probabilities[candidate] for candidate in _CANDIDATES)
         estimates.append({
-            "seed_block": block_id,
+            "seed_bundle": list(seed_bundle),
             "candidate_finish_probability": probabilities,
+            "candidate_run_manifest_sha256": candidate_run_manifest_digests,
             "contrasts": {
                 "reward_main_effect": ((b - a) + (d - c)) / 2,
                 "corridor_main_effect": ((c - a) + (d - b)) / 2,
@@ -168,13 +223,52 @@ def paired_seed_t_intervals(estimates, *, confidence=0.95):
     return result
 
 
+def _paired_seed_block_sign_flip_p(values):
+    observed = abs(sum(values) / len(values))
+    extreme = 0
+    allocations = 1 << len(values)
+    for mask in range(allocations):
+        signed_mean = sum(value if mask & (1 << index) else -value
+                          for index, value in enumerate(values)) / len(values)
+        if abs(signed_mean) >= observed - 1e-15:
+            extreme += 1
+    return extreme / allocations
+
+
+def proposed_factorial_inference(estimates):
+    """Return unverified draft inference; this helper cannot authenticate run evidence."""
+    rows = _validated_estimates(estimates)
+    bootstrap = paired_cluster_bootstrap_intervals(
+        estimates, resamples=_ANALYSIS_BOOTSTRAP_RESAMPLES, seed=_ANALYSIS_BOOTSTRAP_SEED
+    )
+    t_sensitivity = paired_seed_t_intervals(estimates)
+    raw = {contrast: _paired_seed_block_sign_flip_p([row[contrast] for row in rows])
+           for contrast in _CONTRASTS}
+    adjusted = holm_adjust(tuple(raw[contrast] for contrast in _CONTRASTS))
+    return {
+        "bootstrap_95_percent_intervals": bootstrap,
+        "paired_t_sensitivity_95_percent_intervals": t_sensitivity,
+        "raw_p_values": raw,
+        "adjusted_p_values": dict(zip(_CONTRASTS, adjusted, strict=True)),
+        "multiplicity": "holm_three_primary_contrasts_alpha_0.05",
+        "primary_test": "two_sided_seed_block_sign_flip_4096",
+        "primary_test_assumption": "independent_seed_blocks_and_sign_exchangeability_under_zero_effect",
+        "bootstrap_resamples": _ANALYSIS_BOOTSTRAP_RESAMPLES,
+        "bootstrap_seed": _ANALYSIS_BOOTSTRAP_SEED,
+        "family_alpha": 0.05,
+        "status": "UNVERIFIED_SUMMARY_ONLY",
+        "provenance_authenticated": False,
+    }
+
+
 def confirmatory_robustness_gate(blocks):
     """Check the fixed one-sided CP threshold on every candidate/model task cell."""
     confirmatory_factorial_contrasts(blocks)
     from .wp7_robustness_gate import one_sided_cp_lower
 
     lower_bounds = {}
-    for block_id, candidates in blocks.items():
+    for block_id in sorted(blocks):
+        candidates = blocks[block_id]
         for candidate in _CANDIDATES:
             for track, stratum in sorted(_CELLS):
                 cell = candidates[candidate][(track, stratum)]

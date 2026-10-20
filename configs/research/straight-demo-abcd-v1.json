@@ -16,7 +16,7 @@
     "approval_state": "proposal_only"
   },
   "statistical_protocol": {
-    "version": "wp2_abcd_statistical_protocol_v1",
+    "version": "wp2_abcd_statistical_protocol_v2",
     "tuning_seed_blocks": 3,
     "confirmation_seed_blocks": 12,
     "tuning_seed_bundles": [[0, 0, 1000], [1, 1, 1001], [2, 2, 1002]],
@@ -27,6 +27,10 @@
     "primary_endpoint": "valid_autonomous_finish_probability",
     "primary_contrasts": ["reward_main_effect", "corridor_main_effect", "interaction"],
     "effect_interval": "two_sided_95_percent_seed_block_cluster_bootstrap_10000",
+    "primary_test": "two_sided_seed_block_sign_flip_4096",
+    "primary_test_assumption": "independent_seed_blocks_and_sign_exchangeability_under_zero_effect",
+    "analysis_bootstrap_resamples": 10000,
+    "analysis_bootstrap_seed": 0,
     "multiplicity": "holm_three_primary_contrasts_alpha_0.05",
     "minimum_meaningful_effect_risk_difference": null,
     "power_target": null,

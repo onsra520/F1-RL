@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import json
 
 import pytest
 from cryptography.hazmat.primitives import serialization
@@ -67,15 +68,66 @@ def test_permit_rejects_scope_change_expiry_and_invalid_replay_nonce(mutation):
             verify_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
 
 
-def test_permit_requires_two_distinct_roles_and_atomic_single_use_claim(tmp_path):
+def test_permit_requires_two_distinct_roles_and_atomic_single_use_claim(tmp_path, monkeypatch):
+    import f1rl.research.wp2_execution_permit as permit_module
+
+    monkeypatch.setattr(permit_module, '_replay_ledger_directory', lambda: tmp_path)
     envelope, registry = signed_permit()
     registry['signers'][1]['role'] = 'owner'
     with pytest.raises(ValueError):
         verify_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
     envelope, registry = signed_permit()
-    claim_wp2_execution_permit(envelope, registry, expected=identity(), replay_directory=tmp_path, now=NOW)
+    claim_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
     with pytest.raises(FileExistsError):
-        claim_wp2_execution_permit(envelope, registry, expected=identity(), replay_directory=tmp_path, now=NOW)
+        claim_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
+
+
+def test_nonce_replay_ledger_is_fixed_across_callers_and_repository_paths(tmp_path, monkeypatch):
+    import f1rl.research.wp2_execution_permit as permit_module
+
+    ledger = tmp_path / 'shared-ledger'
+    monkeypatch.setattr(permit_module, '_replay_ledger_directory', lambda: ledger)
+    envelope, registry = signed_permit()
+    roots = [tmp_path / 'repo-one', tmp_path / 'repo-two']
+    for root in roots:
+        registry_path = root / 'configs' / 'research' / 'wp2-trusted-signers-v1.json'
+        registry_path.parent.mkdir(parents=True)
+        registry_path.write_text(json.dumps(registry), encoding='utf-8')
+    claim_repository_wp2_execution_permit(roots[0], envelope, expected=identity(), now=NOW)
+    with pytest.raises(FileExistsError):
+        claim_repository_wp2_execution_permit(roots[1], envelope, expected=identity(), now=NOW)
+
+
+def test_nonce_ledger_rejects_symlinked_ancestor_before_claim(tmp_path, monkeypatch):
+    import f1rl.research.wp2_execution_permit as permit_module
+
+    target = tmp_path / 'target'
+    target.mkdir()
+    redirected_ancestor = tmp_path / 'redirected-ancestor'
+    try:
+        redirected_ancestor.symlink_to(target, target_is_directory=True)
+    except (OSError, NotImplementedError) as error:
+        pytest.skip(f'directory symlink unavailable: {error}')
+    monkeypatch.setattr(permit_module, '_replay_ledger_directory',
+                        lambda: redirected_ancestor / 'nested' / 'wp2-permit-ledger')
+    envelope, registry = signed_permit()
+    with pytest.raises(ValueError, match='symlink or junction'):
+        claim_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
+    assert not (target / 'wp2-permit-ledger').exists()
+
+
+def test_nonce_claim_is_atomic_under_concurrent_calls(tmp_path, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    import f1rl.research.wp2_execution_permit as permit_module
+
+    monkeypatch.setattr(permit_module, '_replay_ledger_directory', lambda: tmp_path / 'ledger')
+    envelope, registry = signed_permit()
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(claim_wp2_execution_permit, envelope, registry,
+                                   expected=identity(), now=NOW) for _ in range(2)]
+    failures = [future.exception() for future in futures]
+    assert sum(error is None for error in failures) == 1
+    assert sum(isinstance(error, FileExistsError) for error in failures) == 1
 
 
 def test_tampered_signature_and_overlong_lifetime_are_rejected():
@@ -95,4 +147,4 @@ def test_repository_trust_registry_is_empty_and_cannot_authenticate_permits():
     envelope, _ = signed_permit()
     with pytest.raises(ValueError):
         claim_repository_wp2_execution_permit(root, envelope, expected=identity(),
-            replay_directory=root.parent / 'wp2-empty-trust-ledger-fixture', now=NOW)
+            now=NOW)
