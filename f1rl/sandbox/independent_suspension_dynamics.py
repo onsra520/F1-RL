@@ -38,6 +38,10 @@ _EPS = 1e-9
 class SuspensionResolutionError(RuntimeError):
     """The opted-in physical candidate cannot be certified; never an ObstacleHit."""
 
+    def __init__(self, message: str, *, failure_code: str = "uncertified_physics") -> None:
+        super().__init__(message)
+        self.failure_code = failure_code
+
 
 @dataclass(frozen=True, slots=True)
 class IndependentSuspensionDynamicsPolicy:

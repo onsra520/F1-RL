@@ -120,8 +120,24 @@ def test_spatial_kernel_rejects_states_outside_registered_domain(change):
     if change=='airborne': vehicle=replace(vehicle,grounded=False)
     if change=='missing_support': vehicle=replace(vehicle,position=vehicle.position+Vec3(20.,0.,0.))
     if change=='overspeed': vehicle=replace(vehicle,velocity=Vec3(0.,0.,100.))
-    with pytest.raises(SuspensionResolutionError):
+    with pytest.raises(SuspensionResolutionError) as error:
         run(vehicle,f,s,VehicleControl(0.,0.,0.))
+    assert error.value.failure_code == "uncertified_physics"
+
+
+def test_spatial_kernel_classifies_only_the_registered_outside_support_verdict(monkeypatch):
+    from types import SimpleNamespace
+    from f1rl.sandbox import spatial_contact_dynamics
+    from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
+
+    f,_,_,s=ramp_translation()
+    monkeypatch.setattr(spatial_contact_dynamics, "certify_multisurface_support",
+                        lambda *_args, **_kwargs: SimpleNamespace(
+                            valid=False, status="outside",
+                            reason="invalid endpoint body or wheel support"))
+    with pytest.raises(SuspensionResolutionError) as error:
+        run(f.initial_state.vehicle,f,s,VehicleControl(0.,0.,0.))
+    assert error.value.failure_code == "unsupported_contact"
 
 
 def test_nonplanar_spin_acceleration_matches_independent_euler_equations():

@@ -153,6 +153,29 @@ def test_recorder_fails_closed_on_nonfinite_observation(tmp_path):
     recorder.close()
 
 
+def test_recorder_binds_registered_training_failure_policy_to_run_event(tmp_path):
+    identity = {
+        "run_id": "run-failure-policy", "source_commit": "b" * 40,
+        "policy_id": "policy-1", "split": "TRAIN",
+        "track_ids": ["straight-sprint-v1"],
+        "seed_identity": {"ppo": 0, "training_reset": 1000},
+        "reset_contracts": _reset_contracts(),
+        "training_failure_policy": "unsupported_contact_terminal_v1",
+    }
+    path = tmp_path / "failure-policy.jsonl"
+    recorder = TrainingTelemetryRecorder(path, run_identity=identity, max_timesteps=1)
+    recorder.close()
+
+    run_event = json.loads(path.read_text(encoding="utf-8").splitlines()[0])
+    assert run_event["training_failure_policy"] == "unsupported_contact_terminal_v1"
+    assert recorder.manifest(complete=False)["complete"] is False
+
+    identity["training_failure_policy"] = "silently_ignore_physics_errors"
+    with pytest.raises(ValueError, match="failure policy is not registered"):
+        TrainingTelemetryRecorder(tmp_path / "invalid-policy.jsonl",
+                                  run_identity=identity, max_timesteps=1)
+
+
 def test_recorder_requires_reset_seed_identity_on_every_transition(tmp_path):
     with pytest.raises(ValueError, match="identified TRAIN"):
         TrainingTelemetryRecorder(

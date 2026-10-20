@@ -21,7 +21,7 @@ from .admission import _source_identity
 
 
 BASELINE_COMMIT = "0ff42345426f2b3ba5c171fff6cee425b3457b16"
-CAMPAIGN_CONFIG = Path("configs/research/wp3-ppo-tuning-campaign-v1.json")
+CAMPAIGN_CONFIG = Path("configs/research/wp3-ppo-tuning-campaign-v2.json")
 SIMULATION_CONFIG = Path("configs/research/simulation-only-ppo-v1.json")
 REGISTRATION_CONFIG = Path("configs/research/wp7-rotating-owner-protocol-v3.json")
 TRACK_MANIFEST = Path("assets/tracks/manifest.json")
@@ -92,8 +92,8 @@ def _expected_campaign_config() -> dict:
         {"candidate_id": "D", "lateral_penalty_per_m2_s": 4.0, "training_corridor_m": 3.0},
     ]
     return {
-        "schema_version": "f1rl_wp3_ppo_tuning_campaign_v1",
-        "campaign_id": "wp3-abcd-12-models-v1",
+        "schema_version": "f1rl_wp3_ppo_tuning_campaign_v2",
+        "campaign_id": "wp3-abcd-12-models-v2",
         "baseline_commit": BASELINE_COMMIT,
         "scope": "TRAIN_simulation_only_development_not_scientific_acceptance",
         "training": {
@@ -102,6 +102,7 @@ def _expected_campaign_config() -> dict:
             "device": "cpu", "n_envs": 1, "torch_threads": 8,
             "torch_interop_threads": 1, "policy": "MlpPolicy",
             "rollout_length": 256, "selection": "final_checkpoint_only",
+            "physics_failure_policy": "unsupported_contact_terminal_v1",
         },
         "candidate_order": ["A", "B", "C", "D"], "candidates": candidates,
         "seed_bundles": [
@@ -206,6 +207,8 @@ def _verify_preflight(root: Path, config: dict, simulation_manifest: dict) -> di
     }
     if any(training[key] != value for key, value in checks.items()):
         raise ValueError("campaign training limits differ from the frozen simulation-only contract")
+    if training.get("physics_failure_policy") != "unsupported_contact_terminal_v1":
+        raise ValueError("WP3 v2 requires its declared unsupported-contact terminal policy")
     registration = json.loads((root / REGISTRATION_CONFIG).read_text(encoding="utf-8"))
     if list(registration["strata"] if "strata" in registration else registration["evaluation"]["strata"]) != config["evaluation"]["strata"]:
         raise ValueError("evaluation strata differ from the registered TRAIN strata")
@@ -293,7 +296,7 @@ def build_campaign_manifest(root: Path) -> tuple[dict, dict, list[dict]]:
     prior_evidence = {name: {"path": str(path), "sha256": _sha256(path)}
                       for name, path in prior_evidence_paths.items()}
     manifest = {
-        "schema_version": "f1rl_wp3_campaign_manifest_v1",
+        "schema_version": "f1rl_wp3_campaign_manifest_v2",
         "campaign_id": config["campaign_id"], "scope": config["scope"],
         "status": "PREPARED_NOT_PREREGISTERED_NOT_SCIENTIFIC",
         "source_commit": source_commit, "source_tree_sha256": source_tree_sha256,
@@ -311,6 +314,7 @@ def build_campaign_manifest(root: Path) -> tuple[dict, dict, list[dict]]:
         },
         "prior_engineering_evidence": prior_evidence,
         "training": config["training"], "candidates": config["candidates"],
+        "physics_failure_policy": config["training"]["physics_failure_policy"],
         "seed_bundles": config["seed_bundles"], "execution_order": schedule,
         "evaluation": config["evaluation"], "resources": resource_check,
         "scientific_training_authorized": False, "scientific_evidence": False,
@@ -367,7 +371,8 @@ def validate_training_run(root: Path, run_dir: Path, expected: dict,
                    for key, value in expected["candidate_factors"].items())
             or run_manifest.get("training_seed_bundle") != expected["seed_bundle"]
             or run_manifest.get("split") != "TRAIN" or run_manifest.get("heldout_access") is not False
-            or run_manifest.get("scientific_training_authorized") is not False):
+            or run_manifest.get("scientific_training_authorized") is not False
+            or run_manifest.get("training_failure_policy") != config["training"]["physics_failure_policy"]):
         raise ValueError("run candidate, seed, or scientific isolation identity mismatch")
     ppo = run_manifest.get("ppo_config", {})
     if (ppo.get("seed") != expected["seed_bundle"]["ppo"] or ppo.get("device") != "cpu"
@@ -408,6 +413,7 @@ def validate_training_run(root: Path, run_dir: Path, expected: dict,
     if (run_event.get("source_commit") != campaign_manifest["source_commit"]
             or run_event.get("split") != "TRAIN"
             or run_event.get("seed_identity") != expected["seed_bundle"]
+            or run_event.get("training_failure_policy") != config["training"]["physics_failure_policy"]
             or run_event.get("reset_contracts") != run_manifest.get("reset_contracts")
             or run_event.get("seed_identity", {}).get("training_reset") != expected["seed_bundle"]["training_reset"]
             or run_event.get("track_ids") != list(TRAIN_IDS)):
@@ -502,7 +508,20 @@ def validate_training_run(root: Path, run_dir: Path, expected: dict,
                 "truncated" if row.get("truncated") else "terminated")
             data["terminated"] = bool(row.get("terminated"))
             data["truncated"] = bool(row.get("truncated"))
-            data["curriculum_terminal"] = bool((row.get("demo_training") or {}).get("curriculum_terminal"))
+            demo = row.get("demo_training") or {}
+            data["curriculum_terminal"] = bool(demo.get("curriculum_terminal"))
+            if demo.get("physics_abort_terminal") is True:
+                if (demo.get("physics_failure_code") != "unsupported_contact"
+                        or not isinstance(demo.get("physics_failure_detail"), str)
+                        or not demo["physics_failure_detail"]
+                        or row.get("termination_reason") != "invalid_physical_transition"
+                        or not np_isfinite(demo.get("terminal_penalty"))
+                        or demo.get("terminal_penalty", 0) <= 0
+                        or row.get("reward") != demo.get("reward")):
+                    raise ValueError("unsupported-contact terminal transition violates its frozen demo contract")
+                data["physics_abort_terminal"] = True
+            elif demo.get("physics_abort_terminal") not in (None, False):
+                raise ValueError("physics-abort terminal marker is malformed")
             reset_count += 1
         elif row.get("termination_reason") is not None:
             raise ValueError("nonterminal transition has a terminal reason")
@@ -622,7 +641,10 @@ def validate_training_run(root: Path, run_dir: Path, expected: dict,
         "episode_count": len(episode_summary), "terminal_transitions": reset_count,
         "automatic_resets_verified": automatic_resets_verified,
         "natural_terminations": sum(data["terminated"] and not data["curriculum_terminal"]
+                                     and not data.get("physics_abort_terminal")
                                      for data in episode_summary.values()),
+        "physics_abort_terminations": sum(data.get("physics_abort_terminal", False)
+                                           for data in episode_summary.values()),
         "curriculum_terminations": sum(data["curriculum_terminal"] for data in episode_summary.values()),
         "truncations": sum(data["truncated"] for data in episode_summary.values()),
         "track_episode_counts": track_episodes,
@@ -857,6 +879,7 @@ def _write_c0_gate_report(path: Path, validation: dict, status: str,
         f"- Checkpoints verified: {len(validation['checkpoints'])} archives (16 periodic plus final)",
         f"- Episodes: {lifecycle['episode_count']}; automatic reset boundaries verified: {lifecycle['automatic_resets_verified']}",
         f"- Natural terminations: {lifecycle['natural_terminations']}; curriculum terminations: {lifecycle['curriculum_terminations']}; truncations: {lifecycle['truncations']}",
+        f"- Unsupported-contact training terminals: {lifecycle['physics_abort_terminations']}",
         "- Runtime split: TRAIN only; HELD-OUT access and scientific evaluation: disabled.",
         "",
         "## Observed registered TRAIN coverage",
@@ -928,7 +951,7 @@ def _write_independent_review(output: Path, schedule: list[dict], state: dict,
         "Review status: **PASS** for the bounded simulation-only campaign mechanics; this review does not grant scientific acceptance.", "",
         "The second-pass review checked the committed campaign implementation against its frozen manifest and inspected the resulting run evidence independently of the campaign state summary.", "",
         "| Area | Source / evidence | Review result |", "|---|---|---|",
-        "| Frozen design and schedule | `configs/research/wp3-ppo-tuning-campaign-v1.json`; `f1rl/local_demo/campaign.py:model_schedule` | 12 unique candidate/seed identities in fixed order; parameters bound to simulation-only manifest |",
+        "| Frozen design and schedule | `configs/research/wp3-ppo-tuning-campaign-v2.json`; `f1rl/local_demo/campaign.py:model_schedule` | 12 unique candidate/seed identities in fixed order; parameters bound to simulation-only manifest |",
         "| Training integrity | `f1rl/local_demo/runner.py:run_local_demo`; `f1rl/learning/training/telemetry.py`; each `runs/*/training-integrity.json` | Real PPO updates, per-step finite/nonzero gradients, changed weights, telemetry and checkpoints independently checked |",
         "| Training transitions | `f1rl/local_demo/campaign.py:validate_training_run`; each `runs/*/training-telemetry.jsonl` | Exact step/event counts, source/seed/reset/draw-seed/track provenance and terminal boundaries checked |",
         "| Checkpoint integrity | each `runs/*/checkpoints.json`, `model-final.zip`, and engineering validation | All periodic archives plus final archive hash-checked and CPU-loaded |",

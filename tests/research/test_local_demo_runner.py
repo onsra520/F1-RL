@@ -4,6 +4,8 @@ from types import SimpleNamespace
 import pytest
 
 from f1rl.local_demo import runner
+from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
+from f1rl.exploratory.reward import apply_training_physics_failure
 
 
 class _Environment:
@@ -122,7 +124,7 @@ def test_local_demo_keeps_training_error_primary_when_telemetry_cleanup_fails(
     monkeypatch.setattr(runner, "_preflight", lambda *args, **kwargs: preflight)
     monkeypatch.setattr(runner, "configure_cpu_runtime", lambda *args: None)
     monkeypatch.setattr(runner, "make_multi_track_vector_env", lambda *args: vector)
-    monkeypatch.setattr(runner, "_install_demo_reward", lambda *args: None)
+    monkeypatch.setattr(runner, "_install_demo_reward", lambda *args, **kwargs: None)
     monkeypatch.setattr(runner, "_issue", lambda *args, **kwargs: object())
     monkeypatch.setattr(runner.PPOModel, "create", staticmethod(lambda *args: model))
     monkeypatch.setattr(runner, "TrainingTelemetryRecorder", lambda *args, **kwargs: telemetry)
@@ -204,7 +206,7 @@ def test_smoke_abort_persists_actual_timestep_and_optimizer_counts(tmp_path, mon
     monkeypatch.setattr(runner, "_preflight", lambda *args, **kwargs: preflight)
     monkeypatch.setattr(runner, "configure_cpu_runtime", lambda *args: None)
     monkeypatch.setattr(runner, "make_multi_track_vector_env", lambda *args: vector)
-    monkeypatch.setattr(runner, "_install_demo_reward", lambda *args: None)
+    monkeypatch.setattr(runner, "_install_demo_reward", lambda *args, **kwargs: None)
     monkeypatch.setattr(runner, "_issue", lambda *args, **kwargs: Session())
     monkeypatch.setattr(runner.PPOModel, "create", staticmethod(lambda *args: model))
     monkeypatch.setattr(runner, "_action_policy_weights_sha256", lambda _model: "9" * 64)
@@ -284,3 +286,71 @@ def test_local_demo_admission_cannot_be_minted_by_direct_caller():
             deadline=1.0,
             max_timesteps=1,
         )
+
+
+def test_tuning_wrapper_converts_only_explicit_unsupported_contact(monkeypatch):
+    class Scenario:
+        _active_env = object()
+
+        def step(self, action):
+            raise SuspensionResolutionError("outside support", failure_code="unsupported_contact")
+
+    scenario = Scenario()
+    vector = SimpleNamespace(envs=[scenario])
+    marker = ("last-certified-observation", -25.0, True, False, {"physics_abort_terminal": True})
+    monkeypatch.setattr(runner, "apply_training_physics_failure",
+                        lambda environment, error, reward: marker)
+
+    runner._install_demo_reward(vector, {"version": "straight_route_stability_demo_v2"},
+                                failure_policy="unsupported_contact_terminal_v1")
+
+    assert scenario.step(None) == marker
+
+
+def test_tuning_wrapper_still_aborts_other_physics_failures():
+    class Scenario:
+        _active_env = object()
+
+        def step(self, action):
+            raise SuspensionResolutionError("uncertified balance")
+
+    scenario = Scenario()
+    vector = SimpleNamespace(envs=[scenario])
+    runner._install_demo_reward(vector, {"version": "straight_route_stability_demo_v2"},
+                                failure_policy="unsupported_contact_terminal_v1")
+
+    with pytest.raises(SuspensionResolutionError, match="uncertified balance"):
+        scenario.step(None)
+
+
+def test_training_physics_failure_is_terminal_at_last_certified_state():
+    vehicle = SimpleNamespace(position=(1.0, 0.5, 2.0))
+    snapshot = SimpleNamespace(tick=12, elapsed_time=0.24,
+                               world=SimpleNamespace(vehicle=vehicle, score=SimpleNamespace(points=3)))
+    progress = SimpleNamespace(next_checkpoint_index=1, finished=False)
+    env = SimpleNamespace(
+        _simulation=SimpleNamespace(snapshot=snapshot), _progress=progress,
+        _needs_reset=True, _authored_route=SimpleNamespace(horizontal_distance=lambda _position: 2.5),
+        _simulation_config=SimpleNamespace(fixed_dt=0.02), _route_highwater=4.0,
+        _encode_observation=lambda _vehicle, _target: [0.1, 0.2],
+        _route_target=lambda _vehicle, _progress: "next-gate",
+        _physics_info=lambda _snapshot: {"physics": {"sha256": "a" * 64}},
+        _train_reset_info=lambda: {"train_reset": {"seed": 1000}},
+        _race_info=lambda: {"race": {"hard_route_boundary_m": 4.0}},
+        _training_state_info=lambda *_args: {"training_telemetry": {"schema_version": "f1rl_training_state_v1"}},
+        last_research_outcome={"reason": "invalid_physical_transition", "valid_sample": False},
+    )
+    config = {"version": "straight_route_stability_demo_v2", "training_corridor_m": 3.0,
+              "lateral_penalty_per_m2_s": 2.0, "terminal_penalty": 25.0}
+
+    observation, reward, terminated, truncated, info = apply_training_physics_failure(
+        env, SuspensionResolutionError("unsupported", failure_code="unsupported_contact"), config)
+
+    assert observation == [0.1, 0.2]
+    assert reward == pytest.approx(-25.25)
+    assert terminated is True and truncated is False
+    assert info["demo_training"]["physics_abort_terminal"] is True
+    assert info["demo_training"]["physics_failure_code"] == "unsupported_contact"
+    assert info["demo_training"]["registered_reward"] == 0.0
+    assert info["research_outcome"]["valid_sample"] is False
+    assert info["race"]["hard_route_boundary_m"] == 4.0

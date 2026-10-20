@@ -53,8 +53,14 @@ class TrainingTelemetryRecorder:
             raise ValueError("capture_autoreset must be bool")
         required = {"run_id", "source_commit", "policy_id", "split", "track_ids",
                     "seed_identity", "reset_contracts"}
-        if not isinstance(run_identity, dict) or set(run_identity) != required:
+        optional = {"training_failure_policy"}
+        if (not isinstance(run_identity, dict)
+                or set(run_identity) not in (required, required | optional)):
             raise ValueError("run_identity has unexpected fields")
+        if ("training_failure_policy" in run_identity
+                and run_identity["training_failure_policy"] not in (
+                    "abort_on_physics_error", "unsupported_contact_terminal_v1")):
+            raise ValueError("training failure policy is not registered")
         if (not all(isinstance(run_identity[k], str) and run_identity[k].strip()
                     for k in ("run_id", "policy_id"))
                 or _COMMIT.fullmatch(run_identity["source_commit"]) is None

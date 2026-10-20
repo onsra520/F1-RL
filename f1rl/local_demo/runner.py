@@ -19,7 +19,9 @@ from ..learning.training.telemetry import TrainingTelemetryRecorder
 from ..learning.training.vector_env import make_multi_track_vector_env
 from ..research.simulation_only_protocol import load_simulation_only_manifest
 from ..research.wp7_protocol import load_registration, prepare_scenarios
-from ..exploratory.reward import apply_training_curriculum, validate as validate_demo_reward
+from ..exploratory.reward import (apply_training_curriculum, apply_training_physics_failure,
+                                  validate as validate_demo_reward)
+from ..sandbox.independent_suspension_dynamics import SuspensionResolutionError
 from .admission import LocalDemoStopped, _issue, _revoke, _source_identity
 
 
@@ -298,14 +300,25 @@ def _preflight(root: Path, candidate_id: str, tuning_seed_index: int, *, profile
     }
 
 
-def _install_demo_reward(vector_env, reward: dict) -> None:
+def _install_demo_reward(vector_env, reward: dict, *,
+                         failure_policy: str = "abort_on_physics_error") -> None:
     for sampled_env in vector_env.envs:
         original_step = sampled_env.step
 
         def step(action, *, _sampled_env=sampled_env, _original=original_step):
-            result = _original(action)
+            try:
+                result = _original(action)
+            except SuspensionResolutionError as error:
+                if (failure_policy != "unsupported_contact_terminal_v1"
+                        or error.failure_code != "unsupported_contact"):
+                    raise
+                if _sampled_env._active_env is None:
+                    raise RuntimeError("TRAIN scenario lost its active environment after physics failure") from error
+                return apply_training_physics_failure(_sampled_env._active_env, error, reward)
             if _sampled_env._active_env is None:
                 raise RuntimeError("TRAIN scenario did not create an active environment")
+            if result[4].get("demo_training", {}).get("physics_abort_terminal") is True:
+                return result
             return apply_training_curriculum(_sampled_env._active_env, result, reward)
 
         sampled_env.step = step
@@ -382,6 +395,8 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
         "action_contract_version": preflight["action_contract_version"],
         "ppo_config": preflight["ppo_config"],
         "candidate": preflight["candidate"], "demo_reward": preflight["demo_reward"],
+        "training_failure_policy": ("unsupported_contact_terminal_v1" if profile == "tuning"
+                                    else "abort_on_physics_error"),
         "training_seed_bundle": {"ppo": preflight["ppo"].seed,
                                   "sampling": preflight["sampling_seed"],
                                   "training_reset": preflight["reset_seed"]},
@@ -403,6 +418,8 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                         classification="LOCAL_DEMO_SMOKE_NOT_SCIENTIFIC",
                         profile="smoke", smoke_profile_sha256=preflight["smoke_profile_sha256"],
                         training_profile_sha256=preflight["training_profile_sha256"])
+    else:
+        manifest["schema_version"] = "f1rl_local_demo_run_v2"
     manifest["sha256"] = sha256(json.dumps(manifest, sort_keys=True, separators=(",", ":"),
                                       allow_nan=False).encode()).hexdigest()
     _write_json(output / "run-manifest.json", manifest)
@@ -426,7 +443,9 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
             preflight["scenarios"], VectorEnvConfig(n_envs=1, backend="dummy"),
             preflight["sampling_seed"],
         )
-        _install_demo_reward(vector, preflight["demo_reward"])
+        _install_demo_reward(vector, preflight["demo_reward"],
+                             failure_policy=("unsupported_contact_terminal_v1" if profile == "tuning"
+                                             else "abort_on_physics_error"))
         session = _issue(root, vector, commit=preflight["source_commit"],
                          tree_sha256=preflight["source_tree_sha256"], deadline=deadline,
                          max_timesteps=preflight["timesteps"])
@@ -454,6 +473,7 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                               "sampling": preflight["sampling_seed"],
                               "training_reset": preflight["reset_seed"]},
             "reset_contracts": preflight["reset_contracts"],
+            "training_failure_policy": manifest["training_failure_policy"],
         }
         _assert_finite_policy_weights(model)
         initial_weights_sha256 = model.weights_sha256()
