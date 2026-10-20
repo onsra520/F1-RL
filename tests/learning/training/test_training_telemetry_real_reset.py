@@ -1,4 +1,5 @@
 """Provenance checks against actual registered TRAIN environment transitions."""
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -86,20 +87,28 @@ def test_declared_run_reset_seed_must_match_actual_train_transition(
     recorder = None
     try:
         if not accepted:
+            actual_reset = transition["infos"][0]["train_reset"]
+            assert actual_reset["seed"] == 1000
+            declared_contract = replace(env._reset_config, seed=declared_seed).identity_for_track(
+                env._reset_track_id
+            )
+            recorder = TrainingTelemetryRecorder(
+                tmp_path / f"telemetry-{declared_seed}.jsonl",
+                run_identity={
+                    "run_id": f"seed-binding-{declared_seed}",
+                    "source_commit": "b" * 40,
+                    "policy_id": POLICY,
+                    "split": "TRAIN",
+                    "track_ids": [env._reset_track_id],
+                    "seed_identity": {"ppo": 0, "training_reset": declared_seed},
+                    "reset_contracts": {env._reset_track_id: declared_contract},
+                },
+                max_timesteps=2,
+            )
+            recorder.on_training_start(_Model(), total_timesteps=1, n_envs=1)
             with pytest.raises(ValueError, match="declared training reset seed"):
-                TrainingTelemetryRecorder(
-                    tmp_path / f"telemetry-{declared_seed}.jsonl",
-                    run_identity={
-                        "run_id": f"seed-binding-{declared_seed}",
-                        "source_commit": "b" * 40,
-                        "policy_id": POLICY,
-                        "split": "TRAIN",
-                        "track_ids": [env._reset_track_id],
-                        "seed_identity": {"ppo": 0, "training_reset": declared_seed},
-                        "reset_contracts": {env._reset_track_id: env.training_reset_contract},
-                    },
-                    max_timesteps=2,
-                )
+                recorder.on_step(transition, _Model())
+            recorder.close()
             return
         recorder = TrainingTelemetryRecorder(
             tmp_path / f"telemetry-{declared_seed}.jsonl",

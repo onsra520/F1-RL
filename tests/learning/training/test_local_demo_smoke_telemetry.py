@@ -3,10 +3,22 @@ import json
 
 import numpy as np
 
+from f1rl.learning.pilot_preflight import TRAIN_IDS
+from f1rl.learning.training.config import VectorEnvConfig
 from f1rl.learning.training.telemetry import TrainingTelemetryRecorder
-from f1rl.learning.training.vector_env import _SampledF1RLEnv
-from f1rl.local_demo.runner import _validate_smoke_telemetry
-from f1rl.research.wp7_protocol import build_protocol, prepare_training_scenarios
+from f1rl.learning.training.vector_env import _SampledF1RLEnv, make_multi_track_vector_env
+from f1rl.local_demo.runner import (
+    _candidate_reward,
+    _install_demo_reward,
+    _validate_smoke_telemetry,
+)
+from f1rl.research.simulation_only_protocol import load_simulation_only_manifest
+from f1rl.research.wp7_protocol import (
+    build_protocol,
+    load_registration,
+    prepare_scenarios,
+    prepare_training_scenarios,
+)
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -125,3 +137,89 @@ def test_smoke_telemetry_auditor_enforces_exact_rollout_and_episode_continuity(t
     assert result["automatic_resets_verified"] == 1
     assert result["episodes_terminated_or_truncated"] == 1
     assert result["episodes_started"] == 2
+
+
+def test_real_train_curriculum_termination_preserves_dummy_vec_autoreset_identity(tmp_path):
+    manifest, _ = load_simulation_only_manifest(ROOT)
+    _, reward_config = _candidate_reward(manifest, "C")
+    registration = load_registration(ROOT, profile="spatial_rotating_owner_v3")
+    scenarios = prepare_scenarios(ROOT, registration, seed_index=0)
+    assert tuple(scenario.track_id for scenario in scenarios.scenarios) == TRAIN_IDS
+    vec = make_multi_track_vector_env(
+        scenarios, VectorEnvConfig(n_envs=1, backend="dummy"), sampling_seed=0
+    )
+    _install_demo_reward(vec, reward_config)
+    vec.env_method("set_training_telemetry_enabled", True)
+    contracts = vec.get_attr("training_reset_contracts")[0]
+
+    class VecModel:
+        num_timesteps = 0
+        _n_updates = 0
+
+        def __init__(self):
+            self._env = vec
+
+        def get_env(self):
+            return self._env
+
+        def weights_sha256(self):
+            return "a" * 64
+
+    model = VecModel()
+    recorder = TrainingTelemetryRecorder(
+        tmp_path / "real-dummy-vec-smoke.jsonl",
+        run_identity={
+            "run_id": "real-dummy-vec-smoke", "source_commit": "b" * 40,
+            "policy_id": "local-demo-smoke-C-seed0", "split": "TRAIN",
+            "track_ids": list(TRAIN_IDS),
+            "seed_identity": {"ppo": 0, "sampling": 0, "training_reset": 1000},
+            "reset_contracts": contracts,
+        },
+        max_timesteps=32, capture_autoreset=True,
+    )
+    try:
+        observation = vec.reset()
+        recorder.on_training_start(model, total_timesteps=32, n_envs=1)
+        action = np.asarray([[1.0, 1.0, 0.0]], dtype=np.float32)
+        terminal_info = None
+        terminal_timestep = None
+        for timestep in range(1, 33):
+            next_observation, rewards, dones, infos = vec.step(action)
+            model.num_timesteps = timestep
+            recorder.on_step({
+                "obs": observation,
+                "new_obs": next_observation,
+                "actions": action,
+                "clipped_actions": action,
+                "rewards": rewards,
+                "dones": dones,
+                "infos": infos,
+            }, model)
+            observation = next_observation
+            if dones[0] and terminal_timestep is None:
+                terminal_info = infos[0]
+                terminal_timestep = timestep
+            elif terminal_timestep is not None:
+                break
+        assert terminal_info is not None
+        assert terminal_info["demo_training"]["curriculum_terminal"] is True
+        assert terminal_info["demo_training"]["lateral_distance_m"] > 3.0
+        assert terminal_info["TimeLimit.truncated"] is False
+        assert np.asarray(terminal_info["terminal_observation"]).shape == (16,)
+
+        recorder.close()
+        rows = [json.loads(line) for line in (tmp_path / "real-dummy-vec-smoke.jsonl").read_text().splitlines()]
+        steps = [row for row in rows if row["event_type"] == "step"]
+        terminal_index = next(index for index, row in enumerate(steps)
+                              if row["demo_training"]["curriculum_terminal"])
+        terminal = steps[terminal_index]
+        following = steps[terminal_index + 1]
+        assert terminal["termination_reason"] == "demo_curriculum_boundary"
+        np.testing.assert_array_equal(terminal["next_observation"], terminal_info["terminal_observation"])
+        np.testing.assert_array_equal(terminal["autoreset_observation"], following["observation"])
+        assert following["episode_index"] == terminal["episode_index"] + 1
+        assert terminal["autoreset_identity"] == following["seed_identity"]["train_reset"]
+        assert terminal["autoreset_episode_id"] == following["episode_id"]
+    finally:
+        recorder.close()
+        vec.close()

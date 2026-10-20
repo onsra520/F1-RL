@@ -1,8 +1,14 @@
 import json
+from types import SimpleNamespace
 
 import pytest
+import torch
 
-from f1rl.local_demo.runner import _load_smoke_profile, _preflight
+from f1rl.local_demo.runner import (
+    _assert_finite_policy_weights,
+    _load_smoke_profile,
+    _preflight,
+)
 
 
 def test_smoke_profile_is_strictly_bounded_to_one_registered_rollout(tmp_path):
@@ -43,3 +49,11 @@ def test_smoke_preflight_rejects_other_candidates_and_seed_bundles(candidate, se
 
     with pytest.raises(ValueError, match="requires candidate C and tuning seed index 0"):
         _preflight(root, candidate, seed_index, profile="smoke")
+
+
+def test_smoke_policy_weight_check_rejects_nonfinite_parameters():
+    policy = SimpleNamespace(state_dict=lambda: {"weight": torch.tensor([1.0, float("nan")])})
+    model = SimpleNamespace(_model=SimpleNamespace(policy=policy))
+
+    with pytest.raises(RuntimeError, match="non-finite PPO policy weight"):
+        _assert_finite_policy_weights(model)

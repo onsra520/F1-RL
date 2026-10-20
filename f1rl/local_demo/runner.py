@@ -38,6 +38,23 @@ def _hash_file(path: Path) -> str:
     return value.hexdigest()
 
 
+def _save_checkpoint(model: PPOModel, pending: Path, final: Path) -> None:
+    try:
+        model.save(pending)
+        os.replace(pending, final)
+    except BaseException as error:
+        try:
+            pending.unlink()
+        except FileNotFoundError:
+            pass
+        except OSError as cleanup_error:
+            error.add_note(
+                f"Could not remove incomplete checkpoint {pending.name}: "
+                f"{type(cleanup_error).__name__}: {cleanup_error}"
+            )
+        raise
+
+
 def _action_policy_weights_sha256(model: PPOModel) -> str:
     selected = ((name, value) for name, value in model._model.policy.state_dict().items()
                 if name.startswith(("mlp_extractor.policy_net.", "action_net."))
@@ -51,6 +68,14 @@ def _action_policy_weights_sha256(model: PPOModel) -> str:
     if not names:
         raise RuntimeError("PPO action policy has no fingerprintable parameters")
     return digest.hexdigest()
+
+
+def _assert_finite_policy_weights(model: PPOModel) -> None:
+    import torch
+
+    for name, tensor in model._model.policy.state_dict().items():
+        if (tensor.is_floating_point() or tensor.is_complex()) and not bool(torch.isfinite(tensor).all()):
+            raise RuntimeError(f"non-finite PPO policy weight: {name}")
 
 
 def _load_smoke_profile(path: str | Path) -> tuple[dict, str]:
@@ -426,6 +451,8 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                               "training_reset": preflight["reset_seed"]},
             "reset_contracts": preflight["reset_contracts"],
         }
+        if profile == "smoke":
+            _assert_finite_policy_weights(model)
         initial_weights_sha256 = model.weights_sha256()
         initial_action_weights_sha256 = (
             _action_policy_weights_sha256(model) if profile == "smoke" else None
@@ -451,12 +478,17 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
             session.check(actual_timesteps)
             if telemetry.optimizer_steps > optimizer_steps:
                 optimizer_steps = telemetry.optimizer_steps
+            if profile == "smoke":
+                state.update(phase="learning", learning_timesteps=actual_timesteps,
+                             optimizer_steps=optimizer_steps)
+                _write_json(output / "state.json", state)
+                if progress_observer is not None:
+                    progress_observer(dict(state))
             if (preflight["checkpoint_every"] and actual_timesteps
                     and actual_timesteps % preflight["checkpoint_every"] == 0):
                 temp = checkpoint_root / f"checkpoint-{actual_timesteps}.pending.zip"
                 final = checkpoint_root / f"checkpoint-{actual_timesteps}.zip"
-                model.save(temp)
-                os.replace(temp, final)
+                _save_checkpoint(model, temp, final)
                 checkpoint_sha256 = _hash_file(final)
                 checkpoints.append({"path": final.relative_to(output).as_posix(),
                                     "sha256": checkpoint_sha256, "timesteps": actual_timesteps})
@@ -502,6 +534,7 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
             _action_policy_weights_sha256(model) if profile == "smoke" else None
         )
         if profile == "smoke":
+            _assert_finite_policy_weights(model)
             if (model.num_timesteps != 256 or len(gradient_activity) != telemetry.optimizer_steps
                     or not any(row["gradient_l2_norm"] > 0 for row in gradient_activity)
                     or initial_weights_sha256 == final_weights_sha256
@@ -510,11 +543,11 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                 raise RuntimeError("LOCAL_DEMO smoke failed its genuine rollout/update/weight checks")
         final_tmp = output / "model-final.pending.zip"
         final_model = output / "model-final.zip"
-        model.save(final_tmp)
-        os.replace(final_tmp, final_model)
+        _save_checkpoint(model, final_tmp, final_model)
         reloaded_weights_sha256 = final_weights_sha256
         if profile == "smoke":
             reloaded = PPOModel.load(final_model, device="cpu")
+            _assert_finite_policy_weights(reloaded)
             reloaded_weights_sha256 = reloaded.weights_sha256()
             reloaded_action_weights_sha256 = _action_policy_weights_sha256(reloaded)
             if (reloaded_weights_sha256 != final_weights_sha256
@@ -530,6 +563,9 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                 "initial_action_policy_weights_sha256": initial_action_weights_sha256,
                 "final_action_policy_weights_sha256": final_action_weights_sha256,
                 "reloaded_action_policy_weights_sha256": reloaded_action_weights_sha256,
+                "initial_policy_weights_finite": True,
+                "final_policy_weights_finite": True,
+                "reloaded_policy_weights_finite": True,
                 "weights_changed": initial_weights_sha256 != final_weights_sha256,
                 "action_policy_weights_changed": initial_action_weights_sha256 != final_action_weights_sha256,
                 "reload_matches_final": reloaded_weights_sha256 == final_weights_sha256,
@@ -546,6 +582,7 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                 "persisted_policy_weights_sha256": final_weights_sha256,
                 "reloaded_policy_weights_sha256": reloaded_weights_sha256,
                 "action_policy_weights_sha256": reloaded_action_weights_sha256,
+                "policy_weights_finite": True,
                 "reloaded_num_timesteps": reloaded.num_timesteps,
                 "observation_space_matches": reloaded._model.observation_space == model._model.observation_space,
                 "action_space_matches": reloaded._model.action_space == model._model.action_space,
@@ -569,6 +606,11 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
         return {**manifest, "state": state}
     except BaseException as error:
         primary_error = error
+        if profile == "smoke":
+            if model is not None:
+                state["learning_timesteps"] = model.num_timesteps
+            if telemetry is not None:
+                state["optimizer_steps"] = telemetry.optimizer_steps
         state.update(status="failed", phase=state.get("phase"),
                      error=f"{type(error).__name__}: {error}",
                      scientific_evidence=False, scientific_training_authorized=False)
@@ -638,7 +680,11 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                         or not weights.get("action_policy_weights_changed")
                         or weights.get("ppo_epoch_updates", 0) <= 0
                         or weights.get("optimizer_steps") != state["optimizer_steps"]
-                        or weights.get("nonzero_gradient_steps") != state["optimizer_steps"]):
+                        or weights.get("nonzero_gradient_steps") != state["optimizer_steps"]
+                        or weights.get("initial_policy_weights_finite") is not True
+                        or weights.get("final_policy_weights_finite") is not True
+                        or weights.get("reloaded_policy_weights_finite") is not True
+                        or checkpoint.get("policy_weights_finite") is not True):
                     raise ValueError("smoke checkpoint or optimizer evidence failed verification")
                 if (transition_accounting["initial_policy_weights_sha256"]
                         != weights["initial_policy_weights_sha256"]
@@ -677,6 +723,7 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                     "initial_policy_weights_sha256": weights["initial_policy_weights_sha256"],
                     "final_policy_weights_sha256": weights["final_policy_weights_sha256"],
                     "reload_policy_weights_sha256": weights["reloaded_policy_weights_sha256"],
+                    "policy_weights_finite": True,
                     "initial_action_policy_weights_sha256": weights["initial_action_policy_weights_sha256"],
                     "final_action_policy_weights_sha256": weights["final_action_policy_weights_sha256"],
                     "reload_action_policy_weights_sha256": weights["reloaded_action_policy_weights_sha256"],
