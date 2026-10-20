@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 
 import pytest
 
@@ -10,6 +11,7 @@ from f1rl.local_demo.campaign import (
     _iter_jsonl,
     _load_campaign_config,
     model_schedule,
+    _windows_process_sample,
 )
 from f1rl.local_demo.evaluation import build_evaluation_roster
 from f1rl.research.simulation_only_protocol import load_simulation_only_manifest
@@ -79,3 +81,13 @@ def test_training_jsonl_parser_fails_closed_on_size_truncation_and_duplicate_key
 def test_campaign_config_file_is_the_source_of_the_frozen_contract():
     config = json.loads((ROOT / CAMPAIGN_CONFIG).read_text(encoding="utf-8"))
     assert config == _expected_campaign_config()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="WP3 campaign runs on local Windows")
+def test_windows_resource_sample_reads_nonzero_process_working_set_and_cpu_time():
+    sample = _windows_process_sample(os.getpid())
+
+    assert sample is not None
+    assert sample["rss_bytes"] > 0
+    assert sample["cpu_seconds"] is not None
+    assert sample["cpu_seconds"] >= 0

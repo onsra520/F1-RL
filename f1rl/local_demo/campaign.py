@@ -767,7 +767,19 @@ def _windows_process_sample(pid: int) -> dict | None:
 
     kernel = ctypes.WinDLL("kernel32", use_last_error=True)
     psapi = ctypes.WinDLL("psapi", use_last_error=True)
-    handle = kernel.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+    handle_type = wintypes.HANDLE
+    kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel.OpenProcess.restype = handle_type
+    kernel.GetProcessTimes.argtypes = [handle_type, ctypes.POINTER(FILETIME),
+                                       ctypes.POINTER(FILETIME), ctypes.POINTER(FILETIME),
+                                       ctypes.POINTER(FILETIME)]
+    kernel.GetProcessTimes.restype = wintypes.BOOL
+    kernel.CloseHandle.argtypes = [handle_type]
+    kernel.CloseHandle.restype = wintypes.BOOL
+    psapi.GetProcessMemoryInfo.argtypes = [handle_type, ctypes.POINTER(PROCESS_MEMORY_COUNTERS),
+                                           wintypes.DWORD]
+    psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
+    handle = kernel.OpenProcess(0x410, False, pid)  # PROCESS_QUERY_INFORMATION | PROCESS_VM_READ
     if not handle:
         return None
     try:
