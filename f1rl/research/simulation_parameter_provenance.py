@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from hashlib import sha256
+from math import isfinite
 from pathlib import Path
 
 from ..sandbox.tire_calibration_contract import REQUIRED_WP7_MEASUREMENTS
@@ -11,6 +12,20 @@ from .wp7_protocol import load_registration, prepare_scenarios
 
 PROFILE = "spatial_rotating_owner_v3"
 REGISTRATION_PATH = "configs/research/wp7-rotating-owner-protocol-v3.json"
+_LEGAL_DOMAINS = {
+    "mass_kg": (0.0, False, None, False, "independent_suspension_dynamics.py:64-68"),
+    "pitch_inertia_kg_m2": (0.0, False, None, False, "independent_suspension_dynamics.py:64-68"),
+    "yaw_inertia_kg_m2": (0.0, False, None, False, "spatial_contact_dynamics.py:38-42"),
+    "roll_inertia_kg_m2": (0.0, False, None, False, "independent_suspension_dynamics.py:64-68"),
+    "wheel_radius_m": (0.0, False, 1.0, True, "tire_calibration_contract.py:29-34"),
+    "wheel_width_m": (0.0, False, 1.0, True, "tire_calibration_contract.py:29-34"),
+    "spring_stiffness_npm": (0.0, False, None, False, "independent_suspension_dynamics.py:64-68"),
+    "damper_nspm": (0.0, True, None, False, "independent_suspension_dynamics.py:69-72"),
+    "front_cornering_stiffness_nprad": (0.0, False, None, False, "grounded_yaw_dynamics.py:40-51"),
+    "rear_cornering_stiffness_nprad": (0.0, False, None, False, "grounded_yaw_dynamics.py:40-51"),
+    "tire_friction_mu": (0.0, True, None, False, "coupled_longitudinal_dynamics.py:39-48"),
+    "tire_restitution": (0.0, True, 1.0, True, "contact_manifold.py:47-56"),
+}
 
 
 def build_parameter_provenance(root: str | Path) -> dict:
@@ -67,13 +82,25 @@ def build_parameter_provenance(root: str | Path) -> dict:
             raise AssertionError(f"registered unit mismatch for {name}")
         if status in ("runtime_exact", "runtime_analogue") and runtime_value != config_value:
             raise ValueError(f"source/runtime parameter mismatch for {name}")
+        minimum, minimum_inclusive, maximum, maximum_inclusive, bounds_source = _LEGAL_DOMAINS[name]
+        for value in (config_value, runtime_value):
+            if value is None:
+                continue
+            if (type(value) not in (int, float) or not _within_domain(
+                    value, minimum, minimum_inclusive, maximum, maximum_inclusive)):
+                raise ValueError(f"parameter outside source legal domain: {name}")
         parameters.append({
             "name": name, "unit": unit,
             "source": None if source_key is None else f"{REGISTRATION_PATH}#/" + source_key.replace(".", "/"),
             "configured_value": config_value,
             "runtime_value": runtime_value,
             "runtime_status": status,
-            "legal_domain_source": _domain_source(name),
+            "legal_domain_source": f"f1rl/sandbox/{bounds_source}",
+            "legal_bounds": {
+                "unit": unit, "minimum": minimum, "minimum_inclusive": minimum_inclusive,
+                "maximum": maximum, "maximum_inclusive": maximum_inclusive,
+                "source": f"f1rl/sandbox/{bounds_source}",
+            },
         })
     return {
         "schema_version": "f1rl_simulation_parameter_provenance_v1",
@@ -93,17 +120,12 @@ def build_parameter_provenance(root: str | Path) -> dict:
     }
 
 
-def _domain_source(name: str) -> str:
-    if name in ("mass_kg", "pitch_inertia_kg_m2", "roll_inertia_kg_m2", "spring_stiffness_npm", "damper_nspm"):
-        return "f1rl/sandbox/independent_suspension_dynamics.py:IndependentSuspensionDynamicsPolicy.__post_init__"
-    if name == "yaw_inertia_kg_m2":
-        return "f1rl/sandbox/spatial_contact_dynamics.py:SpatialContactPolicy.__post_init__"
-    if name == "tire_friction_mu":
-        return "f1rl/sandbox/coupled_longitudinal_dynamics.py:LongitudinalContactPolicy.__post_init__"
-    if name in ("wheel_radius_m", "wheel_width_m"):
-        return "f1rl/sandbox/tire_calibration_contract.py:TireHubGeometry.__post_init__ (not consumed by selected runtime profile)"
-    if name in ("front_cornering_stiffness_nprad", "rear_cornering_stiffness_nprad"):
-        return "f1rl/sandbox/grounded_yaw_dynamics.py:GroundedYawPolicy.__post_init__ (policy absent from selected runtime profile)"
-    if name == "tire_restitution":
-        return "f1rl/sandbox/contact_manifold.py:ContactManifoldPolicy.__post_init__ (policy absent from selected runtime profile)"
-    raise ValueError(f"unregistered WP7 parameter: {name}")
+def _within_domain(value: float, minimum: float, minimum_inclusive: bool,
+                   maximum: float | None, maximum_inclusive: bool) -> bool:
+    if not isfinite(value):
+        return False
+    if value < minimum or (value == minimum and not minimum_inclusive):
+        return False
+    if maximum is not None and (value > maximum or (value == maximum and not maximum_inclusive)):
+        return False
+    return True

@@ -1,15 +1,30 @@
 """Process-local capability used only by the separate LOCAL_DEMO runner."""
 from __future__ import annotations
 
+from hashlib import sha256
+import inspect
 import os
 from pathlib import Path
 import subprocess
 import time
 from weakref import WeakKeyDictionary
-from hashlib import sha256
 
 
 _CAPABILITIES = WeakKeyDictionary()
+
+
+def _source_identity(root: Path) -> tuple[str, str]:
+    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, check=True,
+                            capture_output=True, text=True).stdout.strip()
+    branch = subprocess.run(["git", "branch", "--show-current"], cwd=root, check=True,
+                            capture_output=True, text=True).stdout.strip()
+    tree = subprocess.run(["git", "rev-parse", "HEAD^{tree}"], cwd=root, check=True,
+                          capture_output=True, text=True).stdout.strip()
+    dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all"],
+                           cwd=root, check=True, capture_output=True, text=True).stdout
+    if dirty or branch in ("", "main") or len(commit) != 40 or len(tree) != 40:
+        raise ValueError("LOCAL_DEMO requires a clean committed source tree")
+    return commit, sha256(b"f1rl-local-demo-git-tree-v1\x00" + bytes.fromhex(tree)).hexdigest()
 
 
 class LocalDemoStopped(RuntimeError):
@@ -41,16 +56,11 @@ class _LocalDemoSession:
         self._verified_source = False
 
     def verify_source(self) -> None:
-        commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.root,
-                                check=True, capture_output=True, text=True).stdout.strip()
-        branch = subprocess.run(["git", "branch", "--show-current"], cwd=self.root,
-                                check=True, capture_output=True, text=True).stdout.strip()
-        tree = subprocess.run(["git", "rev-parse", "HEAD^{tree}"], cwd=self.root,
-                              check=True, capture_output=True, text=True).stdout.strip()
-        dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all"],
-                               cwd=self.root, check=True, capture_output=True, text=True).stdout
-        tree_sha256 = sha256(b"f1rl-local-demo-git-tree-v1\x00" + bytes.fromhex(tree)).hexdigest()
-        if commit != self.commit or tree_sha256 != self.tree_sha256 or dirty or branch == "main":
+        try:
+            commit, tree_sha256 = _source_identity(self.root)
+        except ValueError as error:
+            raise ValueError("LOCAL_DEMO source identity changed during preflight") from error
+        if commit != self.commit or tree_sha256 != self.tree_sha256:
             raise ValueError("LOCAL_DEMO source identity changed during preflight")
         self._verified_source = True
 
@@ -63,6 +73,9 @@ class _LocalDemoSession:
 
 def _issue(root: Path, environment, *, commit: str, tree_sha256: str,
            deadline: float, max_timesteps: int) -> _LocalDemoSession:
+    caller = inspect.currentframe().f_back
+    if caller is None or caller.f_globals.get("__name__") != "f1rl.local_demo.runner":
+        raise PermissionError("LOCAL_DEMO admission can only be issued by its runner")
     session = _LocalDemoSession(root, environment, commit=commit, tree_sha256=tree_sha256,
                                 deadline=deadline, max_timesteps=max_timesteps)
     session.verify_source()

@@ -7,22 +7,20 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
-import subprocess
 import time
 from uuid import uuid4
 
 import numpy as np
 
-from ..learning.algorithms.ppo import PPOConfig, PPOModel, configure_cpu_runtime
+from ..learning.algorithms.ppo import PPOModel, configure_cpu_runtime
 from ..learning.pilot_preflight import TRAIN_IDS
-from ..learning.provenance import _capture_git_provenance
 from ..learning.training.config import TrainingRunConfig, VectorEnvConfig
 from ..learning.training.telemetry import TrainingTelemetryRecorder
 from ..learning.training.vector_env import make_multi_track_vector_env
 from ..research.simulation_only_protocol import load_simulation_only_manifest
 from ..research.wp7_protocol import load_registration, prepare_scenarios
 from ..exploratory.reward import apply_training_curriculum, validate as validate_demo_reward
-from .admission import LocalDemoStopped, _issue, _revoke
+from .admission import LocalDemoStopped, _issue, _revoke, _source_identity
 
 
 def _write_json(path: Path, value: dict) -> None:
@@ -38,20 +36,6 @@ def _hash_file(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             value.update(block)
     return value.hexdigest()
-
-
-def _source_identity(root: Path) -> tuple[str, str]:
-    commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, check=True,
-                            capture_output=True, text=True).stdout.strip()
-    branch = subprocess.run(["git", "branch", "--show-current"], cwd=root, check=True,
-                            capture_output=True, text=True).stdout.strip()
-    tree = subprocess.run(["git", "rev-parse", "HEAD^{tree}"], cwd=root, check=True,
-                          capture_output=True, text=True).stdout.strip()
-    dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all"],
-                           cwd=root, check=True, capture_output=True, text=True).stdout
-    if dirty or branch in ("", "main") or len(commit) != 40 or len(tree) != 40:
-        raise ValueError("LOCAL_DEMO requires a clean committed source tree")
-    return commit, sha256(b"f1rl-local-demo-git-tree-v1\x00" + bytes.fromhex(tree)).hexdigest()
 
 
 def _candidate_reward(manifest: dict, candidate_id: str) -> tuple[dict, dict]:
@@ -149,30 +133,41 @@ def _install_demo_reward(vector_env, reward: dict) -> None:
 
 def _finalize_run(output: Path, state: dict, *, telemetry, model, vector, session,
                   learning_completed: bool) -> None:
-    try:
-        if telemetry is not None:
-            try:
-                telemetry.close()
-                _write_json(output / "training-telemetry-manifest.json",
-                            telemetry.manifest(complete=learning_completed))
-            except BaseException as error:
-                previous_error = state.get("error")
-                state.update(status="failed", phase="telemetry_finalization",
-                             finalization_error=f"{type(error).__name__}: {error}",
-                             scientific_evidence=False, scientific_training_authorized=False)
-                if previous_error is not None:
-                    state["error"] = previous_error
-                _write_json(output / "state.json", state)
-                raise
-    finally:
+    errors = []
+    if telemetry is not None:
         try:
-            if model is not None:
-                model._model.get_env().close()
-            elif vector is not None:
-                vector.close()
-        finally:
-            if session is not None:
+            telemetry.close()
+            _write_json(output / "training-telemetry-manifest.json",
+                        telemetry.manifest(complete=learning_completed))
+        except BaseException as error:
+            errors.append(error)
+    try:
+        if model is not None:
+            model._model.get_env().close()
+        elif vector is not None:
+            vector.close()
+    except BaseException as error:
+        errors.append(error)
+    finally:
+        if session is not None:
+            try:
                 _revoke(vector)
+            except BaseException as error:
+                errors.append(error)
+    if errors:
+        state.update(status="failed", phase="finalization_failed",
+                     finalization_error="; ".join(
+                         f"{type(error).__name__}: {error}" for error in errors
+                     ), scientific_evidence=False, scientific_training_authorized=False)
+        try:
+            _write_json(output / "state.json", state)
+        except BaseException as error:
+            errors[0].add_note(
+                f"Could not persist LOCAL_DEMO finalization failure: {type(error).__name__}: {error}"
+            )
+        for error in errors[1:]:
+            errors[0].add_note(f"Additional LOCAL_DEMO finalization failure: {type(error).__name__}: {error}")
+        raise errors[0]
 
 
 def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: int,
@@ -230,15 +225,16 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
              "optimizer_steps": 0, "scientific_training_authorized": False,
              "scientific_evidence": False}
     _write_json(output / "state.json", state)
-    configure_cpu_runtime(preflight["threads"], preflight["interop_threads"])
     vector = None
     model = None
     telemetry = None
     session = None
+    primary_error = None
     learning_completed = False
     deadline = started + (min(60, preflight["max_wall_seconds"]) if dry_run
                           else preflight["max_wall_seconds"])
     try:
+        configure_cpu_runtime(preflight["threads"], preflight["interop_threads"])
         if time.monotonic() >= deadline:
             raise LocalDemoStopped("LOCAL_DEMO time budget exhausted during preflight")
         vector = make_multi_track_vector_env(
@@ -324,11 +320,43 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
         _write_json(output / "state.json", state)
         return {**manifest, "state": state}
     except BaseException as error:
+        primary_error = error
         state.update(status="failed", phase=state.get("phase"),
                      error=f"{type(error).__name__}: {error}",
                      scientific_evidence=False, scientific_training_authorized=False)
-        _write_json(output / "state.json", state)
+        try:
+            _write_json(output / "state.json", state)
+        except BaseException as state_error:
+            error.add_note(
+                f"Could not persist LOCAL_DEMO failure state: "
+                f"{type(state_error).__name__}: {state_error}"
+            )
         raise
     finally:
-        _finalize_run(output, state, telemetry=telemetry, model=model, vector=vector,
-                      session=session, learning_completed=learning_completed)
+        try:
+            _finalize_run(output, state, telemetry=telemetry, model=model, vector=vector,
+                          session=session, learning_completed=learning_completed)
+        except BaseException as finalization_error:
+            state.update(status="failed", phase="finalization_failed",
+                         finalization_error=f"{type(finalization_error).__name__}: {finalization_error}",
+                         scientific_evidence=False, scientific_training_authorized=False)
+            if primary_error is not None:
+                primary_error.add_note(
+                    f"LOCAL_DEMO finalization also failed: {type(finalization_error).__name__}: "
+                    f"{finalization_error}"
+                )
+            try:
+                _write_json(output / "state.json", state)
+            except BaseException as state_error:
+                if primary_error is not None:
+                    primary_error.add_note(
+                        f"Could not persist LOCAL_DEMO finalization failure: "
+                        f"{type(state_error).__name__}: {state_error}"
+                    )
+                elif finalization_error is not state_error:
+                    finalization_error.add_note(
+                        f"Could not persist LOCAL_DEMO finalization failure: "
+                        f"{type(state_error).__name__}: {state_error}"
+                    )
+            if primary_error is None:
+                raise
