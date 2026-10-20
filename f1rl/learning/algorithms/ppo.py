@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, fields
+from contextvars import ContextVar
 from math import isfinite
 from numbers import Real
 from pathlib import Path
@@ -26,6 +27,7 @@ except ImportError as error:
 from ..gym_environment import F1RLEnv
 
 MAX_SEED = 2**32 - 1
+_ACTIVE_TELEMETRY_OBSERVER = ContextVar("f1rl_active_telemetry_observer", default=None)
 
 
 def _training_transition_locals(sb3_locals: dict, current_observation) -> dict:
@@ -252,7 +254,7 @@ class PPO(_SB3PPO):
             result = super().train()
         finally:
             self.runtime_timings['optimizer_updates'] = self.runtime_timings.get('optimizer_updates', 0.) + time.perf_counter()-started
-        observer = getattr(self, "_training_telemetry_observer", None)
+        observer = _ACTIVE_TELEMETRY_OBSERVER.get()
         if observer is not None:
             observer.on_update(PPOModel(self))
         return result
@@ -409,6 +411,7 @@ class PPOModel:
             kwargs["callback"] = _ProgressHookCallback(progress_hook, telemetry_observer)
         observer_started = False
         optimizer_hook = None
+        observer_token = _ACTIVE_TELEMETRY_OBSERVER.set(telemetry_observer)
         try:
             if telemetry_observer is not None:
                 if not isinstance(env, VecEnv):
@@ -418,7 +421,6 @@ class PPOModel:
                 )
                 observer_started = True
                 env.env_method("set_training_telemetry_enabled", True)
-                self._model._training_telemetry_observer = telemetry_observer
             if telemetry_observer is not None or optimizer_step_hook is not None:
                 def optimizer_step(*args, **kwargs):
                     if telemetry_observer is not None:
@@ -428,12 +430,13 @@ class PPOModel:
                 optimizer_hook = self._model.policy.optimizer.register_step_post_hook(optimizer_step)
             self._model.learn(**kwargs)
         finally:
-            if optimizer_hook is not None:
-                optimizer_hook.remove()
-            if observer_started:
-                if hasattr(self._model, "_training_telemetry_observer"):
-                    del self._model._training_telemetry_observer
-                env.env_method("set_training_telemetry_enabled", False)
+            try:
+                if optimizer_hook is not None:
+                    optimizer_hook.remove()
+                if observer_started:
+                    env.env_method("set_training_telemetry_enabled", False)
+            finally:
+                _ACTIVE_TELEMETRY_OBSERVER.reset(observer_token)
         return self
 
     @staticmethod
