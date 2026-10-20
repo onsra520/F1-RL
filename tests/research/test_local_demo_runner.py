@@ -189,4 +189,3 @@ def test_local_demo_admission_cannot_be_minted_by_direct_caller():
             deadline=1.0,
             max_timesteps=1,
         )
-
