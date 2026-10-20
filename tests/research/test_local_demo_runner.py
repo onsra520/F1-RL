@@ -114,7 +114,7 @@ def test_local_demo_keeps_training_error_primary_when_telemetry_cleanup_fails(
         "action_space": {"shape": [3], "low": [-1, -1, -1], "high": [1, 1, 1]},
         "observation_space": {"shape": [2], "low": [-1, -1], "high": [1, 1]},
     }
-    monkeypatch.setattr(runner, "_preflight", lambda *args: preflight)
+    monkeypatch.setattr(runner, "_preflight", lambda *args, **kwargs: preflight)
     monkeypatch.setattr(runner, "configure_cpu_runtime", lambda *args: None)
     monkeypatch.setattr(runner, "make_multi_track_vector_env", lambda *args: vector)
     monkeypatch.setattr(runner, "_install_demo_reward", lambda *args: None)

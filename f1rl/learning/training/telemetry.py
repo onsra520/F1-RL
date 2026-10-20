@@ -14,6 +14,7 @@ import numpy as np
 
 
 _SCHEMA = "f1rl_training_telemetry_v1"
+_SMOKE_SCHEMA = "f1rl_local_demo_smoke_telemetry_v1"
 _TRAIN_TRACKS = {"straight-sprint-v1", "right-turn-v1", "slalom-v1", "ramp-v1"}
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _COMMIT = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
@@ -44,9 +45,12 @@ def _number(value: object, name: str) -> float:
 class TrainingTelemetryRecorder:
     """Stream read-only PPO transition and update records to a fresh JSONL file."""
 
-    def __init__(self, path: str | Path, *, run_identity: dict, max_timesteps: int) -> None:
+    def __init__(self, path: str | Path, *, run_identity: dict, max_timesteps: int,
+                 capture_autoreset: bool = False) -> None:
         if type(max_timesteps) is not int or max_timesteps <= 0:
             raise ValueError("max_timesteps must be a positive integer")
+        if type(capture_autoreset) is not bool:
+            raise ValueError("capture_autoreset must be bool")
         required = {"run_id", "source_commit", "policy_id", "split", "track_ids",
                     "seed_identity", "reset_contracts"}
         if not isinstance(run_identity, dict) or set(run_identity) != required:
@@ -82,6 +86,8 @@ class TrainingTelemetryRecorder:
         if not self.path.parent.is_dir():
             raise ValueError("telemetry output directory must already exist")
         self._run = deepcopy(run_identity)
+        self._schema = _SMOKE_SCHEMA if capture_autoreset else _SCHEMA
+        self._capture_autoreset = capture_autoreset
         self._max_timesteps = max_timesteps
         required_capacity = max_timesteps * _MAX_RECORD_BYTES + _AUXILIARY_RESERVE_BYTES
         if required_capacity > _MAX_LOG_BYTES:
@@ -106,7 +112,7 @@ class TrainingTelemetryRecorder:
         self._closed = False
         self._total_timesteps = None
         try:
-            self._append({"event_type": "run", "schema_version": _SCHEMA,
+            self._append({"event_type": "run", "schema_version": self._schema,
                           **self._run, "max_timesteps": max_timesteps})
         except BaseException:
             self._stream.close()
@@ -146,7 +152,7 @@ class TrainingTelemetryRecorder:
         self._n_envs = n_envs
         self._episodes = {i: 0 for i in range(n_envs)}
         self._weight_sha256 = _digest(model.weights_sha256(), "policy weight identity")
-        self._append({"event_type": "training_start", "schema_version": _SCHEMA,
+        self._append({"event_type": "training_start", "schema_version": self._schema,
                       "total_timesteps": total_timesteps, "n_envs": n_envs,
                       "policy_weights_sha256": self._weight_sha256})
 
@@ -157,6 +163,7 @@ class TrainingTelemetryRecorder:
         if self._n_envs is None:
             raise RuntimeError("training start must be recorded before steps")
         obs = np.asarray(local_values["obs"])
+        new_obs = np.asarray(local_values.get("new_obs")) if self._capture_autoreset else None
         raw_actions = np.asarray(local_values["actions"])
         applied_actions = np.asarray(local_values["clipped_actions"])
         rewards = np.asarray(local_values["rewards"]).reshape(-1)
@@ -165,7 +172,8 @@ class TrainingTelemetryRecorder:
         expected = (self._n_envs,)
         if (obs.shape[0] != self._n_envs or raw_actions.shape[0] != self._n_envs
                 or applied_actions.shape != raw_actions.shape or rewards.shape != expected
-                or dones.shape != expected or len(infos) != self._n_envs):
+                or dones.shape != expected or len(infos) != self._n_envs
+                or (self._capture_autoreset and (new_obs is None or new_obs.shape != obs.shape))):
             raise ValueError("PPO callback transition batch shape changed")
         final_timestep = int(model.num_timesteps)
         if final_timestep > self._max_timesteps + self._n_envs:
@@ -223,6 +231,50 @@ class TrainingTelemetryRecorder:
             episode_index = self._episodes[index]
             global_timestep = final_timestep - self._n_envs + index + 1
             done = bool(dones[index])
+            next_observation = new_obs[index] if new_obs is not None else None
+            autoreset_identity = None
+            if self._capture_autoreset and done:
+                terminal_observation = info.get("terminal_observation")
+                reset_infos = model.get_env().reset_infos
+                if (terminal_observation is None or len(reset_infos) != self._n_envs
+                        or not isinstance(reset_infos[index], dict)):
+                    raise ValueError("smoke telemetry lacks terminal or automatic-reset state")
+                next_observation = np.asarray(terminal_observation)
+                reset_info = reset_infos[index]
+                autoreset_identity = reset_info.get("train_reset")
+                next_episode = self._episodes[index] + 1
+                next_track = reset_info.get("track_id")
+                next_contract = self._run["reset_contracts"].get(next_track)
+                from ..train_reset import derive_train_reset_draw_seed
+                if (not isinstance(autoreset_identity, dict) or next_contract is None
+                        or next_track not in self._run["track_ids"]
+                        or type(autoreset_identity.get("seed")) is not int
+                        or type(autoreset_identity.get("rank")) is not int
+                        or type(autoreset_identity.get("reset_index")) is not int
+                        or type(autoreset_identity.get("draw_seed")) is not int
+                        or autoreset_identity.get("seed") != next_contract["seed"]
+                        or autoreset_identity.get("rank") != index
+                        or autoreset_identity.get("reset_index") != next_episode
+                        or autoreset_identity.get("track_id") != next_track
+                        or autoreset_identity.get("version") != next_contract["version"]
+                        or autoreset_identity.get("configuration_sha256") != next_contract["configuration_sha256"]
+                        or autoreset_identity.get("world_sha256") != next_contract["world_sha256"]
+                        or autoreset_identity.get("draw_seed") != derive_train_reset_draw_seed(
+                            version=next_contract["version"], seed=next_contract["seed"],
+                            rank=index, track_id=next_track, reset_index=next_episode)):
+                    raise ValueError("smoke automatic reset identity is inconsistent with its next episode")
+            elif self._capture_autoreset:
+                reset_infos = model.get_env().reset_infos
+                if len(reset_infos) != self._n_envs or reset_infos[index].get("track_id") != track_id:
+                    raise ValueError("smoke nonterminal transition changed active episode identity")
+            encoded_next_observation = (
+                [_number(v, "next observation") for v in np.asarray(next_observation).reshape(-1)]
+                if self._capture_autoreset else None
+            )
+            encoded_autoreset_observation = (
+                [_number(v, "autoreset observation") for v in new_obs[index].reshape(-1)]
+                if self._capture_autoreset and done else None
+            )
             truncated = bool(info.get("TimeLimit.truncated", False))
             if not done:
                 termination_reason = None
@@ -237,7 +289,7 @@ class TrainingTelemetryRecorder:
             else:
                 termination_reason = "terminated"
             record = {
-                "event_type": "step", "schema_version": _SCHEMA,
+                "event_type": "step", "schema_version": self._schema,
                 "source_commit": self._run["source_commit"], "run_id": self._run["run_id"],
                 "policy_id": self._run["policy_id"], "global_timestep": global_timestep,
                 "env_index": index, "episode_id": f"{self._run['run_id']}/env-{index}/episode-{episode_index}",
@@ -248,6 +300,13 @@ class TrainingTelemetryRecorder:
                 "observation_feature_names": schema["feature_names"],
                 "observation_schema_sha256": schema_digest,
                 "observation": [_number(v, "observation") for v in obs[index].reshape(-1)],
+                **({"next_observation": encoded_next_observation,
+                   "autoreset_observation": encoded_autoreset_observation,
+                   "autoreset_episode_id": (
+                       f"{self._run['run_id']}/env-{index}/episode-{self._episodes[index] + 1}"
+                       if done else None),
+                   "autoreset_identity": autoreset_identity}
+                  if self._capture_autoreset else {}),
                 "raw_ppo_action": [_number(v, "raw PPO action") for v in raw_actions[index]],
                 "action_sent_to_environment": action,
                 "action_contract_version": state["action_contract_version"],
@@ -289,7 +348,7 @@ class TrainingTelemetryRecorder:
         self._update_index = int(backend._n_updates)
         self._weight_sha256 = _digest(model.weights_sha256(), "policy weight identity")
         self._metrics = metrics
-        self._append({"event_type": "ppo_update", "schema_version": _SCHEMA,
+        self._append({"event_type": "ppo_update", "schema_version": self._schema,
                       "ppo_epoch_updates": self._update_index,
                       "optimizer_steps": self.optimizer_steps, "metrics": metrics,
                       "policy_weights_sha256": self._weight_sha256})
@@ -302,7 +361,7 @@ class TrainingTelemetryRecorder:
         self._checkpoint = {"name": name, "archive_sha256": archive_sha256,
                             "policy_weights_sha256": policy_weights_sha256,
                             "timestep": int(timestep)}
-        self._append({"event_type": "checkpoint", "schema_version": _SCHEMA,
+        self._append({"event_type": "checkpoint", "schema_version": self._schema,
                       **self._checkpoint})
 
     def close(self) -> None:
@@ -330,7 +389,7 @@ class TrainingTelemetryRecorder:
                         ValueError(f"invalid JSON constant: {value}")))
                 except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
                     raise ValueError("telemetry JSONL contains a corrupt record") from exc
-                if not isinstance(record, dict) or record.get("schema_version") != _SCHEMA:
+                if not isinstance(record, dict) or record.get("schema_version") != self._schema:
                     raise ValueError("telemetry JSONL record schema is corrupt")
                 if record.get("event_type") not in {
                     "run", "training_start", "step", "ppo_update", "checkpoint",
@@ -353,7 +412,7 @@ class TrainingTelemetryRecorder:
                 raise ValueError("complete telemetry requires one run and one training-start record")
             if not self._total_timesteps <= step_rows <= self._total_timesteps + self._n_envs - 1:
                 raise ValueError("complete telemetry step count does not match the declared budget")
-        return {"schema_version": _SCHEMA, "path": self.path.name,
+        return {"schema_version": self._schema, "path": self.path.name,
                 "sha256": digest.hexdigest(), "bytes": byte_count, "events": event_count,
                 "step_rows": self.step_rows, "update_rows": self.update_rows,
                 "optimizer_steps": self.optimizer_steps, "complete": complete}
