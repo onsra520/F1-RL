@@ -193,11 +193,25 @@ def _validate_training_admission(env: object) -> None:
     else:
         raise ValueError("unregistered training environment")
     if blocked:
-        from ...exploratory.permit import admitted
-        if admitted(env):
+        if _local_capability_admitted(env):
             return
         from ...research.wp7_admission import reject_research_training
         reject_research_training("research physics training is blocked until scientific admission is reviewed")
+
+
+def _local_capability_admitted(env: object) -> bool:
+    # The explicit local demo is a separate process-local path. Short-circuit
+    # before consulting the scientific exploratory permit subsystem.
+    from ...local_demo.admission import admitted as demo_admitted
+    if demo_admitted(env):
+        return True
+    from ...exploratory.permit import admitted as exploratory_admitted
+    return exploratory_admitted(env)
+
+
+def _local_demo_admitted(env: object) -> bool:
+    from ...local_demo.admission import admitted as demo_admitted
+    return demo_admitted(env)
 
 
 class PPO(_SB3PPO):
@@ -208,8 +222,9 @@ class PPO(_SB3PPO):
         # SB3 load reconstructs with setup disabled, including inference envs.
         if env is not None and kwargs.get("_init_setup_model", True):
             _validate_training_admission(env)
-            from ...exploratory.permit import admitted
-            if admitted(env) and kwargs.get('device', 'auto') != 'cpu':
+            if _local_demo_admitted(env) and kwargs.get('device', 'auto') != 'cpu':
+                raise ValueError('local demo PPO requires explicit CPU device')
+            if not _local_demo_admitted(env) and _local_capability_admitted(env) and kwargs.get('device', 'auto') != 'cpu':
                 raise ValueError('exploratory PPO requires explicit CPU device')
         super().__init__(policy, env, **kwargs)
 
@@ -236,8 +251,9 @@ class PPO(_SB3PPO):
         if env is None:
             raise RuntimeError("an environment is required to continue learning")
         _validate_training_admission(env)
-        from ...exploratory.permit import admitted
-        if admitted(env) and self.device.type != 'cpu':
+        if _local_demo_admitted(env) and self.device.type != 'cpu':
+            raise ValueError('local demo learning requires CPU model parameters')
+        if not _local_demo_admitted(env) and _local_capability_admitted(env) and self.device.type != 'cpu':
             raise ValueError('exploratory learning requires CPU model parameters')
         return super().learn(*args, **kwargs)
 

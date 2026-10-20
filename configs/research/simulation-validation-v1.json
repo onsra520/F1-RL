@@ -1,0 +1,33 @@
+{
+  "schema_version": "f1rl_simulation_validation_v1",
+  "status": "engineering_protocol_draft",
+  "scope": "simulation_consistency_only_not_physical_calibration",
+  "source_profile": "spatial_rotating_owner_v3",
+  "split": "TRAIN",
+  "registered_tracks": ["straight-sprint-v1", "slalom-v1", "right-turn-v1", "ramp-v1"],
+  "fixture": {
+    "reset_seed": 23012026,
+    "reset_rank": 0,
+    "reset_index": 0,
+    "action_tape": [[0.0, 0.0, 0.0], [0.15, 0.2, 0.0], [-0.15, 0.3, 0.0], [0.0, 0.0, 0.25]],
+    "repeats": 2
+  },
+  "tolerances": {
+    "observation_absolute": 1e-7,
+    "reward_absolute": 1e-9,
+    "state_absolute": 1e-7,
+    "time_absolute_seconds": 1e-9
+  },
+  "invariants": [
+    "finite_state_force_reward_observation",
+    "observation_and_action_spaces_hold",
+    "identical_source_config_seed_track_and_action_tape_reproduce",
+    "registered_train_reset_identity_matches_rank_index_track_and_world",
+    "physics_transition_audit_is_present_and_ordered",
+    "reward_and_termination_are_finite_and_repeatable",
+    "registered_4m_route_boundary_and_original_finish_semantics_unchanged"
+  ],
+  "failure_classes": ["source_or_config_drift", "reset_identity_mismatch", "non_finite_state", "space_contract_violation", "physics_transition_error", "nondeterministic_replay", "route_or_termination_contract_failure"],
+  "physical_calibration_claim": false,
+  "scientific_acceptance_claim": false
+}
