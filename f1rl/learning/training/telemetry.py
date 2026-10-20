@@ -46,11 +46,13 @@ class TrainingTelemetryRecorder:
     """Stream read-only PPO transition and update records to a fresh JSONL file."""
 
     def __init__(self, path: str | Path, *, run_identity: dict, max_timesteps: int,
-                 capture_autoreset: bool = False) -> None:
+                 capture_autoreset: bool = False, schema_version: str = _SCHEMA) -> None:
         if type(max_timesteps) is not int or max_timesteps <= 0:
             raise ValueError("max_timesteps must be a positive integer")
         if type(capture_autoreset) is not bool:
             raise ValueError("capture_autoreset must be bool")
+        if schema_version not in (_SCHEMA, _SMOKE_SCHEMA):
+            raise ValueError("unsupported training telemetry schema")
         required = {"run_id", "source_commit", "policy_id", "split", "track_ids",
                     "seed_identity", "reset_contracts"}
         optional = {"training_failure_policy"}
@@ -92,7 +94,7 @@ class TrainingTelemetryRecorder:
         if not self.path.parent.is_dir():
             raise ValueError("telemetry output directory must already exist")
         self._run = deepcopy(run_identity)
-        self._schema = _SMOKE_SCHEMA if capture_autoreset else _SCHEMA
+        self._schema = schema_version
         self._capture_autoreset = capture_autoreset
         self._max_timesteps = max_timesteps
         required_capacity = max_timesteps * _MAX_RECORD_BYTES + _AUXILIARY_RESERVE_BYTES

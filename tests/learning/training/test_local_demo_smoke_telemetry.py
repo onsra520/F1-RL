@@ -67,6 +67,7 @@ def test_smoke_telemetry_separates_terminal_transition_from_autoreset_episode(tm
         recorder = TrainingTelemetryRecorder(
             tmp_path / "smoke.jsonl", run_identity=identity, max_timesteps=1,
             capture_autoreset=True,
+            schema_version="f1rl_local_demo_smoke_telemetry_v1",
         )
         recorder.on_training_start(model, total_timesteps=1, n_envs=1)
         recorder.on_step({
@@ -196,6 +197,7 @@ def test_real_train_curriculum_termination_preserves_dummy_vec_autoreset_identit
             "reset_contracts": contracts,
         },
         max_timesteps=32, capture_autoreset=True,
+        schema_version="f1rl_local_demo_smoke_telemetry_v1",
     )
     try:
         observation = vec.reset()

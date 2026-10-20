@@ -176,6 +176,22 @@ def test_recorder_binds_registered_training_failure_policy_to_run_event(tmp_path
                                   run_identity=identity, max_timesteps=1)
 
 
+def test_autoreset_capture_keeps_the_selected_training_schema(tmp_path):
+    path = tmp_path / "autoreset-training.jsonl"
+    recorder = TrainingTelemetryRecorder(
+        path,
+        run_identity={"run_id": "run-autoreset", "source_commit": "b" * 40,
+                      "policy_id": "policy-1", "split": "TRAIN",
+                      "track_ids": ["straight-sprint-v1"],
+                      "seed_identity": {"ppo": 0, "training_reset": 1000},
+                      "reset_contracts": _reset_contracts()},
+        max_timesteps=1, capture_autoreset=True,
+    )
+    recorder.close()
+    run_event = json.loads(path.read_text(encoding="utf-8").splitlines()[0])
+    assert run_event["schema_version"] == "f1rl_training_telemetry_v1"
+
+
 def test_recorder_requires_reset_seed_identity_on_every_transition(tmp_path):
     with pytest.raises(ValueError, match="identified TRAIN"):
         TrainingTelemetryRecorder(

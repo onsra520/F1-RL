@@ -489,6 +489,8 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                       else "training-telemetry.jsonl"),
             run_identity=identity, max_timesteps=preflight["timesteps"],
             capture_autoreset=profile in ("smoke", "tuning"),
+            schema_version=("f1rl_local_demo_smoke_telemetry_v1" if profile == "smoke"
+                            else "f1rl_training_telemetry_v1"),
         )
         checkpoint_root = output / "checkpoints"
         checkpoint_root.mkdir()
