@@ -28,6 +28,9 @@ def build_parameter_provenance(root: str | Path) -> dict:
             "straight-sprint-v1", "slalom-v1", "right-turn-v1", "ramp-v1"):
         raise ValueError("simulation parameter profile is not the registered TRAIN roster")
     physics = scenarios.scenarios[0].factory.physics_config
+    if any(scenario.factory.physics_config.sha256 != physics.sha256
+           for scenario in scenarios.scenarios):
+        raise ValueError("selected TRAIN tracks do not share one registered runtime physics configuration")
     suspension = physics.independent_suspension_policy
     spatial = physics.spatial_contact_policy
     configured_suspension = registration["engineering_suspension"]
@@ -62,7 +65,7 @@ def build_parameter_provenance(root: str | Path) -> dict:
         unit, source_key, runtime_value, config_value, status = rows[name]
         if unit != REQUIRED_UNITS[name]:
             raise AssertionError(f"registered unit mismatch for {name}")
-        if status == "runtime_exact" and runtime_value != config_value:
+        if status in ("runtime_exact", "runtime_analogue") and runtime_value != config_value:
             raise ValueError(f"source/runtime parameter mismatch for {name}")
         parameters.append({
             "name": name, "unit": unit,

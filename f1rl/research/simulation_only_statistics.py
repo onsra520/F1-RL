@@ -286,11 +286,9 @@ def analyze_factorial_seed_blocks(estimates: list[dict], *, repository_root: str
         mean = float(np.mean(values))
         sd = float(np.std(values, ddof=1))
         if sd == 0.0:
-            t_value = 0.0 if mean == 0.0 else float("inf")
-            p_value = 1.0 if mean == 0.0 else 0.0
-        else:
-            t_value = mean / (sd / sqrt(len(values)))
-            p_value = min(1.0, 2.0 * (1.0 - student_t_cdf(abs(t_value), df)))
+            raise ValueError("paired-t inference is undefined when seed-block contrast variance is zero")
+        t_value = mean / (sd / sqrt(len(values)))
+        p_value = min(1.0, 2.0 * (1.0 - student_t_cdf(abs(t_value), df)))
         raw_p[name] = p_value
         margin = t_critical * sd / sqrt(len(values))
         intervals[name] = [mean - margin, mean + margin]

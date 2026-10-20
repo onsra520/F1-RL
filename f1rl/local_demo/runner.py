@@ -147,6 +147,34 @@ def _install_demo_reward(vector_env, reward: dict) -> None:
         sampled_env.step = step
 
 
+def _finalize_run(output: Path, state: dict, *, telemetry, model, vector, session,
+                  learning_completed: bool) -> None:
+    try:
+        if telemetry is not None:
+            try:
+                telemetry.close()
+                _write_json(output / "training-telemetry-manifest.json",
+                            telemetry.manifest(complete=learning_completed))
+            except BaseException as error:
+                previous_error = state.get("error")
+                state.update(status="failed", phase="telemetry_finalization",
+                             finalization_error=f"{type(error).__name__}: {error}",
+                             scientific_evidence=False, scientific_training_authorized=False)
+                if previous_error is not None:
+                    state["error"] = previous_error
+                _write_json(output / "state.json", state)
+                raise
+    finally:
+        try:
+            if model is not None:
+                model._model.get_env().close()
+            elif vector is not None:
+                vector.close()
+        finally:
+            if session is not None:
+                _revoke(vector)
+
+
 def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: int,
                    output_directory: str | Path, dry_run: bool = False,
                    progress_observer=None) -> dict:
@@ -273,8 +301,8 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                 state.update(phase="learning", learning_timesteps=actual_timesteps,
                              optimizer_steps=optimizer_steps, latest_checkpoint=checkpoints[-1])
                 _write_json(output / "state.json", state)
-            if progress_observer is not None:
-                progress_observer(dict(state))
+                if progress_observer is not None:
+                    progress_observer(dict(state))
 
         state.update(phase="learning")
         _write_json(output / "state.json", state)
@@ -302,13 +330,5 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
         _write_json(output / "state.json", state)
         raise
     finally:
-        if telemetry is not None:
-            telemetry.close()
-            _write_json(output / "training-telemetry-manifest.json",
-                        telemetry.manifest(complete=learning_completed))
-        if model is not None:
-            model._model.get_env().close()
-        elif vector is not None:
-            vector.close()
-        if session is not None:
-            _revoke(vector)
+        _finalize_run(output, state, telemetry=telemetry, model=model, vector=vector,
+                      session=session, learning_completed=learning_completed)

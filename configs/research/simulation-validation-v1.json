@@ -5,6 +5,14 @@
   "source_profile": "spatial_rotating_owner_v3",
   "split": "TRAIN",
   "registered_tracks": ["straight-sprint-v1", "slalom-v1", "right-turn-v1", "ramp-v1"],
+  "coverage_matrix": [
+    {"domain": "repeatable_actual_train_replay", "tests": ["tests/research/test_simulation_only_validation.py"]},
+    {"domain": "finite_state_and_contact_invariants", "tests": ["tests/sandbox/test_coupled_longitudinal_dynamics.py", "tests/sandbox/test_independent_suspension_dynamics.py", "tests/sandbox/test_road_relative_suspension.py"]},
+    {"domain": "steering_throttle_braking_and_suspension", "tests": ["tests/sandbox/test_coupled_longitudinal_dynamics.py", "tests/integration/test_policy_action_integration.py"]},
+    {"domain": "airborne_and_landing_supported_domains", "tests": ["tests/sandbox/test_high_clearance_torque_free.py", "tests/sandbox/test_euler_ode_clearance.py"]},
+    {"domain": "route_checkpoint_finish_and_termination", "tests": ["tests/integration/test_wp7_race_contract.py", "tests/integration/test_wp7_lifecycle_race.py", "tests/integration/test_hard_route_terminal_v2.py", "tests/learning/test_hard_route_exit.py", "tests/research/test_demo_curriculum.py"]},
+    {"domain": "gymnasium_observation_action_and_reward", "tests": ["tests/integration/test_gym_environment_integration.py", "tests/integration/test_observation_encoding.py", "tests/integration/test_reward_integration.py", "tests/learning/test_gym_environment.py"]}
+  ],
   "fixture": {
     "reset_seed": 23012026,
     "reset_rank": 0,

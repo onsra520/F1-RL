@@ -61,22 +61,33 @@ def load_simulation_only_manifest(root: str | Path) -> tuple[dict, str]:
     seeds = value["seeds"]
     if (not isinstance(seeds, dict) or set(seeds) != {"tuning", "confirmation_rule"}
             or seeds["tuning"] != [[0, 0, 1000], [1, 1, 1001], [2, 2, 1002]]
+            or any(type(seed) is not int or not 0 <= seed <= 2**32 - 1
+                   for bundle in seeds["tuning"] for seed in bundle)
             or seeds["confirmation_rule"] != {
                 "ppo_start": 100, "sampling_start": 200, "training_reset_start": 1100, "count": 24}):
         raise ValueError("simulation-only seed roster changed without a new reviewed version")
     statistics = value["statistics"]
-    if (not isinstance(statistics, dict)
-            or statistics.get("confirmation_blocks") != 24
-            or statistics.get("minimum_meaningful_effect") != 0.15
-            or statistics.get("planning_contrast_sd") != 0.2
-            or statistics.get("target_power") != 0.8
-            or statistics.get("family_alpha") != 0.05
-            or statistics.get("primary_contrasts") != ["reward_main_effect", "corridor_main_effect", "interaction"]
-            or statistics.get("secondary_endpoints") != [
-                "mean_route_progress_fraction_at_termination", "mean_checkpoints_completed",
-                "steering_rate_rms_rad_per_s", "collision_probability",
-                "hard_route_failure_probability", "mean_episode_duration_seconds"]
-            or statistics.get("multiplicity") != "holm_three_primary_contrasts"):
+    expected_statistics = {
+        "primary_endpoint": "valid_autonomous_finish_probability",
+        "primary_contrasts": ["reward_main_effect", "corridor_main_effect", "interaction"],
+        "secondary_endpoints": [
+            "mean_route_progress_fraction_at_termination", "mean_checkpoints_completed",
+            "steering_rate_rms_rad_per_s", "collision_probability",
+            "hard_route_failure_probability", "mean_episode_duration_seconds"],
+        "episodes_per_track_stratum_per_model": 60,
+        "minimum_meaningful_effect": 0.15, "planning_contrast_sd": 0.2,
+        "target_power": 0.8, "family_alpha": 0.05,
+        "multiplicity": "holm_three_primary_contrasts",
+        "planning_test": "two_sided_paired_t_bonferroni_conservative_for_holm",
+        "planning_assumption": "independent_normal_paired_seed_block_contrasts",
+        "planning_simulations": 500000, "planning_seed": 20261020,
+        "confirmation_blocks": 24,
+        "analysis_test": "two_sided_paired_t_normal_seed_block_assumption",
+        "invalid_episode_rule": "abort_cell_no_redraw",
+        "aborted_run_rule": "report_no_replacement_exclude_from_confirmatory_contrast",
+        "robustness_gate": "not_a_prerequisite_for_factorial_comparison",
+    }
+    if not isinstance(statistics, dict) or statistics != expected_statistics:
         raise ValueError("simulation-only D3 planning choices differ from owner-selected draft")
     if value["evaluation"] != {
             "task": "registered_original_task", "hard_route_boundary_m": 4.0,

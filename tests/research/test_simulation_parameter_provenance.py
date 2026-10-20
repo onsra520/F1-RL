@@ -17,6 +17,8 @@ def test_parameter_manifest_binds_all_wp7_names_to_live_runtime_or_marks_absent(
     assert sum(row["runtime_status"] == "not_consumed" for row in report["parameters"]) == 5
     assert report["externally_measured"] is False
     assert report["independently_physically_validated"] is False
+    analogue = next(row for row in report["parameters"] if row["runtime_status"] == "runtime_analogue")
+    assert analogue["runtime_value"] == analogue["configured_value"]
     assert len(report["configuration_sha256"]) == 64
     assert len(report["runtime_physics_sha256"]) == 64
 

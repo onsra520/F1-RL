@@ -17,11 +17,12 @@ PROTOCOL_PATH = Path("configs/research/simulation-validation-v1.json")
 
 
 def load_simulation_validation_protocol(root: str | Path) -> tuple[dict, str]:
-    path = Path(root).resolve(strict=True) / PROTOCOL_PATH
+    root = Path(root).resolve(strict=True)
+    path = root / PROTOCOL_PATH
     value = json.loads(path.read_text(encoding="utf-8"))
     expected_keys = {
         "schema_version", "status", "scope", "source_profile", "split", "registered_tracks",
-        "fixture", "tolerances", "invariants", "failure_classes", "physical_calibration_claim",
+        "coverage_matrix", "fixture", "tolerances", "invariants", "failure_classes", "physical_calibration_claim",
         "scientific_acceptance_claim",
     }
     if (not isinstance(value, dict) or set(value) != expected_keys
@@ -34,6 +35,19 @@ def load_simulation_validation_protocol(root: str | Path) -> tuple[dict, str]:
             or value["physical_calibration_claim"] is not False
             or value["scientific_acceptance_claim"] is not False):
         raise ValueError("simulation validation protocol is malformed or scope-escalated")
+    coverage = value["coverage_matrix"]
+    expected_domains = {
+        "repeatable_actual_train_replay", "finite_state_and_contact_invariants",
+        "steering_throttle_braking_and_suspension", "airborne_and_landing_supported_domains",
+        "route_checkpoint_finish_and_termination", "gymnasium_observation_action_and_reward",
+    }
+    if (not isinstance(coverage, list) or len(coverage) != len(expected_domains)
+            or {row.get("domain") for row in coverage if isinstance(row, dict)} != expected_domains
+            or any(not isinstance(row, dict) or set(row) != {"domain", "tests"}
+                   or not isinstance(row["tests"], list) or not row["tests"]
+                   or any(not isinstance(test, str) or not (root / test).is_file()
+                          for test in row["tests"]) for row in coverage)):
+        raise ValueError("simulation validation coverage matrix is malformed or references missing tests")
     fixture = value["fixture"]
     if (not isinstance(fixture, dict) or set(fixture) != {
             "reset_seed", "reset_rank", "reset_index", "action_tape", "repeats"}
@@ -75,8 +89,14 @@ def _episode_probe(factory, track_id: str, *, seed: int, action_tape: list[list[
         observation, reset_info = env.reset(seed=seed)
         expected = factory.reset_config.identity_for_track(track_id)
         reset = reset_info.get("train_reset")
-        if (reset is None or reset.get("seed") != expected["seed"]
-                or reset.get("rank") != 0 or reset.get("reset_index") != 0
+        identity_fields = ("version", "seed", "rank", "reset_index", "draw_seed", "track_id",
+                           "configuration_sha256", "world_sha256")
+        if (not isinstance(reset, dict)
+                or reset.get("version") != expected["version"]
+                or type(reset.get("seed")) is not int or reset.get("seed") != expected["seed"]
+                or type(reset.get("rank")) is not int or reset.get("rank") != 0
+                or type(reset.get("reset_index")) is not int or reset.get("reset_index") != 0
+                or type(reset.get("draw_seed")) is not int
                 or reset.get("track_id") != track_id
                 or reset.get("configuration_sha256") != expected["configuration_sha256"]
                 or reset.get("world_sha256") != expected["world_sha256"]
@@ -97,6 +117,11 @@ def _episode_probe(factory, track_id: str, *, seed: int, action_tape: list[list[
             if (not env.observation_space.contains(observation) or not np.isfinite(observation).all()
                     or not isfinite(float(reward)) or not _all_finite(info)):
                 raise ValueError("non_finite_state_or_space_contract_violation")
+            step_reset = info.get("train_reset")
+            if (not isinstance(step_reset, dict)
+                    or any(type(step_reset.get(key)) is not type(reset.get(key))
+                           or step_reset.get(key) != reset.get(key) for key in identity_fields)):
+                raise ValueError("reset_identity_mismatch")
             transition = (info.get("physics") or {}).get("transition")
             if not isinstance(transition, dict) or transition.get("version") != "wp7_transition_audit_v1":
                 raise ValueError("physics_transition_error")

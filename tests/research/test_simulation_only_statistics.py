@@ -1,4 +1,5 @@
 from hashlib import sha256
+import json
 from pathlib import Path
 
 import pytest
@@ -19,11 +20,15 @@ STRATA = ("nominal", "randomized_train")
 CELLS = tuple((track, stratum) for track in TRACKS for stratum in STRATA)
 
 
-def _blocks():
+def _blocks(*, varying=True):
     result = {}
     for index, bundle in enumerate(confirmation_seed_bundles(ROOT)):
         result[bundle] = {}
-        for candidate, successes in zip(("A", "B", "C", "D"), (30, 36, 42, 54), strict=True):
+        base = (30, 36, 42, 54)
+        offset = (index % 5, (index * 2) % 7, (index * 3) % 8, (index * 4) % 6) if varying else (0, 0, 0, 0)
+        for candidate, successes in zip(("A", "B", "C", "D"),
+                                        (value + delta for value, delta in zip(base, offset, strict=True)),
+                                        strict=True):
             digest = sha256(f"{index}-{candidate}".encode()).hexdigest()
             result[bundle][candidate] = {
                 key: CellSummary(successes, 60, 0, False, "a" * 64, candidate, bundle, digest)
@@ -43,6 +48,21 @@ def test_manifest_keeps_owner_selected_factorial_as_unapproved_draft():
     assert len(digest) == 64
 
 
+@pytest.mark.parametrize("mutation", ["unknown_statistic", "boolean_seed"])
+def test_simulation_only_manifest_rejects_unversioned_statistical_or_seed_drift(tmp_path, mutation):
+    destination = tmp_path / "configs" / "research" / "simulation-only-ppo-v1.json"
+    destination.parent.mkdir(parents=True)
+    manifest = json.loads((ROOT / "configs" / "research" / "simulation-only-ppo-v1.json").read_text(
+        encoding="utf-8"))
+    if mutation == "unknown_statistic":
+        manifest["statistics"]["unreviewed_option"] = True
+    else:
+        manifest["seeds"]["tuning"][0][0] = True
+    destination.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="D3|seed roster"):
+        load_simulation_only_manifest(tmp_path)
+
+
 def test_paired_t_uses_finite_sample_critical_and_holm_family():
     estimates = factorial_seed_block_contrasts(_blocks(), repository_root=ROOT)
     result = analyze_factorial_seed_blocks(estimates, repository_root=ROOT)
@@ -55,6 +75,12 @@ def test_paired_t_uses_finite_sample_critical_and_holm_family():
     assert set(result["holm_adjusted_p_values"]) == {
         "reward_main_effect", "corridor_main_effect", "interaction"
     }
+
+
+def test_paired_t_rejects_zero_seed_block_variance():
+    estimates = factorial_seed_block_contrasts(_blocks(varying=False), repository_root=ROOT)
+    with pytest.raises(ValueError, match="variance is zero"):
+        analyze_factorial_seed_blocks(estimates, repository_root=ROOT)
 
 
 def test_power_calculation_is_finite_sample_and_reproducible():

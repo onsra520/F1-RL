@@ -1,7 +1,9 @@
-# Straight demo curriculum v2 proposal
+# Straight demo curriculum v2 — implemented draft contract
 
-Status: **DRAFT — NOT PREREGISTERED — NOT AUTHORIZED**. This document records a compatibility requirement only; it does not change the active validator, demo configuration, registered reward, or evaluation task.
+Status: **implemented as a versioned local-demo reward contract; experiment remains DRAFT and unauthorized**.
 
-The current `straight_route_stability_demo_v1` validator requires `training_corridor_m == 2.0`. Proposed WP2 cells C and D use a 3.0 m training stop corridor, so they cannot use v1 by changing the number. If C/D are approved, implement an explicitly versioned `straight_route_stability_demo_v2` contract that accepts exactly `training_corridor_m == 3.0` and preserves the existing bounded lateral penalty coefficient and terminal penalty rules. V1 must continue to accept exactly 2.0 m. Persist the selected version and corridor value in demo-training transition telemetry.
+`f1rl/exploratory/reward.py` supports two explicit demo-training contracts. `straight_route_stability_demo_v1` accepts exactly a 2.0 m training corridor; `straight_route_stability_demo_v2` accepts exactly 3.0 m. Both preserve the bounded lateral-penalty and terminal-penalty validation. `tests/research/test_demo_curriculum.py` covers accepted values, rejected cross-version corridor values, reward shaping and termination behavior. The separate `scripts/local_demo.py` runner records the selected version and corridor in training telemetry.
 
-V2 may affect only demo-training reward and stop behavior after a valid transition. The registered 4.0 m evaluation hard-route boundary, physics, observations/actions, registered outcome checks, evaluation reward, and evaluation termination remain unchanged. Any implementation requires separate source review and owner/reviewer approval under Gate 2. Until then A/B/C/D remain DRAFT and no v2 runtime branch is enabled.
+The proposed A/B/C/D configuration uses v1 for A/B and v2 for C/D. This makes the training proposals executable under the explicit demo-only contract, but does not authorize a run or change the experiment's DRAFT status. Any future run must use a fresh explicit local-demo command and an approved experiment scope. It must not claim WP7 scientific evidence.
+
+The curriculum changes only demo-training reward and stop behavior after a valid transition. It does not change physics, observations/actions, registered outcome checks, evaluation rewards, evaluation termination, or the registered **4.0 m evaluation hard-route boundary**. A/B/C/D remain **DRAFT — NOT PREREGISTERED — NOT AUTHORIZED** until the required owner/statistical review and approvals are complete.
