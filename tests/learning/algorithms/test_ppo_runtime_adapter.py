@@ -35,3 +35,21 @@ def test_optimizer_hook_adapter_preserves_callback_and_removable_handle():
     assert model.register_optimizer_step_hook(check_budget) is handle
     with pytest.raises(RuntimeError, match='deadline reached'):
         callbacks[0]()
+
+
+def test_sb3_transition_locals_expose_observation_for_training_telemetry():
+    previous_observation = torch.tensor([[1.0, 2.0]])
+    sb3_locals = {
+        "new_obs": torch.tensor([[3.0, 4.0]]),
+        "actions": torch.tensor([[0.1]]),
+        "clipped_actions": torch.tensor([[0.1]]),
+        "rewards": torch.tensor([1.0]),
+        "dones": torch.tensor([False]),
+        "infos": [{}],
+    }
+
+    transition = ppo._training_transition_locals(sb3_locals, previous_observation)
+
+    assert transition["obs"] is previous_observation
+    assert transition["new_obs"] is sb3_locals["new_obs"]
+    assert "obs" not in sb3_locals

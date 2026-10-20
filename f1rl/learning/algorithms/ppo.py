@@ -28,6 +28,14 @@ from ..gym_environment import F1RLEnv
 MAX_SEED = 2**32 - 1
 
 
+def _training_transition_locals(sb3_locals: dict, current_observation) -> dict:
+    """Expose the pre-step observation under the telemetry recorder's stable key."""
+    values = dict(sb3_locals)
+    if "obs" not in values:
+        values["obs"] = current_observation
+    return values
+
+
 class _ProgressHookCallback(BaseCallback):
     def __init__(self, hook: Callable[[int], None] | None, telemetry_observer=None) -> None:
         super().__init__(verbose=0)
@@ -36,7 +44,10 @@ class _ProgressHookCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         if self._telemetry_observer is not None:
-            self._telemetry_observer.on_step(self.locals, self.model)
+            transition_locals = _training_transition_locals(
+                self.locals, self.model._last_obs
+            )
+            self._telemetry_observer.on_step(transition_locals, self.model)
         if self._hook is not None:
             self._hook(int(self.model.num_timesteps))
         return True
