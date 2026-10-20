@@ -72,6 +72,10 @@ def load_simulation_only_manifest(root: str | Path) -> tuple[dict, str]:
             or statistics.get("target_power") != 0.8
             or statistics.get("family_alpha") != 0.05
             or statistics.get("primary_contrasts") != ["reward_main_effect", "corridor_main_effect", "interaction"]
+            or statistics.get("secondary_endpoints") != [
+                "mean_route_progress_fraction_at_termination", "mean_checkpoints_completed",
+                "steering_rate_rms_rad_per_s", "collision_probability",
+                "hard_route_failure_probability", "mean_episode_duration_seconds"]
             or statistics.get("multiplicity") != "holm_three_primary_contrasts"):
         raise ValueError("simulation-only D3 planning choices differ from owner-selected draft")
     if value["evaluation"] != {

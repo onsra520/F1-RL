@@ -38,6 +38,7 @@ def test_manifest_keeps_owner_selected_factorial_as_unapproved_draft():
     assert manifest["statistics"]["confirmation_blocks"] == 24
     assert manifest["statistics"]["minimum_meaningful_effect"] == 0.15
     assert manifest["statistics"]["planning_contrast_sd"] == 0.20
+    assert len(manifest["statistics"]["secondary_endpoints"]) == 6
     assert len(confirmation_seed_bundles(ROOT)) == 24
     assert len(digest) == 64
 

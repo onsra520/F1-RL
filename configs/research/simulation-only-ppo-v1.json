@@ -28,6 +28,14 @@
   "statistics": {
     "primary_endpoint": "valid_autonomous_finish_probability",
     "primary_contrasts": ["reward_main_effect", "corridor_main_effect", "interaction"],
+    "secondary_endpoints": [
+      "mean_route_progress_fraction_at_termination",
+      "mean_checkpoints_completed",
+      "steering_rate_rms_rad_per_s",
+      "collision_probability",
+      "hard_route_failure_probability",
+      "mean_episode_duration_seconds"
+    ],
     "episodes_per_track_stratum_per_model": 60,
     "minimum_meaningful_effect": 0.15,
     "planning_contrast_sd": 0.2,
