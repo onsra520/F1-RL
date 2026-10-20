@@ -71,11 +71,15 @@ def _action_policy_weights_sha256(model: PPOModel) -> str:
 
 
 def _assert_finite_policy_weights(model: PPOModel) -> None:
-    import torch
-
+    checker = getattr(model, "policy_weights_finite", None)
+    if callable(checker):
+        if not checker():
+            raise RuntimeError("non-finite PPO policy weight")
+        return
     for name, tensor in model._model.policy.state_dict().items():
-        if (tensor.is_floating_point() or tensor.is_complex()) and not bool(torch.isfinite(tensor).all()):
-            raise RuntimeError(f"non-finite PPO policy weight: {name}")
+        if tensor.is_floating_point() or tensor.is_complex():
+            if not np.isfinite(tensor.detach().cpu().numpy()).all():
+                raise RuntimeError(f"non-finite PPO policy weight: {name}")
 
 
 def _load_smoke_profile(path: str | Path) -> tuple[dict, str]:
@@ -451,8 +455,7 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                               "training_reset": preflight["reset_seed"]},
             "reset_contracts": preflight["reset_contracts"],
         }
-        if profile == "smoke":
-            _assert_finite_policy_weights(model)
+        _assert_finite_policy_weights(model)
         initial_weights_sha256 = model.weights_sha256()
         initial_action_weights_sha256 = (
             _action_policy_weights_sha256(model) if profile == "smoke" else None
@@ -465,7 +468,7 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
             output / ("SMOKE-TRAINING-TELEMETRY.jsonl" if profile == "smoke"
                       else "training-telemetry.jsonl"),
             run_identity=identity, max_timesteps=preflight["timesteps"],
-            capture_autoreset=profile == "smoke",
+            capture_autoreset=profile in ("smoke", "tuning"),
         )
         checkpoint_root = output / "checkpoints"
         checkpoint_root.mkdir()
@@ -505,26 +508,17 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
         state.update(phase="learning")
         _write_json(output / "state.json", state)
         def record_gradient_activity() -> None:
-            gradients = [parameter.grad.detach() for parameter in model._model.policy.parameters()
-                         if parameter.grad is not None]
-            import torch
-            if not gradients:
-                raise RuntimeError("PPO optimizer step produced no gradients")
-            finite = all(bool(torch.isfinite(gradient).all()) for gradient in gradients)
-            norm = float(torch.linalg.vector_norm(torch.stack([
-                torch.linalg.vector_norm(gradient.float()) for gradient in gradients
-            ])).item())
-            if not finite or not np.isfinite(norm):
+            integrity = model.optimizer_gradient_integrity()
+            if not integrity["finite"] or not np.isfinite(integrity["gradient_l2_norm"]):
                 raise RuntimeError("PPO optimizer step produced non-finite gradients")
-            gradient_activity.append({"step": len(gradient_activity) + 1,
-                                      "gradient_l2_norm": norm,
-                                      "nonzero_gradient_tensors": sum(
-                                          bool(torch.count_nonzero(gradient)) for gradient in gradients),
-                                      "finite": finite})
+            if integrity["nonzero_gradient_tensors"] == 0:
+                raise RuntimeError("PPO optimizer step produced only zero gradients")
+            _assert_finite_policy_weights(model)
+            gradient_activity.append({"step": len(gradient_activity) + 1, **integrity})
 
         model.learn(preflight["timesteps"], progress_hook=progress,
                     telemetry_observer=telemetry,
-                    optimizer_step_hook=record_gradient_activity if profile == "smoke" else None)
+                    optimizer_step_hook=record_gradient_activity)
         if profile == "smoke":
             session.check(model.num_timesteps)
         if model.num_timesteps != preflight["timesteps"] or telemetry.optimizer_steps <= 0:
@@ -541,6 +535,25 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                     or initial_action_weights_sha256 == final_action_weights_sha256
                     or telemetry.step_rows != 256):
                 raise RuntimeError("LOCAL_DEMO smoke failed its genuine rollout/update/weight checks")
+        else:
+            _assert_finite_policy_weights(model)
+            if (len(gradient_activity) != telemetry.optimizer_steps
+                    or not gradient_activity
+                    or not any(row["gradient_l2_norm"] > 0 for row in gradient_activity)
+                    or initial_weights_sha256 == final_weights_sha256):
+                raise RuntimeError("LOCAL_DEMO training failed optimizer, finite-gradient or changed-weight integrity")
+            _write_json(output / "training-integrity.json", {
+                "schema_version": "f1rl_local_demo_training_integrity_v1",
+                "initial_policy_weights_sha256": initial_weights_sha256,
+                "final_policy_weights_sha256": final_weights_sha256,
+                "weights_changed": True, "policy_weights_finite_at_every_optimizer_step": True,
+                "optimizer_steps": telemetry.optimizer_steps,
+                "optimizer_gradient_activity": gradient_activity,
+                "finite_gradient_steps": sum(row["finite"] for row in gradient_activity),
+                "nonzero_gradient_steps": sum(row["gradient_l2_norm"] > 0 for row in gradient_activity),
+                "ppo_update_rows": telemetry.update_rows,
+                "metrics_finite": True,
+            })
         final_tmp = output / "model-final.pending.zip"
         final_model = output / "model-final.zip"
         _save_checkpoint(model, final_tmp, final_model)

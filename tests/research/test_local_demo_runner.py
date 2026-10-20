@@ -84,10 +84,15 @@ def test_local_demo_keeps_training_error_primary_when_telemetry_cleanup_fails(
         def weights_sha256(self):
             return "f" * 64
 
+        def policy_weights_finite(self):
+            return True
+
         def learn(self, *args, **kwargs):
             raise RuntimeError("training failed")
 
     model = FailingModel(environment)
+    # The production runner verifies the actual policy tensor state before learning.
+    # This test only exercises cleanup after a mocked training error.
     preflight = {
         "source_commit": "a" * 40,
         "source_tree_sha256": "b" * 64,

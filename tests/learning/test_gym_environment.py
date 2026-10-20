@@ -158,6 +158,7 @@ def test_learning_observer_enables_training_info_only_during_learn(monkeypatch) 
         callback.init_callback(backend)
         callback.on_training_start({}, {})
         observation = env.reset()
+        backend._last_obs = observation
         actions = np.array([[0.0, 0.5]], dtype=np.float32)
         next_obs, rewards, dones, infos = env.step(actions)
         backend.num_timesteps = 1

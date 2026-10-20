@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from math import dist, isclose, isfinite
 from numbers import Real
 from typing import Protocol, runtime_checkable
@@ -191,6 +191,7 @@ def evaluate_episode(
     policy: EvaluationPolicy,
     reset_seed: int | None = None,
     deterministic: bool = True,
+    step_observer: Callable[[dict[str, object]], None] | None = None,
 ) -> EpisodeMetrics:
     if not isinstance(track_id, str) or not track_id.strip():
         raise ValueError("track_id must be a non-empty string")
@@ -205,6 +206,8 @@ def evaluate_episode(
         raise ValueError("reset_seed must be uint32 or None")
     if type(deterministic) is not bool:
         raise ValueError("deterministic must be bool")
+    if step_observer is not None and not callable(step_observer):
+        raise ValueError("step_observer must be callable or None")
 
     fixed_dt = float(factory.simulation_config.fixed_dt)
     route = RaceRoute.from_track(factory.track)
@@ -258,6 +261,15 @@ def evaluate_episode(
                 executed_steps=executed_steps,
                 fixed_dt=fixed_dt,
             )
+            if step_observer is not None:
+                step_observer({
+                    "step": executed_steps, "action": np.asarray(action).copy(),
+                    "info": info, "reward": reward_value,
+                    "terminated": terminated, "truncated": truncated,
+                    "elapsed_time": elapsed_time,
+                    "next_checkpoint_index": next_checkpoint_index,
+                    "finished": finished,
+                })
             if authored_route is not None:
                 step_info = _mapping(info, "step info")
                 if "route_highwater_meters" not in step_info:

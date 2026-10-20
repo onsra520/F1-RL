@@ -286,6 +286,31 @@ class PPOModel:
             value.update(tensor.detach().cpu().numpy().tobytes())
         return value.hexdigest()
 
+    def policy_weights_finite(self) -> bool:
+        return all(np.isfinite(tensor.detach().cpu().numpy()).all()
+                   for tensor in self._model.policy.state_dict().values()
+                   if tensor.is_floating_point() or tensor.is_complex())
+
+    def optimizer_gradient_integrity(self) -> dict[str, float | int | bool]:
+        gradients = [parameter.grad.detach() for parameter in self._model.policy.parameters()
+                     if parameter.grad is not None]
+        if not gradients:
+            raise RuntimeError("PPO optimizer step produced no gradients")
+        arrays = [gradient.float().cpu().numpy() for gradient in gradients]
+        finite = all(bool(np.isfinite(gradient).all()) for gradient in arrays)
+        norm = float(np.linalg.norm([np.linalg.norm(gradient) for gradient in arrays]))
+        nonzero_tensors = sum(bool(np.count_nonzero(gradient)) for gradient in arrays)
+        return {"finite": finite, "gradient_l2_norm": norm,
+                "nonzero_gradient_tensors": nonzero_tensors,
+                "nonzero_gradient_elements": sum(int(np.count_nonzero(gradient))
+                                                  for gradient in arrays)}
+
+    @staticmethod
+    def seed_policy_rng(seed: int) -> None:
+        from importlib import import_module
+
+        import_module("torch").manual_seed(seed)
+
     @classmethod
     def create(cls, env: PPOTrainingEnv, config: PPOConfig) -> "PPOModel":
         if not isinstance(env, (F1RLEnv, VecEnv)):
