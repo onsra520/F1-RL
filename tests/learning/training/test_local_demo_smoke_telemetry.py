@@ -138,6 +138,26 @@ def test_smoke_telemetry_auditor_enforces_exact_rollout_and_episode_continuity(t
     assert result["episodes_terminated_or_truncated"] == 1
     assert result["episodes_started"] == 2
 
+    # A coherent 256-step audit must still fail closed if the recorded
+    # automatic reset is missing or its identity is changed after the run.
+    for name, mutate in (
+        ("missing-reset", lambda event: event.update(autoreset_identity=None)),
+        ("spoofed-reset", lambda event: event["autoreset_identity"].update(seed=1001)),
+    ):
+        corrupted = [json.loads(json.dumps(event)) for event in events]
+        terminal = next(event for event in corrupted if event.get("event_type") == "step")
+        mutate(terminal)
+        corrupted_path = tmp_path / f"{name}.jsonl"
+        corrupted_path.write_text(
+            "".join(json.dumps(event) + "\n" for event in corrupted), encoding="utf-8"
+        )
+        try:
+            _validate_smoke_telemetry(corrupted_path, run_id)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"smoke telemetry auditor accepted {name} identity")
+
 
 def test_real_train_curriculum_termination_preserves_dummy_vec_autoreset_identity(tmp_path):
     manifest, _ = load_simulation_only_manifest(ROOT)
