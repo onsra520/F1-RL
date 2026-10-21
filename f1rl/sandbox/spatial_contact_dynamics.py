@@ -389,7 +389,7 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             if lifecycle and not phase_change and h>1e-8 and phase_depth<24:
                 middle=advance(y,start,h/2.,depth,phase_depth+1)
                 return advance(middle,times[-1],h/2.,depth,phase_depth+1)
-            if verdict.status == 'outside' and verdict.reason == 'invalid endpoint body or wheel support':
+            if verdict.status == 'outside':
                 raise SuspensionResolutionError(
                     f'spatial body/contact sweep {verdict.status}: {verdict.reason}',
                     failure_code='unsupported_contact',

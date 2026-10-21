@@ -140,6 +140,21 @@ def test_spatial_kernel_classifies_only_the_registered_outside_support_verdict(m
     assert error.value.failure_code == "unsupported_contact"
 
 
+def test_spatial_kernel_classifies_witnessed_swept_outside_as_unsupported_contact(monkeypatch):
+    from types import SimpleNamespace
+    from f1rl.sandbox import spatial_contact_dynamics
+    from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
+
+    f,_,_,s=ramp_translation()
+    monkeypatch.setattr(spatial_contact_dynamics, "certify_multisurface_support",
+                        lambda *_args, **_kwargs: SimpleNamespace(
+                            valid=False, status="outside",
+                            reason="witnessed unsupported body or wheel pose within motion"))
+    with pytest.raises(SuspensionResolutionError) as error:
+        run(f.initial_state.vehicle,f,s,VehicleControl(0.,0.,0.))
+    assert error.value.failure_code == "unsupported_contact"
+
+
 def test_nonplanar_spin_acceleration_matches_independent_euler_equations():
     f,_,_,s=ramp_translation()
     q=Quaternion.from_axis_angle(Vec3(1.,0.,0.),.04)*Quaternion.from_axis_angle(Vec3(0.,0.,1.),.02)
