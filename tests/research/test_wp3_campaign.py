@@ -7,6 +7,7 @@ import pytest
 
 from f1rl.local_demo.campaign import (
     CAMPAIGN_CONFIG,
+    _validate_training_contact_terminal,
     _expected_campaign_config,
     _iter_jsonl,
     _load_campaign_config,
@@ -81,6 +82,92 @@ def test_training_jsonl_parser_fails_closed_on_size_truncation_and_duplicate_key
 def test_campaign_config_file_is_the_source_of_the_frozen_contract():
     config = json.loads((ROOT / CAMPAIGN_CONFIG).read_text(encoding="utf-8"))
     assert config == _expected_campaign_config()
+
+
+@pytest.mark.parametrize(("code", "detail", "distance", "lateral_penalty", "demo_reward", "row_reward"), [
+    ("unsupported_contact",
+     "spatial body/contact sweep outside: invalid endpoint body or wheel support",
+     2.2656793812716023, 1.0266606117438541,
+     -26.026660611743853, -26.026660919189453),
+    ("verified_obstacle_contact",
+     "flight/substep body hit obstacle: no scored impact response registered",
+     1.5758883456636512, 0.4966848155997039,
+     -25.496684815599703, -25.496685028076172),
+])
+def test_campaign_accepts_captured_training_contact_terminal_contract(
+    code, detail, distance, lateral_penalty, demo_reward, row_reward
+):
+    # Values are copied from actual C-seed0 attempt-v7 TRAIN telemetry rows.
+    demo_contract = {
+        "version": "straight_route_stability_demo_v2",
+        "training_corridor_m": 3.0,
+        "lateral_penalty_per_m2_s": 2.0,
+        "terminal_penalty": 25.0,
+    }
+    row = {
+        "terminated": True,
+        "truncated": False,
+        "termination_reason": detail,
+        "reward": row_reward,
+        "demo_training": {
+            "version": "straight_route_stability_demo_v2",
+            "training_corridor_m": 3.0,
+            "registered_reward": 0.0,
+            "lateral_distance_m": distance,
+            "lateral_penalty": lateral_penalty,
+            "terminal_penalty": 25.0,
+            "reward": demo_reward,
+            "curriculum_terminal": False,
+            "physics_abort_terminal": True,
+            "physics_failure_code": code,
+            "physics_failure_detail": detail,
+            "scientific_evidence": False,
+        },
+    }
+
+    _validate_training_contact_terminal(row, demo_contract)
+
+
+@pytest.mark.parametrize("mutation", [
+    {"termination_reason": "invalid_physical_transition"},
+    {"truncated": True},
+    {"physics_failure_code": "unclassified_physics_error"},
+    {"terminal_penalty": 24.0},
+    {"reward": -25.0},
+])
+def test_campaign_rejects_inconsistent_training_contact_terminal(mutation):
+    demo_contract = {
+        "version": "straight_route_stability_demo_v2",
+        "training_corridor_m": 3.0,
+        "lateral_penalty_per_m2_s": 2.0,
+        "terminal_penalty": 25.0,
+    }
+    row = {
+        "terminated": True,
+        "truncated": False,
+        "termination_reason": "spatial body/contact sweep outside: invalid endpoint body or wheel support",
+        "reward": -26.026660919189453,
+        "demo_training": {
+            "version": "straight_route_stability_demo_v2",
+            "training_corridor_m": 3.0,
+            "registered_reward": 0.0,
+            "lateral_distance_m": 2.2656793812716023,
+            "lateral_penalty": 1.0266606117438541,
+            "terminal_penalty": 25.0,
+            "reward": -26.026660611743853,
+            "curriculum_terminal": False,
+            "physics_abort_terminal": True,
+            "physics_failure_code": "unsupported_contact",
+            "physics_failure_detail": "spatial body/contact sweep outside: invalid endpoint body or wheel support",
+            "scientific_evidence": False,
+        },
+    }
+    for key, value in mutation.items():
+        target = row if key in {"termination_reason", "truncated", "reward"} else row["demo_training"]
+        target[key] = value
+
+    with pytest.raises(ValueError, match="training contact terminal"):
+        _validate_training_contact_terminal(row, demo_contract)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="WP3 campaign runs on local Windows")

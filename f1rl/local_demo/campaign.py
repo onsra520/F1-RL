@@ -9,6 +9,7 @@ from pathlib import Path
 import random
 import shutil
 import subprocess
+import struct
 import sys
 import time
 from typing import Any
@@ -353,6 +354,33 @@ def _inside(base: Path, relative: str) -> Path:
     return candidate
 
 
+def _validate_training_contact_terminal(row: dict, expected_demo_reward: dict) -> None:
+    demo = row.get("demo_training")
+    detail = demo.get("physics_failure_detail") if isinstance(demo, dict) else None
+    try:
+        vector_reward = struct.unpack("=f", struct.pack("=f", float(demo["reward"])))[0]
+    except (KeyError, TypeError, ValueError, OverflowError, struct.error):
+        vector_reward = None
+    if (not isinstance(demo, dict)
+            or row.get("terminated") is not True or row.get("truncated") is not False
+            or demo.get("physics_failure_code") not in {"unsupported_contact", "verified_obstacle_contact"}
+            or not isinstance(detail, str) or not detail.strip()
+            or row.get("termination_reason") != detail
+            or demo.get("version") != expected_demo_reward.get("version")
+            or demo.get("training_corridor_m") != expected_demo_reward.get("training_corridor_m")
+            or demo.get("terminal_penalty") != expected_demo_reward.get("terminal_penalty")
+            or demo.get("registered_reward") != 0.0
+            or demo.get("curriculum_terminal") is not False
+            or demo.get("scientific_evidence") is not False
+            or not np_isfinite(demo.get("lateral_penalty"))
+            or demo.get("lateral_penalty", -1) < 0
+            or not np_isfinite(demo.get("reward"))
+            or not np_isfinite(row.get("reward"))
+            or demo.get("reward") != -demo["lateral_penalty"] - demo["terminal_penalty"]
+            or row.get("reward") != vector_reward):
+        raise ValueError("training contact terminal transition violates its frozen demo contract")
+
+
 def validate_training_run(root: Path, run_dir: Path, expected: dict,
                           campaign_manifest: dict, config: dict) -> dict:
     run_manifest, _ = _strict_json(run_dir / "run-manifest.json")
@@ -374,6 +402,17 @@ def validate_training_run(root: Path, run_dir: Path, expected: dict,
             or run_manifest.get("scientific_training_authorized") is not False
             or run_manifest.get("training_failure_policy") != config["training"]["physics_failure_policy"]):
         raise ValueError("run candidate, seed, or scientific isolation identity mismatch")
+    factors = expected["candidate_factors"]
+    corridor = factors["training_corridor_m"]
+    expected_demo_reward = {
+        "version": "straight_route_stability_demo_v1" if corridor == 2.0
+                   else "straight_route_stability_demo_v2",
+        "training_corridor_m": corridor,
+        "lateral_penalty_per_m2_s": factors["lateral_penalty_per_m2_s"],
+        "terminal_penalty": 25.0,
+    }
+    if run_manifest.get("demo_reward") != expected_demo_reward:
+        raise ValueError("run demo reward differs from the frozen candidate contract")
     ppo = run_manifest.get("ppo_config", {})
     if (ppo.get("seed") != expected["seed_bundle"]["ppo"] or ppo.get("device") != "cpu"
             or ppo.get("n_steps") != 256 or ppo.get("batch_size") != 64 or ppo.get("n_epochs") != 10):
@@ -511,14 +550,7 @@ def validate_training_run(root: Path, run_dir: Path, expected: dict,
             demo = row.get("demo_training") or {}
             data["curriculum_terminal"] = bool(demo.get("curriculum_terminal"))
             if demo.get("physics_abort_terminal") is True:
-                if (demo.get("physics_failure_code") != "unsupported_contact"
-                        or not isinstance(demo.get("physics_failure_detail"), str)
-                        or not demo["physics_failure_detail"]
-                        or row.get("termination_reason") != "invalid_physical_transition"
-                        or not np_isfinite(demo.get("terminal_penalty"))
-                        or demo.get("terminal_penalty", 0) <= 0
-                        or row.get("reward") != demo.get("reward")):
-                    raise ValueError("unsupported-contact terminal transition violates its frozen demo contract")
+                _validate_training_contact_terminal(row, expected_demo_reward)
                 data["physics_abort_terminal"] = True
             elif demo.get("physics_abort_terminal") not in (None, False):
                 raise ValueError("physics-abort terminal marker is malformed")
