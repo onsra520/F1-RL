@@ -1,0 +1,377 @@
+{
+    "schema_version":  "f1rl_wp3_handoff_manifest_v1",
+    "source_commit":  "fe83f517479f3b990028d6409304fae83b8199a9",
+    "models":  [
+                   "C-seed0",
+                   "A-seed0",
+                   "B-seed0"
+               ],
+    "scientific_evidence":  false,
+    "files":  [
+                  {
+                      "path":  "campaign-events.jsonl",
+                      "bytes":  1271,
+                      "sha256":  "56f3357f48b02b3af1f94a2ecc7b568e12fbf518c0010a2e830889306ab551ef"
+                  },
+                  {
+                      "path":  "campaign-state.json",
+                      "bytes":  14418,
+                      "sha256":  "31cdd1bf2d6bd7408263cdbd980029b552835075f697a793e899cea4a124dd9a"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints.json",
+                      "bytes":  2858,
+                      "sha256":  "14ea2bd861fbbc8ed10209e65b65830285f0be7d7f328233212892e662efc402"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-12288.zip",
+                      "bytes":  158376,
+                      "sha256":  "a5f9766bdcae91bfe6c3393a5cc187e68ee1627e7714a77d7135ebbeb433e495"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-16384.zip",
+                      "bytes":  158377,
+                      "sha256":  "4161aabced61063b5d50f3b7299ee2416ed458fcd4cb708c53e21e366dc16302"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-20480.zip",
+                      "bytes":  158377,
+                      "sha256":  "56fc5b91b3156f8d4ce9912f75ef6608004fd05d9d27f6f215cd52fa8f58f95b"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-24576.zip",
+                      "bytes":  158377,
+                      "sha256":  "016b3606ff8d1f0613d01a70d5f5a6d7b13f0e858fe4cc20c42b81787e8c9495"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-28672.zip",
+                      "bytes":  158378,
+                      "sha256":  "75e08c64d198d95dc8f8fec85e8f49ee1569c233aaadc3a19e16cd96857b4da5"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-32768.zip",
+                      "bytes":  158379,
+                      "sha256":  "f2e1cc63ef25f8c0592ed4be2630bfe2fb64ceeac1352d73c6881f054f06b4ab"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-36864.zip",
+                      "bytes":  158377,
+                      "sha256":  "fb9585798314e5dedc3ce89bc744bcdbd80eafefade9f35dbe26318c09eecda1"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-4096.zip",
+                      "bytes":  158377,
+                      "sha256":  "c9695de800b890d0b8a4507df32d96958b51984c205ed8b9460f138f90bb99c1"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-40960.zip",
+                      "bytes":  158379,
+                      "sha256":  "c9561485c8c22b0d2945824f7ad28fea5d2344b55849be054497a041de45aa3a"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-45056.zip",
+                      "bytes":  158379,
+                      "sha256":  "81c0c5db3567f2348b12b0a22bf77fe582e64bd991aaa32830fe6c97863aab86"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-49152.zip",
+                      "bytes":  158378,
+                      "sha256":  "ab5a4f31d26a69da0b6651320e79c595e1d38980a8c1acca53e19e0a76060323"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-53248.zip",
+                      "bytes":  158379,
+                      "sha256":  "67b4c7aaf797d40467c4fbebb83e3cc7871d392d4d9991b593b4700868ba832a"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-57344.zip",
+                      "bytes":  158379,
+                      "sha256":  "243cc0bcad7f4ddf9daa45a8cc8bef0f91a135ec50bc29a96474ba25d0e05599"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-61440.zip",
+                      "bytes":  158378,
+                      "sha256":  "2e592d9be9dd258777ec8d12a3d92e474c9938df14daa54e995496a31296ae6c"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-65536.zip",
+                      "bytes":  158376,
+                      "sha256":  "7227d9afd4e3d99afd4a7e752f783b4af87130ced4530447f64cffeaf952eba0"
+                  },
+                  {
+                      "path":  "models/A-seed0/checkpoints/checkpoint-8192.zip",
+                      "bytes":  158376,
+                      "sha256":  "92ba41521015d1f7b9a7ebbe33d8c4233754033e7e4b6fcb9d264aeffe2da14e"
+                  },
+                  {
+                      "path":  "models/A-seed0/engineering-validation.json",
+                      "bytes":  5097,
+                      "sha256":  "94d5461de87901cb8d0d8af2729312c02b593a38cd9e5b14dbac53f2ca62d801"
+                  },
+                  {
+                      "path":  "models/A-seed0/model-final.zip",
+                      "bytes":  158370,
+                      "sha256":  "8cfcde6d4c88bbcc01dbf9b67dee3829c991474b0a8883a4479370f665c01c79"
+                  },
+                  {
+                      "path":  "models/A-seed0/run-manifest.json",
+                      "bytes":  5733,
+                      "sha256":  "fb77f2c556159aa6cea6b90159ad9071130e81b1aa609f438063ddd0ee600e67"
+                  },
+                  {
+                      "path":  "models/A-seed0/runtime.json",
+                      "bytes":  130,
+                      "sha256":  "47f8a7251cef47d6247fa57f98e338c50dae3d9cceb37e3b11f8ab2c3f8a326b"
+                  },
+                  {
+                      "path":  "models/A-seed0/state.json",
+                      "bytes":  530,
+                      "sha256":  "b93c57a8e35726199a0e4731c33d849f0c8fc71ef63f22a6ff6d1af41ba1d5ca"
+                  },
+                  {
+                      "path":  "models/A-seed0/training-telemetry-manifest.json",
+                      "bytes":  315,
+                      "sha256":  "36349d5122bfad905b998324733eef27b3e3b8283ecc9bfd78d87986e5157742"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints.json",
+                      "bytes":  2858,
+                      "sha256":  "8828977e276ce523b1d5ea246ad13d4a1adbcdcff8dacabc826f766b71a8cf01"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-12288.zip",
+                      "bytes":  158376,
+                      "sha256":  "ba26136e9bd1420496b1825adbe3a9950571276c3a70d9db774477f0baa935b8"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-16384.zip",
+                      "bytes":  158378,
+                      "sha256":  "f36000c67974e3d67382c6230bbbee9d9f1a81222df7f74464439feb60b4edc0"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-20480.zip",
+                      "bytes":  158377,
+                      "sha256":  "4bafd8f5bf121f4adb9acf4c8c0871b6fd321b7ff0bfdf9f2e108251a3f0e4ce"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-24576.zip",
+                      "bytes":  158377,
+                      "sha256":  "06651f04174e93f97de9e14cba11edd2ddde39213ebfcd8c5f3fabe04d37bd1e"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-28672.zip",
+                      "bytes":  158378,
+                      "sha256":  "416d3b94dc9531d22839e6695c124c64dd252bfebaaa77ca1bac23d3afbeab2a"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-32768.zip",
+                      "bytes":  158378,
+                      "sha256":  "a192b8cfb91a9fedccebde0224400de6bac7ae75312e161af1d29e8713bdb9cd"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-36864.zip",
+                      "bytes":  158378,
+                      "sha256":  "7e59eb1d387cf20ed04160942559295496cf0d402d958806a22b234a9d1a22af"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-4096.zip",
+                      "bytes":  158377,
+                      "sha256":  "2246e08a22cbfe50df07b48ef5fa83211de1019ac473bd7645173d167d639429"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-40960.zip",
+                      "bytes":  158377,
+                      "sha256":  "73a11a7c26180a406e2c57b2f75f06471b7c6a9c89651737e15f33891e2cd2fc"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-45056.zip",
+                      "bytes":  158377,
+                      "sha256":  "743b635a7e5683b87eb05083e51cd90d9228e5a1f110446ba176d089769c0c56"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-49152.zip",
+                      "bytes":  158372,
+                      "sha256":  "c8c0ec2d9aa1d609aa8161e73135555e3ccc45ca3ec45ba376896543fd2523cd"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-53248.zip",
+                      "bytes":  158378,
+                      "sha256":  "20281a21b8e9655c6c7f0a726245b91afbd89f2e28f329c596c86a2639cdda6f"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-57344.zip",
+                      "bytes":  158379,
+                      "sha256":  "a35b865ef0cd62307950f2c88c53ecc293d9f47fca0782c8d01a1e9a491270c1"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-61440.zip",
+                      "bytes":  158378,
+                      "sha256":  "7af3510c319974b1dedb1231545631a50b885b98e2272d725c46b02aedb3df10"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-65536.zip",
+                      "bytes":  158378,
+                      "sha256":  "c14be4f8ef8ac192476a33da10b68883621bcb44dd7e2c2b38a75c67713b0aa1"
+                  },
+                  {
+                      "path":  "models/B-seed0/checkpoints/checkpoint-8192.zip",
+                      "bytes":  158376,
+                      "sha256":  "b9acc6bb004a6e11ac7ced3e39c39bb630b9f54b87d2b63022e06fa8b746f78b"
+                  },
+                  {
+                      "path":  "models/B-seed0/engineering-validation.json",
+                      "bytes":  5097,
+                      "sha256":  "ec96441cc2789f4007c6c67b0120cc64fca1be23d906511fbe3057ab171b0b45"
+                  },
+                  {
+                      "path":  "models/B-seed0/model-final.zip",
+                      "bytes":  158370,
+                      "sha256":  "d76719fb04c5eee1a03e1b0885989f44faad6543d3a1fea9aa24fe6ac55867d6"
+                  },
+                  {
+                      "path":  "models/B-seed0/run-manifest.json",
+                      "bytes":  5733,
+                      "sha256":  "79778fc20f0e982c7db84e48cf559d99f008315af2ae930718bfb6229f9d45f4"
+                  },
+                  {
+                      "path":  "models/B-seed0/runtime.json",
+                      "bytes":  130,
+                      "sha256":  "47f8a7251cef47d6247fa57f98e338c50dae3d9cceb37e3b11f8ab2c3f8a326b"
+                  },
+                  {
+                      "path":  "models/B-seed0/state.json",
+                      "bytes":  530,
+                      "sha256":  "1dfb11116f57bcb803e6d3312a8c01f9e56744d9a3f1bd779e356dd2031ecf48"
+                  },
+                  {
+                      "path":  "models/B-seed0/training-telemetry-manifest.json",
+                      "bytes":  315,
+                      "sha256":  "0b8d50a5e289f793293a5dd5bd24f8d35967adfd3ce1bf144e0f40dde56a0ab8"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints.json",
+                      "bytes":  2858,
+                      "sha256":  "3e9c5cd4f864eac070bc17705a49f6c46016cc5c9e862759705c9b9a83c626aa"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-12288.zip",
+                      "bytes":  158376,
+                      "sha256":  "63e4ddce1f52931f77a36a9254b941b7fb5d46d04c5fd3d9fc88a18926a6fc42"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-16384.zip",
+                      "bytes":  158376,
+                      "sha256":  "910d246af9a2e663db5e11056de64afc06c50d8beaca31e1d61d09f36c3fbc8e"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-20480.zip",
+                      "bytes":  158376,
+                      "sha256":  "de36910f687fe77f860a4ee869bdb317d07c606eed6d7cfba96cb2562921f998"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-24576.zip",
+                      "bytes":  158378,
+                      "sha256":  "f891603b3140ed079776bed1cba5761e239e81d8b435646e21c410708142750a"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-28672.zip",
+                      "bytes":  158379,
+                      "sha256":  "251fc2254267bcf2d132febbdb340473e27db262a23c7448e949f8c1580764e7"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-32768.zip",
+                      "bytes":  158378,
+                      "sha256":  "dc5bc23c0118975be07d8e4e901ce153cb300371df887ad21c5e9b644aefad52"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-36864.zip",
+                      "bytes":  158378,
+                      "sha256":  "516766ab0db192181497abbfed4e5b58cee498c88fd6710426595935c77db919"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-4096.zip",
+                      "bytes":  158376,
+                      "sha256":  "d89bcfbab66069b36913f2e9491856e72d5ffcca53dfaa4ad3e3e08066c40021"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-40960.zip",
+                      "bytes":  158379,
+                      "sha256":  "8e3c39272d8d14fd5b6e824896ff13612be35bef166639432bb7175ab937170c"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-45056.zip",
+                      "bytes":  158378,
+                      "sha256":  "154ee03564833d65eae776b82f90685feb60446ba35cd07f66cd7ca7839df9f1"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-49152.zip",
+                      "bytes":  158379,
+                      "sha256":  "ce73c2bd77eebb0fbc6f8d9b6454c66195cc88a66f477aadc5ed2f187d77490b"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-53248.zip",
+                      "bytes":  158378,
+                      "sha256":  "c64790efbef6b68746e5f2983acc96559b4fafa389475610b591c60f02faf787"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-57344.zip",
+                      "bytes":  158378,
+                      "sha256":  "c08e7a7367070fc8d7359bb2f364e87c6662d154dfbd5e10abbd2a792c682dff"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-61440.zip",
+                      "bytes":  158377,
+                      "sha256":  "9f5ebac7f71b422738beb1064325873328b7c4dfd34fe74389f395a9905764df"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-65536.zip",
+                      "bytes":  158378,
+                      "sha256":  "3b5c5cb3cdefb43a5e60cba1d07d100af4340299046ee1b65ab2a996cb8ad292"
+                  },
+                  {
+                      "path":  "models/C-seed0/checkpoints/checkpoint-8192.zip",
+                      "bytes":  158376,
+                      "sha256":  "dd103b00af34d18000119ce2094703c812549aaad28bb301a4ec2c1cdce65212"
+                  },
+                  {
+                      "path":  "models/C-seed0/engineering-validation.json",
+                      "bytes":  5099,
+                      "sha256":  "aa83f8f518e89cd02e1721b55474b28b24de6333ade70079cc40b1b6f5e94b97"
+                  },
+                  {
+                      "path":  "models/C-seed0/model-final.zip",
+                      "bytes":  158370,
+                      "sha256":  "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492"
+                  },
+                  {
+                      "path":  "models/C-seed0/run-manifest.json",
+                      "bytes":  5733,
+                      "sha256":  "5b5685487f761ebdb82b30684d6d5305dd80097c281dbee2c26aea54ac9bf444"
+                  },
+                  {
+                      "path":  "models/C-seed0/runtime.json",
+                      "bytes":  130,
+                      "sha256":  "47f8a7251cef47d6247fa57f98e338c50dae3d9cceb37e3b11f8ab2c3f8a326b"
+                  },
+                  {
+                      "path":  "models/C-seed0/state.json",
+                      "bytes":  530,
+                      "sha256":  "292c937c5d3922d7c880ad5f7f2429bc88cf54016423bc24c6cd60f2719e02f5"
+                  },
+                  {
+                      "path":  "models/C-seed0/training-telemetry-manifest.json",
+                      "bytes":  315,
+                      "sha256":  "efe1cd3fe67b1ffd27924dfeb9a6f2f370085e62beb3a7ab49b6c395fff883d5"
+                  },
+                  {
+                      "path":  "WP3-C0-ENGINEERING-GATE.md",
+                      "bytes":  1189,
+                      "sha256":  "c652f2e13b4b46b0ebf7bcae0b52f3be692929a56b04e437383f2acc638a7e95"
+                  },
+                  {
+                      "path":  "WP3-CAMPAIGN-MANIFEST.json",
+                      "bytes":  12031,
+                      "sha256":  "857b6fc2540c52571813f14b438cbf606d086f8e4644f6afbf04506d0852da15"
+                  }
+              ]
+}

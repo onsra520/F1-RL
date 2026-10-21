@@ -1,0 +1,5 @@
+*.json -text -diff
+*.jsonl -text -diff
+*.zip binary
+*.md text eol=lf
+*.py text eol=lf

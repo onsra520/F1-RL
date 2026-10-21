@@ -1,0 +1,395 @@
+{
+  "c0_engineering_gate": {
+    "model_id": "C-seed0",
+    "passed_at": "2026-10-21T08:06:30.825300+00:00",
+    "status": "ENGINEERING_PASS",
+    "validation_sha256": "064314c48ac11c8eadd4b90791d7a77d36d71006788647235aa881d3ef78c232"
+  },
+  "campaign_manifest_sha256": "312b5ebb8b3cedf2b38b15045f982a3196184f5b5de89394924b8abc45f90b7c",
+  "completed_model_ids": [
+    "C-seed0",
+    "A-seed0"
+  ],
+  "completed_training_timesteps": 131072,
+  "current_model_id": "B-seed0",
+  "gate2_status": "BLOCKED",
+  "heldout_access": false,
+  "models": {
+    "A-seed0": {
+      "elapsed_seconds": 4521.968999999983,
+      "log_path": "logs/A-seed0.log",
+      "output_path": "runs/A-seed0",
+      "resource_usage": {
+        "final_cpu_seconds": 0.0,
+        "measurement_source": "Windows GetProcessMemoryInfo/GetProcessTimes",
+        "peak_working_set_bytes": 5943296,
+        "sampling_interval_seconds": 10
+      },
+      "returncode": 0,
+      "started_at": "2026-10-21T08:06:30.838627+00:00",
+      "status": "ENGINEERING_PASS",
+      "validation": {
+        "candidate_id": "A",
+        "checkpoints": [
+          {
+            "path": "checkpoints/checkpoint-4096.zip",
+            "sha256": "c9695de800b890d0b8a4507df32d96958b51984c205ed8b9460f138f90bb99c1",
+            "size_bytes": 158377,
+            "timesteps": 4096
+          },
+          {
+            "path": "checkpoints/checkpoint-8192.zip",
+            "sha256": "92ba41521015d1f7b9a7ebbe33d8c4233754033e7e4b6fcb9d264aeffe2da14e",
+            "size_bytes": 158376,
+            "timesteps": 8192
+          },
+          {
+            "path": "checkpoints/checkpoint-12288.zip",
+            "sha256": "a5f9766bdcae91bfe6c3393a5cc187e68ee1627e7714a77d7135ebbeb433e495",
+            "size_bytes": 158376,
+            "timesteps": 12288
+          },
+          {
+            "path": "checkpoints/checkpoint-16384.zip",
+            "sha256": "4161aabced61063b5d50f3b7299ee2416ed458fcd4cb708c53e21e366dc16302",
+            "size_bytes": 158377,
+            "timesteps": 16384
+          },
+          {
+            "path": "checkpoints/checkpoint-20480.zip",
+            "sha256": "56fc5b91b3156f8d4ce9912f75ef6608004fd05d9d27f6f215cd52fa8f58f95b",
+            "size_bytes": 158377,
+            "timesteps": 20480
+          },
+          {
+            "path": "checkpoints/checkpoint-24576.zip",
+            "sha256": "016b3606ff8d1f0613d01a70d5f5a6d7b13f0e858fe4cc20c42b81787e8c9495",
+            "size_bytes": 158377,
+            "timesteps": 24576
+          },
+          {
+            "path": "checkpoints/checkpoint-28672.zip",
+            "sha256": "75e08c64d198d95dc8f8fec85e8f49ee1569c233aaadc3a19e16cd96857b4da5",
+            "size_bytes": 158378,
+            "timesteps": 28672
+          },
+          {
+            "path": "checkpoints/checkpoint-32768.zip",
+            "sha256": "f2e1cc63ef25f8c0592ed4be2630bfe2fb64ceeac1352d73c6881f054f06b4ab",
+            "size_bytes": 158379,
+            "timesteps": 32768
+          },
+          {
+            "path": "checkpoints/checkpoint-36864.zip",
+            "sha256": "fb9585798314e5dedc3ce89bc744bcdbd80eafefade9f35dbe26318c09eecda1",
+            "size_bytes": 158377,
+            "timesteps": 36864
+          },
+          {
+            "path": "checkpoints/checkpoint-40960.zip",
+            "sha256": "c9561485c8c22b0d2945824f7ad28fea5d2344b55849be054497a041de45aa3a",
+            "size_bytes": 158379,
+            "timesteps": 40960
+          },
+          {
+            "path": "checkpoints/checkpoint-45056.zip",
+            "sha256": "81c0c5db3567f2348b12b0a22bf77fe582e64bd991aaa32830fe6c97863aab86",
+            "size_bytes": 158379,
+            "timesteps": 45056
+          },
+          {
+            "path": "checkpoints/checkpoint-49152.zip",
+            "sha256": "ab5a4f31d26a69da0b6651320e79c595e1d38980a8c1acca53e19e0a76060323",
+            "size_bytes": 158378,
+            "timesteps": 49152
+          },
+          {
+            "path": "checkpoints/checkpoint-53248.zip",
+            "sha256": "67b4c7aaf797d40467c4fbebb83e3cc7871d392d4d9991b593b4700868ba832a",
+            "size_bytes": 158379,
+            "timesteps": 53248
+          },
+          {
+            "path": "checkpoints/checkpoint-57344.zip",
+            "sha256": "243cc0bcad7f4ddf9daa45a8cc8bef0f91a135ec50bc29a96474ba25d0e05599",
+            "size_bytes": 158379,
+            "timesteps": 57344
+          },
+          {
+            "path": "checkpoints/checkpoint-61440.zip",
+            "sha256": "2e592d9be9dd258777ec8d12a3d92e474c9938df14daa54e995496a31296ae6c",
+            "size_bytes": 158378,
+            "timesteps": 61440
+          },
+          {
+            "path": "checkpoints/checkpoint-65536.zip",
+            "sha256": "7227d9afd4e3d99afd4a7e752f783b4af87130ced4530447f64cffeaf952eba0",
+            "size_bytes": 158376,
+            "timesteps": 65536
+          },
+          {
+            "path": "model-final.zip",
+            "sha256": "8cfcde6d4c88bbcc01dbf9b67dee3829c991474b0a8883a4479370f665c01c79",
+            "size_bytes": 158370,
+            "timesteps": 65536
+          }
+        ],
+        "episodes": 226,
+        "final_policy_weights_sha256": "0d00cf766465d04a3cc0e46dc562a5c77823705d8e25041fe6aa6d88a6abb1ab",
+        "heldout_access": false,
+        "initial_policy_weights_sha256": "02f3273342ec475ea457ed01af9104e13c5c565dce7ed3864eb5f378d5155e39",
+        "learning_timesteps": 65536,
+        "lifecycle": {
+          "automatic_resets_verified": 225,
+          "curriculum_terminations": 174,
+          "episode_count": 226,
+          "natural_terminations": 0,
+          "physics_abort_terminations": 0,
+          "terminal_transitions": 225,
+          "track_episode_counts": {
+            "ramp-v1": 63,
+            "right-turn-v1": 59,
+            "slalom-v1": 64,
+            "straight-sprint-v1": 40
+          },
+          "track_timestep_counts": {
+            "ramp-v1": 19522,
+            "right-turn-v1": 20131,
+            "slalom-v1": 14627,
+            "straight-sprint-v1": 11256
+          },
+          "truncations": 51
+        },
+        "model_id": "A-seed0",
+        "optimizer_steps": 10240,
+        "policy_weights_finite_at_all_checkpoints": true,
+        "ppo_update_rows": 256,
+        "run_id": "20261021T080632Z-252a0650e833",
+        "run_manifest_sha256": "fb77f2c556159aa6cea6b90159ad9071130e81b1aa609f438063ddd0ee600e67",
+        "schema_version": "f1rl_wp3_model_engineering_validation_v1",
+        "scientific_evidence": false,
+        "seed_index": 0,
+        "sha256": "d2b788f1a18ae6ae0291b933ccea7809884e0b624b92b6a8c656effde7a810b1",
+        "source_commit": "fe83f517479f3b990028d6409304fae83b8199a9",
+        "status": "ENGINEERING_PASS",
+        "telemetry": {
+          "bytes": 270304652,
+          "events": 65811,
+          "optimizer_steps": 10240,
+          "path": "training-telemetry.jsonl",
+          "sha256": "b36b5a5b3720daf11c62fd58d5c557f0671e12e80cd036d398da6919dbbc5697",
+          "step_rows": 65536,
+          "update_rows": 256
+        },
+        "weights_changed": true
+      }
+    },
+    "A-seed1": {
+      "status": "pending"
+    },
+    "A-seed2": {
+      "status": "pending"
+    },
+    "B-seed0": {
+      "output_path": "runs/B-seed0",
+      "started_at": "2026-10-21T09:21:57.955737+00:00",
+      "status": "running"
+    },
+    "B-seed1": {
+      "status": "pending"
+    },
+    "B-seed2": {
+      "status": "pending"
+    },
+    "C-seed0": {
+      "elapsed_seconds": 3965.2970000000205,
+      "log_path": "logs/C-seed0.log",
+      "output_path": "runs/C-seed0",
+      "resource_usage": {
+        "final_cpu_seconds": 0.0,
+        "measurement_source": "Windows GetProcessMemoryInfo/GetProcessTimes",
+        "peak_working_set_bytes": 5947392,
+        "sampling_interval_seconds": 10
+      },
+      "returncode": 0,
+      "started_at": "2026-10-21T07:00:19.244024+00:00",
+      "status": "ENGINEERING_PASS",
+      "validation": {
+        "candidate_id": "C",
+        "checkpoints": [
+          {
+            "path": "checkpoints/checkpoint-4096.zip",
+            "sha256": "d89bcfbab66069b36913f2e9491856e72d5ffcca53dfaa4ad3e3e08066c40021",
+            "size_bytes": 158376,
+            "timesteps": 4096
+          },
+          {
+            "path": "checkpoints/checkpoint-8192.zip",
+            "sha256": "dd103b00af34d18000119ce2094703c812549aaad28bb301a4ec2c1cdce65212",
+            "size_bytes": 158376,
+            "timesteps": 8192
+          },
+          {
+            "path": "checkpoints/checkpoint-12288.zip",
+            "sha256": "63e4ddce1f52931f77a36a9254b941b7fb5d46d04c5fd3d9fc88a18926a6fc42",
+            "size_bytes": 158376,
+            "timesteps": 12288
+          },
+          {
+            "path": "checkpoints/checkpoint-16384.zip",
+            "sha256": "910d246af9a2e663db5e11056de64afc06c50d8beaca31e1d61d09f36c3fbc8e",
+            "size_bytes": 158376,
+            "timesteps": 16384
+          },
+          {
+            "path": "checkpoints/checkpoint-20480.zip",
+            "sha256": "de36910f687fe77f860a4ee869bdb317d07c606eed6d7cfba96cb2562921f998",
+            "size_bytes": 158376,
+            "timesteps": 20480
+          },
+          {
+            "path": "checkpoints/checkpoint-24576.zip",
+            "sha256": "f891603b3140ed079776bed1cba5761e239e81d8b435646e21c410708142750a",
+            "size_bytes": 158378,
+            "timesteps": 24576
+          },
+          {
+            "path": "checkpoints/checkpoint-28672.zip",
+            "sha256": "251fc2254267bcf2d132febbdb340473e27db262a23c7448e949f8c1580764e7",
+            "size_bytes": 158379,
+            "timesteps": 28672
+          },
+          {
+            "path": "checkpoints/checkpoint-32768.zip",
+            "sha256": "dc5bc23c0118975be07d8e4e901ce153cb300371df887ad21c5e9b644aefad52",
+            "size_bytes": 158378,
+            "timesteps": 32768
+          },
+          {
+            "path": "checkpoints/checkpoint-36864.zip",
+            "sha256": "516766ab0db192181497abbfed4e5b58cee498c88fd6710426595935c77db919",
+            "size_bytes": 158378,
+            "timesteps": 36864
+          },
+          {
+            "path": "checkpoints/checkpoint-40960.zip",
+            "sha256": "8e3c39272d8d14fd5b6e824896ff13612be35bef166639432bb7175ab937170c",
+            "size_bytes": 158379,
+            "timesteps": 40960
+          },
+          {
+            "path": "checkpoints/checkpoint-45056.zip",
+            "sha256": "154ee03564833d65eae776b82f90685feb60446ba35cd07f66cd7ca7839df9f1",
+            "size_bytes": 158378,
+            "timesteps": 45056
+          },
+          {
+            "path": "checkpoints/checkpoint-49152.zip",
+            "sha256": "ce73c2bd77eebb0fbc6f8d9b6454c66195cc88a66f477aadc5ed2f187d77490b",
+            "size_bytes": 158379,
+            "timesteps": 49152
+          },
+          {
+            "path": "checkpoints/checkpoint-53248.zip",
+            "sha256": "c64790efbef6b68746e5f2983acc96559b4fafa389475610b591c60f02faf787",
+            "size_bytes": 158378,
+            "timesteps": 53248
+          },
+          {
+            "path": "checkpoints/checkpoint-57344.zip",
+            "sha256": "c08e7a7367070fc8d7359bb2f364e87c6662d154dfbd5e10abbd2a792c682dff",
+            "size_bytes": 158378,
+            "timesteps": 57344
+          },
+          {
+            "path": "checkpoints/checkpoint-61440.zip",
+            "sha256": "9f5ebac7f71b422738beb1064325873328b7c4dfd34fe74389f395a9905764df",
+            "size_bytes": 158377,
+            "timesteps": 61440
+          },
+          {
+            "path": "checkpoints/checkpoint-65536.zip",
+            "sha256": "3b5c5cb3cdefb43a5e60cba1d07d100af4340299046ee1b65ab2a996cb8ad292",
+            "size_bytes": 158378,
+            "timesteps": 65536
+          },
+          {
+            "path": "model-final.zip",
+            "sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+            "size_bytes": 158370,
+            "timesteps": 65536
+          }
+        ],
+        "episodes": 254,
+        "final_policy_weights_sha256": "365c404762f612e245f6922576a15ca40f5e3d858631808f8c16e5fb8ac0a389",
+        "heldout_access": false,
+        "initial_policy_weights_sha256": "02f3273342ec475ea457ed01af9104e13c5c565dce7ed3864eb5f378d5155e39",
+        "learning_timesteps": 65536,
+        "lifecycle": {
+          "automatic_resets_verified": 253,
+          "curriculum_terminations": 112,
+          "episode_count": 254,
+          "natural_terminations": 44,
+          "physics_abort_terminations": 69,
+          "terminal_transitions": 253,
+          "track_episode_counts": {
+            "ramp-v1": 66,
+            "right-turn-v1": 68,
+            "slalom-v1": 72,
+            "straight-sprint-v1": 48
+          },
+          "track_timestep_counts": {
+            "ramp-v1": 22501,
+            "right-turn-v1": 13846,
+            "slalom-v1": 16319,
+            "straight-sprint-v1": 12870
+          },
+          "truncations": 28
+        },
+        "model_id": "C-seed0",
+        "optimizer_steps": 10240,
+        "policy_weights_finite_at_all_checkpoints": true,
+        "ppo_update_rows": 256,
+        "run_id": "20261021T070020Z-d50a1ebc8e38",
+        "run_manifest_sha256": "5b5685487f761ebdb82b30684d6d5305dd80097c281dbee2c26aea54ac9bf444",
+        "schema_version": "f1rl_wp3_model_engineering_validation_v1",
+        "scientific_evidence": false,
+        "seed_index": 0,
+        "sha256": "064314c48ac11c8eadd4b90791d7a77d36d71006788647235aa881d3ef78c232",
+        "source_commit": "fe83f517479f3b990028d6409304fae83b8199a9",
+        "status": "ENGINEERING_PASS",
+        "telemetry": {
+          "bytes": 269773075,
+          "events": 65811,
+          "optimizer_steps": 10240,
+          "path": "training-telemetry.jsonl",
+          "sha256": "9d80d3262ec2d134a0ebb5c733abf7d0965da97d6027b93638037409928096f5",
+          "step_rows": 65536,
+          "update_rows": 256
+        },
+        "weights_changed": true
+      }
+    },
+    "C-seed1": {
+      "status": "pending"
+    },
+    "C-seed2": {
+      "status": "pending"
+    },
+    "D-seed0": {
+      "status": "pending"
+    },
+    "D-seed1": {
+      "status": "pending"
+    },
+    "D-seed2": {
+      "status": "pending"
+    }
+  },
+  "phase": "STAGE_2_TRAINING",
+  "schema_version": "f1rl_wp3_campaign_state_v1",
+  "scientific_evidence": false,
+  "status": "RUNNING",
+  "updated_at": "2026-10-21T09:21:57.947222+00:00",
+  "wp7_status": "BLOCKED"
+}
