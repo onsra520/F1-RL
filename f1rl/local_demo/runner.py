@@ -391,6 +391,7 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
         "experiment_manifest_sha256": preflight["experiment_manifest_sha256"],
         "registration_sha256": preflight["registration_sha256"],
         "track_manifest_sha256": preflight["track_manifest_sha256"],
+        "training_profile_sha256": preflight["training_profile_sha256"],
         "physics_sha256": preflight["physics_sha256"],
         "observation_schema": preflight["observation_schema"],
         "action_contract_version": preflight["action_contract_version"],
@@ -417,8 +418,7 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
     if profile == "smoke":
         manifest.update(schema_version="f1rl_local_demo_smoke_run_v1",
                         classification="LOCAL_DEMO_SMOKE_NOT_SCIENTIFIC",
-                        profile="smoke", smoke_profile_sha256=preflight["smoke_profile_sha256"],
-                        training_profile_sha256=preflight["training_profile_sha256"])
+                        profile="smoke", smoke_profile_sha256=preflight["smoke_profile_sha256"])
     else:
         manifest["schema_version"] = "f1rl_local_demo_run_v2"
     manifest["sha256"] = sha256(json.dumps(manifest, sort_keys=True, separators=(",", ":"),

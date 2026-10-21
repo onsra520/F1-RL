@@ -112,6 +112,7 @@ def test_local_demo_keeps_training_error_primary_when_telemetry_cleanup_fails(
         "reset_seed": 1000,
         "track_rows": [],
         "reset_contracts": {},
+        "training_profile_sha256": "f" * 64,
         "registration_sha256": "d" * 64,
         "track_manifest_sha256": "e" * 64,
         "physics_sha256": "1" * 64,
@@ -151,9 +152,13 @@ def test_local_demo_keeps_training_error_primary_when_telemetry_cleanup_fails(
         )
 
     state = __import__("json").loads((tmp_path / "run" / "state.json").read_text(encoding="utf-8"))
+    run_manifest = __import__("json").loads(
+        (tmp_path / "run" / "run-manifest.json").read_text(encoding="utf-8")
+    )
     assert state["status"] == "failed"
     assert state["error"] == "RuntimeError: training failed"
     assert state["finalization_error"] == "OSError: flush failed"
+    assert run_manifest["training_profile_sha256"] == "f" * 64
     assert environment.closed is True
     assert revoked == [vector]
     assert any("failure state write failed" in note for note in raised.value.__notes__)
