@@ -61,7 +61,8 @@ class TrainingTelemetryRecorder:
             raise ValueError("run_identity has unexpected fields")
         if ("training_failure_policy" in run_identity
                 and run_identity["training_failure_policy"] not in (
-                    "abort_on_physics_error", "unsupported_contact_terminal_v1")):
+                    "abort_on_physics_error", "unsupported_contact_terminal_v1",
+                    "training_contact_terminal_v1")):
             raise ValueError("training failure policy is not registered")
         if (not all(isinstance(run_identity[k], str) and run_identity[k].strip()
                     for k in ("run_id", "policy_id"))

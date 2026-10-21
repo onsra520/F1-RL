@@ -22,6 +22,7 @@ from ..research.wp7_protocol import load_registration, prepare_scenarios
 from ..exploratory.reward import (apply_training_curriculum, apply_training_physics_failure,
                                   validate as validate_demo_reward)
 from ..sandbox.independent_suspension_dynamics import SuspensionResolutionError
+from ..sandbox.ballistic_flight import FlightPhysicsError
 from .admission import LocalDemoStopped, _issue, _revoke, _source_identity
 
 
@@ -308,9 +309,9 @@ def _install_demo_reward(vector_env, reward: dict, *,
         def step(action, *, _sampled_env=sampled_env, _original=original_step):
             try:
                 result = _original(action)
-            except SuspensionResolutionError as error:
-                if (failure_policy != "unsupported_contact_terminal_v1"
-                        or error.failure_code != "unsupported_contact"):
+            except (SuspensionResolutionError, FlightPhysicsError) as error:
+                if (failure_policy != "training_contact_terminal_v1"
+                        or error.failure_code not in ("unsupported_contact", "verified_obstacle_contact")):
                     raise
                 if _sampled_env._active_env is None:
                     raise RuntimeError("TRAIN scenario lost its active environment after physics failure") from error
@@ -395,7 +396,7 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
         "action_contract_version": preflight["action_contract_version"],
         "ppo_config": preflight["ppo_config"],
         "candidate": preflight["candidate"], "demo_reward": preflight["demo_reward"],
-        "training_failure_policy": ("unsupported_contact_terminal_v1" if profile == "tuning"
+        "training_failure_policy": ("training_contact_terminal_v1" if profile == "tuning"
                                     else "abort_on_physics_error"),
         "training_seed_bundle": {"ppo": preflight["ppo"].seed,
                                   "sampling": preflight["sampling_seed"],
@@ -444,7 +445,7 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
             preflight["sampling_seed"],
         )
         _install_demo_reward(vector, preflight["demo_reward"],
-                             failure_policy=("unsupported_contact_terminal_v1" if profile == "tuning"
+                             failure_policy=("training_contact_terminal_v1" if profile == "tuning"
                                              else "abort_on_physics_error"))
         session = _issue(root, vector, commit=preflight["source_commit"],
                          tree_sha256=preflight["source_tree_sha256"], deadline=deadline,

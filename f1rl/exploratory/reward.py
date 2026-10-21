@@ -2,6 +2,7 @@
 from math import isfinite
 
 from ..sandbox.independent_suspension_dynamics import SuspensionResolutionError
+from ..sandbox.ballistic_flight import FlightPhysicsError
 
 REGISTERED = {'version': 'registered'}
 
@@ -47,12 +48,12 @@ def apply_training_curriculum(env, result, config):
 
 
 def apply_training_physics_failure(env, error, config):
-    """End a tuning episode at its last certified state on unsupported contact."""
+    """End a tuning episode at its last certified state on classified contact."""
     config = validate(config)
-    if (not isinstance(error, SuspensionResolutionError)
-            or error.failure_code != 'unsupported_contact'
+    if (not isinstance(error, (SuspensionResolutionError, FlightPhysicsError))
+            or error.failure_code not in ('unsupported_contact', 'verified_obstacle_contact')
             or config['version'] == 'registered'):
-        raise ValueError('only the versioned tuning profile may terminate unsupported contact')
+        raise ValueError('only explicitly classified training contact failures may terminate')
     snapshot = env._simulation.snapshot
     progress = env._progress
     if progress is None or not env._needs_reset:

@@ -55,6 +55,10 @@ _EPS = 1e-9
 class FlightPhysicsError(RuntimeError):
     """Invalid/unsupported prospective flight, never a scored collision event."""
 
+    def __init__(self, message: str, *, failure_code: str = "uncertified_physics") -> None:
+        super().__init__(message)
+        self.failure_code = failure_code
+
 
 @dataclass(frozen=True, slots=True)
 class BallisticFlightPolicy:

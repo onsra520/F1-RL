@@ -302,7 +302,7 @@ def test_tuning_wrapper_converts_only_explicit_unsupported_contact(monkeypatch):
                         lambda environment, error, reward: marker)
 
     runner._install_demo_reward(vector, {"version": "straight_route_stability_demo_v2"},
-                                failure_policy="unsupported_contact_terminal_v1")
+                                failure_policy="training_contact_terminal_v1")
 
     assert scenario.step(None) == marker
 
@@ -317,13 +317,59 @@ def test_tuning_wrapper_still_aborts_other_physics_failures():
     scenario = Scenario()
     vector = SimpleNamespace(envs=[scenario])
     runner._install_demo_reward(vector, {"version": "straight_route_stability_demo_v2"},
-                                failure_policy="unsupported_contact_terminal_v1")
+                                failure_policy="training_contact_terminal_v1")
 
     with pytest.raises(SuspensionResolutionError, match="uncertified balance"):
         scenario.step(None)
 
 
-def test_training_physics_failure_is_terminal_at_last_certified_state():
+def test_tuning_wrapper_converts_only_verified_obstacle_contact(monkeypatch):
+    from types import SimpleNamespace
+    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
+
+    class Scenario:
+        _active_env = object()
+
+        def step(self, action):
+            raise FlightPhysicsError("verified obstacle contact",
+                                     failure_code="verified_obstacle_contact")
+
+    scenario = Scenario()
+    vector = SimpleNamespace(envs=[scenario])
+    marker = ("last-certified-observation", -25.0, True, False, {"physics_abort_terminal": True})
+    monkeypatch.setattr(runner, "apply_training_physics_failure",
+                        lambda environment, error, reward: marker)
+    runner._install_demo_reward(vector, {"version": "straight_route_stability_demo_v2"},
+                                failure_policy="training_contact_terminal_v1")
+
+    assert scenario.step(None) == marker
+
+
+def test_tuning_wrapper_still_aborts_unclassified_flight_physics_error():
+    from types import SimpleNamespace
+    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
+
+    class Scenario:
+        _active_env = object()
+
+        def step(self, action):
+            raise FlightPhysicsError("unresolved flight geometry")
+
+    scenario = Scenario()
+    vector = SimpleNamespace(envs=[scenario])
+    runner._install_demo_reward(vector, {"version": "straight_route_stability_demo_v2"},
+                                failure_policy="training_contact_terminal_v1")
+
+    with pytest.raises(FlightPhysicsError, match="unresolved flight geometry"):
+        scenario.step(None)
+
+
+@pytest.mark.parametrize("error", [
+    SuspensionResolutionError("unsupported", failure_code="unsupported_contact"),
+    pytest.param(None, id="verified-obstacle-contact"),
+])
+def test_training_physics_failure_is_terminal_at_last_certified_state(error):
+    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
     vehicle = SimpleNamespace(position=(1.0, 0.5, 2.0))
     snapshot = SimpleNamespace(tick=12, elapsed_time=0.24,
                                world=SimpleNamespace(vehicle=vehicle, score=SimpleNamespace(points=3)))
@@ -343,14 +389,15 @@ def test_training_physics_failure_is_terminal_at_last_certified_state():
     config = {"version": "straight_route_stability_demo_v2", "training_corridor_m": 3.0,
               "lateral_penalty_per_m2_s": 2.0, "terminal_penalty": 25.0}
 
-    observation, reward, terminated, truncated, info = apply_training_physics_failure(
-        env, SuspensionResolutionError("unsupported", failure_code="unsupported_contact"), config)
+    if error is None:
+        error = FlightPhysicsError("obstacle", failure_code="verified_obstacle_contact")
+    observation, reward, terminated, truncated, info = apply_training_physics_failure(env, error, config)
 
     assert observation == [0.1, 0.2]
     assert reward == pytest.approx(-25.25)
     assert terminated is True and truncated is False
     assert info["demo_training"]["physics_abort_terminal"] is True
-    assert info["demo_training"]["physics_failure_code"] == "unsupported_contact"
+    assert info["demo_training"]["physics_failure_code"] == error.failure_code
     assert info["demo_training"]["registered_reward"] == 0.0
     assert info["research_outcome"]["valid_sample"] is False
     assert info["race"]["hard_route_boundary_m"] == 4.0

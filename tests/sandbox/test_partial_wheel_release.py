@@ -202,6 +202,29 @@ def test_world_auto_takeoff_switches_to_ballistic_for_remaining_time():
     assert state.flight.phase == "grounded"
 
 
+def test_world_marks_only_verified_auto_takeoff_obstacle_contact():
+    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
+    from f1rl.sandbox.entities.obstacle import Obstacle
+    from f1rl.sandbox.track.volume import OrientedBoxVolume
+    from f1rl.sandbox.world import step_world
+
+    track, state, parameters = _world(pose(speed=15.))
+    wall = Obstacle("wall", OrientedBoxVolume(
+        Vec3(0., .3, 1.), Vec3(.5, 1., .1), Quaternion.identity(),
+    ))
+    track = replace(track, obstacles=(wall,))
+
+    with pytest.raises(FlightPhysicsError, match="no scored impact response registered") as error:
+        step_world(
+            track, state, VehicleControl(0.,0.,0.), parameters, 2.9/15., .5,
+            body_geometry=BODY, independent_suspension_policy=PHYSICS,
+            ballistic_flight_policy=FLIGHT, automatic_takeoff_policy=POLICY,
+        )
+
+    assert error.value.failure_code == "verified_obstacle_contact"
+    assert state.flight.phase == "grounded"
+
+
 def test_world_no_automatic_policy_retains_legacy_optin_path():
     from f1rl.sandbox.world import step_world
     source = pose()

@@ -21,7 +21,7 @@ from .admission import _source_identity
 
 
 BASELINE_COMMIT = "0ff42345426f2b3ba5c171fff6cee425b3457b16"
-CAMPAIGN_CONFIG = Path("configs/research/wp3-ppo-tuning-campaign-v2.json")
+CAMPAIGN_CONFIG = Path("configs/research/wp3-ppo-tuning-campaign-v3.json")
 SIMULATION_CONFIG = Path("configs/research/simulation-only-ppo-v1.json")
 REGISTRATION_CONFIG = Path("configs/research/wp7-rotating-owner-protocol-v3.json")
 TRACK_MANIFEST = Path("assets/tracks/manifest.json")
@@ -92,8 +92,8 @@ def _expected_campaign_config() -> dict:
         {"candidate_id": "D", "lateral_penalty_per_m2_s": 4.0, "training_corridor_m": 3.0},
     ]
     return {
-        "schema_version": "f1rl_wp3_ppo_tuning_campaign_v2",
-        "campaign_id": "wp3-abcd-12-models-v2",
+        "schema_version": "f1rl_wp3_ppo_tuning_campaign_v3",
+        "campaign_id": "wp3-abcd-12-models-v3",
         "baseline_commit": BASELINE_COMMIT,
         "scope": "TRAIN_simulation_only_development_not_scientific_acceptance",
         "training": {
@@ -102,7 +102,7 @@ def _expected_campaign_config() -> dict:
             "device": "cpu", "n_envs": 1, "torch_threads": 8,
             "torch_interop_threads": 1, "policy": "MlpPolicy",
             "rollout_length": 256, "selection": "final_checkpoint_only",
-            "physics_failure_policy": "unsupported_contact_terminal_v1",
+            "physics_failure_policy": "training_contact_terminal_v1",
         },
         "candidate_order": ["A", "B", "C", "D"], "candidates": candidates,
         "seed_bundles": [
@@ -207,8 +207,8 @@ def _verify_preflight(root: Path, config: dict, simulation_manifest: dict) -> di
     }
     if any(training[key] != value for key, value in checks.items()):
         raise ValueError("campaign training limits differ from the frozen simulation-only contract")
-    if training.get("physics_failure_policy") != "unsupported_contact_terminal_v1":
-        raise ValueError("WP3 v2 requires its declared unsupported-contact terminal policy")
+    if training.get("physics_failure_policy") != "training_contact_terminal_v1":
+        raise ValueError("WP3 v3 requires its declared classified-contact terminal policy")
     registration = json.loads((root / REGISTRATION_CONFIG).read_text(encoding="utf-8"))
     if list(registration["strata"] if "strata" in registration else registration["evaluation"]["strata"]) != config["evaluation"]["strata"]:
         raise ValueError("evaluation strata differ from the registered TRAIN strata")
@@ -951,7 +951,7 @@ def _write_independent_review(output: Path, schedule: list[dict], state: dict,
         "Review status: **PASS** for the bounded simulation-only campaign mechanics; this review does not grant scientific acceptance.", "",
         "The second-pass review checked the committed campaign implementation against its frozen manifest and inspected the resulting run evidence independently of the campaign state summary.", "",
         "| Area | Source / evidence | Review result |", "|---|---|---|",
-        "| Frozen design and schedule | `configs/research/wp3-ppo-tuning-campaign-v2.json`; `f1rl/local_demo/campaign.py:model_schedule` | 12 unique candidate/seed identities in fixed order; parameters bound to simulation-only manifest |",
+        "| Frozen design and schedule | `configs/research/wp3-ppo-tuning-campaign-v3.json`; `f1rl/local_demo/campaign.py:model_schedule` | 12 unique candidate/seed identities in fixed order; parameters bound to simulation-only manifest |",
         "| Training integrity | `f1rl/local_demo/runner.py:run_local_demo`; `f1rl/learning/training/telemetry.py`; each `runs/*/training-integrity.json` | Real PPO updates, per-step finite/nonzero gradients, changed weights, telemetry and checkpoints independently checked |",
         "| Training transitions | `f1rl/local_demo/campaign.py:validate_training_run`; each `runs/*/training-telemetry.jsonl` | Exact step/event counts, source/seed/reset/draw-seed/track provenance and terminal boundaries checked |",
         "| Checkpoint integrity | each `runs/*/checkpoints.json`, `model-final.zip`, and engineering validation | All periodic archives plus final archive hash-checked and CPU-loaded |",

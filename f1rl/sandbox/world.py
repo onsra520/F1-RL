@@ -369,7 +369,8 @@ def step_world(
                     break
         if (flight_active or auto_released) and body_hits:
             raise FlightPhysicsError(
-                "flight/substep body hit obstacle: no scored impact response registered"
+                "flight/substep body hit obstacle: no scored impact response registered",
+                failure_code="verified_obstacle_contact",
             )
         candidate_query = replace(candidate_query, obstacles=tuple(body_hits))
 

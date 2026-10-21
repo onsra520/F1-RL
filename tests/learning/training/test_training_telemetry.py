@@ -160,14 +160,14 @@ def test_recorder_binds_registered_training_failure_policy_to_run_event(tmp_path
         "track_ids": ["straight-sprint-v1"],
         "seed_identity": {"ppo": 0, "training_reset": 1000},
         "reset_contracts": _reset_contracts(),
-        "training_failure_policy": "unsupported_contact_terminal_v1",
+        "training_failure_policy": "training_contact_terminal_v1",
     }
     path = tmp_path / "failure-policy.jsonl"
     recorder = TrainingTelemetryRecorder(path, run_identity=identity, max_timesteps=1)
     recorder.close()
 
     run_event = json.loads(path.read_text(encoding="utf-8").splitlines()[0])
-    assert run_event["training_failure_policy"] == "unsupported_contact_terminal_v1"
+    assert run_event["training_failure_policy"] == "training_contact_terminal_v1"
     assert recorder.manifest(complete=False)["complete"] is False
 
     identity["training_failure_policy"] = "silently_ignore_physics_errors"
