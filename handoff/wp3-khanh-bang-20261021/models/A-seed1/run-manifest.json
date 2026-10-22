@@ -1,0 +1,188 @@
+{
+  "action_contract_version": "steering-throttle-brake-v2",
+  "action_space": {
+    "high": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "low": [
+      -1.0,
+      0.0,
+      0.0
+    ],
+    "shape": [
+      3
+    ]
+  },
+  "authorization_context": "explicit_local_demo_command",
+  "candidate": {
+    "candidate_id": "A",
+    "demo_contract": "straight_route_stability_demo_v1",
+    "lateral_penalty_per_m2_s": 2.0,
+    "training_corridor_m": 2.0
+  },
+  "classification": "LOCAL_DEMO_NOT_SCIENTIFIC",
+  "demo_reward": {
+    "lateral_penalty_per_m2_s": 2.0,
+    "terminal_penalty": 25.0,
+    "training_corridor_m": 2.0,
+    "version": "straight_route_stability_demo_v1"
+  },
+  "dry_run": false,
+  "experiment_manifest_sha256": "489c934fc218d20f7f84cc26dfe66fd504784a9c97eb193f48ac58f04c68bc9f",
+  "heldout_access": false,
+  "limits": {
+    "checkpoint_every_timesteps": 4096,
+    "device": "cpu",
+    "learning_timesteps": 65536,
+    "max_wall_seconds": 7200,
+    "n_envs": 1,
+    "torch_interop_threads": 1,
+    "torch_threads": 8
+  },
+  "observation_schema": [
+    "rangefinder:left-30deg",
+    "rangefinder:left-15deg",
+    "rangefinder:left-7p5deg",
+    "rangefinder:front",
+    "rangefinder:right-7p5deg",
+    "rangefinder:right-15deg",
+    "rangefinder:right-30deg",
+    "velocity_local_x",
+    "velocity_local_y",
+    "velocity_local_z",
+    "target_direction_local_x",
+    "target_direction_local_y",
+    "target_direction_local_z",
+    "target_distance",
+    "target_available",
+    "grounded"
+  ],
+  "observation_space": {
+    "high": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "low": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -1.0,
+      -1.0,
+      -1.0,
+      -1.0,
+      -1.0,
+      -1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "shape": [
+      16
+    ]
+  },
+  "physics_sha256": "fe6e753f1471e83f8103bae5ad64e050d316c3ddb9186c51cba3c27a3e8ddf5b",
+  "ppo_config": {
+    "batch_size": 64,
+    "clip_range": 0.2,
+    "device": "cpu",
+    "ent_coef": 0.0,
+    "gae_lambda": 0.95,
+    "gamma": 0.99,
+    "learning_rate": 0.0003,
+    "max_grad_norm": 0.5,
+    "n_epochs": 10,
+    "n_steps": 256,
+    "seed": 1,
+    "vf_coef": 0.5
+  },
+  "registration_sha256": "942f1d469506ec709c33adf5f3b8328c9808a2447a9131b5eaf3367bc807f516",
+  "reset_contracts": {
+    "ramp-v1": {
+      "configuration_sha256": "9dedc83d9a56d9f873d5093f1a733beca5f8417153947e27a8488dcbd645a81b",
+      "seed": 1001,
+      "version": "wp7_train_reset_lifecycle_research_v1",
+      "world_sha256": "775f795aa2763f64916e68e6a64fc763021e875c384050a974c747b6b4907978"
+    },
+    "right-turn-v1": {
+      "configuration_sha256": "9dedc83d9a56d9f873d5093f1a733beca5f8417153947e27a8488dcbd645a81b",
+      "seed": 1001,
+      "version": "wp7_train_reset_lifecycle_research_v1",
+      "world_sha256": "d79133bc9a0599f9b056c7eb78658446631f564f038bc4afa91f3325fd4f9fd2"
+    },
+    "slalom-v1": {
+      "configuration_sha256": "9dedc83d9a56d9f873d5093f1a733beca5f8417153947e27a8488dcbd645a81b",
+      "seed": 1001,
+      "version": "wp7_train_reset_lifecycle_research_v1",
+      "world_sha256": "6071829f2eb790ada04c5e59b22efb205e3a20d59fbe670e68fb78ed3eb304e0"
+    },
+    "straight-sprint-v1": {
+      "configuration_sha256": "9dedc83d9a56d9f873d5093f1a733beca5f8417153947e27a8488dcbd645a81b",
+      "seed": 1001,
+      "version": "wp7_train_reset_lifecycle_research_v1",
+      "world_sha256": "685f273f62bdc35399d73be5db922198022ad2b549623924dbeb8171d4a4088b"
+    }
+  },
+  "run_id": "20261021T173253Z-1a04a7b7605d",
+  "schema_version": "f1rl_local_demo_run_v2",
+  "scientific_evidence": false,
+  "scientific_training_authorized": false,
+  "sha256": "9f483649b85cba208acf6ea62fd48f419cb6e09688b35db9ac28732335b1b672",
+  "source_commit": "fe83f517479f3b990028d6409304fae83b8199a9",
+  "source_tree_sha256": "2caad0bc3517c9409f3aacc95946bbcbc869f7cbfc5ca9977ac56f4b28ba22f5",
+  "split": "TRAIN",
+  "status": "prepared_not_scientific",
+  "track_manifest_sha256": "5a0ffc507fffef6fcc782d7acf4a16f543dbd89794e96df143e2dcd6e87b0dda",
+  "track_roster": [
+    {
+      "content_sha256": "29aecc1482be48e0d4279b8067b47d5bd44ae0b376edc2de48354c01bf1b8bed",
+      "path": "training/straight-sprint-v1.json",
+      "track_id": "straight-sprint-v1",
+      "world_sha256": "685f273f62bdc35399d73be5db922198022ad2b549623924dbeb8171d4a4088b"
+    },
+    {
+      "content_sha256": "e2db2953259ebb465246d7d9bfaa7cedbfc2e8b82c389f4eef655a5f04cfd959",
+      "path": "training/slalom-v1.json",
+      "track_id": "slalom-v1",
+      "world_sha256": "6071829f2eb790ada04c5e59b22efb205e3a20d59fbe670e68fb78ed3eb304e0"
+    },
+    {
+      "content_sha256": "ec8ff5d64c21c21af6b15455defb141bfa57985f728e0be751cc2f19fa0492e8",
+      "path": "training/right-turn-v1.json",
+      "track_id": "right-turn-v1",
+      "world_sha256": "d79133bc9a0599f9b056c7eb78658446631f564f038bc4afa91f3325fd4f9fd2"
+    },
+    {
+      "content_sha256": "67a8280888e8010a2727fd113436bb237952693b8e29cebc2c3c1b8944eb7c70",
+      "path": "training/ramp-v1.json",
+      "track_id": "ramp-v1",
+      "world_sha256": "775f795aa2763f64916e68e6a64fc763021e875c384050a974c747b6b4907978"
+    }
+  ],
+  "training_failure_policy": "training_contact_terminal_v1",
+  "training_profile_sha256": "56516054bcf61426832c9b7395014ffbc0da2d1f212b0d0fb3aba78be4520142",
+  "training_seed_bundle": {
+    "ppo": 1,
+    "sampling": 1,
+    "training_reset": 1001
+  }
+}
