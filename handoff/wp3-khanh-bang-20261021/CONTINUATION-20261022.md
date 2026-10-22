@@ -41,3 +41,20 @@ evidence or edit the locked source/configuration to bypass it.**
 The planned TRAIN-only evaluation (5,760 episodes) and scientific WP7/HELD-OUT
 admission are **not** complete or authorized by this checkpoint publication.
 No HELD-OUT data was accessed.
+
+## Portable telemetry archived on private GitHub Release
+
+- Release: https://github.com/onsra520/F1-RL/releases/tag/wp3-khanh-bang-20261021
+- Continuation asset: `WP3-attempt-v8-continuation-9-telemetry-20261022.zip`
+- Asset URL: https://github.com/onsra520/F1-RL/releases/download/wp3-khanh-bang-20261021/WP3-attempt-v8-continuation-9-telemetry-20261022.zip
+- Size: 250,542,291 bytes
+- SHA-256: `726573b374f3aec727457f2c7b7b1f6533ae09079e257577b85ced17fac18926`
+- Contents: 9 original `runs/<model>/training-telemetry.jsonl` records and corresponding telemetry manifests, plus the continuation SHA-256 manifest.
+
+For full portable reconstruction, first unpack the original 3-model release asset.
+Unpack the continuation telemetry archive into its existing `attempt-v8` directory.
+Copy the nine new checkpoint/metadata directories from this handoff branch's
+`models/<model>/` to matching `attempt-v8/runs/<model>/` directories.
+Verify file digests from `CONTINUATION-20261022-SHA256.json` before any evaluation.
+The frozen original `campaign-state.json` remains unreconciled and must not be represented
+as a 12/12 authoritative campaign state.
