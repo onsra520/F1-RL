@@ -463,7 +463,7 @@ def run_evaluation(root: Path, campaign_root: Path, campaign_manifest: dict,
         result = existing
     else:
         _write_new_json(result_path, result)
-    _write_evaluation_reports(campaign_root, result, models, cells, evaluation)
+    _write_evaluation_reports(campaign_root, result, model_records, all_cells, evaluation)
     return result
 
 
