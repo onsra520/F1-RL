@@ -52,6 +52,22 @@ def _mapping(value: object, name: str) -> Mapping[str, object]:
     return value
 
 
+def _valid_terminal_failure(info: object) -> bool:
+    if not isinstance(info, Mapping):
+        return False
+    outcome = info.get("research_outcome")
+    race = info.get("race")
+    return (
+        isinstance(outcome, Mapping)
+        and isinstance(race, Mapping)
+        and outcome.get("version") == "wp7_episode_outcome_v1"
+        and outcome.get("kind") == "valid_terminal_failure"
+        and outcome.get("valid_sample") is True
+        and outcome.get("reason") == "hard_route_violation"
+        and race.get("terminal_failure") is True
+    )
+
+
 def _position(
     value: object,
     name: str = "vehicle_position",
@@ -327,7 +343,12 @@ def evaluate_episode(
                         raise ValueError(
                             "terminal flags are inconsistent with successful episode"
                         )
-                elif terminated or not truncated:
+                elif terminated:
+                    if truncated or not _valid_terminal_failure(info):
+                        raise ValueError(
+                            "terminal flags are inconsistent with unsuccessful episode"
+                        )
+                elif not truncated:
                     raise ValueError(
                         "terminal flags are inconsistent with unsuccessful episode"
                     )
