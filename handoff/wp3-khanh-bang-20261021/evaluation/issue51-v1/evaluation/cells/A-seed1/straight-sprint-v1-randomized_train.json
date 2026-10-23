@@ -1,0 +1,32 @@
+{
+  "candidate_id": "A",
+  "collision_rate": 0.0,
+  "completed_at": "2026-10-22T23:17:01.062770+00:00",
+  "event_log_sha256": "01317df8c5b085b6ac886e806d6cd37282d293c80ecf8495ba8f1ef00d5232ae",
+  "expected_episodes": 60,
+  "failure_reasons": {
+    "valid_finish": 60
+  },
+  "hard_route_violation_rate": 0.0,
+  "heldout_access": false,
+  "invalid_episode": null,
+  "invalid_episodes": 0,
+  "mean_collision_count": 0.0,
+  "mean_completed_checkpoints": 2.0,
+  "mean_episode_duration_seconds": 19.493333333333336,
+  "mean_route_progress": 1.0,
+  "mean_steering_rate_rms_rad_per_s": 8.992386016466641,
+  "model_id": "A-seed1",
+  "model_sha256": "4334c44b3370c4f0adaa345ca280d190850fda9599736cc561ed6cbb71425831",
+  "schema_version": "f1rl_wp3_train_eval_cell_v1",
+  "scientific_evidence": false,
+  "seed_index": 1,
+  "sha256": "b7568e2f7e50dce1faa564b4a18bb548d3379b275e43feb088a248d11ecff616",
+  "status": "completed",
+  "stratum": "randomized_train",
+  "success_count": 60,
+  "timeout_rate": 0.0,
+  "track_id": "straight-sprint-v1",
+  "valid_autonomous_finish_rate": 1.0,
+  "valid_episodes": 60
+}

@@ -1,0 +1,32 @@
+{
+  "candidate_id": "B",
+  "collision_rate": 0.0,
+  "completed_at": "2026-10-23T05:39:34.984881+00:00",
+  "event_log_sha256": "bdef55e3f59744e5201c27aebedfa1f4f5635fcdcad3329eee9bae1593c94cd9",
+  "expected_episodes": 60,
+  "failure_reasons": {
+    "step_limit": 60
+  },
+  "hard_route_violation_rate": 0.0,
+  "heldout_access": false,
+  "invalid_episode": null,
+  "invalid_episodes": 0,
+  "mean_collision_count": 0.0,
+  "mean_completed_checkpoints": 0.9666666666666667,
+  "mean_episode_duration_seconds": 50.0,
+  "mean_route_progress": 0.5426810491319147,
+  "mean_steering_rate_rms_rad_per_s": 9.590314456630816,
+  "model_id": "B-seed2",
+  "model_sha256": "18f17c3f07d3e62b43364f3f4c6572b3e08b3307a4ae47137b80342188ad0dae",
+  "schema_version": "f1rl_wp3_train_eval_cell_v1",
+  "scientific_evidence": false,
+  "seed_index": 2,
+  "sha256": "b937ac0e54ac28695aabcd9e27f716e85222c9f5b584600fe8851b94ed571c20",
+  "status": "completed",
+  "stratum": "nominal",
+  "success_count": 0,
+  "timeout_rate": 1.0,
+  "track_id": "ramp-v1",
+  "valid_autonomous_finish_rate": 0.0,
+  "valid_episodes": 60
+}

@@ -1,0 +1,32 @@
+{
+  "candidate_id": "D",
+  "collision_rate": 0.0,
+  "completed_at": "2026-10-22T21:45:29.867153+00:00",
+  "event_log_sha256": "319260098915365ab92a780eca2f1bdfe82f85a0c76d15079b37ee5aed8019bc",
+  "expected_episodes": 60,
+  "failure_reasons": {
+    "step_limit": 60
+  },
+  "hard_route_violation_rate": 0.0,
+  "heldout_access": false,
+  "invalid_episode": null,
+  "invalid_episodes": 0,
+  "mean_collision_count": 0.0,
+  "mean_completed_checkpoints": 0.0,
+  "mean_episode_duration_seconds": 50.0,
+  "mean_route_progress": 0.014387705950868274,
+  "mean_steering_rate_rms_rad_per_s": 9.845857259449023,
+  "model_id": "D-seed0",
+  "model_sha256": "318f76813b69f8457dc169b6b3a89dd5f3aa2f2f765170075e0e48ab9f0e0109",
+  "schema_version": "f1rl_wp3_train_eval_cell_v1",
+  "scientific_evidence": false,
+  "seed_index": 0,
+  "sha256": "f8ccb23f9913d67cad4e2190d2ec392b12f43e113e2e5ebf4635227d1d6255f0",
+  "status": "completed",
+  "stratum": "nominal",
+  "success_count": 0,
+  "timeout_rate": 1.0,
+  "track_id": "right-turn-v1",
+  "valid_autonomous_finish_rate": 0.0,
+  "valid_episodes": 60
+}

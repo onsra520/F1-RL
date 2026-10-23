@@ -1,0 +1,43 @@
+{
+  "candidate_id": "C",
+  "collision_rate": null,
+  "completed_at": "2026-10-22T18:07:36.915015+00:00",
+  "event_log_sha256": "58138e3aab65fac38aedf65b74fed4ad97aa4de232a7d1408aaee8dc4fd9c8a0",
+  "expected_episodes": 60,
+  "failure_reasons": {
+    "valid_finish": 1
+  },
+  "hard_route_violation_rate": null,
+  "heldout_access": false,
+  "invalid_episode": {
+    "candidate_id": "C",
+    "episode": 1,
+    "error": "spatial body/contact sweep outside: invalid endpoint body or wheel support",
+    "error_type": "SuspensionResolutionError",
+    "model_id": "C-seed0",
+    "model_sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+    "seed_index": 0,
+    "stratum": "randomized_train",
+    "track_id": "slalom-v1",
+    "valid": false
+  },
+  "invalid_episodes": 1,
+  "mean_collision_count": 0.0,
+  "mean_completed_checkpoints": 3.0,
+  "mean_episode_duration_seconds": 41.800000000000004,
+  "mean_route_progress": 1.0,
+  "mean_steering_rate_rms_rad_per_s": 7.7638578545666475,
+  "model_id": "C-seed0",
+  "model_sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+  "schema_version": "f1rl_wp3_train_eval_cell_v1",
+  "scientific_evidence": false,
+  "seed_index": 0,
+  "sha256": "b97880011b2a075c248677832dd45b439e5bf31429aa0ac16039ecd22e0fee85",
+  "status": "invalid_aborted",
+  "stratum": "randomized_train",
+  "success_count": 1,
+  "timeout_rate": null,
+  "track_id": "slalom-v1",
+  "valid_autonomous_finish_rate": null,
+  "valid_episodes": 1
+}

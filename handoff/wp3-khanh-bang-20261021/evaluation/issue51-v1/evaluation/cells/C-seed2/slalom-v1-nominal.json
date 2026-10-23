@@ -1,0 +1,32 @@
+{
+  "candidate_id": "C",
+  "collision_rate": 0.0,
+  "completed_at": "2026-10-23T07:12:13.128876+00:00",
+  "event_log_sha256": "40f891f5dc9f04954384a58f78d312ce6284403107605a9902b15d5f880f6909",
+  "expected_episodes": 60,
+  "failure_reasons": {
+    "step_limit": 60
+  },
+  "hard_route_violation_rate": 0.0,
+  "heldout_access": false,
+  "invalid_episode": null,
+  "invalid_episodes": 0,
+  "mean_collision_count": 0.0,
+  "mean_completed_checkpoints": 0.0,
+  "mean_episode_duration_seconds": 50.0,
+  "mean_route_progress": 0.06626698600316143,
+  "mean_steering_rate_rms_rad_per_s": 9.596760335309368,
+  "model_id": "C-seed2",
+  "model_sha256": "156ee0f2194f3aedb36cce3917cc4121994b53fa0f0c942c2de548b9e2ea32b7",
+  "schema_version": "f1rl_wp3_train_eval_cell_v1",
+  "scientific_evidence": false,
+  "seed_index": 2,
+  "sha256": "75ecbc0815fafd80f4b75bec1e6bd2e783235f4ed54a4e5bafa3603e621bf2f3",
+  "status": "completed",
+  "stratum": "nominal",
+  "success_count": 0,
+  "timeout_rate": 1.0,
+  "track_id": "slalom-v1",
+  "valid_autonomous_finish_rate": 0.0,
+  "valid_episodes": 60
+}
