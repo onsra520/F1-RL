@@ -215,6 +215,7 @@ def certify_multisurface_support(
     *, body_clearance_version: str = 'infinite_patch_planes_v1',
     contact_domain: str = 'four_supported_v1', ballistic_sag_m: float = 0.,
     maximum_deflection_m: float | None = None, minimum_support_deflection_m: float | None = None,
+    body_coverage_domain: str = 'full_footprint_v1',
 ) -> MultiSurfaceSupportVerdict:
     """Conservative continuous four-wheel / body containment for linear+SLERP sweep.
 
@@ -227,6 +228,12 @@ def certify_multisurface_support(
     if contact_domain not in ('four_supported_v1','unilateral_free_extension_v1'):
         raise ValueError('unregistered geometric contact domain')
     free_extension = contact_domain == 'unilateral_free_extension_v1'
+    if body_coverage_domain not in ('full_footprint_v1', 'wheel_supported_overhang_v1'):
+        raise ValueError('unregistered body coverage domain')
+    if body_coverage_domain == 'wheel_supported_overhang_v1' and (
+        not free_extension or body_clearance_version != 'bounded_patch_planes_v2'
+    ):
+        raise ValueError('wheel-supported overhang requires unilateral contact and bounded clearance')
     if type(ballistic_sag_m) not in (int,float) or not isfinite(ballistic_sag_m) or ballistic_sag_m < 0.:
         raise ValueError('finite nonnegative ballistic sag required')
     if ballistic_sag_m and not free_extension:
@@ -279,7 +286,8 @@ def certify_multisurface_support(
             return False, False, contacts
         hull = body_xz_polygon(state, body)
         envelope = _inflate(hull, r_b)
-        if _uncovered_area(envelope, polygons) > _EPS:
+        if (body_coverage_domain == 'full_footprint_v1'
+                and _uncovered_area(envelope, polygons) > _EPS):
             return False, False, contacts
 
         corners = _body_corners(state, body)
