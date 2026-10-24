@@ -116,8 +116,12 @@ def build_eval_only_preflight(root:Path,history:Path,three_replays:Path)->dict:
     root=Path(root).resolve(strict=True)
     history=Path(history).resolve(strict=True)
     source=_git(root,"rev-parse","HEAD")
-    if source!=HANDOFF_SOURCE:
-        raise ValueError("unexpected handoff base: do not infer evaluator source")
+    ancestry=subprocess.run(["git","-C",str(root),"merge-base","--is-ancestor",
+                             HANDOFF_SOURCE,source],capture_output=True)
+    if ancestry.returncode!=0:
+        raise ValueError("original handoff base must be ancestor of evaluation-only source")
+    # This read-only forensic preflight describes v3 and its ORIGINAL
+    # handoff, never an approval to score the new v4 implementation.
     original=_json(history/"WP3-EVAL-SOURCE-PROVENANCE.json")
     roster=_json(history/"evaluation/evaluation-roster.json")
     _roster_check(roster,original)
@@ -162,7 +166,8 @@ def build_eval_only_preflight(root:Path,history:Path,three_replays:Path)->dict:
     assets={name:hash_file(root/"assets/tracks/training"/(name+".json")) for name in TRACKS}
     plan={
         "schema_version":SCHEMA,"evaluated_at_utc":datetime.now(timezone.utc).isoformat(),
-        "handoff_source_commit":source,"source_dirty":bool(_git(root,"status","--porcelain")),
+        "handoff_source_commit":HANDOFF_SOURCE,
+        "source_dirty":bool(_git(root,"status","--porcelain")),
         "frozen_train_commit":FROZEN_TRAIN,"historical_roster_sha256":roster["sha256"],
         "historical_roster_file_sha256":hash_file(history/"evaluation/evaluation-roster.json"),
         "historical_eval_provenance_sha256":hash_file(history/"WP3-EVAL-SOURCE-PROVENANCE.json"),

@@ -73,7 +73,13 @@ def test_12_real_frozen_final_zip_and_telemetry_sha_verified():
     assert result["frozen_final_checkpoint_count"]==12
     assert len(result["verified_models"])==12
     assert result["checkpoint_validation"]=="12_MODELS_ALL_SHA256_MATCH"
-    assert result["source_dirty"] is True # local diagnostic-only scripts and source work
+    # This historical v3 preflight is read-only; the source can now be a
+    # locked clean descendant of the original ce0e55d authoring commit.
+    from subprocess import check_output
+    currently_dirty=bool(check_output(["git","-C",str(ROOT),"status","--porcelain"],
+                                      text=True).strip())
+    assert result["source_dirty"] is currently_dirty
+    assert result["handoff_source_commit"]=="ce0e55d7a428826b2d4ed3218641105bd0206f4b"
     assert result["expected_cells"]==96 and result["expected_episodes"]==5760
     assert result["registered_eval_started"] is False
     assert result["full_eval_execution_authorized"] is False
