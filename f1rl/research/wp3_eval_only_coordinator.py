@@ -107,7 +107,10 @@ def preflight(root: Path, history: Path) -> tuple[dict, dict, dict]:
     _roster_check(roster, provenance)
     if provenance["training_source_commit"] != TRAIN_HEAD:
         raise ValueError("frozen training source mismatch")
+    # This is a NEW derived preflight, not the historic receipt. Bind HEAD and
+    # recalculate its canonical digest before invoking the fail-closed gate.
     check["current_evaluation_source_commit"] = source
+    check["sha256"] = digest({k: v for k, v in check.items() if k != "sha256"})
     return check, roster, provenance
 
 

@@ -151,3 +151,24 @@ def test_full_eval_hard_gate_propagates(monkeypatch,tmp_path):
 def test_cli_entrypoint_parses_as_python():
     script = Path(__file__).resolve().parents[2] / "scripts/wp3_eval_only_coordinator.py"
     compile(script.read_text(encoding="utf8"), str(script), "exec")
+
+
+def test_real_admission_gate_checksum_survives_bound_source_head(monkeypatch, tmp_path):
+    from f1rl.research.wp3_eval_only_admission import refuse_full_eval as original_gate
+    root, history = tmp_path / "root", tmp_path / "history"
+    root.mkdir()
+    history.mkdir()
+    monkeypatch.setattr(co, "_source", lambda *args: "new-eval-commit")
+    monkeypatch.setattr(co, "build_eval_only_preflight", lambda *args: {
+        "source_dirty": False, "frozen_final_checkpoint_count": 12,
+        "sha256": "original_preflight_hash", "mandatory_replay_gate": "BLOCKED",
+    })
+    monkeypatch.setattr(co, "_json", lambda path: {
+        "training_source_commit": co.TRAIN_HEAD,
+    })
+    monkeypatch.setattr(co, "_roster_check", lambda *args: None)
+    bound, _, _ = co.preflight(root, history)
+    assert bound["current_evaluation_source_commit"] == "new-eval-commit"
+    assert bound["sha256"] == co.digest({k: v for k, v in bound.items() if k != "sha256"})
+    with pytest.raises(RuntimeError, match="FULL_EVAL_BLOCKED"):
+        original_gate(bound)
