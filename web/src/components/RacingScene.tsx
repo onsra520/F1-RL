@@ -5,6 +5,7 @@ import { BufferAttribute, BufferGeometry, Camera, DoubleSide, Plane, Raycaster, 
 import type { PropKind, RoadSample, TrackDocument, TrackProp } from '../lib/track';
 import { pointAt, sampleRoad } from '../lib/track';
 import SolidRoad from './SolidRoad';
+import { BoosterSurface, CheckpointGate } from './RoadAttachments';
 
 export type CarPose = { x: number; y: number; z: number; heading: number; speed: number };
 type Mode = 'build' | 'drive';
@@ -76,7 +77,16 @@ function TrackObject({ prop, track, selected, onPick, onRelease }: {
   const p = pointAt(track, prop.t, prop.offset);
   const angle = p.heading + prop.rotation;
   const color = labelColors[prop.kind];
-  return <group position={[p.x, p.y + 0.13, p.z]} rotation={[0, angle, 0]} onPointerDown={onPick} onPointerUp={onRelease}>
+  if (prop.kind === 'checkpoint' || prop.kind === 'booster') {
+    return <group onPointerDown={onPick} onPointerUp={onRelease} onClick={(e) => e.stopPropagation()}
+      onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'grab'; }}
+      onPointerOut={() => { document.body.style.cursor = ''; }}>
+      {prop.kind === 'checkpoint'
+        ? <CheckpointGate track={track} prop={prop} selected={selected} />
+        : <BoosterSurface track={track} prop={prop} selected={selected} />}
+    </group>;
+  }
+  return <group position={[p.x, p.y + 0.13, p.z]} rotation={[0, angle, 0]} onPointerDown={onPick} onPointerUp={onRelease} onClick={(e) => e.stopPropagation()}>
     {selected && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
       <ringGeometry args={[3.0, 3.18, 48]}/><meshBasicMaterial color="#d5f694" transparent opacity={0.94} side={DoubleSide} />
     </mesh>}
@@ -97,16 +107,6 @@ function TrackObject({ prop, track, selected, onPick, onRelease }: {
       <mesh castShadow position={[0, 0.55, 0]}><coneGeometry args={[0.7, 1.2, 6]}/><meshStandardMaterial color={color}/></mesh>
       <mesh position={[0, 0.06, 0]}><boxGeometry args={[1.3, 0.12, 1.3]}/><meshStandardMaterial color="#2b3235"/></mesh>
     </>}
-    {prop.kind === 'booster' && <>
-      <mesh position={[0, 0.12, 0]}><boxGeometry args={[4.4, 0.18, 4.4]}/><meshStandardMaterial color="#a8d767" emissive="#3f5d20" emissiveIntensity={0.35}/></mesh>
-      {[-1, 0, 1].map((i) => <mesh key={i} position={[i * 1.12, 0.24, 0]}>
-        <boxGeometry args={[0.5, 0.06, 2.3]}/><meshBasicMaterial color="#e1ffa3"/></mesh>)}
-    </>}
-    {prop.kind === 'checkpoint' && <>
-      <mesh castShadow position={[-4.5, 2.5, 0]}><cylinderGeometry args={[0.18,0.18,5,8]}/><meshStandardMaterial color={color}/></mesh>
-      <mesh castShadow position={[4.5, 2.5, 0]}><cylinderGeometry args={[0.18,0.18,5,8]}/><meshStandardMaterial color={color}/></mesh>
-      <mesh castShadow position={[0, 4.9, 0]}><boxGeometry args={[9.3, 0.30, 0.35]}/><meshStandardMaterial color={color}/></mesh>
-    </>}
   </group>;
 }
 
@@ -125,23 +125,19 @@ function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, onCame
   pose: CarPose; onCamera: (camera: Camera) => void;
   onSelect: (id: string | null) => void;
   onPlace: (kind: PropKind | null, x: number, z: number, id?: string) => void;
-  onDragChange: (v: boolean) => void;
+  onDragChange: (id: string | null) => void;
 }) {
   const { camera } = useThree();
-  const [dragged, setDragged] = useState<string | null>(null);
   const samples = useMemo(() => sampleRoad(track), [track]);
   useEffect(() => { onCamera(camera); }, [camera, onCamera]);
   const choose = (event: ThreeEvent<PointerEvent>, id: string) => {
     if (mode !== 'build') return;
     event.stopPropagation();
     onSelect(id);
-    setDragged(id);
-    onDragChange(true);
+    document.body.style.cursor = 'grabbing';
+    onDragChange(id);
   };
-  const handleMove = (e: ThreeEvent<PointerEvent>) => {
-    if (dragged && mode === 'build') onPlace(null, e.point.x, e.point.z, dragged);
-  };
-  const stopDrag = () => { setDragged(null); onDragChange(false); };
+  const stopDrag = () => { document.body.style.cursor = ''; onDragChange(null); };
   return <>
     <color attach="background" args={['#111b20']} />
     <fog attach="fog" args={['#111b20', 140, 330]} />
@@ -152,7 +148,7 @@ function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, onCame
     <Road track={track} samples={samples} />
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.8, 0]}
       onClick={(e) => { if (mode !== 'build') return; if (armed) onPlace(armed, e.point.x, e.point.z); else onSelect(null); }}
-      onPointerMove={handleMove} onPointerUp={stopDrag} onPointerMissed={stopDrag}>
+      onPointerUp={stopDrag}>
       <planeGeometry args={[2000, 2000]}/><meshBasicMaterial visible={false}/>
     </mesh>
     {track.props.map((p) => <TrackObject key={p.id} prop={p} track={track} selected={selectedId === p.id}
@@ -169,8 +165,46 @@ export default function RacingScene({ track, mode, selectedId, armed, pose, onSe
 }) {
   const cameraRef = useRef<Camera | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState(false);
+  const [dragging, setDragging] = useState<string | null>(null);
   const onCamera = (camera: Camera) => { cameraRef.current = camera; };
+  // Listen at the DOM/window level after selection. Unlike a ground-mesh
+  // pointer handler this keeps dragging when the pointer crosses the gate,
+  // elevated road, or exits the canvas. Orbit is disabled while selected.
+  useEffect(() => {
+    if (mode !== 'build' || dragging === null) return;
+    let lastMove = -Infinity;
+    const move = (event: PointerEvent) => {
+      if ((event.buttons & 1) === 0) { setDragging(null); return; }
+      if (event.timeStamp - lastMove < 34) return;
+      lastMove = event.timeStamp;
+      const rect = containerRef.current?.getBoundingClientRect();
+      const camera = cameraRef.current;
+      if (!rect || !camera || rect.width <= 0 || rect.height <= 0) return;
+      if (event.clientX < rect.left || event.clientX > rect.right ||
+          event.clientY < rect.top || event.clientY > rect.bottom) return;
+      const ndc = new Vector2(
+        (event.clientX - rect.left) / rect.width * 2 - 1,
+        -(event.clientY - rect.top) / rect.height * 2 + 1,
+      );
+      const ray = new Raycaster();
+      ray.setFromCamera(ndc, camera);
+      const target = new Vector3();
+      if (ray.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), target)) {
+        onPlace(null, target.x, target.z, dragging);
+      }
+    };
+    const finish = () => { setDragging(null); document.body.style.cursor = ''; };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
+    window.addEventListener('blur', finish);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+      window.removeEventListener('blur', finish);
+    };
+  }, [mode, dragging, onPlace]);
   const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const kind = e.dataTransfer.getData('application/x-f1rl-prop') as PropKind;

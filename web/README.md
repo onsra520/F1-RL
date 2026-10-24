@@ -50,3 +50,9 @@ npm test
 - Retracing collinear segments, nearly-overlapping roads without a centerline crossing, tight endpoint intersections, and arbitrary multilayer road geometry are **not guaranteed** to be bridged. All auto-overpass spans must be validated by a future Python track compiler before authoritative simulation.
 - Bridge/ramp tools deform the road profile and show small selectable handles beside the lane; the former cross-road beam and floating ramp slab are gone.
 - The chassis is placed at the start segment with enough inward offset to keep the rear wheels on the road, facing the first tangent.
+
+## V1.2 track-attached checkpoint and booster
+
+- **Checkpoint gate:** anchor is the road centerline and tangent; posts are computed from the road's live width and surface height, not from a fixed 9.3m prefab or hand-adjusted lateral offset. A transparent full-span picking mesh makes it easy to select by clicking anywhere through the gate. Checkpoint selection prevents click-through to the ground, and window-level pointer tracking allows repositioning even when the pointer moves off the model. The Build inspector shows auto-fitting instead of an ineffective rotation control.
+- **Booster pad:** consists of a tessellated road-aligned surface decal, with segmented stripes following the exact sampled 3D route/elevation (including ramp or auto-overpass). The prior flat box that intersected sloped roads is removed. These meshes are purely visual; actual runtime trigger volumes and speed changes still require a Python `TrackWorld` adapter.
+- All attached objects still serialize through the unchanged draft schema `f1rl_racing_sandbox_draft_v1`. Old checkpoint `offset`/`rotation` fields may remain in imported files; rendering automatically ignores them to keep the gate fitted to the road.

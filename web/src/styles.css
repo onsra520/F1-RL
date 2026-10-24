@@ -98,3 +98,5 @@
 
 /* Keep the help affordance clear of Drive's bottom-right Back to build control. */
 .floating-help{bottom:88px;right:18px}
+
+.inspector-auto{font-size:11px;line-height:1.6;color:#c4dfb6;margin:0 0 13px;background:#233b33;padding:9px;border-radius:8px}

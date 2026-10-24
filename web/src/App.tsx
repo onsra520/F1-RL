@@ -119,11 +119,14 @@ export default function App() {
     if (!Number.isFinite(target.distance)) { setToast('Sketch a road first'); return; }
     const offset = Math.max(-track.width * 0.42, Math.min(track.width * 0.42, target.offset));
     if (moveId) {
-      updateProp(moveId, { t: target.t, offset });
+      // Checkpoint gates always span the road from edge to edge; the editor
+      // only needs the route location, never manual lateral alignment.
+      const movingKind = track.props.find((p) => p.id === moveId)?.kind;
+      updateProp(moveId, { t: target.t, offset: movingKind === 'checkpoint' ? 0 : offset });
     } else if (kind && PROP_KINDS.includes(kind)) {
       const id = newId();
       changeTrack((prev) => ({ ...prev,
-        props: [...prev.props, { id, kind, t: target.t, offset, rotation: 0 }],
+        props: [...prev.props, { id, kind, t: target.t, offset: kind === 'checkpoint' ? 0 : offset, rotation: 0 }],
       }));
       setSelected(id);
       setArmed(null);
@@ -272,12 +275,16 @@ export default function App() {
             <div className="build-instructions"><MousePointer2 size={16}/> {armed ? 'Click the road to place ' + armed : 'Drag an item from the hotbar onto the track · keys 1–6'}</div>
             {selectedProp && <div className="prop-inspector">
               <div className="inspector-top"><strong>{selectedProp.kind[0].toUpperCase() + selectedProp.kind.slice(1)}</strong><button aria-label="Close selection" onClick={() => setSelected(null)}><X size={16}/></button></div>
-              <span className="inspector-label">ROTATION</span>
-              <div className="inspector-actions">
-                <button title="Rotate counterclockwise" onClick={() => updateProp(selectedProp.id, { rotation: selectedProp.rotation - Math.PI / 12 })}><RotateCcw size={17}/></button>
-                <span>{Math.round(selectedProp.rotation * 180 / Math.PI)}°</span>
-                <button title="Rotate clockwise" onClick={() => updateProp(selectedProp.id, { rotation: selectedProp.rotation + Math.PI / 12 })}><RotateCw size={17}/></button>
-              </div>
+              {selectedProp.kind === 'checkpoint' || selectedProp.kind === 'booster'
+                ? <p className="inspector-auto">Auto-fitted to road · drag to reposition</p>
+                : <>
+                    <span className="inspector-label">ROTATION</span>
+                    <div className="inspector-actions">
+                      <button title="Rotate counterclockwise" onClick={() => updateProp(selectedProp.id, { rotation: selectedProp.rotation - Math.PI / 12 })}><RotateCcw size={17}/></button>
+                      <span>{Math.round(selectedProp.rotation * 180 / Math.PI)}°</span>
+                      <button title="Rotate clockwise" onClick={() => updateProp(selectedProp.id, { rotation: selectedProp.rotation + Math.PI / 12 })}><RotateCw size={17}/></button>
+                    </div>
+                  </>}
               <button className="remove-prop" onClick={() => { changeTrack((p) => ({...p, props: p.props.filter((x) => x.id !== selectedProp.id)})); setSelected(null); }}><Trash2 size={15}/> Remove object</button>
             </div>}
           </>}
