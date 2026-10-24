@@ -57,3 +57,44 @@
 @media(max-width:1050px){.topbar{padding:0 16px}.brand{min-width:205px}.brand-text strong{font-size:15px}.mode-tab{padding:0 12px;min-width:83px}.top-actions{gap:2px}.workspace-heading{padding:22px 24px 10px}.world-stage{margin:5px 20px 0}.build-dock{margin:11px 20px 14px}.sketch-stage{margin:8px 20px 4px}.build-instructions{display:none}}
 @media(max-width:710px){.app{min-height:600px}.topbar{height:66px;padding:0 10px}.brand{min-width:0}.brand-text{display:none}.brand-icon{width:38px;height:38px}.mode-tabs{left:49%;gap:1px;padding:3px}.mode-tab{font-size:11px;gap:4px;min-width:61px;padding:0 5px;height:34px}.mode-tab svg{width:14px}.top-actions>.icon-button,.header-divider{display:none}.save-button{padding:0 10px;font-size:11px;margin-left:0}.save-button svg{width:15px}.workspace-heading{padding:17px 17px 8px}.track-title input,.track-title h1{font-size:23px}.workspace-subtitle{font-size:11px}.sketch-stage{margin:5px 10px 2px}.sketch-tools{left:8px;top:8px;gap:2px}.tool{font-size:10px;padding:8px 7px}.tool svg{width:14px}.sketch-action{left:8px;right:8px;bottom:8px;padding:11px}.sketch-action div span{display:none}.sketch-action div strong{font-size:11px}.primary-button{min-width:0;font-size:11px;padding:10px}.primary-button svg{width:15px}.sketch-hint{left:12px;bottom:88px;font-size:10px}.world-stage{margin:5px 8px 0}.build-dock{margin:8px}.asset-list{display:flex;overflow-x:auto}.asset{min-width:104px}.dock-heading div span,.dock-foot-right{display:none}.drive-overlay{padding:10px}.speed-readout{right:15px;top:19px}.speed-readout strong{font-size:50px}.drive-warning{top:72px;left:10px;font-size:9px}.driving-keys span:last-child{display:none}.view-corner{display:none}}
 @media(max-height:750px){.workspace-heading{padding-top:15px;padding-bottom:7px}.build-dock{padding-top:9px;padding-bottom:7px}.dock-heading{margin-bottom:8px}.asset-icon{height:32px}.asset{gap:3px}.dock-foot{margin-top:7px}.world-stage{min-height:200px}}
+
+/* V1.1: game viewport fills everything below the top navigation. */
+.workspace{position:relative;padding:8px;min-height:0;overflow:hidden}
+.workspace-heading,.sketch-footer,.drive-footer,.build-dock{display:none}
+.sketch-stage{flex:1;min-height:0;margin:0;border-radius:12px}
+.world-stage{flex:1;min-height:0;margin:0;border-radius:12px}
+.sketch-canvas{height:100%;width:100%}
+.sketch-action{bottom:16px;left:16px;right:16px}
+.build-hotbar{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:3px;padding:6px;border:2px solid #778a7e;border-radius:12px;background:linear-gradient(155deg,#334346f2,#142125f2);box-shadow:0 7px 0 #0b1215a6,0 22px 55px #000c;backdrop-filter:blur(14px)}
+.hotbar-slot{position:relative;width:62px;height:60px;flex:0 0 62px;border:2px solid #384849;background:linear-gradient(140deg,#435457,#263639);border-radius:7px;color:#d4e5d2;box-shadow:inset 0 1px 0 #7c939350;display:grid;place-items:center;cursor:grab;transition:border-color .13s,background .13s,transform .13s}
+.hotbar-slot:hover{border-color:#d2eda0;background:#42584b;transform:translateY(-2px)}
+.hotbar-slot:active{cursor:grabbing}
+.hotbar-slot.selected{border-color:#f6ffda;background:#415944;box-shadow:0 0 0 2px #c4ec83,inset 0 1px 0 #fff6}
+.hotbar-number{position:absolute;top:3px;left:6px;color:#e7f8de;font-weight:900;font-size:11px;text-shadow:0 1px 2px #000}
+.hotbar-model{display:grid;place-items:center;width:43px;height:43px;border-radius:6px;margin-top:6px}
+.hotbar-model.steel{color:#b5d5e2;background:#354956}
+.hotbar-model.orange{color:#f8c276;background:#50402f}
+.hotbar-model.red{color:#ff987c;background:#593a36}
+.hotbar-model.lime{color:#d2ff88;background:#405436}
+.hotbar-model.blue{color:#92d5ff;background:#2f4a59}
+.hotbar-tooltip{display:none;position:absolute;bottom:calc(100% + 16px);left:50%;transform:translateX(-50%);z-index:15;min-width:170px;flex-direction:column;gap:5px;padding:12px;border:1px solid #58736c;border-radius:9px;background:#111d22f7;color:#eaf6e8;box-shadow:0 11px 25px #0009;pointer-events:none;text-align:left;white-space:nowrap}
+.hotbar-tooltip strong{font-size:12px;font-weight:800}
+.hotbar-tooltip small{color:#a7bcbb;font-size:11px}
+.hotbar-slot:hover .hotbar-tooltip,.hotbar-slot:focus-visible .hotbar-tooltip{display:flex}
+.world-label{top:15px;left:16px}
+.build-instructions{top:15px}
+.prop-inspector{top:58px}
+.view-corner{right:15px;bottom:15px}
+@media(max-width:710px){
+ .workspace{padding:4px}
+ .sketch-stage,.world-stage{margin:0}
+ .build-hotbar{bottom:17px;max-width:calc(100% - 12px);gap:2px;padding:4px}
+ .hotbar-slot{height:50px;width:calc((100vw - 43px)/6);max-width:54px;flex-basis:calc((100vw - 43px)/6)}
+ .hotbar-model{width:35px;height:35px}
+ .hotbar-model svg{width:23px}
+ .build-instructions{display:none}
+ .sketch-action{left:8px;right:8px;bottom:8px}
+}
+
+/* Keep the help affordance clear of Drive's bottom-right Back to build control. */
+.floating-help{bottom:88px;right:18px}

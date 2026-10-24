@@ -4,6 +4,7 @@ import { OrbitControls } from '@react-three/drei';
 import { BufferAttribute, BufferGeometry, Camera, DoubleSide, Plane, Raycaster, Vector2, Vector3 } from 'three';
 import type { PropKind, RoadSample, TrackDocument, TrackProp } from '../lib/track';
 import { pointAt, sampleRoad } from '../lib/track';
+import SolidRoad from './SolidRoad';
 
 export type CarPose = { x: number; y: number; z: number; heading: number; speed: number };
 type Mode = 'build' | 'drive';
@@ -39,18 +40,7 @@ function Road({ track, samples }: { track: TrackDocument; samples: RoadSample[] 
     <mesh geometry={left}><meshBasicMaterial color="#e3e9df" side={DoubleSide} /></mesh>
     <mesh geometry={right}><meshBasicMaterial color="#e3e9df" side={DoubleSide} /></mesh>
     <mesh geometry={center}><meshBasicMaterial color="#b4a781" transparent opacity={0.35} side={DoubleSide} /></mesh>
-    {samples.filter((s, i) => i % 12 === 0 && s.y > 1.7).map((s, i) => (
-      <group key={i}>
-        <mesh position={[s.x + s.nx * (track.width / 2 - 1), s.y / 2 - 0.08, s.z + s.nz * (track.width / 2 - 1)]} castShadow>
-          <boxGeometry args={[0.8, Math.max(0.1, s.y), 0.8]} />
-          <meshStandardMaterial color="#687579" roughness={1} />
-        </mesh>
-        <mesh position={[s.x - s.nx * (track.width / 2 - 1), s.y / 2 - 0.08, s.z - s.nz * (track.width / 2 - 1)]} castShadow>
-          <boxGeometry args={[0.8, Math.max(0.1, s.y), 0.8]} />
-          <meshStandardMaterial color="#687579" roughness={1} />
-        </mesh>
-      </group>
-    ))}
+    <SolidRoad track={track} samples={samples} />
   </>;
 }
 
@@ -90,13 +80,15 @@ function TrackObject({ prop, track, selected, onPick, onRelease }: {
     {selected && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
       <ringGeometry args={[3.0, 3.18, 48]}/><meshBasicMaterial color="#d5f694" transparent opacity={0.94} side={DoubleSide} />
     </mesh>}
-    {prop.kind === 'bridge' && <>
-      <mesh position={[-3.8, 1.2, 0]} castShadow><boxGeometry args={[0.6, 2.4, 1.8]}/><meshStandardMaterial color={color}/></mesh>
-      <mesh position={[3.8, 1.2, 0]} castShadow><boxGeometry args={[0.6, 2.4, 1.8]}/><meshStandardMaterial color={color}/></mesh>
-      <mesh position={[0, 2.65, 0]} castShadow><boxGeometry args={[8.3, 0.36, 0.55]}/><meshStandardMaterial color="#b2c2c9"/></mesh>
-    </>}
-    {prop.kind === 'ramp' && <mesh castShadow position={[0, 0.22, 0]} rotation={[-0.22,0,0]}>
-      <boxGeometry args={[5, 0.3, 5.8]}/><meshStandardMaterial color={color}/></mesh>}
+    {(prop.kind === 'bridge' || prop.kind === 'ramp') && <group position={[track.width / 2 + 1.9, 0, 0]}>
+      {/* Selection handle lives beside the road: no overhead beam or ramp slab blocks the lane. */}
+      <mesh castShadow position={[0, 0.9, 0]}>
+        <cylinderGeometry args={[0.12, 0.12, 1.8, 8]}/><meshStandardMaterial color="#86999b"/>
+      </mesh>
+      <mesh castShadow position={[0, 2, 0]}>
+        <boxGeometry args={[1.4, 0.9, 0.3]}/><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.12}/>
+      </mesh>
+    </group>}
     {prop.kind === 'barrier' && <>
       <mesh castShadow position={[0, 0.8, 0]}><boxGeometry args={[4.0, 1.5, 0.7]}/><meshStandardMaterial color="#ec7353"/></mesh>
       <mesh position={[0, 0.8, 0.37]}><boxGeometry args={[3.7, 0.24, 0.06]}/><meshBasicMaterial color="#fff0d6"/></mesh>
@@ -199,13 +191,13 @@ export default function RacingScene({ track, mode, selectedId, armed, pose, onSe
     return new Vector3(positions.reduce((a,p)=>a+p.x,0)/positions.length, 0, positions.reduce((a,p)=>a+p.z,0)/positions.length);
   }, [track.points]);
   return <div className="scene-container" ref={containerRef} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
-    <Canvas shadows dpr={[1, 1.8]} camera={{ position: [53, 68, 101], fov: 52, near: 0.1, far: 600 }}>
+    <Canvas shadows dpr={[1, 1.8]} camera={{ position: [65, 122, 108], fov: 52, near: 0.1, far: 650 }}>
       <Suspense fallback={null}>
         <World track={track} mode={mode} selectedId={selectedId} armed={armed} pose={pose}
           onSelect={onSelect} onPlace={onPlace} onCamera={onCamera} onDragChange={setDragging}/>
         {mode === 'build' && <OrbitControls makeDefault target={[center.x, center.y, center.z]}
           enableDamping dampingFactor={0.09} enabled={!dragging}
-          minDistance={12} maxDistance={250} maxPolarAngle={Math.PI / 2 - 0.04}/>}
+          minDistance={12} maxDistance={260} minPolarAngle={0.20} maxPolarAngle={1.34}/>}
       </Suspense>
     </Canvas>
     {mode === 'build' && <div className="view-corner"><span className="status-dot"/> ORBIT VIEW <span className="tiny-separator">·</span> DRAG TO ROTATE <span className="tiny-separator">·</span> SCROLL TO ZOOM</div>}

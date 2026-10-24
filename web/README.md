@@ -40,3 +40,13 @@ npm test
 ```
 
 - PPO replay files are imported locally, do not verify evidence authenticity, and are **not** direct WP3 evaluation JSONL. HELD-OUT is disallowed. Live FastAPI/WebSocket, map-to-TrackWorld compiler, and scientifically validated manual driving remain future work.
+
+## V1.1 layout and elevated-road builder
+
+- Only top navigation + full-height canvas; the former workspace title/DRAFT subtitle and large Build Kit cards are removed.
+- The Build kit is a compact six-slot Minecraft-like hotbar over the scene. Hover/focus reveals a tooltip, drag items to the scene or select a slot with keys `1–6`, and use Escape to clear selection.
+- Road visuals have a 1.5m underbody, side walls, end caps, side rails on raised spans, and support pillars. These are **render meshes, not physics collision meshes**.
+- Proper non-adjacent **centerline intersections** are detected in the smoothed sketch. The later traversal is raised by a minimum 6m visual separation using a smooth approach/exit profile, producing a simple automatic overpass.
+- Retracing collinear segments, nearly-overlapping roads without a centerline crossing, tight endpoint intersections, and arbitrary multilayer road geometry are **not guaranteed** to be bridged. All auto-overpass spans must be validated by a future Python track compiler before authoritative simulation.
+- Bridge/ramp tools deform the road profile and show small selectable handles beside the lane; the former cross-road beam and floating ramp slab are gone.
+- The chassis is placed at the start segment with enough inward offset to keep the rear wheels on the road, facing the first tangent.

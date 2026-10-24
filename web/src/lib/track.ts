@@ -1,4 +1,5 @@
 import { CatmullRomCurve3, Vector3 } from 'three';
+import { bridgeElevationAt, detectAutoBridges, type AutoBridge } from './elevation';
 
 export type Point2 = { x: number; z: number };
 export type PropKind = 'bridge' | 'ramp' | 'barrier' | 'cone' | 'booster' | 'checkpoint';
@@ -37,7 +38,7 @@ const smoothStep = (a: number, b: number, t: number) => {
   return u * u * (3 - 2 * u);
 };
 
-export function roadHeight(t: number, props: TrackProp[]): number {
+export function roadHeight(t: number, props: TrackProp[], bridges: AutoBridge[] = [], length = 1): number {
   let y = 0;
   for (const p of props) {
     const d = Math.abs(t - p.t);
@@ -49,28 +50,57 @@ export function roadHeight(t: number, props: TrackProp[]): number {
       y = Math.max(y, lift);
     }
   }
-  return y;
+  return y + bridgeElevationAt(t, bridges, length);
+}
+
+const roadCache = new WeakMap<TrackDocument, Map<number, RoadSample[]>>();
+const crossingCache = new WeakMap<TrackDocument, { bridges: AutoBridge[]; length: number }>();
+
+export function getAutoBridges(track: TrackDocument): AutoBridge[] {
+  return elevationProfile(track).bridges;
+}
+
+function elevationProfile(track: TrackDocument) {
+  const saved = crossingCache.get(track);
+  if (saved) return saved;
+  if (track.points.length < 2) return { bridges: [] as AutoBridge[], length: 0 };
+  const spline = new CatmullRomCurve3(
+    track.points.map((p) => new Vector3(p.x, 0, p.z)), false, 'centripetal',
+  );
+  const points: Point2[] = [];
+  for (let i = 0; i <= 400; i++) {
+    const p = spline.getPointAt(i / 400);
+    points.push({ x: p.x, z: p.z });
+  }
+  const length = points.reduce((sum, p, i) =>
+    i === 0 ? 0 : sum + Math.hypot(p.x - points[i - 1].x, p.z - points[i - 1].z), 0);
+  const profile = { bridges: detectAutoBridges(points, length), length };
+  crossingCache.set(track, profile);
+  return profile;
 }
 
 export function sampleRoad(track: TrackDocument, count = 240): RoadSample[] {
   if (track.points.length < 2) return [];
+  const cache = roadCache.get(track);
+  const saved = cache?.get(count);
+  if (saved) return saved;
   const spline = new CatmullRomCurve3(
-    track.points.map((p) => new Vector3(p.x, 0, p.z)),
-    false,
-    'centripetal',
+    track.points.map((p) => new Vector3(p.x, 0, p.z)), false, 'centripetal',
   );
+  const { bridges, length } = elevationProfile(track);
   const samples: RoadSample[] = [];
   for (let i = 0; i <= count; i++) {
     const t = i / count;
     const pos = spline.getPointAt(t);
     const tangent = spline.getTangentAt(t).normalize();
-    const nx = -tangent.z;
-    const nz = tangent.x;
     samples.push({
-      x: pos.x, z: pos.z, y: roadHeight(t, track.props), t,
-      heading: Math.atan2(tangent.x, tangent.z), nx, nz,
+      x: pos.x, z: pos.z, y: roadHeight(t, track.props, bridges, length), t,
+      heading: Math.atan2(tangent.x, tangent.z), nx: -tangent.z, nz: tangent.x,
     });
   }
+  const nextCache = cache ?? new Map<number, RoadSample[]>();
+  nextCache.set(count, samples);
+  roadCache.set(track, nextCache);
   return samples;
 }
 

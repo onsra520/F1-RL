@@ -1,14 +1,14 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ArrowLeft, ArrowRight, Box, Check, CircleHelp, Compass, Download,
-  Flag, Gauge, Grip, Keyboard, Layers3, MousePointer2,
-  Mountain, Pause, Pencil, Play, Plus, RotateCcw, RotateCw, Save, Sparkles,
+  ArrowLeft, Box, Check, CircleHelp, Compass, Download,
+  Flag, Gauge, Keyboard, Layers3, MousePointer2,
+  Mountain, Pause, Pencil, Play, Plus, RotateCcw, RotateCw, Save,
   Trash2, TriangleAlert, Upload, Waves, X
 } from 'lucide-react';
 import SketchEditor from './components/SketchEditor';
 import type { CarPose } from './components/RacingScene';
 const RacingScene = lazy(() => import('./components/RacingScene'));
-import { createTrack, nearestRoad, parseTrack, pointAt, PROP_KINDS, roadLength, sampleRoad,
+import { createTrack, getAutoBridges, nearestRoad, parseTrack, pointAt, PROP_KINDS, roadLength, sampleRoad,
          type Point2, type PropKind, type TrackDocument, type TrackProp } from './lib/track';
 import { parseReplay, replayAt, type Replay } from './lib/replay';
 
@@ -41,7 +41,9 @@ function downloadJSON(name: string, data: unknown) {
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 function spawnPose(track: TrackDocument): CarPose {
-  const p = pointAt(track, 0.015);
+  // Position the full chassis on the start segment, rather than leaving its rear wheels beyond the road cap.
+  const total = roadLength(sampleRoad(track, 240));
+  const p = pointAt(track, total > 0 ? Math.min(2.6 / total, 0.1) : 0);
   return { x: p.x, y: p.y, z: p.z, heading: p.heading, speed: 0 };
 }
 const newId = () => typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -67,6 +69,7 @@ export default function App() {
   const redoStack = useRef<TrackDocument[]>([]);
   const selectedProp = track.props.find((p) => p.id === selected);
   const trackMeters = useMemo(() => roadLength(sampleRoad(track, 300)), [track]);
+  const autoBridges = useMemo(() => getAutoBridges(track).length, [track]);
   const canDrive = track.points.length >= 2;
   const activePose = driveMode === 'replay' && replay ? (() => {
     const p = replayAt(replay, replayTime);
@@ -127,6 +130,19 @@ export default function App() {
       setToast(kind[0].toUpperCase() + kind.slice(1) + ' placed');
     }
   }, [track, changeTrack]);
+  useEffect(() => {
+    if (mode !== 'build') return;
+    const shortcuts = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.ctrlKey || e.altKey || e.metaKey) return;
+      if (e.code === 'Escape') { setArmed(null); setSelected(null); return; }
+      if (/^Digit[1-6]$/.test(e.code)) {
+        const kind = PROP_KINDS[Number(e.code.slice(-1)) - 1];
+        setArmed((current) => current === kind ? null : kind);
+      }
+    };
+    window.addEventListener('keydown', shortcuts);
+    return () => window.removeEventListener('keydown', shortcuts);
+  }, [mode]);
   const startDrive = () => {
     if (!canDrive) return;
     setPose(spawnPose(track));
@@ -246,23 +262,14 @@ export default function App() {
     </header>
 
     <main className={'workspace mode-' + mode}>
-      <div className="workspace-heading">
-        <div className="crumb"><span className="crumb-icon">◈</span> MY WORKSPACE <span className="crumb-slash">/</span> {mode === 'sketch' ? 'TRACK SKETCH' : mode === 'build' ? '3D BUILDER' : 'DRIVE SESSION'}</div>
-        {mode !== 'drive' && <div className="track-title"><input aria-label="Track name" value={track.name} maxLength={100} onChange={(e) => changeTrack((t) => ({ ...t, name: e.target.value || 'Untitled track' }))}/><span className="editor-badge">DRAFT</span></div>}
-        {mode === 'drive' && <div className="track-title"><h1>{track.name}</h1><span className="editor-badge">VISUAL PREVIEW</span></div>}
-        {mode === 'sketch' && <p className="workspace-subtitle">Every great circuit starts with a line.</p>}
-        {mode === 'build' && <p className="workspace-subtitle">Drag, drop, and make the track your own.</p>}
-        {mode === 'drive' && <p className="workspace-subtitle">Take it for a spin — without leaving the editor.</p>}
-      </div>
-
       {mode === 'sketch' ? <SketchEditor points={track.points} onChange={onSketch} onConvert={() => changeMode('build')}/> :
         <div className="world-stage">
           <Suspense fallback={<div className="scene-loading">Loading 3D world…</div>}>
-            <RacingScene track={track} mode={mode} selectedId={selected} armed={armed} pose={activePose} onSelect={setSelected} onPlace={onPlace}/>
+            <RacingScene track={track} mode={mode} selectedId={selected} armed={armed} pose={mode === 'build' ? spawnPose(track) : activePose} onSelect={setSelected} onPlace={onPlace}/>
           </Suspense>
           {mode === 'build' && <>
-            <div className="world-label"><span className="live-glow"/> 3D EDITOR <span>·</span> {Math.round(trackMeters)}M ROAD</div>
-            <div className="build-instructions"><MousePointer2 size={16}/> {armed ? 'Click the road to place ' + armed : 'Drag an item from the dock onto the track'}</div>
+            <div className="world-label"><span className="live-glow"/> 3D EDITOR <span>·</span> {Math.round(trackMeters)}M ROAD {autoBridges > 0 && <span>· {autoBridges} AUTO BRIDGE{autoBridges > 1 ? 'S' : ''}</span>}</div>
+            <div className="build-instructions"><MousePointer2 size={16}/> {armed ? 'Click the road to place ' + armed : 'Drag an item from the hotbar onto the track · keys 1–6'}</div>
             {selectedProp && <div className="prop-inspector">
               <div className="inspector-top"><strong>{selectedProp.kind[0].toUpperCase() + selectedProp.kind.slice(1)}</strong><button aria-label="Close selection" onClick={() => setSelected(null)}><X size={16}/></button></div>
               <span className="inspector-label">ROTATION</span>
@@ -290,20 +297,20 @@ export default function App() {
             <div className="drive-bottom"><button onClick={() => {setPose(spawnPose(track));setPlaying(false);setReplayTime(replay?.frames[0]?.time_s ?? 0);}}><RotateCcw size={17}/> Restart</button><button className="leave-drive" onClick={() => changeMode('build')}><ArrowLeft size={17}/> Back to build</button></div>
           </div>}
         </div>}
-      {mode === 'build' && <div className="build-dock">
-        <div className="dock-heading"><div><strong>BUILD KIT</strong><span>Drag assets onto your track</span></div><span className="dock-count">06 ITEMS</span></div>
-        <div className="asset-list">{assets.map(({kind, title, description, icon: Icon, color}) => (
-          <button key={kind} draggable className={armed === kind ? 'asset selected' : 'asset'} title={description}
-            onDragStart={(e) => {e.dataTransfer.setData('application/x-f1rl-prop', kind);e.dataTransfer.effectAllowed = 'copy';setArmed(kind);}}
+      {mode === 'build' && <div className="build-hotbar" role="toolbar" aria-label="Build hotbar">
+        {assets.map(({kind, title, description, icon: Icon, color}, index) => (
+          <button key={kind} draggable
+            className={armed === kind ? 'hotbar-slot selected' : 'hotbar-slot'}
+            aria-label={`Select ${title} (slot ${index + 1})`}
+            aria-pressed={armed === kind}
+            onDragStart={(e) => {e.dataTransfer.setData('application/x-f1rl-prop', kind);e.dataTransfer.effectAllowed='copy';setArmed(kind);}}
             onDragEnd={() => setArmed(null)} onClick={() => setArmed(armed === kind ? null : kind)}>
-            <span className={'asset-icon ' + color}><Icon size={25} strokeWidth={1.65}/></span>
-            <strong>{title}</strong><span>{description}</span>
+            <span className="hotbar-number">{index + 1}</span>
+            <span className={'hotbar-model ' + color}><Icon size={29} strokeWidth={1.75}/></span>
+            <span className="hotbar-tooltip" role="tooltip"><strong>{title}</strong><small>{description}</small></span>
           </button>
-        ))}</div>
-        <div className="dock-foot"><span><Grip size={16}/> DRAG & DROP</span><span className="dock-foot-right">Objects are editable · Select to rotate or delete</span></div>
+        ))}
       </div>}
-      {mode === 'sketch' && <div className="sketch-footer"><span><Sparkles size={15}/> Sketch is just the beginning</span><span>Step 01 / 03 <ArrowRight size={15}/></span></div>}
-      {mode === 'drive' && <div className="drive-footer"><span><Check size={16}/> Ready for visual preview</span><span>Physics validation remains on the Python side</span></div>}
     </main>
     <div className="floating-help">
       <button aria-label="Help" className="help-button" onClick={() => setHelp(!help)}><CircleHelp size={20}/></button>
