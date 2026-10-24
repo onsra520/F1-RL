@@ -146,3 +146,8 @@ def test_full_eval_hard_gate_propagates(monkeypatch,tmp_path):
     root,hist=fake_fixture(monkeypatch,tmp_path)
     with pytest.raises(RuntimeError,match="FULL_EVAL_BLOCKED"):
         co.forbid_registered_full_eval(root,hist)
+
+
+def test_cli_entrypoint_parses_as_python():
+    script = Path(__file__).resolve().parents[2] / "scripts/wp3_eval_only_coordinator.py"
+    compile(script.read_text(encoding="utf8"), str(script), "exec")

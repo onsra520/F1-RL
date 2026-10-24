@@ -2,7 +2,7 @@
 
 Usage:
     python scripts/wp3_eval_only_coordinator.py preflight
-    python scripts/wp3_eval_only_coordinator.py smoke --out D:\unique-new-run-dir
+    python scripts/wp3_eval_only_coordinator.py smoke --out D:/unique-new-run-dir
     python scripts/wp3_eval_only_coordinator.py full  # intentionally fail-closed
 """
 from __future__ import annotations
