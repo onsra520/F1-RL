@@ -1,0 +1,62 @@
+{
+  "schema_version": "wp3_three_frozen_case_scratch_preflight_v1",
+  "run_date_utc": "2026-10-24T07:42:46.990648+00:00",
+  "source_commit": "ce0e55d7a428826b2d4ed3218641105bd0206f4b",
+  "training_commit": "fe83f517479f3b990028d6409304fae83b8199a9",
+  "original_roster_sha256": "f2f9d15954cea48345a8932773ed945f6ed250ad1435b4e675b97e4a6b94f319",
+  "original_roster_file_sha256": "1530a54a636f80cacc096f2ed86d9e89fd5e7c7a7429873deb2fe366bcd859dc",
+  "mode": "TRAIN_ONLY_SCRATCH_NO_REGISTERED_EVAL",
+  "original_evidence_immutable": true,
+  "physics_profile": "spatial_rotating_owner_v3",
+  "new_physics_profile_registered": false,
+  "full_eval_gate": "BLOCKED",
+  "completed_valid_scratch_episodes": 0,
+  "invalid_scratch_episodes": 3,
+  "results": [
+    {
+      "model_id": "C-seed0",
+      "track": "right-turn-v1",
+      "stratum": "nominal",
+      "episode": 0,
+      "seed_environment": 3644787252,
+      "seed_policy": 1064001499,
+      "model_sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+      "source_physics_profile": "spatial_rotating_owner_v3",
+      "status": "INVALID_UNSCORED_PHYSICS_OR_EVAL",
+      "error_type": "SuspensionResolutionError",
+      "error": "spatial body/contact sweep outside: invalid endpoint body or wheel support",
+      "elapsed_s": 17.0
+    },
+    {
+      "model_id": "A-seed1",
+      "track": "ramp-v1",
+      "stratum": "randomized_train",
+      "episode": 17,
+      "seed_environment": 1942738645,
+      "seed_policy": 3797528771,
+      "model_sha256": "4334c44b3370c4f0adaa345ca280d190850fda9599736cc561ed6cbb71425831",
+      "source_physics_profile": "spatial_rotating_owner_v3",
+      "status": "INVALID_UNSCORED_PHYSICS_OR_EVAL",
+      "error_type": "SuspensionResolutionError",
+      "error": "spatial wheel support/travel missing",
+      "elapsed_s": 5.25
+    },
+    {
+      "model_id": "C-seed0",
+      "track": "slalom-v1",
+      "stratum": "nominal",
+      "episode": 2,
+      "seed_environment": 4142406975,
+      "seed_policy": 2036278604,
+      "model_sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+      "source_physics_profile": "spatial_rotating_owner_v3",
+      "status": "INVALID_UNSCORED_PHYSICS_OR_EVAL",
+      "error_type": "FlightPhysicsError",
+      "error": "flight/substep body hit obstacle: no scored impact response registered",
+      "elapsed_s": 19.719
+    }
+  ],
+  "new_registered_eval_runs": 0,
+  "scientific_evidence": false,
+  "heldout_access": false
+}

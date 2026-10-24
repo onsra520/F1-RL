@@ -11,6 +11,8 @@ from ..episode import RaceRoute
 from ..route_navigation import AuthoredRoute
 from ..training.env_factory import F1RLEnvFactory
 from .metrics import EpisodeMetrics, _normalized_route_progress
+from .crash_contract import validate_crash_terminal_info
+from ..crash_terminal_registered import validate_registered_crash_terminal_info
 
 
 @runtime_checkable
@@ -57,15 +59,18 @@ def _valid_terminal_failure(info: object) -> bool:
         return False
     outcome = info.get("research_outcome")
     race = info.get("race")
-    return (
-        isinstance(outcome, Mapping)
-        and isinstance(race, Mapping)
-        and outcome.get("version") == "wp7_episode_outcome_v1"
-        and outcome.get("kind") == "valid_terminal_failure"
-        and outcome.get("valid_sample") is True
-        and outcome.get("reason") == "hard_route_violation"
-        and race.get("terminal_failure") is True
-    )
+    if (not isinstance(outcome,Mapping) or not isinstance(race,Mapping)
+        or outcome.get('version')!='wp7_episode_outcome_v1'
+        or outcome.get('kind')!='valid_terminal_failure'
+        or outcome.get('valid_sample') is not True
+        or race.get('terminal_failure') is not True):
+        return False
+    if outcome.get('reason')=='hard_route_violation':
+        return True
+    return ((outcome.get('reason')=='physical_crash_development'
+             and validate_crash_terminal_info(info))
+            or (outcome.get('reason')=='physical_crash'
+                and validate_registered_crash_terminal_info(info)))
 
 
 def _position(
@@ -116,6 +121,12 @@ def _step_evidence(
     tuple[str, ...],
 ]:
     step_info = _mapping(info, "step info")
+    # This original source recognizes only registered hard-route outcomes.
+    # Untrusted crash rows cannot mint valid Eval terminals.
+    if "physical_crash_terminal" in step_info and not (
+            validate_crash_terminal_info(step_info) or
+            validate_registered_crash_terminal_info(step_info)):
+        raise ValueError("unregistered physical crash terminal: approved contact, timing, impulse and energy required")
 
     required = (
         "tick",
