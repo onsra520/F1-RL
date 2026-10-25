@@ -20,6 +20,16 @@ from .independent_suspension_dynamics import (
     SuspensionDynamicsState, SuspensionResolutionError, WheelForceSample,
 )
 from .multi_surface_support import _atlas, _contacts, _intersection, _square, certify_multisurface_support
+from .spatial_partial_wheel_contact import sample_spatial_partial_wheels
+from .finite_tire_footprint_v4 import sample_finite_wheel_coverage
+from .wheel_edge_release_energy import certify_wheel_edge_release_energy
+from .wheel_bump_stop_impact import certify_wheel_bump_stop
+from .rigid_body_impact_response import RigidBodyImpactMass
+from .accepted_contact_transition import apply_bump_impulse_at_certified_clear_pose
+from .accepted_road_body_contact import apply_first_road_body_contact
+from .physical_crash import PhysicalCrash
+from .swept_surface_clearance import certify_swept_chassis_clearance, certify_swept_chassis_patch_intersection_free, certify_first_bounded_road_contact
+from .body_collision import _slerp
 from .vehicle import VehicleControl, VehicleParameters, VehicleState
 
 UP, RIGHT, FORWARD = Vec3(0.,1.,0.), Vec3(1.,0.,0.), Vec3(0.,0.,1.)
@@ -68,6 +78,7 @@ class SpatialSubstepAudit:
     energy_residual_j: float
     energy_tolerance_j: float
     contact_stages: tuple[tuple[SpatialWheelAudit, ...], ...]
+    road_edge_release_dissipation_j: float = 0.
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,6 +167,16 @@ def integrate_spatial_lifecycle(previous, physics, body, surfaces, parameters, c
                               dt=dt,modifiers=modifiers,lifecycle=True,phase_domain=phase_domain)
 
 
+def integrate_spatial_road_edge_lifecycle(previous, physics, body, surfaces, parameters, control,
+                                         policy, *, dt, modifiers=None):
+    """Opt-in spatial per-wheel release experiment; NEVER legacy v3."""
+    if physics.force_model != 'road_relative_unilateral_v3':
+        raise ValueError('spatial edge mode requires unilateral contact')
+    return _integrate_spatial(previous,physics,body,surfaces,parameters,control,policy,
+                              dt=dt,modifiers=modifiers,lifecycle=True,
+                              phase_domain='atlas_rotating_edge_v4')
+
+
 def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                         policy, *, dt, modifiers, lifecycle, phase_domain='horizontal_v1'):
     """Force-coupled supported motion; world Hdot=tau prevents hidden yaw projection.
@@ -212,12 +233,29 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
         if (max(abs(dynamic.pitch_x_rad),abs(dynamic.roll_z_rad))>physics.max_abs_tilt_rad
                 or state.speed>parameters.max_ground_speed+1e-8
                 or state.angular_velocity.magnitude>policy.max_angular_speed_radps):
+            if phase_domain=='atlas_rotating_edge_v4':
+                raise SuspensionResolutionError(
+                    f'v4 spatial state outside certified domain: '
+                    f'pitch={dynamic.pitch_x_rad:.9g} roll={dynamic.roll_z_rad:.9g} '
+                    f'tilt_limit={physics.max_abs_tilt_rad:.9g} '
+                    f'speed={state.speed:.9g} speed_limit={parameters.max_ground_speed:.9g} '
+                    f'angular={state.angular_velocity.magnitude:.9g} '
+                    f'angular_limit={policy.max_angular_speed_radps:.9g}')
             raise SuspensionResolutionError('spatial state exceeds tilt/speed/angular domain')
-        contacts=_contacts(state,physics.contact,atlas,free_extension=lifecycle)
+        if phase_domain=='atlas_rotating_edge_v4':
+            # A wheel enters/leaves a finite supporting tire footprint
+            # continuously; source the potential gradient from the same
+            # smooth road-atlas coverage as the wheel's normal load.
+            footprints=sample_finite_wheel_coverage(state,physics.contact,atlas)
+            contacts=tuple(f.contact for f in footprints)
+        else:
+            footprints=None
+            contacts=_contacts(state,physics.contact,atlas,free_extension=lifecycle)
         if contacts is None:
             raise SuspensionResolutionError('spatial wheel support/travel missing')
-        compressed=any(preload+physics.spring_stiffness_npm*c.deflection_m>0. for c in contacts)
-        if lifecycle and phase_domain!='atlas_rotating_v3' and not compressed and state.angular_velocity.magnitude>1e-9:
+        compressed=any(c is not None and preload+physics.spring_stiffness_npm*c.deflection_m>0.
+                       for c in contacts)
+        if lifecycle and phase_domain not in ('atlas_rotating_v3','atlas_rotating_edge_v4') and not compressed and state.angular_velocity.magnitude>1e-9:
             raise SuspensionResolutionError('spatial compliant flight requires fixed airborne attitude')
         ground_effect=1. if not lifecycle or compressed else 0.
         drag=state.velocity*(-mass*parameters.rolling_drag*modifiers.rolling_drag_multiplier*ground_effect)
@@ -229,6 +267,9 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
         spring_energy=0.
         samples,records=[],[]
         for index,(local,contact) in enumerate(zip(physics.contact.wheels.positions,contacts,strict=True)):
+            if contact is None:
+                # Physically released/unloaded wheel: zero contact, no tire or damper work.
+                continue
             patch=patches[contact.patch_id]
             arm=state.orientation.rotate(local)
             point_velocity=state.velocity+state.angular_velocity.cross(arm)
@@ -245,7 +286,10 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                 load=elastic*max(0.,factor)
             else:
                 load=max(0.,raw_elastic-physics.damper_nspm*gap_rate)
-            normal_force=load/patch.normal.y
+            coverage=footprints[index].coverage if footprints is not None else 1.
+            edge_gradient=(footprints[index].coverage_gradient
+                           if footprints is not None else Vec3(0.,0.,0.))
+            normal_force=coverage*load/patch.normal.y
             angle=control.steering*parameters.max_steering_angle if local.z>0. and ground_effect else 0.
             heading=state.orientation.rotate(Vec3(sin(angle),0.,cos(angle))).reject_from(patch.normal)
             if heading.magnitude<1e-8:
@@ -253,9 +297,9 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             tangent=heading.normalized()
             lateral=patch.normal.cross(tangent)
             speed,slip=point_velocity.dot(tangent),point_velocity.dot(lateral)
-            longitudinal=mass*(control.throttle*parameters.max_acceleration
+            longitudinal=coverage*mass*(control.throttle*parameters.max_acceleration
                 -control.brake*parameters.max_braking*tanh(speed/traction.brake_speed_scale_mps))/4.
-            side=-policy.lateral_damping_nspm*slip
+            side=-coverage*policy.lateral_damping_nspm*slip
             magnitude=(longitudinal*longitudinal+side*side)**.5
             limit=traction.traction_mu*normal_force
             if magnitude>limit:
@@ -263,16 +307,20 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                 longitudinal,side=longitudinal*scale,side*scale
             if longitudinal*speed>traction.max_drive_power_w/4.:
                 longitudinal=traction.max_drive_power_w/(4.*speed)
-            wheel_force=gradient*load+tangent*longitudinal+lateral*side
+            stored=elastic*elastic/(2.*physics.spring_stiffness_npm)
+            # Conservative edge force is -d(coverage*stored)/d(x,z).
+            # Omitting it would create energy as a compressed tire enters.
+            wheel_force=(gradient*(coverage*load)+tangent*longitudinal
+                         +lateral*side-edge_gradient*stored)
             force=force+wheel_force
             torque=torque+arm.cross(wheel_force)
             actuator+=longitudinal*speed
-            normal_loss=(elastic-load)*gap_rate
+            normal_loss=coverage*(elastic-load)*gap_rate
             if normal_loss < -1e-8 or side*slip>1e-8:
                 raise SuspensionResolutionError('spatial contact produced damping energy')
             dissipation+=max(0.,normal_loss)-side*slip
-            spring_energy+=elastic*elastic/(2.*physics.spring_stiffness_npm)
-            samples.append(WheelForceSample(contact,load,gap_rate))
+            spring_energy+=coverage*stored
+            samples.append(WheelForceSample(contact,coverage*load,gap_rate))
             records.append(SpatialWheelAudit(index,patch.id,normal_force,longitudinal,side,speed,slip))
         if not lifecycle and not any(s.upward_force_n>0. for s in samples):
             raise SuspensionResolutionError('unloaded spatial contact requires airborne solver')
@@ -302,24 +350,230 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
     def shifted(y,d,h):
         return tuple(v+h*k for v,k in zip(y,d,strict=True))
 
+    def checked_stage(trial_y,start_y,elapsed):
+        try:
+            return stage(trial_y)
+        except SuspensionResolutionError as error:
+            if (phase_domain!='atlas_rotating_edge_v4' or
+                getattr(error,'failure_code',None)!='over_bump_travel' or
+                not hasattr(error,'wheel_local')):
+                raise
+            try:
+                # Exact original rejected RK4 trial supplied as a *diagnostic*
+                # interpolation only. The event is NOT a valid accepted step.
+                witness=certify_wheel_bump_stop(
+                    vehicle(start_y),vehicle(trial_y),
+                    wheel_local=error.wheel_local,road=error.road_patch,
+                    max_bump_m=physics.contact.max_bump_m,
+                    mass=RigidBodyImpactMass(mass,inertia),duration_s=elapsed,
+                    resolution_s=min(1e-10,elapsed/128.))
+            except ValueError as proof_error:
+                n=error.road_patch.normal
+                def signed_gap(p):
+                    return (physics.contact.max_bump_m*n.y+
+                        (p.position+p.orientation.rotate(error.wheel_local)
+                         -error.road_patch.origin).dot(n))
+                s0,s1=vehicle(start_y),vehicle(trial_y)
+                speed0=(s0.velocity+s0.angular_velocity.cross(
+                    s0.orientation.rotate(error.wheel_local))).dot(n)
+                speed1=(s1.velocity+s1.angular_velocity.cross(
+                    s1.orientation.rotate(error.wheel_local))).dot(n)
+                raise SuspensionResolutionError(
+                    f'{error}; unscored hard-stop trial not certified: {proof_error}'
+                    f' clear_gap_m={signed_gap(s0):.12g}'
+                    f' rejected_gap_m={signed_gap(s1):.12g}'
+                    f' vnormal0={speed0:.12g} vnormal1={speed1:.12g}'
+                    f' elapsed_s={elapsed:.12g}',
+                    failure_code='over_bump_travel') from error
+            fault=SuspensionResolutionError(
+                f'{error}; provisional hard-stop witness time_s='
+                f'({witness.first_clear_time_s:.9g},{witness.first_violating_time_s:.9g}) '
+                f'normal_impulse_ns={witness.impulse_n_s} '
+                f'angular_impulse_nms={witness.angular_impulse_nms} '
+                f'energy_lost_j={witness.dissipated_kinetic_j:.9g}; '
+                f'NOT_APPLIED_NOT_SCORED',failure_code='over_bump_travel')
+            fault.wheel_index=error.wheel_index
+            fault.wheel_local=error.wheel_local
+            fault.road_patch=error.road_patch
+            fault.trial_y=trial_y
+            fault.trial_duration_s=elapsed
+            raise fault from error
+
     def advance(y,start,h,depth,phase_depth=0):
-        if phase_domain=='atlas_rotating_v3' and h*max(policy.max_angular_speed_radps,
+        if phase_domain in ('atlas_rotating_v3','atlas_rotating_edge_v4') and h*max(policy.max_angular_speed_radps,
                 Vec3(*y[10:13]).magnitude/min(inertia.x,inertia.y,inertia.z))>=pi:
             if depth>=traction.max_refinements:
                 raise SuspensionResolutionError('spatial rotation interval cannot exclude a full turn')
             middle=advance(y,start,h/2.,depth+1,phase_depth)
             return advance(middle,times[-1],h/2.,depth+1,phase_depth)
         a=stage(y)
-        b=stage(shifted(y,a.derivative,h/2.))
-        c=stage(shifted(y,b.derivative,h/2.))
-        d=stage(shifted(y,c.derivative,h))
-        stages=(a,b,c,d)
-        weights=(1.,2.,2.,1.)
-        end=tuple(v+h/6.*(ka+2.*kb+2.*kc+kd)
-                  for v,ka,kb,kc,kd in zip(y,a.derivative,b.derivative,c.derivative,d.derivative,strict=True))
-        q=Quaternion(*end[6:10])
-        end=(*end[:6],q.w,q.x,q.y,q.z,*end[10:13])
-        final=stage(end)
+        try:
+            b=checked_stage(shifted(y,a.derivative,h/2.),y,h/2.)
+            c=checked_stage(shifted(y,b.derivative,h/2.),y,h/2.)
+            d=checked_stage(shifted(y,c.derivative,h),y,h)
+            stages=(a,b,c,d)
+            weights=(1.,2.,2.,1.)
+            end=tuple(v+h/6.*(ka+2.*kb+2.*kc+kd)
+                      for v,ka,kb,kc,kd in zip(y,a.derivative,b.derivative,c.derivative,d.derivative,strict=True))
+            q=Quaternion(*end[6:10])
+            end=(*end[:6],q.w,q.x,q.y,q.z,*end[10:13])
+            final=checked_stage(end,y,h)
+        except SuspensionResolutionError as fault:
+            if (phase_domain!='atlas_rotating_edge_v4' or
+                getattr(fault,'failure_code',None)!='over_bump_travel'
+                or not hasattr(fault,'trial_y')):
+                raise
+            # Refine the accepted RK4 prefix rather than applying an impulse
+            # against a rejected large-step candidate. Event resolution is
+            # only possible in a tiny, monotone source-bounded window.
+            if h>1e-5 and phase_depth<30:
+                middle=advance(y,start,h/2.,depth,phase_depth+1)
+                return advance(middle,times[-1],h/2.,depth,phase_depth+1)
+            if h>1e-5:
+                raise
+            # Find the event on FULL short-step RK4, not the rejected
+            # intermediate stage's linear interpolation. Every bisection's
+            # admitted prefix is computed from the original accepted state.
+            def short_rk4(duration):
+                ka=stage(y)
+                kb=stage(shifted(y,ka.derivative,duration/2.))
+                kc=stage(shifted(y,kb.derivative,duration/2.))
+                kd=stage(shifted(y,kc.derivative,duration))
+                end_y=tuple(v+duration/6.*(u+2.*v2+2.*v3+w)
+                    for v,u,v2,v3,w in zip(
+                        y,ka.derivative,kb.derivative,kc.derivative,kd.derivative,
+                        strict=True))
+                q0=Quaternion(*end_y[6:10])
+                end_y=(*end_y[:6],q0.w,q0.x,q0.y,q0.z,*end_y[10:13])
+                kfin=stage(end_y)
+                return end_y,(ka,kb,kc,kd,kfin)
+            high=fault.trial_duration_s
+            low=0.
+            prefix_y=None
+            prefix_stages=None
+            try:
+                if high<=0. or high>h:
+                    raise ValueError('rejected RK4 trial outside source interval')
+                for _ in range(55):
+                    if high-low<=1e-10:
+                        break
+                    probe=(low+high)/2.
+                    try:
+                        trial_y,trial_stages=short_rk4(probe)
+                        # The accepted prefix must be clearly on the safe
+                        # side of the original, UNCHANGED 0.12m hard stop.
+                        proof=vehicle(trial_y)
+                        wheel=proof.position+proof.orientation.rotate(fault.wheel_local)
+                        n=fault.road_patch.normal
+                        clearance=physics.contact.max_bump_m*n.y+(
+                            wheel-fault.road_patch.origin).dot(n)
+                        if clearance< -1e-9:
+                            high=probe
+                            continue
+                    except SuspensionResolutionError as why:
+                        if (getattr(why,'failure_code',None)!='over_bump_travel'
+                            or getattr(why,'wheel_index',None)!=getattr(fault,'wheel_index',None)):
+                            raise
+                        high=probe
+                        continue
+                    low=probe
+                    prefix_y,prefix_stages=trial_y,trial_stages
+                if prefix_y is None or low<=0.:
+                    raise ValueError('no accepted pre-impact RK4 prefix to hard stop')
+                pre=vehicle(prefix_y)
+                impact=apply_bump_impulse_at_certified_clear_pose(
+                    pre,RigidBodyImpactMass(mass,inertia),
+                    wheel_local=fault.wheel_local,road=fault.road_patch,
+                    max_bump_m=physics.contact.max_bump_m,
+                    first_clear_s=low,first_witness_s=high)
+                post=impact.postimpact
+                q=post.orientation
+                H=angular_momentum(q,post.angular_velocity)
+                after=(post.position.x,post.position.y,post.position.z,
+                       post.velocity.x,post.velocity.y,post.velocity.z,
+                       q.w,q.x,q.y,q.z,H.x,H.y,H.z)
+                after_stage=stage(after)
+                pre_a,pre_b,pre_c,pre_d,pre_final=prefix_stages
+                weights=(1.,2.,2.,1.)
+                source_force=sum((k.force*w for k,w in zip(
+                    prefix_stages[:4],weights,strict=True)),Vec3(0.,0.,0.))*(low/6.)
+                source_torque=sum((k.torque*w for k,w in zip(
+                    prefix_stages[:4],weights,strict=True)),Vec3(0.,0.,0.))*(low/6.)
+                total_force=source_force+impact.impulse_n_s
+                total_torque=source_torque+impact.angular_impulse_nms
+                lin=((post.velocity-vehicle(y).velocity)*mass-total_force).magnitude
+                ang=(H-Vec3(*y[10:13])-total_torque).magnitude
+                work=low/6.*sum(w*k.actuator_power for w,k in zip(weights,prefix_stages[:4],strict=True))
+                regular_loss=low/6.*sum(w*k.dissipation_power for w,k in zip(weights,prefix_stages[:4],strict=True))
+                loss=regular_loss+impact.energy_lost_j
+                E0=energy(y,a)
+                E1=energy(after,after_stage)
+                balance=E1-E0-work+loss
+                scale=max(1.,kinetic(y),kinetic(after),a.spring_energy,
+                          after_stage.spring_energy,abs(work),loss)
+                tolerance=(traction.energy_absolute_tolerance_j+
+                           traction.energy_relative_tolerance*scale)
+                if (abs(balance)>tolerance or lin>1e-7 or ang>1e-7
+                    or not start<start+low<=start+h):
+                    raise ValueError(f'accepted RK4 hard-stop conservation failed: '
+                        f'energy={balance:.9g}/{tolerance:.9g} '
+                        f'linear_ns={lin:.9g} angular_nms={ang:.9g}')
+            except (ValueError,SuspensionResolutionError) as reason:
+                raise SuspensionResolutionError(
+                    f'v4 hard-stop remains invalid: {reason}',
+                    failure_code='over_bump_travel') from fault
+            if phase_domain=='atlas_rotating_edge_v4':
+                # This first certified rigid hard-stop impulse terminates
+                # immediately. Continuing the remaining tick without a
+                # persistent unilateral constraint would let the very next
+                # RK4 stage penetrate again and double-count the impulse.
+                tick_hit=start+high
+                if not start<tick_hit<=dt or not 0.<high-low<=1e-10+1e-14:
+                    raise SuspensionResolutionError(
+                        'wheel hard stop certified witness time outside tick')
+                previous_prefix=tuple(
+                    CenterSegment(t0,t1,p.position,q.position,
+                        p.velocity if air else None,gravity if air else 0.)
+                    for t0,t1,p,q,air in zip(
+                        times[:-1],times[1:],poses[:-1],poses[1:],
+                        ballistic_leaves,strict=True))
+                prefix=previous_prefix+(
+                    CenterSegment(start,tick_hit,vehicle(y).position,
+                                  impact.preimpact.position),)
+                if tick_hit<dt:
+                    prefix+=(CenterSegment(tick_hit,dt,
+                        impact.preimpact.position,impact.preimpact.position),)
+                crash=PhysicalCrash(
+                    f'wheel-hard-stop:{fault.road_patch.id}',
+                    tick_hit,start+low,tick_hit,len(leaves),impact,prefix,
+                    version='wp3_grounded_wheel_hard_stop_crash_v4_dev')
+                impact_leaf=SpatialSubstepAudit(
+                    start,start+low,total_force,total_torque,lin,ang,
+                    E0,E1,work,loss,balance,tolerance,
+                    tuple(k.contacts for k in prefix_stages[:4])+
+                    (after_stage.contacts,))
+                source=SpatialRoadCrashSource(
+                    vehicle(y),vehicle(fault.trial_y),
+                    start,fault.trial_duration_s,atlas,body,
+                    RigidBodyImpactMass(mass,inertia),
+                    tuple(poses),tuple(times),tuple(leaves),
+                    tuple(ballistic_leaves),tuple(brackets),
+                    fault.wheel_local,fault.road_patch,low,high,
+                    impact_leaf)
+                raise SpatialRoadCrash(crash,source)
+            tick_hit=start+low
+            leaves.append(SpatialSubstepAudit(start,tick_hit,
+                total_force,total_torque,lin,ang,E0,E1,work,loss,balance,
+                tolerance,tuple(k.contacts for k in prefix_stages[:4])+
+                (after_stage.contacts,)))
+            poses.append(post)
+            history.append(a.samples)
+            times.append(tick_hit)
+            ballistic_leaves.append(False)
+            rest=start+h-tick_hit
+            if rest<=1e-13:
+                return after
+            return advance(after,tick_hit,rest,depth,phase_depth+1)
         phase_change=lifecycle and any(f.compressed!=a.compressed for f in (*stages,final))
         if phase_change and h>1e-8:
             if phase_depth>=24:
@@ -335,15 +589,38 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
         scale=max(1.,kinetic(y),kinetic(end),a.spring_energy,final.spring_energy,
                   abs(mass*gravity*(end[1]-y[1])),abs(work),lost)
         tolerance=traction.energy_absolute_tolerance_j+traction.energy_relative_tolerance*scale
+        edge_release_loss=0.
+        if phase_domain=='atlas_rotating_edge_v4' and abs(residual)>tolerance:
+            signatures=tuple(frozenset(item.wheel_index for item in f.contacts)
+                             for f in (*stages,final))
+            # Explicit, bounded dissipative road-contact release ledger.
+            # A released massless wheel cannot create a body momentum impulse.
+            # Missing event-time proof or rebound must remain a physics failure.
+            if h<=1e-8:
+                try:
+                    release=certify_wheel_edge_release_energy(
+                        signatures,start_spring_energy_j=a.spring_energy,
+                        end_spring_energy_j=final.spring_energy,
+                        balance_residual_j=residual,
+                        balance_tolerance_j=tolerance,bracket_duration_s=h)
+                except ValueError:
+                    pass  # Original energy audit below must still fail closed.
+                else:
+                    edge_release_loss=release.transferred_to_environment_j
+                    lost+=edge_release_loss
+                    residual=release.residual_after_transfer_j
         if abs(residual)>tolerance:
             if depth>=traction.max_refinements:
+                if phase_domain=='atlas_rotating_edge_v4':
+                    signatures=tuple(tuple(item.wheel_index for item in stage.contacts) for stage in (*stages,final))
+                    raise SuspensionResolutionError(f'v4 spatial energy refinement exhausted: h={h:.3g} residual={residual:.9g} tol={tolerance:.9g} spring0={a.spring_energy:.8g} spring1={final.spring_energy:.8g} masks={signatures}')
                 raise SuspensionResolutionError('spatial energy balance unresolved at refinement limit')
             middle=advance(y,start,h/2.,depth+1)
             return advance(middle,times[-1],h/2.,depth+1)
         first,last=vehicle(y),vehicle(end)
         if lifecycle:
             first,last=replace(first,grounded=a.compressed),replace(last,grounded=final.compressed)
-        if phase_change:
+        if phase_change and phase_domain!='atlas_rotating_edge_v4':
             # A SLERP wheel/plane gap has normalized second derivative bounded
             # by theta^2*|r|*|gradient|. Its secant exceeds every derivative's
             # deviation by half this bound, proving a unique phase crossing.
@@ -378,14 +655,90 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                     if direction*secant<=.5*curvature+roundoff:
                         raise SuspensionResolutionError('spatial phase crossing monotonicity unresolved')
         ballistic=lifecycle and not any(f.compressed for f in (*stages,final))
-        verdict=certify_multisurface_support(first,last,body,physics.contact,surfaces,
+        if phase_domain=='atlas_rotating_edge_v4':
+            # No all-wheel footprint demand; independently prove the complete
+            # chassis does not cross any currently present road patch.
+            # Unknown/grazing geometric intervals always reject the step.
+            def pose_at(t):
+                return VehicleState(first.position+(last.position-first.position)*t,
+                                    first.velocity+(last.velocity-first.velocity)*t,
+                                    _slerp(first.orientation,last.orientation,t),
+                                    first.angular_velocity+(last.angular_velocity-first.angular_velocity)*t,
+                                    first.grounded)
+            try:
+                certify_swept_chassis_patch_intersection_free(pose_at,0.,1.,body,atlas,
+                    max_subdivisions=14,
+                    gravity_mps2=gravity*h*h if ballistic else 0.)
+            except SuspensionResolutionError as error:
+                if (phase_domain=='atlas_rotating_edge_v4'
+                    and 'bounded chassis witnessed physical road contact' in str(error)
+                    and h>1e-8):
+                    try:
+                        early_contact=apply_first_road_body_contact(
+                            first,last,body,atlas,RigidBodyImpactMass(mass,inertia),
+                            duration_s=h)
+                    except ValueError as diagnostic_error:
+                        if h>1e-5:
+                            raise SuspensionResolutionError(
+                                f'v4 first road proof diagnostic h={h:.9g} '
+                                f'start_time={start:.9g} '
+                                f'first={first.position} last={last.position} '
+                                f'cause={diagnostic_error}') from error
+                        early_contact=None  # May be a corner/seam, never invent a face.
+                    if early_contact is not None:
+                        time_s=start+early_contact.contact.witnessed_contact_s
+                        original_prefix=tuple(
+                            CenterSegment(t0,t1,p.position,r.position,
+                                p.velocity if airborne else None,
+                                gravity if airborne else 0.)
+                            for t0,t1,p,r,airborne in zip(
+                                times[:-1],times[1:],poses[:-1],poses[1:],
+                                ballistic_leaves,strict=True))
+                        if (time_s<=start or time_s>dt
+                            or len(original_prefix)!=len(leaves)):
+                            raise SuspensionResolutionError(
+                                'first road contact source time is not an accepted prefix') from error
+                        event_segment=CenterSegment(start,time_s,first.position,
+                            early_contact.contact.preimpact.position)
+                        prefix=original_prefix+(event_segment,)
+                        if time_s<dt:
+                            prefix+=(CenterSegment(time_s,dt,
+                                early_contact.contact.preimpact.position,
+                                early_contact.contact.preimpact.position),)
+                        contact=early_contact.contact
+                        crash=PhysicalCrash(
+                            f'road-patch:{early_contact.patch_id}',time_s,
+                            start+contact.first_clear_s,time_s,
+                            len(original_prefix),contact,prefix,
+                            version='wp3_grounded_applied_road_crash_v4_dev')
+                        source=SpatialRoadCrashSource(
+                            first,last,start,h,atlas,body,
+                            RigidBodyImpactMass(mass,inertia),
+                            tuple(poses),tuple(times),tuple(leaves),
+                            tuple(ballistic_leaves),tuple(brackets))
+                        raise SpatialRoadCrash(crash,source) from error
+                if lifecycle and not phase_change and h>1e-8 and phase_depth<24:
+                    middle=advance(y,start,h/2.,depth,phase_depth+1)
+                    return advance(middle,times[-1],h/2.,depth,phase_depth+1)
+                witness='no certified first bounded patch collision'
+                if 'witnessed physical road contact' in str(error):
+                    try:
+                        event=certify_first_bounded_road_contact(first,last,body,atlas,
+                            duration_s=h,resolution_s=1e-6)
+                        if event is not None:
+                            witness=f'first bounded patch interval={event}'
+                    except ValueError as proof_error:
+                        witness=f'first patch contact unresolved: {proof_error}'
+                raise SuspensionResolutionError(f'spatial edge chassis sweep uncertified: {error}; {witness}') from error
+        else:
+            verdict=certify_multisurface_support(first,last,body,physics.contact,surfaces,
                                             body_clearance_version='bounded_patch_planes_v2',
             contact_domain='unilateral_free_extension_v1' if lifecycle else 'four_supported_v1',
             ballistic_sag_m=gravity*h*h/8. if ballistic else 0.,
             maximum_deflection_m=-preload/physics.spring_stiffness_npm if ballistic else None,
             minimum_support_deflection_m=-preload/physics.spring_stiffness_npm
                 if lifecycle and not ballistic and not phase_change else None)
-        if not verdict.valid:
+        if phase_domain!='atlas_rotating_edge_v4' and not verdict.valid:
             if lifecycle and not phase_change and h>1e-8 and phase_depth<24:
                 middle=advance(y,start,h/2.,depth,phase_depth+1)
                 return advance(middle,times[-1],h/2.,depth,phase_depth+1)
@@ -404,7 +757,7 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
         if len(leaves)>=4096:
             raise SuspensionResolutionError('spatial substep budget exhausted')
         leaves.append(SpatialSubstepAudit(start,start+h,impulse,torque_impulse,linear_error,angular_error,
-            e0,e1,work,lost,residual,tolerance,tuple(f.contacts for f in stages)))
+            e0,e1,work,lost,residual,tolerance,tuple(f.contacts for f in stages),edge_release_loss))
         if phase_change:
             brackets.append(SpatialPhaseBracket('landing' if final.compressed else 'takeoff',start,start+h))
         ballistic_leaves.append(lifecycle and not any(f.compressed for f in (*stages,final)))
@@ -425,7 +778,8 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
         sum(s.energy_residual_j for s in leaves),max(s.linear_impulse_residual_ns for s in leaves),
         max(s.angular_impulse_residual_nms for s in leaves))
     if lifecycle:
-        audit=SpatialLifecycleAudit('spatial_rotating_compliant_lifecycle_rk4_v3' if phase_domain=='atlas_rotating_v3'
+        audit=SpatialLifecycleAudit('spatial_road_edge_partial_lifecycle_rk4_v4' if phase_domain=='atlas_rotating_edge_v4'
+            else 'spatial_rotating_compliant_lifecycle_rk4_v3' if phase_domain=='atlas_rotating_v3'
             else 'spatial_compliant_atlas_lifecycle_rk4_v2' if phase_domain=='atlas_gradient_v2'
             else 'spatial_compliant_lifecycle_rk4_v1',audit.substeps,
             audit.actuator_work_j,audit.dissipation_j,audit.energy_residual_j,
@@ -433,3 +787,32 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
     centers=tuple(CenterSegment(a,b,p.position,r.position,p.velocity if air else None,gravity if air else 0.)
         for a,b,p,r,air in zip(times[:-1],times[1:],poses[:-1],poses[1:],ballistic_leaves,strict=True))
     return SpatialGroundResult(suspension,audit,centers)
+
+
+@dataclass(frozen=True,slots=True)
+class SpatialRoadCrashSource:
+    """Development-only source bind for a first bounded road impact."""
+    first:VehicleState
+    last:VehicleState
+    segment_start_s:float
+    segment_duration_s:float
+    road_atlas:tuple
+    body:VehicleBodyGeometry
+    mass:RigidBodyImpactMass
+    accepted_poses:tuple[VehicleState,...]
+    accepted_times_s:tuple[float,...]
+    accepted_leaves:tuple[SpatialSubstepAudit,...]
+    accepted_ballistic_leaves:tuple[bool,...]
+    accepted_phase_brackets:tuple[SpatialPhaseBracket,...]
+    wheel_hard_stop_local:Vec3|None=None
+    wheel_hard_stop_patch:object|None=None
+    wheel_hard_stop_clear_s:float|None=None
+    wheel_hard_stop_witness_s:float|None=None
+    wheel_hard_stop_impact_audit:SpatialSubstepAudit|None=None
+
+class SpatialRoadCrash(RuntimeError):
+    """Opt-in v4 physically absorbed road contact, not a scientific outcome."""
+    def __init__(self,crash,source:SpatialRoadCrashSource):
+        super().__init__("v4 accepted first road body contact: development absorbing terminal")
+        self.crash=crash
+        self.source=source
