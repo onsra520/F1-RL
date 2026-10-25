@@ -28,6 +28,8 @@ SOURCES={
       ("bounded_road_body","grounded_road_obb_impulse_absorbing_v4_development"),
   "wp3_grounded_wheel_hard_stop_crash_v4_dev":
       ("wheel_hard_stop","grounded_wheel_hard_stop_absorbing_v4_development"),
+  "wp3_grounded_wheel_edge_stop_crash_v4_dev":
+      ("wheel_edge_hard_stop","grounded_wheel_edge_hard_stop_absorbing_v4_development"),
 }
 
 

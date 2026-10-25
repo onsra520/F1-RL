@@ -43,7 +43,10 @@ class PhysicalCrash:
                      and self.obstacle_id.startswith('road-patch:'))
                     or (self.contact.kind=="wheel_hard_stop"
                      and self.version=="wp3_grounded_wheel_hard_stop_crash_v4_dev"
-                     and self.obstacle_id.startswith('wheel-hard-stop:')))
+                     and self.obstacle_id.startswith('wheel-hard-stop:'))
+                    or (self.contact.kind=="wheel_edge_hard_stop"
+                     and self.version=="wp3_grounded_wheel_edge_stop_crash_v4_dev"
+                     and self.obstacle_id.startswith('wheel-edge-stop:')))
             or type(self.segment_index) is not int or self.segment_index<0
             or not all(type(t) in (float,int) and isfinite(t)
                    for t in (self.tick_contact_time_s,self.last_proven_clear_s,self.first_overlap_s))

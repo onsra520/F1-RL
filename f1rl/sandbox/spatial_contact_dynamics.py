@@ -24,6 +24,9 @@ from .spatial_partial_wheel_contact import sample_spatial_partial_wheels
 from .finite_tire_footprint_v4 import sample_finite_wheel_coverage
 from .wheel_edge_release_energy import certify_wheel_edge_release_energy
 from .wheel_bump_stop_impact import certify_wheel_bump_stop
+from .wheel_edge_overtravel_impact import (
+    incoming_edge,entry_margin,apply_edge_overtravel_impulse_at_prefix,
+)
 from .rigid_body_impact_response import RigidBodyImpactMass
 from .accepted_contact_transition import apply_bump_impulse_at_certified_clear_pose
 from .accepted_road_body_contact import apply_first_road_body_contact
@@ -368,6 +371,34 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                     mass=RigidBodyImpactMass(mass,inertia),duration_s=elapsed,
                     resolution_s=min(1e-10,elapsed/128.))
             except ValueError as proof_error:
+                # Distinct event: the tire is OUTSIDE a polygon footprint at
+                # the accepted start, already BELOW the vertical hard stop.
+                # Its first physical encounter is a horizontal tyre sidewall
+                # against that polygon's finite-radius boundary, not a
+                # fictitious crossing of the already-penetrated y=stop plane.
+                original=vehicle(start_y)
+                rejected=vehicle(trial_y)
+                try:
+                    patch_index=next(i for i,p in enumerate(atlas[0])
+                                     if p.id==error.road_patch.id)
+                    polygon=atlas[1][patch_index]
+                    edge_index=incoming_edge(
+                        original,rejected,error.wheel_local,error.road_patch,
+                        polygon,max_bump_m=physics.contact.max_bump_m)
+                except (ValueError,StopIteration):
+                    pass  # Keep the original fail-closed vertical error.
+                else:
+                    fault=SuspensionResolutionError(
+                        'source-witnessed first compressed tire sidewall entry',
+                        failure_code='edge_overtravel')
+                    fault.wheel_index=error.wheel_index
+                    fault.wheel_local=error.wheel_local
+                    fault.road_patch=error.road_patch
+                    fault.edge_polygon=polygon
+                    fault.edge_index=edge_index
+                    fault.trial_y=trial_y
+                    fault.trial_duration_s=elapsed
+                    raise fault from error
                 n=error.road_patch.normal
                 def signed_gap(p):
                     return (physics.contact.max_bump_m*n.y+
@@ -420,7 +451,8 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             final=checked_stage(end,y,h)
         except SuspensionResolutionError as fault:
             if (phase_domain!='atlas_rotating_edge_v4' or
-                getattr(fault,'failure_code',None)!='over_bump_travel'
+                getattr(fault,'failure_code',None) not in
+                    ('over_bump_travel','edge_overtravel')
                 or not hasattr(fault,'trial_y')):
                 raise
             # Refine the accepted RK4 prefix rather than applying an impulse
@@ -467,7 +499,15 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                         n=fault.road_patch.normal
                         clearance=physics.contact.max_bump_m*n.y+(
                             wheel-fault.road_patch.origin).dot(n)
-                        if clearance< -1e-9:
+                        if getattr(fault,'failure_code',None)=='edge_overtravel':
+                            margin=entry_margin(proof,fault.wheel_local,
+                                fault.edge_polygon,fault.edge_index)
+                            # Reject interior penetration; only a genuine
+                            # finite-tyre exterior prefix can be accepted.
+                            if margin>0.:
+                                high=probe
+                                continue
+                        elif clearance< -1e-9:
                             high=probe
                             continue
                     except SuspensionResolutionError as why:
@@ -481,11 +521,19 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                 if prefix_y is None or low<=0.:
                     raise ValueError('no accepted pre-impact RK4 prefix to hard stop')
                 pre=vehicle(prefix_y)
-                impact=apply_bump_impulse_at_certified_clear_pose(
-                    pre,RigidBodyImpactMass(mass,inertia),
-                    wheel_local=fault.wheel_local,road=fault.road_patch,
-                    max_bump_m=physics.contact.max_bump_m,
-                    first_clear_s=low,first_witness_s=high)
+                if getattr(fault,'failure_code',None)=='edge_overtravel':
+                    impact=apply_edge_overtravel_impulse_at_prefix(
+                        pre,RigidBodyImpactMass(mass,inertia),
+                        wheel_local=fault.wheel_local,road=fault.road_patch,
+                        polygon=fault.edge_polygon,edge_index=fault.edge_index,
+                        max_bump_m=physics.contact.max_bump_m,
+                        first_clear_s=low,first_witness_s=high)
+                else:
+                    impact=apply_bump_impulse_at_certified_clear_pose(
+                        pre,RigidBodyImpactMass(mass,inertia),
+                        wheel_local=fault.wheel_local,road=fault.road_patch,
+                        max_bump_m=physics.contact.max_bump_m,
+                        first_clear_s=low,first_witness_s=high)
                 post=impact.postimpact
                 q=post.orientation
                 H=angular_momentum(q,post.angular_velocity)
@@ -543,10 +591,13 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                 if tick_hit<dt:
                     prefix+=(CenterSegment(tick_hit,dt,
                         impact.preimpact.position,impact.preimpact.position),)
+                edge_hit=getattr(fault,'failure_code',None)=='edge_overtravel'
                 crash=PhysicalCrash(
-                    f'wheel-hard-stop:{fault.road_patch.id}',
+                    (f'wheel-edge-stop:{fault.road_patch.id}' if edge_hit else
+                     f'wheel-hard-stop:{fault.road_patch.id}'),
                     tick_hit,start+low,tick_hit,len(leaves),impact,prefix,
-                    version='wp3_grounded_wheel_hard_stop_crash_v4_dev')
+                    version=('wp3_grounded_wheel_edge_stop_crash_v4_dev' if edge_hit
+                             else 'wp3_grounded_wheel_hard_stop_crash_v4_dev'))
                 impact_leaf=SpatialSubstepAudit(
                     start,start+low,total_force,total_torque,lin,ang,
                     E0,E1,work,loss,balance,tolerance,
@@ -559,7 +610,9 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                     tuple(poses),tuple(times),tuple(leaves),
                     tuple(ballistic_leaves),tuple(brackets),
                     fault.wheel_local,fault.road_patch,low,high,
-                    impact_leaf)
+                    impact_leaf,
+                    fault.edge_polygon if edge_hit else None,
+                    fault.edge_index if edge_hit else None)
                 raise SpatialRoadCrash(crash,source)
             tick_hit=start+low
             leaves.append(SpatialSubstepAudit(start,tick_hit,
@@ -809,6 +862,8 @@ class SpatialRoadCrashSource:
     wheel_hard_stop_clear_s:float|None=None
     wheel_hard_stop_witness_s:float|None=None
     wheel_hard_stop_impact_audit:SpatialSubstepAudit|None=None
+    wheel_edge_polygon:tuple[tuple[float,float],...]|None=None
+    wheel_edge_index:int|None=None
 
 class SpatialRoadCrash(RuntimeError):
     """Opt-in v4 physically absorbed road contact, not a scientific outcome."""

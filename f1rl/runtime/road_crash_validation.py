@@ -40,7 +40,7 @@ def verify_development_road_crash(
     if crash is None or src is None:
         raise PhysicsTransitionError("road crash evidence absent")
     c=crash.contact
-    if c.kind=='wheel_hard_stop':
+    if c.kind in ('wheel_hard_stop','wheel_edge_hard_stop'):
         return verify_development_wheel_hard_stop_crash(
             result,previous,config,parameters=parameters,dt=dt)
     if (config.ground_motion_version!='spatial_road_edge_partial_lifecycle_v4'
@@ -165,6 +165,7 @@ def verify_development_wheel_hard_stop_crash(
     src=result.road_crash_source
     if crash is None or src is None:raise PhysicsTransitionError("wheel stop source missing")
     c=crash.contact
+    is_edge=c.kind=='wheel_edge_hard_stop'
     m=RigidBodyImpactMass(config.independent_suspension_policy.mass_kg,
        Vec3(config.independent_suspension_policy.pitch_inertia_kg_m2,
             config.spatial_contact_policy.yaw_inertia_kg_m2,
@@ -178,17 +179,25 @@ def verify_development_wheel_hard_stop_crash(
     ballistic=src.accepted_ballistic_leaves
     if (config.mode!='wp7_lifecycle_v1'
         or config.ground_motion_version!='spatial_road_edge_partial_lifecycle_v4'
-        or crash.version!='wp3_grounded_wheel_hard_stop_crash_v4_dev'
-        or c.kind!='wheel_hard_stop'
+        or crash.version!=('wp3_grounded_wheel_edge_stop_crash_v4_dev' if is_edge
+                            else 'wp3_grounded_wheel_hard_stop_crash_v4_dev')
+        or c.kind!=('wheel_edge_hard_stop' if is_edge else 'wheel_hard_stop')
         or not isinstance(local,Vec3)
         or not isinstance(road,PlanarSurfacePatch)
-        or not crash.obstacle_id==f'wheel-hard-stop:{road.id}'
+        or not crash.obstacle_id==f'{"wheel-edge-stop" if is_edge else "wheel-hard-stop"}:{road.id}'
         or not isinstance(leaf,object) or leaf is None
         or c.preimpact.position!=c.postimpact.position
         or not c.preimpact.grounded or not c.postimpact.grounded
         or result.precrash_result is not None or result.events
         or result.spatial_ground_telemetry is not None or result.flight_telemetry is not None
         or m!=src.mass or src.body!=config.body_geometry
+        or (is_edge and (
+            not isinstance(src.wheel_edge_polygon,tuple)
+            or type(src.wheel_edge_index) is not int
+            or not src.road_atlas or road not in src.road_atlas[0]
+            or src.road_atlas[1][src.road_atlas[0].index(road)]!=src.wheel_edge_polygon))
+        or (not is_edge and (src.wheel_edge_polygon is not None
+                              or src.wheel_edge_index is not None))
         or not 0.<=src.segment_start_s<dt
         or not 0.<src.segment_duration_s<=dt-src.segment_start_s+1e-12
         or len(poses)!=len(times) or len(leaves)!=len(poses)-1
@@ -230,19 +239,39 @@ def verify_development_wheel_hard_stop_crash(
           -leaf.torque_impulse_nms).magnitude>1e-7):
         raise PhysicsTransitionError('wheel stop impulse fails accepted prefix momenta')
     try:
-        cert=certify_wheel_bump_stop(src.first,src.last,
-            wheel_local=local,road=road,
-            max_bump_m=config.independent_suspension_policy.contact.max_bump_m,
-            mass=m,duration_s=src.segment_duration_s,
-            resolution_s=min(1e-10,src.segment_duration_s/128.))
-        replay=apply_bump_impulse_at_certified_clear_pose(
-            c.preimpact,m,wheel_local=local,road=road,
-            max_bump_m=config.independent_suspension_policy.contact.max_bump_m,
-            first_clear_s=clear,first_witness_s=witness)
+        if is_edge:
+            from ..sandbox.wheel_edge_overtravel_impact import (
+                incoming_edge,apply_edge_overtravel_impulse_at_prefix,
+                entry_margin,
+            )
+            edge=incoming_edge(src.first,src.last,local,road,
+                src.wheel_edge_polygon,
+                max_bump_m=config.independent_suspension_policy.contact.max_bump_m)
+            if edge!=src.wheel_edge_index:
+                raise ValueError('sidewall edge index does not match source')
+            if (entry_margin(c.preimpact,local,src.wheel_edge_polygon,edge)<-1e-6
+                or entry_margin(c.preimpact,local,src.wheel_edge_polygon,edge)>1e-9):
+                raise ValueError('unwitnessed finite tire edge time')
+            replay=apply_edge_overtravel_impulse_at_prefix(
+                c.preimpact,m,wheel_local=local,road=road,
+                polygon=src.wheel_edge_polygon,edge_index=edge,
+                max_bump_m=config.independent_suspension_policy.contact.max_bump_m,
+                first_clear_s=clear,first_witness_s=witness)
+            cert=None
+        else:
+            cert=certify_wheel_bump_stop(src.first,src.last,
+                wheel_local=local,road=road,
+                max_bump_m=config.independent_suspension_policy.contact.max_bump_m,
+                mass=m,duration_s=src.segment_duration_s,
+                resolution_s=min(1e-10,src.segment_duration_s/128.))
+            replay=apply_bump_impulse_at_certified_clear_pose(
+                c.preimpact,m,wheel_local=local,road=road,
+                max_bump_m=config.independent_suspension_policy.contact.max_bump_m,
+                first_clear_s=clear,first_witness_s=witness)
     except ValueError as error:
         raise PhysicsTransitionError('wheel hard stop cannot be independently re-certified') from error
-    if (cert.first_violating_time_s<clear-1e-7
-        or cert.first_clear_time_s>witness+1e-7
+    if ((not is_edge and (cert.first_violating_time_s<clear-1e-7
+        or cert.first_clear_time_s>witness+1e-7))
         or replay!=c):
         raise PhysicsTransitionError('wheel stop source and signed impulse differ')
     prefix=tuple(CenterSegment(a,b,p.position,q.position,

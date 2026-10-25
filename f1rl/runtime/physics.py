@@ -250,6 +250,8 @@ class PhysicsConfig:
                     ("spatial_road_edge_partial_lifecycle_rk4_v4",
                      "grounded_wheel_hard_stop_absorbing_v4_development"
                      if result.crash.contact.kind=="wheel_hard_stop" else
+                     "grounded_wheel_edge_hard_stop_absorbing_v4_development"
+                     if result.crash.contact.kind=="wheel_edge_hard_stop" else
                      "grounded_road_obb_impulse_absorbing_v4_development"),())
             # Fully revalidate the pre-impact RK4 tick against its unchanged
             # momenta and work audit, then separately audit the accepted
