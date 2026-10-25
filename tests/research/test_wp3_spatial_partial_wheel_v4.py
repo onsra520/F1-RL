@@ -128,7 +128,7 @@ def test_optin_road_edge_rejects_penetrating_body_even_with_support_present():
             VehicleControl(0.,0.,0.),spatial_policy(),dt=1e-8)
 
 
-def test_edge_release_accounted_as_explicit_dissipation_not_hidden_energy():
+def test_finite_tire_edge_release_conserves_work_without_hidden_energy():
     from tests.sandbox.test_road_relative_suspension import ramp_translation
     f,_,_,_=ramp_translation()
     v=pose(1.199,speed=4.)
@@ -138,7 +138,10 @@ def test_edge_release_accounted_as_explicit_dissipation_not_hidden_energy():
         v,physics,BODY,PLAN,f.vehicle_parameters,
         VehicleControl(0.,0.,0.),spatial_policy(),dt=.001)
     dissipated=sum(leaf.road_edge_release_dissipation_j for leaf in result.audit.substeps)
-    assert dissipated>0.
+    # v4's finite tyre footprint now uses the conservative coverage-gradient
+    # force for edge spring energy. No artificial one-step edge dissipation
+    # is needed or licensed in this continuous-contact test.
+    assert dissipated==0.
     assert result.audit.dissipation_j>=dissipated
     for leaf in result.audit.substeps:
         assert abs(leaf.energy_residual_j)<=leaf.energy_tolerance_j
