@@ -167,7 +167,9 @@ def apply_bump_impulse_at_certified_clear_pose(
     r=pre.orientation.rotate(wheel_local)
     pt=pre.position+r
     gap=max_bump_m*n.y+(pt-road.origin).dot(n)
-    if not 0.<=gap<=maximum_road_gap_m:
+    # Accept only sub-angstrom signed boundary roundoff; real penetration
+    # and any macroscopic overtravel still fail closed.
+    if not -1e-9<=gap<=maximum_road_gap_m:
         raise ValueError(f'accepted prefix not at clear hard-stop boundary: gap_m={gap:.9g}')
     speed=(pre.velocity+pre.angular_velocity.cross(r)).dot(n)
     if speed>=-1e-6:

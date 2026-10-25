@@ -12,6 +12,7 @@ from .accepted_contact_transition import (
     AppliedContactState,apply_certified_face_impulse,absorb_crash_center_prefix
 )
 from .body_collision import VehicleBodyGeometry,sweep_body_against_obstacle
+from .certified_edge_impact import apply_certified_edge_impulse
 from .center_trajectory import CenterSegment
 from .rigid_body_impact_response import RigidBodyImpactMass
 from .vehicle import VehicleState
@@ -34,9 +35,15 @@ class PhysicalCrash:
             or not ((self.contact.kind=="obstacle_face"
                      and self.version=="wp3_grounded_applied_crash_v4_dev"
                      and not self.obstacle_id.startswith('road-patch:'))
+                    or (self.contact.kind=="obstacle_edge"
+                     and self.version=="wp3_grounded_applied_edge_crash_v4_dev"
+                     and not self.obstacle_id.startswith('road-patch:'))
                     or (self.contact.kind=="bounded_road_body"
                      and self.version=="wp3_grounded_applied_road_crash_v4_dev"
-                     and self.obstacle_id.startswith('road-patch:')))
+                     and self.obstacle_id.startswith('road-patch:'))
+                    or (self.contact.kind=="wheel_hard_stop"
+                     and self.version=="wp3_grounded_wheel_hard_stop_crash_v4_dev"
+                     and self.obstacle_id.startswith('wheel-hard-stop:')))
             or type(self.segment_index) is not int or self.segment_index<0
             or not all(type(t) in (float,int) and isfinite(t)
                    for t in (self.tick_contact_time_s,self.last_proven_clear_s,self.first_overlap_s))
@@ -67,14 +74,28 @@ def first_applied_grounded_crash(
             if segment.initial_velocity is not None or not p.grounded or not q.grounded:
                 raise ValueError("airborne obstacle impact requires a distinct ballistic solver")
             duration=segment.end_time_s-segment.start_time_s
-            accepted=apply_certified_face_impulse(
-                p,q,body,obstacle.volume,mass,duration_s=duration)
+            try:
+                accepted=apply_certified_face_impulse(
+                    p,q,body,obstacle.volume,mass,duration_s=duration)
+                crash_version="wp3_grounded_applied_crash_v4_dev"
+            except ValueError as face_error:
+                # Face normal absent: ONLY a separately source-certified
+                # unique SAT edge/edge witness may admit the transition.
+                # Invalid or ambiguous corners still fail closed.
+                try:
+                    accepted=apply_certified_edge_impulse(
+                        p,q,body,obstacle.volume,mass,duration_s=duration)
+                except ValueError as edge_error:
+                    raise ValueError(
+                        f"no physical face or unique edge impulse: "
+                        f"{face_error}; {edge_error}") from edge_error
+                crash_version="wp3_grounded_applied_edge_crash_v4_dev"
             abs_t=segment.start_time_s+accepted.witnessed_contact_s
             shortened=absorb_crash_center_prefix(segments,abs_t,
                 fixed_dt_s=fixed_dt_s,accepted=accepted)
             candidates.append(PhysicalCrash(
                 obstacle.id,abs_t,segment.start_time_s+accepted.first_clear_s,
-                abs_t,i,accepted,shortened))
+                abs_t,i,accepted,shortened,version=crash_version))
             break
     if not candidates:
         return None

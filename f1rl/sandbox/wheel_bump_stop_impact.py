@@ -66,8 +66,12 @@ def certify_wheel_bump_stop(
         pt=s.position+s.orientation.rotate(wheel_local)
         return max_bump_m*normal.y+(pt-road.origin).dot(normal)
     g0,g1=gap(0.),gap(duration_s)
-    if not (g0>1e-9 and g1< -1e-9):
-        raise ValueError("hard stop must be strictly crossed from a certified clear state")
+    # RK4's separately accepted pose can be within 0.1 nm of an ideal
+    # hard-stop boundary. Distinguish this bounded numerical contact from
+    # any macroscopic existing penetration: the rejected endpoint must be
+    # strictly beyond 1 nm, with approaching velocity proved below.
+    if not (-1e-9<=g0 and g1<-1e-9):
+        raise ValueError(f"hard stop must be crossed from certified clear/touching state: g0={g0:.14g},g1={g1:.14g},dt={duration_s:.14g}")
     # Physically monotonic only if both wheel anchor velocities are approaching
     # the ROAD plane, rejecting ambiguous oscillation/recontact.
     for s in (before,after):

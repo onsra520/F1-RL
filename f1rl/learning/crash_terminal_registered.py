@@ -22,8 +22,12 @@ PHYSICS_V4="spatial_road_edge_partial_lifecycle_v4"
 SOURCES={
   "wp3_grounded_applied_crash_v4_dev":
       ("obstacle_face","grounded_face_impulse_absorbing_v4_development"),
+  "wp3_grounded_applied_edge_crash_v4_dev":
+      ("obstacle_edge","grounded_edge_impulse_absorbing_v4_development"),
   "wp3_grounded_applied_road_crash_v4_dev":
       ("bounded_road_body","grounded_road_obb_impulse_absorbing_v4_development"),
+  "wp3_grounded_wheel_hard_stop_crash_v4_dev":
+      ("wheel_hard_stop","grounded_wheel_hard_stop_absorbing_v4_development"),
 }
 
 

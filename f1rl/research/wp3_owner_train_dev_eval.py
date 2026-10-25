@@ -155,8 +155,9 @@ def execute_cell(root: str, history: str, out: str, run_id: str,
     if manifest["sha256"] != digest({k: v for k, v in manifest.items() if k != "sha256"}):
         raise RuntimeError("manifest checksum mismatch")
     if not probe:
-        import torch
-        torch.set_num_threads(1)
+        # Framework imports belong to the approved PPO backend, not here.
+        os.environ.setdefault('OMP_NUM_THREADS','1')
+        os.environ.setdefault('MKL_NUM_THREADS','1')
     path = out / "cells" / cell_filename(cell)
     cache = {}
     prior, pending = parse_cell(read_events(path), cell, run_id)

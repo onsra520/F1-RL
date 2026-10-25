@@ -241,13 +241,15 @@ class PhysicsConfig:
                 # Independently replay finite-road first contact and accepted
                 # rigid impulse. Distinct, development-only source/version.
                 from .road_crash_validation import verify_development_road_crash
-                verify_development_road_crash(result,previous,self,dt=dt)
+                verify_development_road_crash(result,previous,self,parameters=parameters,dt=dt)
                 self.validate_state(result.state,parameters)
                 return PhysicsTransitionAudit(
                     "wp7_transition_audit_v1",self.mode,
                     previous.flight.phase if previous.flight is not None else "grounded",
                     "grounded",start_time_s,end_time_s,
                     ("spatial_road_edge_partial_lifecycle_rk4_v4",
+                     "grounded_wheel_hard_stop_absorbing_v4_development"
+                     if result.crash.contact.kind=="wheel_hard_stop" else
                      "grounded_road_obb_impulse_absorbing_v4_development"),())
             # Fully revalidate the pre-impact RK4 tick against its unchanged
             # momenta and work audit, then separately audit the accepted
@@ -266,6 +268,13 @@ class PhysicsConfig:
             from ..sandbox.rigid_body_impact_response import RigidBodyImpactMass
             crash=result.crash
             c=crash.contact
+            if (c.kind,crash.version) not in (
+                    ("obstacle_face","wp3_grounded_applied_crash_v4_dev"),
+                    ("obstacle_edge","wp3_grounded_applied_edge_crash_v4_dev")):
+                raise PhysicsTransitionError("unregistered obstacle contact type/version")
+            solver_name=("grounded_face_impulse_absorbing_v4_development"
+                if c.kind=="obstacle_face" else
+                "grounded_edge_impulse_absorbing_v4_development")
             base=result.precrash_result
             mass=RigidBodyImpactMass(self.independent_suspension_policy.mass_kg,
                 Vec3(self.independent_suspension_policy.pitch_inertia_kg_m2,
@@ -276,7 +285,7 @@ class PhysicsConfig:
                     c.impulse_n_s,c.angular_impulse_nms,
                     c.kinetic_before_j,c.kinetic_after_j,c.energy_lost_j,
                     first_clear=c.first_clear_s,witness=c.witnessed_contact_s,
-                    kind='obstacle_face')
+                    kind=c.kind)
                 expected=absorb_crash_center_prefix(base.center_segments,
                     crash.tick_contact_time_s,fixed_dt_s=dt,accepted=c)
             except ValueError as error:
@@ -297,7 +306,7 @@ class PhysicsConfig:
                 raise PhysicsTransitionError('unaccepted crash contact momentum or event-time source')
             self.validate_state(result.state,parameters)
             return replace(original,solvers=(*original.solvers,
-                'grounded_face_impulse_absorbing_v4_development'))
+                solver_name))
         if self.mode == "legacy_v1":
             return None
         if self.mode != "legacy_v1" and any(isinstance(e, ObstacleHit) for e in result.events):

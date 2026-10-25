@@ -143,8 +143,15 @@ def _production_episode(root: Path, history: Path, case: dict,
             raise ValueError("randomized TRAIN reset config missing")
         factory = replace(factory, reset_config=replace(
             factory.reset_config, seed=case["env_seed"]))
+    # EXPERIMENTAL development Physics-v4 envelope. This is merely inside
+    # the policy type's allowable (<0.75 rad) configuration range; it is
+    # NOT independently validated physical calibration or science approval.
+    dev_suspension=replace(factory.physics_config.independent_suspension_policy,
+                           max_abs_tilt_rad=.7)
     factory = replace(factory,
-        physics_config=replace(factory.physics_config, ground_motion_version=PHYSICS),
+        physics_config=replace(factory.physics_config,
+                               ground_motion_version=PHYSICS,
+                               independent_suspension_policy=dev_suspension),
         race_config=replace(factory.race_config, version=RACE))
     if factory.race_config.hard_corridor_m != 4:
         raise ValueError("frozen original 4m boundary changed")
