@@ -1,0 +1,116 @@
+{
+  "all_cases_attempted": false,
+  "heldout_access": false,
+  "model_final_sha256": {
+    "A-seed0": "8cfcde6d4c88bbcc01dbf9b67dee3829c991474b0a8883a4479370f665c01c79",
+    "A-seed1": "4334c44b3370c4f0adaa345ca280d190850fda9599736cc561ed6cbb71425831",
+    "A-seed2": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc",
+    "B-seed0": "d76719fb04c5eee1a03e1b0885989f44faad6543d3a1fea9aa24fe6ac55867d6",
+    "B-seed1": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021",
+    "B-seed2": "18f17c3f07d3e62b43364f3f4c6572b3e08b3307a4ae47137b80342188ad0dae",
+    "C-seed0": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+    "C-seed1": "1089a4ddb826d8a52a3960f2415fc920ee1b87cedda6d062d661e4f3244440e7",
+    "C-seed2": "156ee0f2194f3aedb36cce3917cc4121994b53fa0f0c942c2de548b9e2ea32b7",
+    "D-seed0": "318f76813b69f8457dc169b6b3a89dd5f3aa2f2f765170075e0e48ab9f0e0109",
+    "D-seed1": "70892fdb0e93ffdc67c36e18e92c1ba70f7ce9f6d6dc41916370781f6f18fc0c",
+    "D-seed2": "212cca532ed1411246687821002ef55f62329ddcab18af2ff08f8e5b9b154cdc"
+  },
+  "no_retraining": true,
+  "paired_roster_sha256": "f2f9d15954cea48345a8932773ed945f6ed250ad1435b4e675b97e4a6b94f319",
+  "previous_29_invalid_cases": [
+    {
+      "env_seed": 3867024733,
+      "episode": 29,
+      "model": "C-seed0",
+      "old_cell_file": "005-C-seed0-right-turn-v1-randomized_train.jsonl",
+      "old_cell_sha256": "c9dad85bd13c199379d90c9c65f3e27843e5680e919b3519fe66cdc90e5963ee",
+      "old_error": "finite-tire wheel exceeds unchanged bump stop: front_left road-exit deflection=0.133349929; unscored hard-stop trial not certified: hard stop must be crossed from certified clear/touching state: g0=-0.0099380274671873,g1=-0.013349929343063,dt=0.003125 clear_gap_m=-0.00993802746719 rejected_gap_m=-0.0133499293431 vnormal0=-1.09229899713 vnormal1=-1.09351789049 elapsed_s=0.003125",
+      "old_error_type": "SuspensionResolutionError",
+      "policy_seed": 3573244413,
+      "stratum": "randomized_train",
+      "track": "right-turn-v1"
+    },
+    {
+      "env_seed": 3222444855,
+      "episode": 22,
+      "model": "B-seed1",
+      "old_cell_file": "042-B-seed1-slalom-v1-nominal.jsonl",
+      "old_cell_sha256": "5fc0e7baedf56ea74788435a666866af2587765ecc7e1d75369b7aa2664d8745",
+      "old_error": "finite-tire wheel exceeds unchanged bump stop: front_right road-main deflection=0.203742163; unscored hard-stop trial not certified: hard stop must be crossed from certified clear/touching state: g0=-0.07955450104592,g1=-0.083742163333228,dt=0.003125 clear_gap_m=-0.0795545010459 rejected_gap_m=-0.0837421633332 vnormal0=-1.34157192504 vnormal1=-1.34949343036 elapsed_s=0.003125",
+      "old_error_type": "SuspensionResolutionError",
+      "policy_seed": 4217860633,
+      "stratum": "nominal",
+      "track": "slalom-v1"
+    },
+    {
+      "env_seed": 4116029783,
+      "episode": 58,
+      "model": "B-seed1",
+      "old_cell_file": "045-B-seed1-right-turn-v1-randomized_train.jsonl",
+      "old_cell_sha256": "45ca2b3597037cbd316dc9bd998eb64ca1a6bd2e8c51cef189441296bf9f369b",
+      "old_error": "finite-tire wheel exceeds unchanged bump stop: front_left road-exit deflection=0.166717492; unscored hard-stop trial not certified: hard stop must be crossed from certified clear/touching state: g0=-0.036523778614537,g1=-0.046717492231607,dt=0.00625 clear_gap_m=-0.0365237786145 rejected_gap_m=-0.0467174922316 vnormal0=-1.62015714827 vnormal1=-1.64176669889 elapsed_s=0.00625",
+      "old_error_type": "SuspensionResolutionError",
+      "policy_seed": 1057076889,
+      "stratum": "randomized_train",
+      "track": "right-turn-v1"
+    },
+    {
+      "env_seed": 1055107271,
+      "episode": 14,
+      "model": "C-seed1",
+      "old_cell_file": "052-C-seed1-right-turn-v1-nominal.jsonl",
+      "old_cell_sha256": "5c19de9f0cec3962a1cb0c8ddd9a84e35acc5cad825934a46b149721ca90e97a",
+      "old_error": "finite-tire wheel exceeds unchanged bump stop: front_left road-exit deflection=0.155648239; unscored hard-stop trial not certified: hard stop must be crossed from certified clear/touching state: g0=-0.02993188625346,g1=-0.03564823898987,dt=0.00625 clear_gap_m=-0.0299318862535 rejected_gap_m=-0.0356482389899 vnormal0=-0.915371548611 vnormal1=-0.91387556086 elapsed_s=0.00625",
+      "old_error_type": "SuspensionResolutionError",
+      "policy_seed": 3640467870,
+      "stratum": "nominal",
+      "track": "right-turn-v1"
+    },
+    {
+      "env_seed": 535077555,
+      "episode": 4,
+      "model": "C-seed1",
+      "old_cell_file": "053-C-seed1-right-turn-v1-randomized_train.jsonl",
+      "old_cell_sha256": "e8e2f6545a1c384ee183be94387e974c6fe1317c2f01c422263c411fb850ab4c",
+      "old_error": "finite-tire wheel exceeds unchanged bump stop: front_left road-exit deflection=0.177413428; unscored hard-stop trial not certified: hard stop must be crossed from certified clear/touching state: g0=-0.054729875392058,g1=-0.057413427959889,dt=0.003125 clear_gap_m=-0.0547298753921 rejected_gap_m=-0.0574134279599 vnormal0=-0.858878961472 vnormal1=-0.870945036058 elapsed_s=0.003125",
+      "old_error_type": "SuspensionResolutionError",
+      "policy_seed": 2706193082,
+      "stratum": "randomized_train",
+      "track": "right-turn-v1"
+    },
+    {
+      "env_seed": 1138747381,
+      "episode": 39,
+      "model": "A-seed2",
+      "old_cell_file": "068-A-seed2-right-turn-v1-nominal.jsonl",
+      "old_cell_sha256": "eabf2676390fe04ae1ced484819352221241d4e53cc9f783074e718bf0ca5dc9",
+      "old_error": "finite-tire wheel exceeds unchanged bump stop: front_left road-exit deflection=0.185374643; unscored hard-stop trial not certified: hard stop must be crossed from certified clear/touching state: g0=-0.060299232756647,g1=-0.065374643411998,dt=0.00625 clear_gap_m=-0.0602992327566 rejected_gap_m=-0.065374643412 vnormal0=-0.816352921098 vnormal1=-0.807808725553 elapsed_s=0.00625",
+      "old_error_type": "SuspensionResolutionError",
+      "policy_seed": 4115752861,
+      "stratum": "nominal",
+      "track": "right-turn-v1"
+    },
+    {
+      "env_seed": 3595014424,
+      "episode": 26,
+      "model": "B-seed2",
+      "old_cell_file": "075-B-seed2-slalom-v1-randomized_train.jsonl",
+      "old_cell_sha256": "59915952f821684e033d076a96771fb8d7ef6c4bd1c3aa69335596df00c2688e",
+      "old_error": "finite-tire wheel exceeds unchanged bump stop: front_right road-main deflection=0.146358495; unscored hard-stop trial not certified: hard stop must be crossed from certified clear/touching state: g0=-0.017024588672618,g1=-0.026358495248117,dt=0.00625 clear_gap_m=-0.0170245886726 rejected_gap_m=-0.0263584952481 vnormal0=-1.48278978653 vnormal1=-1.50410181963 elapsed_s=0.00625",
+      "old_error_type": "SuspensionResolutionError",
+      "policy_seed": 3168896923,
+      "stratum": "randomized_train",
+      "track": "slalom-v1"
+    }
+  ],
+  "run_id": "WP3-CLEAN-R3-7-INVALID-20261026",
+  "schema": "wp3_29_original_invalid_wip_replay_v1",
+  "scientific_evidence": false,
+  "sha256": "3a41e55d24ec820f228ac55cec17f7a26695be07f24d16a33d0b8b7b281c1cc9",
+  "source": {
+    "modified_source": [],
+    "source_head": "929f05fa170e8d9f10ce3d150a557d7408ac0fa2"
+  },
+  "source_training_commit": "fe83f517479f3b990028d6409304fae83b8199a9",
+  "time_utc": "2026-10-25T20:08:13.083341+00:00"
+}
