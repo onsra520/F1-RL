@@ -1,0 +1,18 @@
+{
+  "invalid": 0,
+  "old_evidence_mutated": false,
+  "original_error_types": {
+    "GroundedBodyCollisionUnscored": 1,
+    "PhysicsTransitionError": 18,
+    "SuspensionResolutionError": 10
+  },
+  "remaining_errors": {},
+  "replayed_cases": 29,
+  "results_jsonl_sha256": "745ba524b687f6ec22ffa295a4e7f9edd14850785875820747097d2ef16ac419",
+  "scientific_evidence": false,
+  "source": {
+    "modified_source": [],
+    "source_head": "c057135a329af59e07d9823a7bedf4b2b06f8682"
+  },
+  "valid": 29
+}
