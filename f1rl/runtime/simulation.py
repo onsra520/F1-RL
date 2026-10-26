@@ -18,6 +18,7 @@ from ..sandbox.track.query import TrackQuery
 from ..sandbox.vehicle import VehicleControl, VehicleParameters
 from ..sandbox.world import WorldEvent, WorldState, step_world
 from ..sandbox.physical_crash import PhysicalCrash
+from ..sandbox.roll_envelope_terminal import RollEnvelopeStop
 
 
 def _finite_number(value: object, name: str) -> float:
@@ -70,6 +71,7 @@ class SimulationSnapshot:
     coupled_ground_telemetry: CoupledGroundAudit | None = None
     spatial_ground_telemetry: SpatialGroundAudit | None = None
     physical_crash: PhysicalCrash | None = None
+    roll_envelope_stop: RollEnvelopeStop | None = None
 
 
 class Simulation:
@@ -129,6 +131,8 @@ class Simulation:
         # may start a fresh trajectory; there is no post-impact future tick.
         if self._snapshot.physical_crash is not None:
             raise RuntimeError('absorbing physical crash terminal: reset required')
+        if self._snapshot.roll_envelope_stop is not None:
+            raise RuntimeError('absorbing certified roll-envelope terminal: reset required')
         current = self._state
         result = step_world(
             self._track,
@@ -166,6 +170,7 @@ class Simulation:
             result.coupled_ground_telemetry,
             result.spatial_ground_telemetry,
             result.crash,
+            result.roll_envelope_stop,
         )
         self._state = next_state
         self._snapshot = next_snapshot

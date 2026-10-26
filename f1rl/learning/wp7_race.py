@@ -100,6 +100,9 @@ def advance_directed_race(
     lifecycle = config is not None and config.version in ('wp7_directed_lifecycle_research_v1','wp7_directed_lifecycle_owner_v2','wp7_directed_lifecycle_crash_dev_v3',RACE_V4)
     owner = config is not None and config.owner_terminal
     impact=snapshot.physical_crash
+    envelope=snapshot.roll_envelope_stop
+    if envelope is not None and (config is None or config.version!=RACE_V4):
+        raise RaceContractError('tilt envelope requires registered v4 owner route contract')
     if impact is not None and (config is None or config.version not in ('wp7_directed_lifecycle_crash_dev_v3',RACE_V4)):
         raise RaceContractError('physical crash requires distinct versioned development route contract')
     timed = lifecycle or owner
@@ -133,6 +136,8 @@ def advance_directed_race(
     for segment in segments:
         if impact is not None and segment.start_time_s>=impact.tick_contact_time_s:
             break  # Any later gate or reward is outside the certified prefix.
+        if envelope is not None and segment.start_time_s>=envelope.first_clear_s:
+            break
         if owner:
             try:
                 fraction=first_hard_route_exit(authored,segment.start,segment.end)
@@ -146,6 +151,10 @@ def advance_directed_race(
                 limit=impact.tick_contact_time_s
                 failure_time=limit
                 failure_reason='physical_crash'
+            if envelope is not None and envelope.first_clear_s<=limit+1e-10:
+                limit=envelope.first_clear_s
+                failure_time=limit
+                failure_reason='tilt_envelope_exit'
             points=(segment.start,segment.position_at((segment.start_time_s+limit)/2.),segment.position_at(limit))
             sampled=max(authored.horizontal_distance(p) for p in points)
             peak=max(peak,sampled)
