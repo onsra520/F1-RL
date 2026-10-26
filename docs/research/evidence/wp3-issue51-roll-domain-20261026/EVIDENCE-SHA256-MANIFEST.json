@@ -1,0 +1,94 @@
+﻿{
+    "schema":  "wp3_roll_domain_engineering_evidence_sha256_v1",
+    "source":  "fc187879d96d95303308b3607a102049a56cd783",
+    "independent_science_review":  false,
+    "full_eval_started":  false,
+    "file_count":  17,
+    "files":  [
+                  {
+                      "name":  ".gitattributes",
+                      "size_bytes":  9,
+                      "sha256":  "8b9c3028d6467ff3be7c793141927841d70f47f52d0590677438f488ca154992"
+                  },
+                  {
+                      "name":  "PREVIOUS7-REPLAY-MANIFEST.json",
+                      "size_bytes":  7302,
+                      "sha256":  "58dd40734a17a9b338ac6559a94033b86ae58cde9cb843b1f7347628922dcf97"
+                  },
+                  {
+                      "name":  "PREVIOUS7-REPLAY-RESULTS.jsonl",
+                      "size_bytes":  6086,
+                      "sha256":  "4c5587e32f678e0f31f2f345bec503937cb165029d5e54c43ef0bee91815b7d5"
+                  },
+                  {
+                      "name":  "PREVIOUS7-REPLAY-SUMMARY.json",
+                      "size_bytes":  417,
+                      "sha256":  "724afc84f155631d9c5171cdfc043a730ec482424b8d996f3a8da8f75b9a0980"
+                  },
+                  {
+                      "name":  "R4-ROLL-BASELINE-RESULTS.jsonl",
+                      "size_bytes":  2161,
+                      "sha256":  "97d58978764d265753a5a189c5bf6710d87439e330d627c22d287f9baae6491f"
+                  },
+                  {
+                      "name":  "R4-ROLL-BASELINE-SUMMARY.json",
+                      "size_bytes":  455,
+                      "sha256":  "5d0c3d568d1cfeda68c4dd72ebf80447eb712bb669d58c8f9ec859f7581375fb"
+                  },
+                  {
+                      "name":  "README.md",
+                      "size_bytes":  4860,
+                      "sha256":  "c07bb47c2aad816e83d87fdcecd8ec516d61d8b80d88dc0a68a8c55caa26d37b"
+                  },
+                  {
+                      "name":  "ROLL-CERTIFICATE.jsonl",
+                      "size_bytes":  1777,
+                      "sha256":  "7b8cc1915b0c5308f9e78c5139dbf31d1553b61546f518c5592a50c24c2a7c87"
+                  },
+                  {
+                      "name":  "ROLL-CERTIFICATE-REPLAY-SUMMARY.json",
+                      "size_bytes":  417,
+                      "sha256":  "1dedfa5a2c42a677c8ae156e8de591ff05412b8069519b4340f7c4391365e1f9"
+                  },
+                  {
+                      "name":  "ROLL-CLEAN-REPLAY-MANIFEST.json",
+                      "size_bytes":  2280,
+                      "sha256":  "9f04fb243af36e934e79400de6425cbfa65767d8adba312bbf6abdd35b60d1f6"
+                  },
+                  {
+                      "name":  "ROLL-CLEAN-REPLAY-RESULTS.jsonl",
+                      "size_bytes":  661,
+                      "sha256":  "43d812dbaa207295ff6889998e0f9b2e00fd329e77cada3c3c98d3c16c211694"
+                  },
+                  {
+                      "name":  "ROLL-CLEAN-REPLAY-SUMMARY.json",
+                      "size_bytes":  417,
+                      "sha256":  "5d8b8da7f02f00c478646677fc65e850297ca15a3219596958754a42e47ae4ee"
+                  },
+                  {
+                      "name":  "SOURCE-LOCK.json",
+                      "size_bytes":  817,
+                      "sha256":  "24d4b648f32cd89f352abc0250f262f9a7d786f8914e703be56adbc96a25cc98"
+                  },
+                  {
+                      "name":  "WP3-FC18787-ROLL-FOCUSED-PYTEST-20261026.txt",
+                      "size_bytes":  532,
+                      "sha256":  "d5a30c32dd2bebda9532c22b33111861da286299f44daf064413b683b4714e77"
+                  },
+                  {
+                      "name":  "WP3-FC18787-ROLL-FOCUSED-PYTEST-EXIT-20261026.json",
+                      "size_bytes":  168,
+                      "sha256":  "ef138229f67dedc4fe293f28064724b1682071779e058b8d2b18f2c9fac11e36"
+                  },
+                  {
+                      "name":  "WP3-FC18787-ROLL-FULL-PYTEST-20261026.txt",
+                      "size_bytes":  6736,
+                      "sha256":  "a680ba4cb123372d287f37365bd9f72fd1a2412023a27c2a6df15c09dffc0098"
+                  },
+                  {
+                      "name":  "WP3-FC18787-ROLL-FULL-PYTEST-EXIT-20261026.json",
+                      "size_bytes":  202,
+                      "sha256":  "440776448e3cefbc83357eeee9f7f818d3c6e86419c8a2dae62d9683c0a05e28"
+                  }
+              ]
+}

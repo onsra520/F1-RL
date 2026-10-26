@@ -1,0 +1,19 @@
+﻿{
+    "source_head":  "fc187879d96d95303308b3607a102049a56cd783",
+    "source_tree":  "25d856bc808118b358490b4cf421410dc6927186",
+    "source_branch":  "fix/wp3-roll-domain-source-certified-20261026",
+    "source_clean":  true,
+    "immutable_predecessor":  "929f05fa170e8d9f10ce3d150a557d7408ac0fa2",
+    "physics_v4_roll_limit_rad":  0.7,
+    "terminal":  "wp3_source_certified_tilt_envelope_terminal_v1_dev",
+    "original_model":  "C-seed1",
+    "original_track":  "right-turn-v1",
+    "original_stratum":  "randomized_train",
+    "original_episode":  10,
+    "original_environment_seed":  3886169428,
+    "original_policy_seed":  1971191095,
+    "new_full_eval_started":  false,
+    "heldout_access":  false,
+    "independent_physics_signoff":  false,
+    "scientific_evaluation":  false
+}
