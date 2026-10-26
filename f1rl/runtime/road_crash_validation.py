@@ -11,6 +11,23 @@ from ..sandbox.accepted_road_body_contact import apply_first_road_body_contact
 from ..sandbox.center_trajectory import CenterSegment
 from ..sandbox.geometry.vector import Vec3
 from ..sandbox.rigid_body_impact_response import RigidBodyImpactMass
+from ..sandbox.full_quaternion_roll_transition_v4 import (
+    verify_full_quaternion_roll_transition,
+)
+
+
+def _verify_roll_leaf(first,last,leaf,config):
+    # The crash verifier must also bind every accepted pre-impact roll event,
+    # even when the transition ends in a distinct genuine road/wheel impulse.
+    try:
+        verified=verify_full_quaternion_roll_transition(
+            first,last,leaf.full_quaternion_roll_transition,
+            bound_rad=config.independent_suspension_policy.max_abs_tilt_rad,
+            duration_s=leaf.end_time_s-leaf.start_time_s)
+    except ValueError as reason:
+        raise PhysicsTransitionError('unverifiable pre-impact roll envelope') from reason
+    if not verified:
+        raise PhysicsTransitionError('pre-impact roll event source was forged')
 
 
 def same_reconstructed_road_pose(a,b):
@@ -109,6 +126,7 @@ def verify_development_road_crash(
                 -mass.world_inertia(p.orientation,p.angular_velocity)
                 -leaf.torque_impulse_nms).magnitude>1e-7):
             raise PhysicsTransitionError("road impact prefix momentum/work not accepted")
+        _verify_roll_leaf(p,q,leaf,config)
     try:
         replay=apply_first_road_body_contact(src.first,src.last,src.body,
             src.road_atlas,mass,duration_s=src.segment_duration_s)
@@ -232,6 +250,7 @@ def verify_development_wheel_hard_stop_crash(
                -m.world_inertia(p.orientation,p.angular_velocity)
                -step.torque_impulse_nms).magnitude>1e-7):
             raise PhysicsTransitionError('unaccepted wheel stop preimpact RK4 leaf')
+        _verify_roll_leaf(p,q,step,config)
     if (((c.postimpact.velocity-src.first.velocity)*m.mass_kg-
          leaf.force_impulse_ns).magnitude>1e-7
         or (m.world_inertia(c.postimpact.orientation,c.postimpact.angular_velocity)

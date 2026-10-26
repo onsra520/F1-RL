@@ -359,6 +359,25 @@ class PhysicsConfig:
                         self.spatial_contact_policy.yaw_inertia_kg_m2*omega.y,
                         suspension.roll_inertia_kg_m2*omega.z))
                 for first,last,leaf,segment in zip(poses,poses[1:],audit.substeps,segments):
+                    # Independently reconstruct every source-bound large-roll
+                    # envelope transition from the accepted 3D poses. A pure
+                    # roll threshold has NO collision/impulse/restitution.
+                    if self.ground_motion_version=='spatial_road_edge_partial_lifecycle_v4':
+                        from ..sandbox.full_quaternion_roll_transition_v4 import (
+                            verify_full_quaternion_roll_transition,
+                        )
+                        try:
+                            if not verify_full_quaternion_roll_transition(
+                                first,last,leaf.full_quaternion_roll_transition,
+                                bound_rad=self.independent_suspension_policy.max_abs_tilt_rad,
+                                duration_s=segment.end_time_s-segment.start_time_s):
+                                raise PhysicsTransitionError(
+                                    'v4 large-roll source certificate forged or missing')
+                        except ValueError as error:
+                            raise PhysicsTransitionError(
+                                'v4 large-roll source timing not independently verified') from error
+                    elif leaf.full_quaternion_roll_transition is not None:
+                        raise PhysicsTransitionError('unregistered large-roll source in legacy physics')
                     if compliant:
                         air=not first.grounded and not last.grounded
                         h=segment.end_time_s-segment.start_time_s
