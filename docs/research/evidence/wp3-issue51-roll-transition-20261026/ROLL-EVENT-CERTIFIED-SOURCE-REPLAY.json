@@ -1,0 +1,44 @@
+{
+  "case": {
+    "env_seed": 3886169428,
+    "episode": 10,
+    "model_id": "C-seed1",
+    "policy_seed": 1971191095,
+    "seed_index": 1,
+    "stratum": "randomized_train",
+    "track": "right-turn-v1"
+  },
+  "episode_time_s": 14.100000000000001,
+  "full_eval_started": false,
+  "heldout_access": false,
+  "no_retraining": true,
+  "original_cell_file_sha256": "f059c1a949497f673462f619a5e5b93ab91195c41ab1c6cbd69fb5c777e49137",
+  "outcome": "hard_route_violation",
+  "paired_roster_sha256": "f2f9d15954cea48345a8932773ed945f6ed250ad1435b4e675b97e4a6b94f319",
+  "scientific_evidence": false,
+  "source": "13b1d8105d14e7492a140a850c43f22e578fd809",
+  "source_clean": true,
+  "source_quaternion_roll_events": [
+    {
+      "energy_residual_j": -8.776444815339346e-08,
+      "energy_tolerance_j": 0.00023293899829011499,
+      "fictitious_impact": false,
+      "leaf_end_time_s": 0.03125,
+      "leaf_index": 4,
+      "leaf_start_time_s": 0.025,
+      "momentum_residual_angular_nms": 1.0154796774455443e-13,
+      "momentum_residual_linear_ns": 2.713584941308271e-13,
+      "signed": {
+        "boundary_rad": 0.7,
+        "end_roll_rad": 0.7043676124648689,
+        "first_clear_s": 0.004098063427954913,
+        "first_crossing_s": 0.00409806352108717,
+        "schema_version": "v4_full_quaternion_roll_envelope_crossing_v1",
+        "sign": 1,
+        "start_roll_rad": 0.6916810232428126
+      },
+      "source_reverified": true
+    }
+  ],
+  "status": "VALID_EPISODE"
+}
