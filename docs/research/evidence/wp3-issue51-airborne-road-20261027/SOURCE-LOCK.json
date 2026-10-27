@@ -12,7 +12,7 @@
     "replayed_historical_hardstop_valid":  7,
     "focused_pytest_passed":  208,
     "focused_pytest_exit":  0,
-    "full_regression_status":  "IN_PROGRESS",
+    "full_regression_status":  "PASS_2947_PASSED_3_SKIPPED_0_FAILED_EXIT_0",
     "full_eval_r6_started":  false,
     "scientific_evidence":  false,
     "independent_physics_signoff":  false

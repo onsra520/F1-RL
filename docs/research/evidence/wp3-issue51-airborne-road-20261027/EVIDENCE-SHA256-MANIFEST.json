@@ -1,7 +1,7 @@
 ﻿{
     "source":  "6c479540134d98d7d27331879c926c8ba82c2965",
     "schema":  "wp3_airborne_road_issue51_source_bound_evidence_v1",
-    "file_count":  17,
+    "file_count":  19,
     "scientific_review_approved":  false,
     "files":  [
                   {
@@ -66,8 +66,8 @@
                   },
                   {
                       "name":  "README.md",
-                      "size_bytes":  4459,
-                      "sha256":  "d745cbe5af88c65c9635ce1fef0ebfd0aa302e08c0d20aa26ea1710a137b777b"
+                      "size_bytes":  4749,
+                      "sha256":  "a5f06bf5506494dbca2c3b5db7ed2991a48cb1f0f9a6aeb137ae3807fdaea137"
                   },
                   {
                       "name":  "ROAD-IMPACT-CERTIFICATE.jsonl",
@@ -76,8 +76,8 @@
                   },
                   {
                       "name":  "SOURCE-LOCK.json",
-                      "size_bytes":  916,
-                      "sha256":  "fe56cc2f957c007249b7beafb50a70133acee57eb270c577a2e6207092f71b88"
+                      "size_bytes":  947,
+                      "sha256":  "6d8a52a1349b1236b59bfdbe7169178231c357100d99ada72c362f9870313d78"
                   },
                   {
                       "name":  "WP3-6C47954-ROAD-FOCUSED-PYTEST-20261027.txt",
@@ -88,6 +88,16 @@
                       "name":  "WP3-6C47954-ROAD-FOCUSED-PYTEST-EXIT-20261027.json",
                       "size_bytes":  233,
                       "sha256":  "8974aca3b1950a797aff69fd890a690896c7dd2077962487c71da2dd09eaec0b"
+                  },
+                  {
+                      "name":  "WP3-6C47954-ROAD-FULL-PYTEST-20261027.txt",
+                      "size_bytes":  6736,
+                      "sha256":  "66c24c39e93c68a7254d73421e4cfec08d42386ad9a633247756785482ee71ca"
+                  },
+                  {
+                      "name":  "WP3-6C47954-ROAD-FULL-PYTEST-EXIT-20261027.json",
+                      "size_bytes":  202,
+                      "sha256":  "68d70a5c6ea6621585ec8a4aa74a291074a87d571593ce8668dc1e4ff103d0c1"
                   }
               ]
 }

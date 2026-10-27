@@ -48,7 +48,8 @@ The precise source and impulse data are preserved without rounding in `ROAD-IMPA
 - **R4 roll invalid replay: 1/1 valid `tilt_envelope_exit`**, 0 invalid.
 - **R3 seven historical hard-stop invalid replays: 7/7 valid `physical_crash`**, 0 invalid.
 - Focused regression on clean source: **208 PASS, 0 FAIL**.
-- Full repository regression and final source engineering tag recorded separately with frozen stdout and receipts when complete.
+- **Full repository regression 2,947 passed, 3 skipped, 0 failed** in 1404.68s, exit code 0, source clean, finished 27 Oct 2026 at 10:22:55 ICT. Exact stdout and exit receipt are included in this directory.
+- Engineering source-locked annotated Git tag: **wp3-physics-v4-airborne-road-6c47954-20261027**, pointing to exact commit 6c479540134d98d7d27331879c926c8ba82c2965; scientific independent signoff still pending.
 
 This is engineering validation of the reproducible TRAIN-development transition. **Independent scientific Physics validation is NOT approved**; the previously declared scientific Evaluation gate remains blocked.
 
