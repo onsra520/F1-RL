@@ -172,9 +172,10 @@ def certify_swept_chassis_patch_intersection_free(
 
 def certify_first_bounded_road_contact(
     before:VehicleState,after:VehicleState,body:VehicleBodyGeometry,atlas:tuple,
-    *,duration_s:float,resolution_s:float=1e-6
+    *,duration_s:float,resolution_s:float=1e-6,
+    ballistic_gravity_mps2:float=0.,
 ):
-    """First finite road/body surface witness on an explicitly linear/SLERP segment.
+    """First finite road/body witness on linear or exact-gravity/SLERP source.
 
     Returns (patch_id, interval_lower_s, interval_upper_s, number_of_checks).
     Unknown or initially overlapping geometry raises, never becomes a scored
@@ -192,7 +193,8 @@ def certify_first_bounded_road_contact(
             Vec3(patch.width/2.,1e-9,patch.length/2.),
             Quaternion.from_basis(patch.right,patch.normal,patch.forward))
         hit=certify_first_linear_body_contact(before,after,body,obstacle,
-               duration_s=duration_s,resolution_s=resolution_s,max_refinements=24)
+               duration_s=duration_s,resolution_s=resolution_s,max_refinements=24,
+               ballistic_gravity_mps2=ballistic_gravity_mps2)
         if hit is not None:
             collisions.append((hit.last_certified_clear_s,patch.id,
                                hit.first_witnessed_overlap_s,hit.gap_checks))

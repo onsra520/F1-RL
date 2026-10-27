@@ -39,7 +39,12 @@ class PhysicalCrash:
                      and self.version=="wp3_grounded_applied_edge_crash_v4_dev"
                      and not self.obstacle_id.startswith('road-patch:'))
                     or (self.contact.kind=="bounded_road_body"
-                     and self.version=="wp3_grounded_applied_road_crash_v4_dev"
+                     and self.version in (
+                         "wp3_grounded_applied_road_crash_v4_dev",
+                         "wp3_airborne_applied_road_crash_v4_dev")
+                     and self.contact.preimpact.grounded==
+                         (self.version=="wp3_grounded_applied_road_crash_v4_dev")
+                     and self.contact.postimpact.grounded==self.contact.preimpact.grounded
                      and self.obstacle_id.startswith('road-patch:'))
                     or (self.contact.kind=="wheel_hard_stop"
                      and self.version=="wp3_grounded_wheel_hard_stop_crash_v4_dev"

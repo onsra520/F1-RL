@@ -804,7 +804,8 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             # chassis does not cross any currently present road patch.
             # Unknown/grazing geometric intervals always reject the step.
             def pose_at(t):
-                return VehicleState(first.position+(last.position-first.position)*t,
+                return VehicleState(first.position+(last.position-first.position)*t+
+                                    Vec3(0.,.5*gravity*h*h*t*(1.-t) if ballistic else 0.,0.),
                                     first.velocity+(last.velocity-first.velocity)*t,
                                     _slerp(first.orientation,last.orientation,t),
                                     first.angular_velocity+(last.angular_velocity-first.angular_velocity)*t,
@@ -820,7 +821,8 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                     try:
                         early_contact=apply_first_road_body_contact(
                             first,last,body,atlas,RigidBodyImpactMass(mass,inertia),
-                            duration_s=h)
+                            duration_s=h,
+                            ballistic_gravity_mps2=gravity if ballistic else 0.)
                     except ValueError as diagnostic_error:
                         if h>1e-5:
                             raise SuspensionResolutionError(
@@ -843,7 +845,9 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                             raise SuspensionResolutionError(
                                 'first road contact source time is not an accepted prefix') from error
                         event_segment=CenterSegment(start,time_s,first.position,
-                            early_contact.contact.preimpact.position)
+                            early_contact.contact.preimpact.position,
+                            first.velocity if ballistic else None,
+                            gravity if ballistic else 0.)
                         prefix=original_prefix+(event_segment,)
                         if time_s<dt:
                             prefix+=(CenterSegment(time_s,dt,
@@ -854,7 +858,9 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                             f'road-patch:{early_contact.patch_id}',time_s,
                             start+contact.first_clear_s,time_s,
                             len(original_prefix),contact,prefix,
-                            version='wp3_grounded_applied_road_crash_v4_dev')
+                            version=('wp3_grounded_applied_road_crash_v4_dev'
+                                if contact.preimpact.grounded else
+                                'wp3_airborne_applied_road_crash_v4_dev'))
                         source=SpatialRoadCrashSource(
                             first,last,start,h,atlas,body,
                             RigidBodyImpactMass(mass,inertia),
@@ -868,7 +874,8 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                 if 'witnessed physical road contact' in str(error):
                     try:
                         event=certify_first_bounded_road_contact(first,last,body,atlas,
-                            duration_s=h,resolution_s=1e-6)
+                            duration_s=h,resolution_s=1e-6,
+                            ballistic_gravity_mps2=gravity if ballistic else 0.)
                         if event is not None:
                             witness=f'first bounded patch interval={event}'
                     except ValueError as proof_error:

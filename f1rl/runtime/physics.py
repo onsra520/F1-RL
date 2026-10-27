@@ -256,13 +256,15 @@ class PhysicsConfig:
                 return PhysicsTransitionAudit(
                     "wp7_transition_audit_v1",self.mode,
                     previous.flight.phase if previous.flight is not None else "grounded",
-                    "grounded",start_time_s,end_time_s,
+                    result.state.flight.phase,start_time_s,end_time_s,
                     ("spatial_road_edge_partial_lifecycle_rk4_v4",
                      "grounded_wheel_hard_stop_absorbing_v4_development"
                      if result.crash.contact.kind=="wheel_hard_stop" else
                      "grounded_wheel_edge_hard_stop_absorbing_v4_development"
                      if result.crash.contact.kind=="wheel_edge_hard_stop" else
-                     "grounded_road_obb_impulse_absorbing_v4_development"),())
+                     ("airborne_road_obb_impulse_absorbing_v4_development"
+                     if not result.crash.contact.preimpact.grounded else
+                     "grounded_road_obb_impulse_absorbing_v4_development")),())
             # Fully revalidate the pre-impact RK4 tick against its unchanged
             # momenta and work audit, then separately audit the accepted
             # instantaneous impulse and absorbing center/event prefix.

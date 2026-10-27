@@ -1,16 +1,17 @@
-"""Continuous first-witness collision on a linear+shortest-SLERP trajectory.
+"""Continuous first-witness collision on a linear/ballistic+SLERP trajectory.
 
 Unlike a repeated-prefix sweep, this searches the first potentially contacting
 time interval left-to-right with a conservative spatial motion bound and can
 resolve a first witnessed overlap to a bounded timestamp. Ambiguous grazing
 is rejected, NEVER scored. The caller must certify that its source motion is
-the stated linear/SLERP segment before treating the witness as physics evidence.
+the stated linear or exact-gravity/SLERP segment before accepting evidence.
 """
 from __future__ import annotations
 from dataclasses import dataclass
 from math import acos,isfinite
 
 from .body_collision import VehicleBodyGeometry,_slerp,obb_separation_lower_bound
+from .geometry.vector import Vec3
 from .track.volume import OrientedBoxVolume
 from .vehicle import VehicleState
 
@@ -31,12 +32,15 @@ def certify_first_linear_body_contact(
     start:VehicleState,end:VehicleState,body:VehicleBodyGeometry,
     obstacle:OrientedBoxVolume,*,duration_s:float,
     resolution_s:float=1e-6,max_refinements:int=20,
+    ballistic_gravity_mps2:float=0.,
 )->LinearFirstContactWitness|None:
     if (not isinstance(start,VehicleState) or not isinstance(end,VehicleState)
         or not isinstance(body,VehicleBodyGeometry)
         or not isinstance(obstacle,OrientedBoxVolume)):
         raise ValueError("typed continuous collision geometry required")
     if (type(duration_s) not in (int,float) or not isfinite(duration_s) or duration_s<=0
+        or type(ballistic_gravity_mps2) not in (int,float)
+        or not isfinite(ballistic_gravity_mps2) or ballistic_gravity_mps2<0.
         or type(resolution_s) not in (int,float) or not isfinite(resolution_s) or resolution_s<=0
         or type(max_refinements) is not int or not 1<=max_refinements<=24):
         raise ValueError("finite positive collision interval/resolution bounds")
@@ -44,12 +48,17 @@ def certify_first_linear_body_contact(
     cosine=min(1.,max(0.,abs(q0.w*q1.w+q0.x*q1.x+q0.y*q1.y+q0.z*q1.z)))
     rotation_arc=2.*acos(cosine)
     translation=(end.position-start.position).magnitude
-    motion_bound=translation+rotation_arc*body.motion_radius_m
+    # A parabola is above its endpoint chord by g*h^2*f*(1-f)/2.
+    # Its derivative in normalized time is bounded by g*h^2/2, so the
+    # search's midpoint non-contact bound remains conservative.
+    motion_bound=(translation+rotation_arc*body.motion_radius_m+
+                  .5*ballistic_gravity_mps2*duration_s*duration_s)
     checks=0
     def gap(fraction:float)->float:
         nonlocal checks
         checks+=1
-        pose=start.position+(end.position-start.position)*fraction
+        pose=(start.position+(end.position-start.position)*fraction+
+              Vec3(0.,.5*ballistic_gravity_mps2*duration_s**2*fraction*(1.-fraction),0.))
         orientation=_slerp(q0,q1,fraction)
         return obb_separation_lower_bound(body.box_at(pose,orientation),obstacle)
     if gap(0.)<=1e-10:

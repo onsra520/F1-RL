@@ -228,7 +228,8 @@ def step_world(
                 crash=road_event.crash
                 terminal=crash.contact.postimpact
                 crash_state=replace(state,vehicle=terminal,
-                    suspension=_suspension_state(terminal),flight=FlightState('grounded'))
+                    suspension=_suspension_state(terminal),
+                    flight=FlightState('grounded' if terminal.grounded else 'airborne'))
                 crash_query=track.query_point(terminal.position,max_surface_distance,state.track)
                 return WorldStepResult(crash_state,crash_query,modifiers,(),
                     center_segments=crash.prefix,crash=crash,
