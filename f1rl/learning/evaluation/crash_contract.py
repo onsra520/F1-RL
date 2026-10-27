@@ -37,7 +37,10 @@ def validate_crash_terminal_info(info:Mapping)->bool:
                      and "grounded_road_obb_impulse_absorbing_v4_development" in trans["solvers"])
                     or (crash.get("version")=="wp3_grounded_wheel_hard_stop_crash_v4_dev"
                      and crash.get('obstacle_id','').startswith('wheel-hard-stop:')
-                     and "grounded_wheel_hard_stop_absorbing_v4_development" in trans["solvers"]))
+                     and "grounded_wheel_hard_stop_absorbing_v4_development" in trans["solvers"])
+                    or (crash.get("version")=="wp3_grounded_wheel_edge_stop_crash_v4_dev"
+                     and crash.get('obstacle_id','').startswith('wheel-edge-stop:')
+                     and "grounded_wheel_edge_hard_stop_absorbing_v4_development" in trans["solvers"]))
             or crash.get("scientific_evidence") is not False
             or phy["configuration"]["ground_motion_version"]!="spatial_road_edge_partial_lifecycle_v4"
             or phy.get('sha256') != sha256(json.dumps(phy['configuration'],

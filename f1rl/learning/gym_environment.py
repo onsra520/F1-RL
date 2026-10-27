@@ -34,6 +34,7 @@ from .offtrack import OffTrackConfig, OffTrackState
 from .route_navigation import AuthoredRoute
 from .wp7_race import WP7RaceConfig, RaceContractError, advance_directed_race
 from .crash_terminal_registered import RACE_V4, CRASH_V1, descriptor as scoring_contract_descriptor, _sha as scoring_contract_sha
+from .roll_envelope_registered import descriptor as roll_contract_descriptor
 from .train_reset import TrainResetConfig, sample_train_spawn
 from .rewards import (RewardComposer, RewardResult, RewardTransition, RewardContribution,
     RouteProgressReward, OffTrackPenalty, TargetProgressReward, TimePenalty, CollisionPenalty)
@@ -548,6 +549,30 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                         reward_prefix_position=_vec3_tuple(reward_vehicle.position),
                         physical_tick_end_time_s=self._simulation_config.fixed_dt,
                         terminal_reason=race_step.terminal_reason)
+                    if race_step.terminal_reason=='tilt_envelope_exit':
+                        stop=snapshot_after.roll_envelope_stop
+                        if stop is None or self._race_config.version!=RACE_V4:
+                            raise RaceContractError('tilt-envelope event lacks verified source')
+                        info['roll_envelope_terminal']={
+                            'version':stop.version,
+                            'descriptor_sha256':scoring_contract_sha(roll_contract_descriptor()),
+                            'first_clear_s':stop.first_clear_s,
+                            'first_outside_s':stop.first_outside_s,
+                            'roll_limit_rad':stop.roll_limit_rad,
+                            'side':stop.side,
+                            'initial_roll_rad':stop.initial_roll_rad,
+                            'clear_roll_rad':stop.clear_roll_rad,
+                            'rejected_roll_rad':stop.rejected_roll_rad,
+                            'accepted_position':_vec3_tuple(stop.accepted.position),
+                            'accepted_velocity_mps':_vec3_tuple(stop.accepted.velocity),
+                            'accepted_orientation_wxyz':(
+                                stop.accepted.orientation.w,stop.accepted.orientation.x,
+                                stop.accepted.orientation.y,stop.accepted.orientation.z),
+                            'impulse_n_s':(0.,0.,0.),
+                            'angular_impulse_nms':(0.,0.,0.),
+                            'collision_energy_lost_j':0.,
+                            'collision':False,'scientific_evidence':False,
+                        }
                     if race_step.terminal_reason=='physical_crash':
                         crash=snapshot_after.physical_crash
                         if crash is None or self._race_config.version not in ('wp7_directed_lifecycle_crash_dev_v3',RACE_V4):
@@ -613,6 +638,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             ("physical_crash" if (race_step.terminal_reason=="physical_crash" and
                                    self._race_config.version==RACE_V4)
              else "physical_crash_development" if race_step.terminal_reason=="physical_crash"
+             else "tilt_envelope_exit" if race_step.terminal_reason=="tilt_envelope_exit"
              else "hard_route_violation") if race_step is not None and race_step.terminal_failure else
             "finish" if progress_result.state.finished else
             (info.get("truncation_reason") or "step_limit") if status.truncated else "accepted_step",

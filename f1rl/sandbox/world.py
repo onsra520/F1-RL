@@ -11,6 +11,7 @@ from .coupled_longitudinal_dynamics import (
 from .geometry.vector import Vec3
 from .spatial_contact_dynamics import SpatialGroundAudit, SpatialContactPolicy, integrate_spatial_contact, integrate_spatial_lifecycle, integrate_spatial_road_edge_lifecycle, _suspension_state, SpatialRoadCrash, SpatialRoadCrashSource
 from .physical_crash import PhysicalCrash, first_applied_grounded_crash
+from .roll_envelope_terminal import RollEnvelopeStop,CertifiedRollEnvelopeExit
 from .rigid_body_impact_response import RigidBodyImpactMass
 from .grounded_yaw_dynamics import (
     GroundedYawPolicy,GroundedYawAudit,advance_grounded_yaw,
@@ -80,6 +81,7 @@ class WorldStepResult:
     crash: PhysicalCrash | None = None
     precrash_result: WorldStepResult | None = None
     road_crash_source: SpatialRoadCrashSource | None = None
+    roll_envelope_stop: RollEnvelopeStop | None = None
 
 
 def step_world(
@@ -208,6 +210,16 @@ def step_world(
                     body_geometry,track.surfaces,parameters,control,spatial_contact_policy,dt=dt,modifiers=modifiers,
                     **({} if ground_motion_version=='spatial_road_edge_partial_lifecycle_v4' else {'phase_domain':'atlas_rotating_v3'} if ground_motion_version=='spatial_rotating_compliant_lifecycle_v3'
                        else {'phase_domain':'atlas_gradient_v2'} if ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else {}))
+            except CertifiedRollEnvelopeExit as roll_event:
+                if ground_motion_version!='spatial_road_edge_partial_lifecycle_v4':
+                    raise
+                stop=roll_event.stop
+                safe=stop.accepted
+                result_state=replace(state,vehicle=safe,
+                    suspension=_suspension_state(safe),flight=FlightState('grounded'))
+                query=track.query_point(safe.position,max_surface_distance,state.track)
+                return WorldStepResult(result_state,query,modifiers,(),
+                    center_segments=stop.prefix,roll_envelope_stop=stop)
             except SpatialRoadCrash as road_event:
                 # Only an explicitly witnessed, independently replayable
                 # development road-contact event can absorb the tick.
@@ -216,7 +228,8 @@ def step_world(
                 crash=road_event.crash
                 terminal=crash.contact.postimpact
                 crash_state=replace(state,vehicle=terminal,
-                    suspension=_suspension_state(terminal),flight=FlightState('grounded'))
+                    suspension=_suspension_state(terminal),
+                    flight=FlightState('grounded' if terminal.grounded else 'airborne'))
                 crash_query=track.query_point(terminal.position,max_surface_distance,state.track)
                 return WorldStepResult(crash_state,crash_query,modifiers,(),
                     center_segments=crash.prefix,crash=crash,

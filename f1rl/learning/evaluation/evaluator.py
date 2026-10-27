@@ -13,6 +13,7 @@ from ..training.env_factory import F1RLEnvFactory
 from .metrics import EpisodeMetrics, _normalized_route_progress
 from .crash_contract import validate_crash_terminal_info
 from ..crash_terminal_registered import validate_registered_crash_terminal_info
+from ..roll_envelope_registered import validate_registered_roll_envelope_info
 
 
 @runtime_checkable
@@ -67,7 +68,9 @@ def _valid_terminal_failure(info: object) -> bool:
         return False
     if outcome.get('reason')=='hard_route_violation':
         return True
-    return ((outcome.get('reason')=='physical_crash_development'
+    return ((outcome.get('reason')=='tilt_envelope_exit'
+             and validate_registered_roll_envelope_info(info))
+            or (outcome.get('reason')=='physical_crash_development'
              and validate_crash_terminal_info(info))
             or (outcome.get('reason')=='physical_crash'
                 and validate_registered_crash_terminal_info(info)))
@@ -127,6 +130,9 @@ def _step_evidence(
             validate_crash_terminal_info(step_info) or
             validate_registered_crash_terminal_info(step_info)):
         raise ValueError("unregistered physical crash terminal: approved contact, timing, impulse and energy required")
+    if ("roll_envelope_terminal" in step_info and
+        not validate_registered_roll_envelope_info(step_info)):
+        raise ValueError("unregistered roll-envelope event: approved source/time/energy prefix required")
 
     required = (
         "tick",
