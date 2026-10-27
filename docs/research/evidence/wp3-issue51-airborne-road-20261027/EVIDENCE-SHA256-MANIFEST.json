@@ -1,0 +1,93 @@
+﻿{
+    "source":  "6c479540134d98d7d27331879c926c8ba82c2965",
+    "schema":  "wp3_airborne_road_issue51_source_bound_evidence_v1",
+    "file_count":  17,
+    "scientific_review_approved":  false,
+    "files":  [
+                  {
+                      "name":  ".gitattributes",
+                      "size_bytes":  9,
+                      "sha256":  "8b9c3028d6467ff3be7c793141927841d70f47f52d0590677438f488ca154992"
+                  },
+                  {
+                      "name":  "ORIGINAL-R5-CELL-053.jsonl",
+                      "size_bytes":  42428,
+                      "sha256":  "b4e7a6058c1d5f9a2a718dc07f726ba8863bd6997f41213a5464cda83fed8665"
+                  },
+                  {
+                      "name":  "R3-SEVEN-REPLAY-RESULTS.jsonl",
+                      "size_bytes":  6083,
+                      "sha256":  "1e88f1e413896bffdb13b96877013e429ee045527681b9154a0cd784648cacc2"
+                  },
+                  {
+                      "name":  "R3-SEVEN-REPLAY-SUMMARY.json",
+                      "size_bytes":  417,
+                      "sha256":  "3228808ccf7179050394228d9be36d5c32e0fbf3f41391fc61c61a8b44ac5d19"
+                  },
+                  {
+                      "name":  "R4-ROLL-REPLAY-RESULTS.jsonl",
+                      "size_bytes":  661,
+                      "sha256":  "df40624adf60ab5feef9ccb7bff02cf960f7d52341b843d4387fdccf8bb6de14"
+                  },
+                  {
+                      "name":  "R4-ROLL-REPLAY-SUMMARY.json",
+                      "size_bytes":  417,
+                      "sha256":  "1374d10b2c1bfb9ab97d445dc2246ef26ba6ac16df6bbaad6091fd50a668f16d"
+                  },
+                  {
+                      "name":  "R5-BASELINE-REPLAY-RESULTS.jsonl",
+                      "size_bytes":  1757,
+                      "sha256":  "9e7c9cba4d2e03d86af437082f10beebb4e02db9b0b00086ec02bfb94efbb7e5"
+                  },
+                  {
+                      "name":  "R5-BASELINE-REPLAY-SUMMARY.json",
+                      "size_bytes":  449,
+                      "sha256":  "dc257490b450127bf584be1116bdf06251cc1d8f9b0be06a8d06836f6f31d315"
+                  },
+                  {
+                      "name":  "R5-CERTIFICATE-REPLAY-SUMMARY.json",
+                      "size_bytes":  414,
+                      "sha256":  "ccc97fbf8040519644cee55b233ced0422a5d8e98140805faa1cda7f7ad29c00"
+                  },
+                  {
+                      "name":  "R5-FIXED-REPLAY-MANIFEST.json",
+                      "size_bytes":  2149,
+                      "sha256":  "ef055e3b8c4422990817686cd9c5460f211187440837469a750c69c7e79d8124"
+                  },
+                  {
+                      "name":  "R5-FIXED-REPLAY-RESULTS.jsonl",
+                      "size_bytes":  526,
+                      "sha256":  "2d81de9759ca42aab90741e2929b0d5d652aba7db876b46eac1f5d8230fadfcc"
+                  },
+                  {
+                      "name":  "R5-FIXED-REPLAY-SUMMARY.json",
+                      "size_bytes":  414,
+                      "sha256":  "abee16cbcdaa6c74ebe4d5f8956b9bada5b82c10ad846f7ce3c25cb9738c5693"
+                  },
+                  {
+                      "name":  "README.md",
+                      "size_bytes":  4459,
+                      "sha256":  "d745cbe5af88c65c9635ce1fef0ebfd0aa302e08c0d20aa26ea1710a137b777b"
+                  },
+                  {
+                      "name":  "ROAD-IMPACT-CERTIFICATE.jsonl",
+                      "size_bytes":  1603,
+                      "sha256":  "b6eedf7ef7f4557c108e25ce0864a8b09557f6b33e5abafbebb25d32ec4741ec"
+                  },
+                  {
+                      "name":  "SOURCE-LOCK.json",
+                      "size_bytes":  916,
+                      "sha256":  "fe56cc2f957c007249b7beafb50a70133acee57eb270c577a2e6207092f71b88"
+                  },
+                  {
+                      "name":  "WP3-6C47954-ROAD-FOCUSED-PYTEST-20261027.txt",
+                      "size_bytes":  532,
+                      "sha256":  "5f10c34bc09d39b6ae786f462921d9e0bdb58e84d3d8682119b845b89c08ada8"
+                  },
+                  {
+                      "name":  "WP3-6C47954-ROAD-FOCUSED-PYTEST-EXIT-20261027.json",
+                      "size_bytes":  233,
+                      "sha256":  "8974aca3b1950a797aff69fd890a690896c7dd2077962487c71da2dd09eaec0b"
+                  }
+              ]
+}
