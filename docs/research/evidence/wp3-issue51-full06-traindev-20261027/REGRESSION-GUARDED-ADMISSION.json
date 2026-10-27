@@ -1,0 +1,12 @@
+{
+    "status":  "ADMITTED_OWNER_TRAIN_DEV_ONLY",
+    "run_id":  "WP3-OWNER-TRAINDEV-20261027-FULL-06",
+    "manifest_sha256":  "4c62ee924951f8b61d85f86c98090f95b77026bb2bdedb23958ad7c80b895701",
+    "execution_source":  "6c479540134d98d7d27331879c926c8ba82c2965",
+    "regression_exit":  0,
+    "source_clean":  true,
+    "science_independent_signoff":  false,
+    "heldout_access":  false,
+    "registered_scientific_evaluation":  false,
+    "datetime":  "2026-10-27T13:38:04.5582314+07:00"
+}
