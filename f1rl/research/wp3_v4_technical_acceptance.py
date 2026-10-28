@@ -221,5 +221,12 @@ def source_bound_acceptance(root:Path,history:Path,replay_file:Path, *,
       "train_or_heldout_access":False,
       "note":"300 source tests and 3 source-bound frozen replay cases demonstrate development execution only, not calibrated/independently reviewed physics or authorization of scored episodes."
     }
+    from .historical_source_records import verify_historical_records
+    verify_historical_records(root, history)
+    original = _json(root/"docs/research/WP3-PHYSICS-V4-TECHNICAL-ACCEPTANCE-20261024.json")
+    if (source_hashes != original["source_bindings_sha256"] or
+        digest_file(replay_file) != original["replay_file_sha256"] or
+        digest_file(test_receipt_file) != original["engineering_pytest_receipt_sha256"]):
+        raise ValueError("historical source identity does not match this source tree")
     report["record_sha256"]=hash_manifest(report)
     return report

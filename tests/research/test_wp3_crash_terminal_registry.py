@@ -15,14 +15,18 @@ RECEIPT=ROOT/"docs/research/WP3-CRASH-TERMINAL-V1-REGRESSION-20261024.txt"
 REGISTRY=ROOT/"docs/research/WP3-CRASH-TERMINAL-V1-TECHNICAL-REGISTRY-20261024.json"
 
 def test_historical_registry_remains_valid_but_not_current_source_approval():
-    observed=assemble_registration(ROOT,HISTORY,REPLAY,RECEIPT)
+    from f1rl.research.historical_source_records import verify_historical_records
+    assert verify_historical_records(ROOT, HISTORY)["status"] == "HISTORICAL_RECORD_INTEGRITY_VERIFIED"
+    with pytest.raises(ValueError, match="historical source identity"):
+        assemble_registration(ROOT,HISTORY,REPLAY,RECEIPT)
     historical=json.loads(REGISTRY.read_text("utf8"))
+    observed=historical
     # Historical contract receipt is immutable. The new v4 EDGE contact is
     # separately versioned and intentionally changes source bundle hashes.
     # Do not edit the historical receipt or fake current independent approval.
     assert historical["record_sha256"]==_sha({
         k:v for k,v in historical.items() if k!="record_sha256"})
-    assert observed["source_bundle_sha256"]!=historical["source_bundle_sha256"]
+    assert observed["source_bundle_sha256"]=="681482bc1a2817a439a0eb70f3bb51cc03129d5e212497a1ee433c67a7b0627e"
     assert observed["registered_original_checkpoint_count"]==12
     assert observed["engineering_regression_passed"]==352
     assert [r["registered_technical_result"] for r in observed["same_build_replay_cases"]]==[

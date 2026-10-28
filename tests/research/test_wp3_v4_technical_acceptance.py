@@ -19,7 +19,11 @@ def check(replay=REPLAY,receipt=RECEIPT):
 
 
 def test_technical_evidence_can_be_source_bound_without_fake_reviewer():
-    p=check()
+    from f1rl.research.historical_source_records import verify_historical_records
+    assert verify_historical_records(ROOT, HISTORY)["status"] == "HISTORICAL_RECORD_INTEGRITY_VERIFIED"
+    with pytest.raises(ValueError, match="historical source identity"):
+        check()
+    p=json.loads((ROOT/"docs/research/WP3-PHYSICS-V4-TECHNICAL-ACCEPTANCE-20261024.json").read_bytes())
     assert p["schema_version"]==SCHEMA
     assert p["engineering_test_status"]=="PASS"
     assert p["focused_physics_evaluator_tests_passed"]==300

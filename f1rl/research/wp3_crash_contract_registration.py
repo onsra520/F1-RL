@@ -160,5 +160,12 @@ def assemble_registration(
         "heldout_access":False,
         "status":"ENGINEERING_CONTRACT_REGISTERED_INDEPENDENT_SIGNOFF_PENDING",
     }
+    from .historical_source_records import verify_historical_records
+    verify_historical_records(root, history)
+    original = _read(root/"docs/research/WP3-CRASH-TERMINAL-V1-TECHNICAL-REGISTRY-20261024.json")
+    if (source != original["source_files_sha256"] or
+        digest_file(replay_file) != original["replay_source_file_sha256"] or
+        digest_file(receipt) != original["engineering_regression_receipt_sha256"]):
+        raise ValueError("historical source identity does not match this source tree")
     result["record_sha256"]=_sha(result)
     return result

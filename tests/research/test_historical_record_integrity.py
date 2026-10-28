@@ -83,3 +83,23 @@ def test_historical_allowlist_does_not_accept_migrated_physics():
     from f1rl.learning.freeze_readiness import verify_training_source_diff
     with pytest.raises(ValueError, match='training/simulator source changed'):
         verify_training_source_diff(('src/sandbox/spatial_contact_dynamics.py',))
+
+
+def test_legacy_receipt_builder_rejects_current_source_identity():
+    from f1rl.research.wp3_v4_technical_acceptance import source_bound_acceptance
+    import os
+    history = Path(os.environ['F1RL_WP3_EVIDENCE'])
+    replay = ROOT / 'docs/research/WP3-V4AH-PHYSICS-V4-ACCEPTANCE-REPLAY-20261024.json'
+    receipt = ROOT / 'docs/research/WP3-V4-PHYSICS-ENGINEERING-PYTEST-20261024.txt'
+    with pytest.raises(ValueError, match='historical source identity'):
+        source_bound_acceptance(ROOT, history, replay, test_receipt_file=receipt)
+
+
+def test_legacy_crash_builder_rejects_current_source_identity():
+    from f1rl.research.wp3_crash_contract_registration import assemble_registration
+    import os
+    history = Path(os.environ['F1RL_WP3_EVIDENCE'])
+    replay = ROOT / 'docs/research/WP3-V4AJ-REGISTERED-CRASH-V1-THREE-REPLAY-20261024.json'
+    receipt = ROOT / 'docs/research/WP3-CRASH-TERMINAL-V1-REGRESSION-20261024.txt'
+    with pytest.raises(ValueError, match='historical source identity'):
+        assemble_registration(ROOT, history, replay, receipt)
