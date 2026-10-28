@@ -3,6 +3,13 @@ import argparse
 import json
 from pathlib import Path
 
+import sys as _entry_sys
+from pathlib import Path as _EntryPath
+
+_entry_root = str(_EntryPath(__file__).resolve().parents[1])
+if _entry_root not in _entry_sys.path:
+    _entry_sys.path.insert(0, _entry_root)
+
 from src.research.wp7_train_acceptance import (
     PROFILE, _write_new, run_acceptance, verify_gym_finish_prefix,
 )

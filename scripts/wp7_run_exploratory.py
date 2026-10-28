@@ -12,6 +12,13 @@ from pathlib import Path
 import platform
 import sys
 
+import sys as _entry_sys
+from pathlib import Path as _EntryPath
+
+_entry_root = str(_EntryPath(__file__).resolve().parents[1])
+if _entry_root not in _entry_sys.path:
+    _entry_sys.path.insert(0, _entry_root)
+
 from src.learning.pilot_milestones import PilotMilestoneRecorder, verify_pilot_evidence_manifest
 from src.learning.pilot_preflight import TRAIN_IDS, build_pilot_preflight
 from src.learning.reconstruction import RecoveryCandidate, build_training_scenarios
