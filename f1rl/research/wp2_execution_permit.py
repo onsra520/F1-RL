@@ -130,7 +130,8 @@ def verify_wp2_execution_permit(envelope, trust_registry, *, expected, now=None)
     body = dict(schema_version='wp2_verified_execution_permit_v1',
         state='authenticated_execution_permit_verified', payload=deepcopy(payload),
         permit_sha256=digest(envelope), signer_ids=sorted(identities),
-        permissions=dict(training_permitted=True, heldout_permitted=False))
+        permissions=dict(training_permitted=False, heldout_permitted=False),
+        authorization='signature_authenticated_only')
     return {**body, 'sha256': digest(body)}
 
 
@@ -211,6 +212,17 @@ def claim_wp2_execution_permit(envelope, trust_registry, *, expected, now=None):
 
 
 def claim_repository_wp2_execution_permit(repository_root, envelope, *, expected, now=None):
-    """Production boundary: load the committed trust anchors, then verify and consume."""
+    """Production boundary: require an approved manifest before granting training."""
+    from ..exploratory.abcd import load_abcd_manifest
+
+    manifest = load_abcd_manifest(repository_root)
+    if manifest['status'] != 'APPROVED — PREREGISTERED':
+        raise ValueError('A/B/C/D remains draft; approved preregistration is required before permit authorization')
     registry = load_repository_signers(repository_root)
-    return claim_wp2_execution_permit(envelope, registry, expected=expected, now=now)
+    verified = verify_wp2_execution_permit(envelope, registry, expected=expected, now=now)
+    claim_path = _claim_verified(verified)
+    body = {key: value for key, value in verified.items() if key != 'sha256'}
+    body['permissions'] = dict(training_permitted=True, heldout_permitted=False)
+    body['authorization'] = 'approved_preregistered_manifest_and_signed_execution_permit'
+    authorized = {**body, 'sha256': digest(body)}
+    return authorized, claim_path

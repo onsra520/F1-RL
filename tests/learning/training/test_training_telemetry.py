@@ -347,6 +347,25 @@ def test_storage_preflight_reserves_the_full_declared_byte_bound(tmp_path, monke
     assert not (tmp_path / "no-space.jsonl").exists()
 
 
+def test_training_start_preflights_vectorized_final_batch_overshoot(tmp_path, monkeypatch):
+    import f1rl.learning.training.telemetry as telemetry
+    path = tmp_path / "vector-capacity.jsonl"
+    recorder = TrainingTelemetryRecorder(
+        path,
+        run_identity={"run_id": "vector-capacity", "source_commit": "b" * 40,
+            "policy_id": "policy", "split": "TRAIN", "track_ids": ["straight-sprint-v1"],
+            "seed_identity": {"training_reset": 1000}, "reset_contracts": _reset_contracts()},
+        max_timesteps=2)
+    required_with_final_batch = 101 * telemetry._MAX_RECORD_BYTES + telemetry._AUXILIARY_RESERVE_BYTES
+    monkeypatch.setattr(telemetry.shutil, "disk_usage", lambda _path: SimpleNamespace(
+        total=required_with_final_batch * 2, used=required_with_final_batch * 2 - 1_100_000,
+        free=1_100_000))
+    with pytest.raises(OSError, match="insufficient free space"):
+        recorder.on_training_start(_ModelAdapter(), total_timesteps=2, n_envs=100)
+    assert recorder._n_envs is None
+    recorder.close()
+
+
 def test_complete_manifest_rejects_partial_training_budget(tmp_path):
     recorder = TrainingTelemetryRecorder(
         tmp_path / "partial.jsonl",
@@ -378,6 +397,38 @@ def test_storage_budget_over_hard_cap_is_rejected_before_file_creation(tmp_path)
                 "seed_identity": {"training_reset": 1000}, "reset_contracts": _reset_contracts()},
             max_timesteps=300_000)
     assert not path.exists()
+
+
+def test_vector_batch_capacity_is_checked_before_training_starts(tmp_path):
+    recorder = TrainingTelemetryRecorder(
+        tmp_path / "large-vector.jsonl",
+        run_identity={"run_id": "large-vector", "source_commit": "b" * 40,
+            "policy_id": "policy", "split": "TRAIN", "track_ids": ["straight-sprint-v1"],
+            "seed_identity": {"training_reset": 1000}, "reset_contracts": _reset_contracts()},
+        max_timesteps=200_000)
+    try:
+        with pytest.raises(ValueError, match="environment count exceeds telemetry capacity"):
+            recorder.on_training_start(_ModelAdapter(), total_timesteps=200_000, n_envs=65_536)
+    finally:
+        recorder.close()
+
+
+def test_close_closes_stream_when_sync_fails(tmp_path, monkeypatch):
+    recorder = TrainingTelemetryRecorder(
+        tmp_path / "sync-failure.jsonl",
+        run_identity={"run_id": "sync-failure", "source_commit": "b" * 40,
+            "policy_id": "policy", "split": "TRAIN", "track_ids": ["straight-sprint-v1"],
+            "seed_identity": {"training_reset": 1000}, "reset_contracts": _reset_contracts()},
+        max_timesteps=2)
+    stream = recorder._stream
+
+    def fail_sync():
+        raise OSError("simulated telemetry fsync failure")
+
+    monkeypatch.setattr(recorder, "_sync", fail_sync)
+    with pytest.raises(OSError, match="fsync"):
+        recorder.close()
+    assert stream.closed
 
 
 def test_initial_oversized_run_record_is_cleaned_up_after_exclusive_create(tmp_path):

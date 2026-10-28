@@ -191,7 +191,10 @@ def test_pilot_phases_do_not_select_best_checkpoint(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize('evaluation_fails', [False, True])
 @pytest.mark.parametrize('schedule', ['learning_first', 'baseline_first'])
-def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedule, evaluation_fails):
+@pytest.mark.parametrize('telemetry_failure', [None, 'close', 'manifest'])
+def test_worker_orchestration_with_fake_model_only(
+    tmp_path, monkeypatch, schedule, evaluation_fails, telemetry_failure
+):
     p = pilot()
     from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
     from dataclasses import asdict
@@ -282,19 +285,48 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedu
         path.write_bytes(name.encode())
         return path
     monkeypatch.setattr(p, 'save_checkpoint', save)
-    env = SimpleNamespace(close=lambda: None)
+    env_closed = []
+    env = SimpleNamespace(close=lambda: env_closed.append(True))
     env.training_reset_contract = {
         'version': 'wp7_train_reset_research_v1', 'seed': 1000,
         'configuration_sha256': 'd'*64, 'world_sha256': 'e'*64,
     }
     monkeypatch.setattr(p, 'Session', lambda *a, **kw: SimpleNamespace(
         create_env=lambda **kw: env, validate=lambda: None, permit=permit))
+    if telemetry_failure:
+        original_recorder = p.TrainingTelemetryRecorder
+
+        class FinalizationFailingRecorder(original_recorder):
+            def close(self):
+                super().close()
+                if telemetry_failure == 'close':
+                    raise OSError('injected telemetry close failure')
+
+            def manifest(self, *, complete):
+                if telemetry_failure == 'manifest':
+                    raise OSError('injected telemetry manifest failure')
+                return super().manifest(complete=complete)
+
+        monkeypatch.setattr(p, 'TrainingTelemetryRecorder', FinalizationFailingRecorder)
     def evaluation(session, evaluated_model, name, ep):
         if evaluation_fails and name == 'trained_final':
             raise RuntimeError('evaluation interrupted')
         events.append(('evaluate', name, getattr(evaluated_model, 'snapshot', 'live')))
         return {'success':False, 'progress':0., 'policy':name, 'episode':ep}
     monkeypatch.setattr(p, 'evaluate_episode', evaluation)
+    if telemetry_failure:
+        if evaluation_fails:
+            with pytest.raises(RuntimeError, match='evaluation interrupted') as failure:
+                p.worker(tmp_path, permit, envelope)
+            assert any('injected telemetry' in note for note in failure.value.__notes__)
+        else:
+            with pytest.raises(OSError, match=f'injected telemetry {telemetry_failure} failure'):
+                p.worker(tmp_path, permit, envelope)
+        assert env_closed == [True]
+        failed_state = json.loads((output/'state.json').read_text())
+        assert failed_state['status'] == 'finalization_failed'
+        assert f'injected telemetry {telemetry_failure} failure' in failed_state['error']
+        return
     if evaluation_fails:
         with pytest.raises(RuntimeError, match='evaluation interrupted'):
             p.worker(tmp_path, permit, envelope)

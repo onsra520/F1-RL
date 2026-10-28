@@ -202,7 +202,10 @@ def verify_candidate_run_manifest(repository_root, run_manifest):
 
 
 def authorize_candidate_run(repository_root, run_manifest, envelope, *, now=None):
-    """First-side-effect gate for a future A/B/C/D worker; no runner is enabled here."""
+    """Reject draft experiments before consulting permits or creating a claim."""
     from ..research.wp2_execution_permit import claim_repository_wp2_execution_permit
+    manifest = load_abcd_manifest(repository_root)
+    if manifest['status'] != 'APPROVED — PREREGISTERED':
+        raise ValueError('A/B/C/D remains draft; approved preregistration is required before permit authorization')
     expected = verify_candidate_run_manifest(repository_root, run_manifest)
     return claim_repository_wp2_execution_permit(repository_root, envelope, expected=expected, now=now)

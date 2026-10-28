@@ -1,0 +1,396 @@
+{
+    "schema_version":  1,
+    "diagram_type":  "architecture",
+    "meta":  {
+                 "title":  "F1-RL | Runtime Architecture Map",
+                 "output":  ".archify/architecture-f1rl-20261019/F1-RL-architecture.html",
+                 "quality_profile":  "showcase",
+                 "locale":  "en",
+                 "repository":  {
+                                    "url":  "https://github.com/onsra520/F1-RL.git",
+                                    "provider":  "github",
+                                    "link_mode":  "web",
+                                    "revision":  "c0e1101c2492acbe8c11f41a07485372f99d1950"
+                                }
+             },
+    "components":  [
+                       {
+                           "id":  "configs",
+                           "type":  "external",
+                           "label":  "Training config",
+                           "sublabel":  "config.yml / PPO settings",
+                           "pos":  [
+                                       40,
+                                       65
+                                   ],
+                           "size":  [
+                                        155,
+                                        66
+                                    ],
+                           "sources":  [
+                                           {
+                                               "path":  "config.yml",
+                                               "line":  1,
+                                               "end_line":  24
+                                           }
+                                       ]
+                       },
+                       {
+                           "id":  "runner",
+                           "type":  "backend",
+                           "label":  "TrainingRunner",
+                           "sublabel":  "Orchestration + checkpoints",
+                           "pos":  [
+                                       275,
+                                       65
+                                   ],
+                           "size":  [
+                                        155,
+                                        66
+                                    ],
+                           "sources":  [
+                                           {
+                                               "path":  "f1rl/learning/training/runner.py",
+                                               "line":  233,
+                                               "end_line":  263
+                                           },
+                                           {
+                                               "path":  "f1rl/learning/training/runner.py",
+                                               "line":  294,
+                                               "end_line":  333
+                                           }
+                                       ]
+                       },
+                       {
+                           "id":  "ppo",
+                           "type":  "backend",
+                           "label":  "PPOModel",
+                           "sublabel":  "SB3 policy optimization",
+                           "pos":  [
+                                       510,
+                                       65
+                                   ],
+                           "size":  [
+                                        155,
+                                        66
+                                    ],
+                           "sources":  [
+                                           {
+                                               "path":  "f1rl/learning/algorithms/ppo.py",
+                                               "line":  154,
+                                               "end_line":  210
+                                           }
+                                       ]
+                       },
+                       {
+                           "id":  "vec",
+                           "type":  "backend",
+                           "label":  "Vector environments",
+                           "sublabel":  "DummyVecEnv / SubprocVecEnv",
+                           "pos":  [
+                                       745,
+                                       65
+                                   ],
+                           "size":  [
+                                        166,
+                                        66
+                                    ],
+                           "sources":  [
+                                           {
+                                               "path":  "f1rl/learning/training/vector_env.py",
+                                               "line":  25,
+                                               "end_line":  40
+                                           },
+                                           {
+                                               "path":  "f1rl/learning/training/vector_env.py",
+                                               "line":  130,
+                                               "end_line":  152
+                                           }
+                                       ]
+                       },
+                       {
+                           "id":  "gym",
+                           "type":  "backend",
+                           "label":  "F1RLEnv",
+                           "sublabel":  "Gymnasium step / reset",
+                           "pos":  [
+                                       1005,
+                                       65
+                                   ],
+                           "size":  [
+                                        154,
+                                        66
+                                    ],
+                           "sources":  [
+                                           {
+                                               "path":  "f1rl/learning/gym_environment.py",
+                                               "line":  67,
+                                               "end_line":  102
+                                           },
+                                           {
+                                               "path":  "f1rl/learning/gym_environment.py",
+                                               "line":  185,
+                                               "end_line":  223
+                                           }
+                                       ]
+                       },
+                       {
+                           "id":  "assets",
+                           "type":  "external",
+                           "label":  "Track JSON assets",
+                           "sublabel":  "Training / evaluation tracks",
+                           "pos":  [
+                                       40,
+                                       330
+                                   ],
+                           "size":  [
+                                        155,
+                                        66
+                                    ],
+                           "sources":  [
+                                           {
+                                               "path":  "assets/tracks/manifest.json",
+                                               "line":  1,
+                                               "end_line":  15
+                                           }
+                                       ]
+                       },
+                       {
+                           "id":  "loader",
+                           "type":  "backend",
+                           "label":  "Track asset loader",
+                           "sublabel":  "load_track_asset()",
+                           "pos":  [
+                                       275,
+                                       330
+                                   ],
+                           "size":  [
+                                        155,
+                                        66
+                                    ],
+                           "sources":  [
+                                           {
+                                               "path":  "f1rl/track_assets/loader.py",
+                                               "line":  212,
+                                               "end_line":  242
+                                           }
+                                       ]
+                       },
+                       {
+                           "id":  "factory",
+                           "type":  "backend",
+                           "label":  "F1RLEnvFactory",
+                           "sublabel":  "Scenario + state injection",
+                           "pos":  [
+                                       510,
+                                       330
+                                   ],
+                           "size":  [
+                                        155,
+                                        66
+                                    ],
+                           "sources":  [
+                                           {
+                                               "path":  "f1rl/learning/training/env_factory.py",
+                                               "line":  19,
+                                               "end_line":  50
+                                           }
+                                       ]
+                       },
+                       {
+                           "id":  "obs_reward",
+                           "type":  "backend",
+                           "label":  "Observations + rewards",
+                           "sublabel":  "Policy input / step feedback",
+                           "pos":  [
+                                       745,
+                                       330
+                                   ],
+                           "size":  [
+                                        166,
+                                        66
+                                    ],
+                           "sources":  [
+                                           {
+                                               "path":  "f1rl/learning/gym_environment.py",
+                                               "line":  193,
+                                               "end_line":  223
+                                           },
+                                           {
+                                               "path":  "f1rl/learning/observation.py",
+                                               "line":  57,
+                                               "end_line":  86
+                                           },
+                                           {
+                                               "path":  "f1rl/learning/rewards/core.py",
+                                               "line":  71,
+                                               "end_line":  99
+                                           }
+                                       ]
+                       },
+                       {
+                           "id":  "sim",
+                           "type":  "backend",
+                           "label":  "Simulation runtime",
+                           "sublabel":  "Deterministic state / tick",
+                           "pos":  [
+                                       1005,
+                                       330
+                                   ],
+                           "size":  [
+                                        154,
+                                        66
+                                    ],
+                           "sources":  [
+                                           {
+                                               "path":  "f1rl/runtime/simulation.py",
+                                               "line":  55,
+                                               "end_line":  100
+                                           }
+                                       ]
+                       },
+                       {
+                           "id":  "eval",
+                           "type":  "backend",
+                           "label":  "Episode evaluator",
+                           "sublabel":  "Policy rollout + metrics",
+                           "pos":  [
+                                       510,
+                                       590
+                                   ],
+                           "size":  [
+                                        155,
+                                        66
+                                    ],
+                           "sources":  [
+                                           {
+                                               "path":  "f1rl/learning/evaluation/evaluator.py",
+                                               "line":  186,
+                                               "end_line":  229
+                                           }
+                                       ]
+                       },
+                       {
+                           "id":  "world",
+                           "type":  "backend",
+                           "label":  "Physics + world step",
+                           "sublabel":  "Dynamics / interactions",
+                           "pos":  [
+                                       1005,
+                                       590
+                                   ],
+                           "size":  [
+                                        154,
+                                        66
+                                    ],
+                           "sources":  [
+                                           {
+                                               "path":  "f1rl/sandbox/world.py",
+                                               "line":  37,
+                                               "end_line":  84
+                                           }
+                                       ]
+                       }
+                   ],
+    "connections":  [
+                        {
+                            "id":  "c1",
+                            "from":  "configs",
+                            "to":  "runner",
+                            "label":  "settings"
+                        },
+                        {
+                            "id":  "c2",
+                            "from":  "runner",
+                            "to":  "ppo",
+                            "label":  "train"
+                        },
+                        {
+                            "id":  "c3",
+                            "from":  "ppo",
+                            "to":  "vec",
+                            "label":  "interacts with"
+                        },
+                        {
+                            "id":  "c4",
+                            "from":  "vec",
+                            "to":  "gym",
+                            "label":  "env slots"
+                        },
+                        {
+                            "id":  "c5",
+                            "from":  "assets",
+                            "to":  "loader",
+                            "label":  "read JSON"
+                        },
+                        {
+                            "id":  "c6",
+                            "from":  "loader",
+                            "to":  "factory",
+                            "label":  "track data"
+                        },
+                        {
+                            "id":  "c7",
+                            "from":  "factory",
+                            "to":  "vec",
+                            "label":  "creates envs"
+                        },
+                        {
+                            "id":  "c8",
+                            "from":  "gym",
+                            "to":  "sim",
+                            "label":  "step(control)"
+                        },
+                        {
+                            "id":  "c9",
+                            "from":  "gym",
+                            "to":  "obs_reward",
+                            "label":  "encode / evaluate",
+                            "fromSide":  "bottom",
+                            "toSide":  "top"
+                        },
+                        {
+                            "id":  "c10",
+                            "from":  "sim",
+                            "to":  "world",
+                            "label":  "step_world"
+                        },
+                        {
+                            "id":  "c11",
+                            "from":  "eval",
+                            "to":  "factory",
+                            "label":  "creates env",
+                            "fromSide":  "top",
+                            "toSide":  "bottom"
+                        }
+                    ],
+    "cards":  [
+                  {
+                      "dot":  "emerald",
+                      "title":  "Implemented training core",
+                      "items":  [
+                                    "TrainingRunner builds vector environments and trains PPO.",
+                                    "F1RLEnv couples simulation, observations, rewards and episode status.",
+                                    "Track assets feed scenario configuration; evaluation is callable separately."
+                                ]
+                  },
+                  {
+                      "dot":  "cyan",
+                      "title":  "Outputs and boundaries",
+                      "items":  [
+                                    "Runs write state, checkpoint archives and a final policy under artifacts/runs/.",
+                                    "Physics and world interactions stay in the Python sandbox.",
+                                    "Architecture uses source code pinned to commit c0e1101."
+                                ]
+                  },
+                  {
+                      "dot":  "amber",
+                      "title":  "Planned adapters â€” not yet implemented",
+                      "items":  [
+                                    "f1rl/api/README.md describes a future FastAPI + WebSocket adapter.",
+                                    "web/README.md describes a future React + TypeScript + Three.js client.",
+                                    "No running web/API service is asserted by this map."
+                                ]
+                  }
+              ]
+}

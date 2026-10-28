@@ -66,6 +66,19 @@ def test_draft_run_cannot_reach_worker_authorization_or_create_replay_claim(tmp_
     assert not ledger.exists()
 
 
+def test_draft_manifest_is_rejected_before_repository_permit_claim(tmp_path, monkeypatch):
+    import f1rl.research.wp2_execution_permit as permit_module
+
+    def unexpected_claim(*args, **kwargs):
+        raise AssertionError('draft manifest reached permit claim boundary')
+
+    monkeypatch.setattr(permit_module, 'claim_repository_wp2_execution_permit', unexpected_claim)
+    run = build_candidate_run_manifest(ROOT, candidate_id='C', run_id='c-seed-100',
+        seed_bundle={'ppo':100, 'sampling':200, 'training_reset':1100})
+    with pytest.raises(ValueError, match='approved preregistration'):
+        authorize_candidate_run(ROOT, run, {'payload':{}, 'signatures':[]})
+
+
 @pytest.mark.parametrize('values', [(), (0.1, float('nan')), (1.1,), (-0.1,)])
 def test_holm_rejects_empty_or_invalid_p_values(values):
     with pytest.raises(ValueError):

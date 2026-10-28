@@ -157,6 +157,12 @@ class TrainingTelemetryRecorder:
             raise ValueError("requested timestep budget exceeds telemetry bound")
         if type(n_envs) is not int or n_envs <= 0:
             raise ValueError("n_envs must be positive")
+        capacity = (self._max_timesteps + n_envs - 1) * _MAX_RECORD_BYTES + _AUXILIARY_RESERVE_BYTES
+        if capacity > _MAX_LOG_BYTES:
+            raise ValueError("environment count exceeds telemetry capacity bound")
+        if shutil.disk_usage(self.path.parent).free + self.path.stat().st_size < capacity:
+            raise OSError(f"insufficient free space for telemetry capacity bound: {capacity} bytes")
+        self._max_bytes = capacity
         self._total_timesteps = total_timesteps
         self._n_envs = n_envs
         self._episodes = {i: 0 for i in range(n_envs)}
@@ -375,9 +381,19 @@ class TrainingTelemetryRecorder:
 
     def close(self) -> None:
         if not self._closed:
-            self._sync()
-            self._stream.close()
+            error = None
+            try:
+                self._sync()
+            except BaseException as exc:
+                error = exc
+            try:
+                self._stream.close()
+            except BaseException as exc:
+                if error is None:
+                    error = exc
             self._closed = True
+            if error is not None:
+                raise error
 
     def manifest(self, *, complete: bool) -> dict:
         if not self._closed:

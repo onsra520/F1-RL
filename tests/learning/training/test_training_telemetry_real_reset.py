@@ -164,6 +164,37 @@ def test_actual_train_transition_rejects_spoofed_reset_identity(tmp_path, field)
         env.close()
 
 
+@pytest.mark.parametrize("mutation", ["missing_reset", "missing_state_identity", "boolean_seed"])
+def test_actual_train_transition_fails_closed_on_missing_or_malformed_identity(tmp_path, mutation):
+    env, transition = _actual_train_transition()
+    recorder = None
+    try:
+        info = transition["infos"][0]
+        if mutation == "missing_reset":
+            info.pop("train_reset")
+        elif mutation == "missing_state_identity":
+            info["training_telemetry"].pop("seed_identity")
+        else:
+            info["train_reset"]["seed"] = True
+            info["training_telemetry"]["seed_identity"] = dict(info["train_reset"])
+        recorder = TrainingTelemetryRecorder(
+            tmp_path / f"invalid-{mutation}.jsonl",
+            run_identity={
+                "run_id": f"invalid-{mutation}", "source_commit": "b" * 40,
+                "policy_id": POLICY, "split": "TRAIN",
+                "track_ids": [env._reset_track_id],
+                "seed_identity": {"ppo": 0, "training_reset": 1000},
+                "reset_contracts": {env._reset_track_id: env.training_reset_contract},
+            }, max_timesteps=2)
+        recorder.on_training_start(_Model(), total_timesteps=1, n_envs=1)
+        with pytest.raises(ValueError, match="reset seed identity"):
+            recorder.on_step(transition, _Model())
+    finally:
+        if recorder is not None:
+            recorder.close()
+        env.close()
+
+
 def test_actual_multienvironment_multitrack_transitions_match_authoritative_contract(tmp_path):
     scenarios, envs, transition = _actual_multitrack_batch()
     track_ids = [scenario.track_id for scenario in scenarios.scenarios[:2]]

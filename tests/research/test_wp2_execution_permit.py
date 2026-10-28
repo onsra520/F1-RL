@@ -44,7 +44,8 @@ def test_distinct_owner_and_reviewer_can_verify_exact_source_run_bound_train_per
     envelope, registry = signed_permit()
     verified = verify_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
     assert verified['state'] == 'authenticated_execution_permit_verified'
-    assert verified['permissions'] == dict(training_permitted=True, heldout_permitted=False)
+    assert verified['authorization'] == 'signature_authenticated_only'
+    assert verified['permissions'] == dict(training_permitted=False, heldout_permitted=False)
 
 
 @pytest.mark.parametrize('mutation', ['manifest', 'source', 'run', 'candidate', 'split', 'action', 'expiry', 'replay_nonce'])
@@ -82,20 +83,16 @@ def test_permit_requires_two_distinct_roles_and_atomic_single_use_claim(tmp_path
         claim_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
 
 
-def test_nonce_replay_ledger_is_fixed_across_callers_and_repository_paths(tmp_path, monkeypatch):
+def test_nonce_replay_ledger_is_fixed_across_low_level_claim_callers(tmp_path, monkeypatch):
     import f1rl.research.wp2_execution_permit as permit_module
 
     ledger = tmp_path / 'shared-ledger'
     monkeypatch.setattr(permit_module, '_replay_ledger_directory', lambda: ledger)
     envelope, registry = signed_permit()
-    roots = [tmp_path / 'repo-one', tmp_path / 'repo-two']
-    for root in roots:
-        registry_path = root / 'configs' / 'research' / 'wp2-trusted-signers-v1.json'
-        registry_path.parent.mkdir(parents=True)
-        registry_path.write_text(json.dumps(registry), encoding='utf-8')
-    claim_repository_wp2_execution_permit(roots[0], envelope, expected=identity(), now=NOW)
+    verified, _ = claim_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
+    assert verified['permissions']['training_permitted'] is False
     with pytest.raises(FileExistsError):
-        claim_repository_wp2_execution_permit(roots[1], envelope, expected=identity(), now=NOW)
+        claim_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
 
 
 def test_nonce_ledger_rejects_symlinked_ancestor_before_claim(tmp_path, monkeypatch):
@@ -141,10 +138,16 @@ def test_tampered_signature_and_overlong_lifetime_are_rejected():
         verify_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
 
 
-def test_repository_trust_registry_is_empty_and_cannot_authenticate_permits():
+def test_repository_claim_rejects_draft_even_with_trusted_signers(tmp_path, monkeypatch):
     from pathlib import Path
+    import f1rl.research.wp2_execution_permit as permit_module
+
     root = Path(__file__).resolve().parents[2]
-    envelope, _ = signed_permit()
-    with pytest.raises(ValueError):
+    envelope, registry = signed_permit()
+    ledger = tmp_path / 'replay-ledger'
+    monkeypatch.setattr(permit_module, '_replay_ledger_directory', lambda: ledger)
+    monkeypatch.setattr(permit_module, 'load_repository_signers', lambda _: registry)
+    with pytest.raises(ValueError, match='approved preregistration'):
         claim_repository_wp2_execution_permit(root, envelope, expected=identity(),
             now=NOW)
+    assert not ledger.exists()

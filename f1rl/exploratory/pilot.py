@@ -183,6 +183,7 @@ def worker(root, permit, envelope):
     phase = 'initialization'
     timings = {}
     telemetry = None
+    worker_error = None
 
     def state(status, **extra):
         write_json(output/'state.json', dict(status=status, phase=phase,
@@ -301,17 +302,41 @@ def worker(root, permit, envelope):
         state('completed', initial_weights_sha256=before, final_weights_sha256=after)
         return 0
     except BaseException as exc:
+        worker_error = exc
         state('learning_completed_evaluation_incomplete' if learning_completed else 'failed',
               error=f'{type(exc).__name__}: {exc}',
               last_learning_outcome=None if env is None else getattr(env, 'last_research_outcome', None))
         raise
     finally:
-        if model is not None:
-            timings.update(getattr(model._model, 'runtime_timings', {}))
-        write_json(output/'runtime-timings.json', timings)
-        if telemetry is not None:
-            telemetry.close()
-            write_json(output/'training-telemetry-manifest.json',
-                       telemetry.manifest(complete=learning_completed))
-        if env is not None:
-            env.close()
+        finalization_error = None
+        try:
+            if model is not None:
+                timings.update(getattr(model._model, 'runtime_timings', {}))
+            write_json(output/'runtime-timings.json', timings)
+        except BaseException as exc:
+            finalization_error = exc
+        try:
+            if telemetry is not None:
+                telemetry.close()
+                write_json(output/'training-telemetry-manifest.json',
+                           telemetry.manifest(complete=learning_completed))
+        except BaseException as exc:
+            finalization_error = finalization_error or exc
+        try:
+            if env is not None:
+                env.close()
+        except BaseException as exc:
+            finalization_error = finalization_error or exc
+        if finalization_error is not None:
+            error = f'{type(finalization_error).__name__}: {finalization_error}'
+            if worker_error is not None:
+                error = f'{type(worker_error).__name__}: {worker_error}; finalization also failed: {error}'
+            try:
+                state('finalization_failed', error=error,
+                      last_learning_outcome=None if env is None else getattr(env, 'last_research_outcome', None))
+            except BaseException:
+                pass
+            if worker_error is not None:
+                worker_error.add_note(f'finalization also failed: {type(finalization_error).__name__}: {finalization_error}')
+                raise worker_error
+            raise finalization_error
