@@ -1,5 +1,6 @@
 """Restore immutable WP3 historical admission inputs from verified archives."""
 import argparse
+import hashlib
 import json
 import shutil
 import sys
@@ -25,6 +26,21 @@ def copy_member(archive, name, destination):
         shutil.copyfileobj(source, output, length=1024 * 1024)
 
 
+def verify_bundled_inputs():
+    inventory = json.loads((ROOT / 'docs/research/FINAL-CONSOLIDATION-ASSETS.json').read_bytes())
+    prefix = 'docs/research/evidence/wp3-historical-admission-inputs/'
+    rows = [row for row in inventory['assets'] if row['destination'].startswith(prefix)]
+    canonical = json.dumps(rows, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode('utf8')
+    if len(rows) != 26 or hashlib.sha256(canonical).hexdigest() != '142c15e293716e81bce9d7eb6408733d095d7256647f96b2563294ccad481dbb':
+        raise ValueError('historical input inventory SHA-256 mismatch')
+    for row in rows:
+        path = ROOT / row['destination']
+        if path.stat().st_size != row['bytes'] or hash_file(path) != row['sha256']:
+            raise ValueError(f'historical input SHA-256 mismatch: {path}')
+    from verify_consolidated_wp3_assets import main as verify_frozen
+    verify_frozen()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ARCHIVES:
@@ -34,6 +50,7 @@ def main():
     destination = args.destination.absolute()
     if destination.exists() or destination.is_symlink():
         raise FileExistsError(f'destination already exists: {destination}')
+    verify_bundled_inputs()
     for name, expected in ARCHIVES.items():
         if hash_file(getattr(args, name)) != expected:
             raise ValueError(f'{name} archive SHA-256 mismatch')
@@ -60,8 +77,11 @@ def main():
         else:
             raise RuntimeError('historical scientific gate unexpectedly allowed evaluation')
         destination.mkdir()
-        for item in stage.iterdir():
-            item.rename(destination / item.name)
+        try:
+            for item in stage.iterdir():
+                item.rename(destination / item.name)
+        except OSError as exc:
+            raise OSError(f'partial restore at {destination}; inspect and remove it before retrying') from exc
     print(json.dumps({'destination': str(destination), 'models_verified': len(plan['verified_models']),
                       'roster_sha256': plan['historical_roster_sha256'],
                       'scientific_gate': 'BLOCKED', 'new_episodes': 0}, sort_keys=True))
