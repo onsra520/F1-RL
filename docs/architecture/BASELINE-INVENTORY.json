@@ -1,0 +1,4515 @@
+{
+  "revision": "a909a251083d937bce23e229111d0c1c1a9947f3",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "size": 209,
+      "sha256": "7f3ad8aa9b52cd92734ba9a93b060bf4733ea643eaf14435dc996e2be1cfcad9"
+    },
+    {
+      "path": ".github/workflows/h01-contract-regression.yml",
+      "size": 1013,
+      "sha256": "34e96cd4bbfaa4661066fc7e13faed18fa6074cc0ea51c6ba6c3a15ca77173df"
+    },
+    {
+      "path": ".github/workflows/wp7-body-collision-regression.yml",
+      "size": 4451,
+      "sha256": "ea0023f6921922a5ca4e213082407fcd53c87c27968f520b47686523102b3990"
+    },
+    {
+      "path": ".gitignore",
+      "size": 845,
+      "sha256": "6d1e7fe8c0040d0755b51dca41772dc44baa311fe11f6b1266fe080155471e2d"
+    },
+    {
+      "path": "README.md",
+      "size": 1279,
+      "sha256": "beb0c3dc50f5932bec5a1b867617f58ef6ff777e25ea0dec13c8192b3ffc3a24"
+    },
+    {
+      "path": "START-DEMO-TRAIN.cmd",
+      "size": 978,
+      "sha256": "fd8e4537d0a0e9c747d4331f101086b995766b74db74694f3d8e1ec1e178d4ef"
+    },
+    {
+      "path": "START-DEMO.cmd",
+      "size": 295,
+      "sha256": "07c02c3a4964178e3afafc86241e26a363042a22e01a98195a3d14dc32c1b744"
+    },
+    {
+      "path": "artifacts/README.md",
+      "size": 506,
+      "sha256": "cae57e1e5e333121b5a6fc1153b7b2f0ae9680460f1f48011797ae273a7b24e4"
+    },
+    {
+      "path": "artifacts/checkpoints/README.md",
+      "size": 201,
+      "sha256": "37fb45415d838729b1bba4284406fec97e9aeb3f9e3508bac650a162dabc09f9"
+    },
+    {
+      "path": "artifacts/evaluations/README.md",
+      "size": 209,
+      "sha256": "81364e379f6e0558b9daa6e337559fd1365b43244a080868448d7031136810de"
+    },
+    {
+      "path": "artifacts/policies/README.md",
+      "size": 221,
+      "sha256": "b525b8b03123fe542023757d623d54acafbe795e6fcb204d941bd46e782412a3"
+    },
+    {
+      "path": "artifacts/runs/README.md",
+      "size": 336,
+      "sha256": "16784a1ba5c15071c2c0ab22acec861a36419448f30b3e7cc06aea4f8b2a835a"
+    },
+    {
+      "path": "assets/README.md",
+      "size": 275,
+      "sha256": "b7a25bd8cf0a467f9c9c60c39cb7c11cdd0da8b344e177e32608ec4f505ee300"
+    },
+    {
+      "path": "assets/tracks/README.md",
+      "size": 1928,
+      "sha256": "b825213b8b1e97b46b02653367335916ba484ee9b8e1eba1f4154ad3aa75c493"
+    },
+    {
+      "path": "assets/tracks/demo/README.md",
+      "size": 230,
+      "sha256": "0f8104f1b7e0505b0e125a73d72f78830443647fa7c6ebc99d8e51c55df5aa09"
+    },
+    {
+      "path": "assets/tracks/evaluation/README.md",
+      "size": 514,
+      "sha256": "a56264dbd592ada214870310aa34625e5a1b99ae73bc5fd9b0ea0036dce580d4"
+    },
+    {
+      "path": "assets/tracks/evaluation/left-turn-v1.json",
+      "size": 1340,
+      "sha256": "0e74d1d2c26493a02455cb52378051def6078ce5b3454913338d1df0d182970c"
+    },
+    {
+      "path": "assets/tracks/evaluation/offset-slalom-v1.json",
+      "size": 2086,
+      "sha256": "298c100c2f9750c896b57e2a0f779e2e77677f32217b0e4b1290914a96575c55"
+    },
+    {
+      "path": "assets/tracks/manifest.json",
+      "size": 1727,
+      "sha256": "5a0ffc507fffef6fcc782d7acf4a16f543dbd89794e96df143e2dcd6e87b0dda"
+    },
+    {
+      "path": "assets/tracks/training/README.md",
+      "size": 540,
+      "sha256": "6577a8ddd4874cc822aedc96957f49f1b1163743ab98ee266336a124a69c4fe5"
+    },
+    {
+      "path": "assets/tracks/training/ramp-v1.json",
+      "size": 1649,
+      "sha256": "6c0da56966962363ed601c8fda2343006c207ee9ea6497deb72e6f6018721bd3"
+    },
+    {
+      "path": "assets/tracks/training/right-turn-v1.json",
+      "size": 1335,
+      "sha256": "a302f5d1d7f08d2b51ae963a5e695d8600d52a0ebf2d1f212ca0a4fbf90e303e"
+    },
+    {
+      "path": "assets/tracks/training/slalom-v1.json",
+      "size": 2039,
+      "sha256": "e9dd588740189f7ed857de8e8b8f5eeb99f3161fdb9b8d3fa05d18978cdefa53"
+    },
+    {
+      "path": "assets/tracks/training/straight-sprint-v1.json",
+      "size": 1012,
+      "sha256": "9efe209780cfa8358f8622d38bb5d56db30425a57dcebebc16e6e447a10b5f00"
+    },
+    {
+      "path": "config.yml",
+      "size": 1953,
+      "sha256": "0f5f5ab66f65854b21f9151a0ebceed07082308e1abb0671a8cd9de7ab144715"
+    },
+    {
+      "path": "configs/README.md",
+      "size": 710,
+      "sha256": "e3435e39a920608733b498e7dcc20b0edc086c227b375fdbc7ff939b1aa3a371"
+    },
+    {
+      "path": "configs/experiments/README.md",
+      "size": 2681,
+      "sha256": "02b3db5945f1a536e5f41372b12da06014d3d00d6c9c173d7a05674141eea697"
+    },
+    {
+      "path": "configs/experiments/ppo-generalization-c2-v2.yml",
+      "size": 2552,
+      "sha256": "48132f8fe3ed1191e363d245ba91069b6fd478a3dc8d5cd600c7ddd61ccea5af"
+    },
+    {
+      "path": "configs/experiments/ppo-generalization-v1.yml",
+      "size": 2073,
+      "sha256": "b00257a0b4e20fd2c512f867be661aa35ea9c1427dc0b61c1302384df2b1f84f"
+    },
+    {
+      "path": "configs/exploratory/README.md",
+      "size": 3882,
+      "sha256": "6769ad4d381c0c77f0713e847dcee6110ff1de187c0fe5c486dca25cb453003f"
+    },
+    {
+      "path": "configs/exploratory/straight-owner-keys-v1.json",
+      "size": 81,
+      "sha256": "c6eb86880a5771982c0c906fc4012425881549dd965b28c00781a5ae1c38a0d5"
+    },
+    {
+      "path": "configs/recovery/wp7-c2-candidate.yml",
+      "size": 846,
+      "sha256": "370a4a6b38954683434292bf82e16403b5aa6a4119ceb5d97d147c3142e283f9"
+    },
+    {
+      "path": "configs/recovery/wp7-full-body-route-robustness-v1.yml",
+      "size": 981,
+      "sha256": "cc8e11af56ff8fc9954e1796b3cccbcaef49b0d141d62b87d14647cf8cf1aff6"
+    },
+    {
+      "path": "configs/recovery/wp7-owner-decisions-preregistered-v1.yml",
+      "size": 3383,
+      "sha256": "d9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1"
+    },
+    {
+      "path": "configs/recovery/wp7-pilot-200k.yml",
+      "size": 646,
+      "sha256": "56516054bcf61426832c9b7395014ffbc0da2d1f212b0d0fb3aba78be4520142"
+    },
+    {
+      "path": "configs/recovery/wp7-vehicle-geometry-review.yml",
+      "size": 691,
+      "sha256": "f32ea713b713dc09f26610783058dc41d9ddfc1b16c0acb7565dea815f92ea67"
+    },
+    {
+      "path": "configs/research/local-demo-ppo-smoke-v1.json",
+      "size": 472,
+      "sha256": "3d078a4bc45718407fb8a58cdb2f2dd856df101510deb6c9327ebff61c43ee36"
+    },
+    {
+      "path": "configs/research/simulation-only-ppo-v1.json",
+      "size": 2884,
+      "sha256": "489c934fc218d20f7f84cc26dfe66fd504784a9c97eb193f48ac58f04c68bc9f"
+    },
+    {
+      "path": "configs/research/simulation-validation-v1.json",
+      "size": 2733,
+      "sha256": "26b8dabc0b5733105ed05ab0f22589265c0efb24a6b6ec587e46fad1706952f4"
+    },
+    {
+      "path": "configs/research/straight-demo-abcd-v1.json",
+      "size": 2949,
+      "sha256": "f17aaf2d008589fa1882b07c16046ef9d255dd52650f0e4ea2ac047de7c6aefe"
+    },
+    {
+      "path": "configs/research/wp2-trusted-signers-v1.json",
+      "size": 70,
+      "sha256": "c880df3c74314ac40dcc7abdb98cdc173a2289904ec4108d64d50cf00928cd6b"
+    },
+    {
+      "path": "configs/research/wp3-ppo-tuning-campaign-v1.json",
+      "size": 3648,
+      "sha256": "b0f05f11cc6ffd61c4c174515a34da30d13eba44f622a95002623afe8554a8e2"
+    },
+    {
+      "path": "configs/research/wp3-ppo-tuning-campaign-v2.json",
+      "size": 4309,
+      "sha256": "830b3e8984bdd65858449d1997580e617f5772bf9fc70e2026b865ca0f29cef6"
+    },
+    {
+      "path": "configs/research/wp3-ppo-tuning-campaign-v3.json",
+      "size": 4306,
+      "sha256": "8a67db80464dc3b93072c0edc431f7a71b1b271c392b47d0915af0f2cac106e4"
+    },
+    {
+      "path": "configs/research/wp7-core-readiness-matrix-v1.json",
+      "size": 11337,
+      "sha256": "0fcb75a2fd1f90493c88976eb56b940fb5ef9b4877d429639a19dd71acf0919f"
+    },
+    {
+      "path": "configs/research/wp7-hard-route-outcome-v2.json",
+      "size": 699,
+      "sha256": "7b306dc684cbc04f787bae9efaee77ab8bf97ee64ae2ee8d7665067b7e7d6954"
+    },
+    {
+      "path": "configs/research/wp7-owner-execution-protocol-v2.json",
+      "size": 2423,
+      "sha256": "ad08ae3162fb3c05438cef0b88669bb7c78dc34597eb079e46e8ce4071f25d5c"
+    },
+    {
+      "path": "configs/research/wp7-pv5-protocol-v1.json",
+      "size": 1728,
+      "sha256": "906edf6145688d7befd90ffe25effad80573d63a6bf3c11811796ca8864d07d8"
+    },
+    {
+      "path": "configs/research/wp7-rotating-owner-protocol-v3.json",
+      "size": 2503,
+      "sha256": "942f1d469506ec709c33adf5f3b8328c9808a2447a9131b5eaf3367bc807f516"
+    },
+    {
+      "path": "configs/research/wp7-spatial-ground-protocol-v1.json",
+      "size": 2342,
+      "sha256": "9a494ba865c8676ddbbd943022cb3cc04ff26d5602388e3da306481a20c04aff"
+    },
+    {
+      "path": "configs/research/wp7-trusted-reviewers-v1.json",
+      "size": 74,
+      "sha256": "f9a167dc19855909f0d51c794def4cc0f1def05a048eeeaa82454fe21f0f60a1"
+    },
+    {
+      "path": "configs/training/README.md",
+      "size": 326,
+      "sha256": "5d7cd839c8c2129d0af77ab8b416fe17f8580d9ddcf77c5db56c7ee586bf19e8"
+    },
+    {
+      "path": "configs/training/ppo-baseline.yml",
+      "size": 216,
+      "sha256": "5287dbb13aab64d2df65425e08b2a3e22e73c628f769c611fdec021961c696e3"
+    },
+    {
+      "path": "configs/training/vectorized-ppo.yml",
+      "size": 285,
+      "sha256": "ee1333db6af6bc90ffb2467519caf96c115d355752ec7bba1275c66491955750"
+    },
+    {
+      "path": "docs/DEMO-READINESS-2026-10-19.md",
+      "size": 4215,
+      "sha256": "9b344bb7c8e1494236a940bad237eb86151d01b63e034c28ff5fd1d9addd7959"
+    },
+    {
+      "path": "docs/PPO-IMPROVEMENT-PROTOCOL.md",
+      "size": 6948,
+      "sha256": "5e912ea82d5276ff443f3adc393307f6d89f4e7c16232b2cb11ed686471827eb"
+    },
+    {
+      "path": "docs/PPO-IMPROVEMENT-RESULTS.md",
+      "size": 6244,
+      "sha256": "4322bf844740871c033d1a8b027d9aaadc837e64fad1192ca631a7d859392e75"
+    },
+    {
+      "path": "docs/README.md",
+      "size": 379,
+      "sha256": "2a216be26cf2c2305993d437a91e2a2cec36ec83f0f374de59abad5d94465886"
+    },
+    {
+      "path": "docs/architecture/F1-RL-architecture.archify.json",
+      "size": 18850,
+      "sha256": "e8cc189777f354106f1c51de170250d2a78f1e40d2283fa3044f15d1b9b5842a"
+    },
+    {
+      "path": "docs/architecture/F1-RL-architecture.html",
+      "size": 848160,
+      "sha256": "8f577ebf4e005f798c8067347bd6dd59c8bc38a42c2f6261f9405aa73bd1ba1a"
+    },
+    {
+      "path": "docs/architecture/README.md",
+      "size": 1236,
+      "sha256": "7ea887502d5c37c642b148b18bc683d06244430cc2cc53438787948254d395af"
+    },
+    {
+      "path": "docs/research/FINAL-CONSOLIDATION-ASSETS.json",
+      "size": 78313,
+      "sha256": "5bc03df31c28da6385c4fa6a87b0a362dcb17dcff599d5a521d435103f857011"
+    },
+    {
+      "path": "docs/research/FINAL-CONSOLIDATION-AUDIT.md",
+      "size": 27842,
+      "sha256": "08ff99ee16ecc1811cdf32c2b858fdfa2b6cae8932e641a33790a9df5760b355"
+    },
+    {
+      "path": "docs/research/FINAL-CONSOLIDATION-HANDOFF-INVENTORY.json",
+      "size": 295630,
+      "sha256": "3bd31f28007ee685c412690cd30d6c256d6cecb1967504805cefe989c02e026d"
+    },
+    {
+      "path": "docs/research/PRE-CLEANUP-CONSOLIDATION.md",
+      "size": 7562,
+      "sha256": "2d214832b2623d2a75e1b9de5887476e6a2d1cf3372ca480123be2a0ede87491"
+    },
+    {
+      "path": "docs/research/WP3-CE0E55D-THREE-REPLAY-PREFLIGHT-20261024.json",
+      "size": 2548,
+      "sha256": "0b7233a9a4aeb1be353b5a5f085677f9fb2fe7f13f52cb575e9dcd8564308f49"
+    },
+    {
+      "path": "docs/research/WP3-CRASH-TERMINAL-V1-ACCEPTANCE-20261024.md",
+      "size": 6202,
+      "sha256": "38334cba32c2cf40ed7f771a1f852827bb700001cdc8e9b7a2b7008ee64b9941"
+    },
+    {
+      "path": "docs/research/WP3-CRASH-TERMINAL-V1-FINAL-PYTEST-20261024.txt",
+      "size": 511,
+      "sha256": "2abd4ca9432682ca76c249d01e01671625fbcd4003d74bea5b8aded23cdc4d3a"
+    },
+    {
+      "path": "docs/research/WP3-CRASH-TERMINAL-V1-REGRESSION-20261024.txt",
+      "size": 430,
+      "sha256": "2158d5932069a46f72310200ff1635f2b118b017ac31357ceb81abe716bbdaf2"
+    },
+    {
+      "path": "docs/research/WP3-CRASH-TERMINAL-V1-TECHNICAL-REGISTRY-20261024.json",
+      "size": 6108,
+      "sha256": "10a9f49f76a5b2d22d6020b6cf5043d48ae747596e373063fb554bda012f9358"
+    },
+    {
+      "path": "docs/research/WP3-EVAL-ISSUE51-FIX.md",
+      "size": 2475,
+      "sha256": "ec81c05a811a24f9b8ebd96725d579bc45781271b0af7f70bc3bae1e70e828db"
+    },
+    {
+      "path": "docs/research/WP3-EVAL-ONLY-COMPLETION-GATE-20261024.json",
+      "size": 6858,
+      "sha256": "f81a02ff2ed5fda86bcd6c3bac7e417ef9c0ef534ebba163672fd88a06011983"
+    },
+    {
+      "path": "docs/research/WP3-EVAL-PHYSICS-COMPLETION-STATUS-20261024.md",
+      "size": 10803,
+      "sha256": "55de0dcd3963b9b5e36cb14a432ccc00dda44e10e9905f7f486ec3af938a85c9"
+    },
+    {
+      "path": "docs/research/WP3-EVAL-PHYSICS-HANDOFF.md",
+      "size": 11071,
+      "sha256": "73ba2f98134bf687d3b99ff26a84d0b7412700de9b986e81e6eb3d74635b49a4"
+    },
+    {
+      "path": "docs/research/WP3-EVAL-ROAD-EDGE-IMPACT-BLOCKER.md",
+      "size": 5743,
+      "sha256": "caf88997303b3945171bb224b6f180328a6348a9c49ac8f1195c509e1dccd97c"
+    },
+    {
+      "path": "docs/research/WP3-EVAL-TERMINAL-PHYSICS-FORENSICS.md",
+      "size": 6431,
+      "sha256": "4452800db93e5afa4793375e36508a5025c2e624de4f48b6b443018651e36888"
+    },
+    {
+      "path": "docs/research/WP3-ISSUE51-EVAL-ONLY-COORDINATOR-20261024.md",
+      "size": 2508,
+      "sha256": "561c5c794c039ec04825432f1a625cc6bf452629afbba1c8c91368ad4f89a553"
+    },
+    {
+      "path": "docs/research/WP3-ISSUE51-PHYSICS-INTEGRATION-STATUS-20261024.md",
+      "size": 8334,
+      "sha256": "6b1d524acac0ef70f7b94f8c5891e0de6f2369472b82c91f2f67d634334015be"
+    },
+    {
+      "path": "docs/research/WP3-ISSUE51-PHYSICS-RELEASE-VERDICT-20261024.json",
+      "size": 2402,
+      "sha256": "a9578be1cbfbaaf25c0f5f1584684c6f0c0040f73e7d9b6a7430b20398a56696"
+    },
+    {
+      "path": "docs/research/WP3-ISSUE51-SOURCE-LOCK-POLICY-20261024.md",
+      "size": 2290,
+      "sha256": "e68f50744315ef183f2b528017fe8e688aa95a93520a3532b186500965f319d2"
+    },
+    {
+      "path": "docs/research/WP3-ISSUE51-THREE-REPLAY-CLOSEOUT-20261024.md",
+      "size": 3007,
+      "sha256": "91881c0a314ee97117e1f784f7cbffb61f194765cda5e470187f220c9076f0a2"
+    },
+    {
+      "path": "docs/research/WP3-OWNER-TRAINDEV-EVAL-PROTOCOL-20261024.md",
+      "size": 3272,
+      "sha256": "61924ca17521a91a6b73131d4f47f6b39ce7c59aa940497984272fbf3514b65a"
+    },
+    {
+      "path": "docs/research/WP3-PHYSICS-V4-ACCEPTANCE-REVIEW-20261024.md",
+      "size": 6040,
+      "sha256": "819a087985f3445cd7bfa75979f314466cbbff04828b6e326c6b6eb5b19c5110"
+    },
+    {
+      "path": "docs/research/WP3-PHYSICS-V4-TECHNICAL-ACCEPTANCE-20261024.json",
+      "size": 7522,
+      "sha256": "67707b64f6bf6c7aeb04f77863c75213c2864ba3ac37616309101acf07feb1bd"
+    },
+    {
+      "path": "docs/research/WP3-UI-PHYSICS-V4-INTEGRATION.md",
+      "size": 3382,
+      "sha256": "57f8c09ade04763655ff1a7b21dfe08f3317b1ba3bbdae0fcfdbef5a5383dcdf"
+    },
+    {
+      "path": "docs/research/WP3-V4-PHYSICS-ENGINEERING-PYTEST-20261024.txt",
+      "size": 430,
+      "sha256": "83d9f75b361bf33b3bf7477b824da6a9d5afc7098847bf2dec4418792c441ae6"
+    },
+    {
+      "path": "docs/research/WP3-V4AH-PHYSICS-V4-ACCEPTANCE-REPLAY-20261024.json",
+      "size": 2833,
+      "sha256": "554ea23eac7a3d76591b574281e8efd7d0cd2ea138e933e0c2de12e4af34b905"
+    },
+    {
+      "path": "docs/research/WP3-V4AJ-REGISTERED-CRASH-V1-THREE-REPLAY-20261024.json",
+      "size": 2904,
+      "sha256": "19f3368ff6a263456c08246cb7d6fa1f09e03f5eb91056ca68287ee8a53558eb"
+    },
+    {
+      "path": "docs/research/WP3-V4L-RIGHT-TURN-PATCH-BRACKET-20261024.json",
+      "size": 1518,
+      "sha256": "cec709ca12af0e0c1ef941cc1a2ad980d135b652fb5060a269b74f52b7c336fb"
+    },
+    {
+      "path": "docs/research/WP3-V4M-SLALOM-GROUNDED-CONTACT-20261024.json",
+      "size": 1552,
+      "sha256": "72432fee172e6d2ad0beb2444494bae40372e204214a4cd617cd3be10f249f95"
+    },
+    {
+      "path": "docs/research/WP3-V4N-RAMP-BUMP-TRACE-20261024.json",
+      "size": 1626,
+      "sha256": "ab4273749ffc00cf4ae3e690777c7fef33636bd12967a9207981d39af5d0b4ba"
+    },
+    {
+      "path": "docs/research/WP3-V4S-THREE-REPLAY-IMPULSE-AUDIT-20261024.json",
+      "size": 3735,
+      "sha256": "cf007539b2280561ef63bcbfe685813aae4082acb139c023033336567d92fab0"
+    },
+    {
+      "path": "docs/research/WP3-V4V-THREE-FROZEN-REPLAY-DEV-CRASH-20261024.json",
+      "size": 3331,
+      "sha256": "f2ac1031072a377816e5e760855e04f7d255544f58d36271a0b93b2f68b9988d"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/WP3-EVAL-SOURCE-PROVENANCE.json",
+      "size": 4796,
+      "sha256": "3b0b9c2bcdaf7614b7a1164b78a9ca0441bb8986488b8249c8614e1a63085349"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/evaluation/evaluation-roster.json",
+      "size": 730395,
+      "sha256": "1530a54a636f80cacc096f2ed86d9e89fd5e7c7a7429873deb2fe366bcd859dc"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed0/engineering-validation.json",
+      "size": 5097,
+      "sha256": "94d5461de87901cb8d0d8af2729312c02b593a38cd9e5b14dbac53f2ca62d801"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed0/state.json",
+      "size": 530,
+      "sha256": "b93c57a8e35726199a0e4731c33d849f0c8fc71ef63f22a6ff6d1af41ba1d5ca"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed1/engineering-validation.json",
+      "size": 5099,
+      "sha256": "1c1c80c5fe2470678f4cdad2932c7eb68308afebe8904386d31e4fa3a3830ab0"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed1/state.json",
+      "size": 530,
+      "sha256": "a3038f8fc5eb6cebc0c5802a46bdebb07fcc93a4267fa0f50c8857affecd2ece"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed2/engineering-validation.json",
+      "size": 5099,
+      "sha256": "da5470dbb67af6cd664abad9e9572d74e19c36cf42a3f2e3b8464ce6bd689ec9"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed2/state.json",
+      "size": 530,
+      "sha256": "1afb16a86c5569039c39ae6ed0f7da4110fd21638b93fe2c0e1b9356b31ae64d"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed0/engineering-validation.json",
+      "size": 5097,
+      "sha256": "ec96441cc2789f4007c6c67b0120cc64fca1be23d906511fbe3057ab171b0b45"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed0/state.json",
+      "size": 530,
+      "sha256": "1dfb11116f57bcb803e6d3312a8c01f9e56744d9a3f1bd779e356dd2031ecf48"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed1/engineering-validation.json",
+      "size": 5099,
+      "sha256": "f32c17e398683c5e59b1f161bf777b99bd12ea6bbefc68f3e38318d05bb91c5b"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed1/state.json",
+      "size": 530,
+      "sha256": "111c5e54a34bd972808fe7fd1b97ed9d97337a52e44ec47f8fbb2a8962fcc206"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed2/engineering-validation.json",
+      "size": 5098,
+      "sha256": "b47df7ab1504d8066e2ac6a40900197976c1e0edb5215f25ae361b7d19b02141"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed2/state.json",
+      "size": 530,
+      "sha256": "9d2cb7ad8c8712dbc1a04ef21599c4c44ad0ee44fc364017da3fe9dfda4b5ed5"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed0/engineering-validation.json",
+      "size": 5099,
+      "sha256": "aa83f8f518e89cd02e1721b55474b28b24de6333ade70079cc40b1b6f5e94b97"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed0/state.json",
+      "size": 530,
+      "sha256": "292c937c5d3922d7c880ad5f7f2429bc88cf54016423bc24c6cd60f2719e02f5"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed1/engineering-validation.json",
+      "size": 5099,
+      "sha256": "47bff322771ba371fd14c379e92bc0567ad8323451f8ee39a1b76dbd6eba1496"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed1/state.json",
+      "size": 530,
+      "sha256": "a7e61acbc1f9fa1d278d2adc9874b9e286236217bd3aec02cbf3cd8998eda97e"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed2/engineering-validation.json",
+      "size": 5098,
+      "sha256": "58490f0734cfd6f7ef5f1fe6a99178db925e1f8aeec882dfbf5ca1bc50d52dbf"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed2/state.json",
+      "size": 530,
+      "sha256": "c8ea97359afdcca3fbd0eba87ca3f6a802b5bf96c0fef33b3f913409937ce8d4"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed0/engineering-validation.json",
+      "size": 5099,
+      "sha256": "490c41295bb365516e3fc6586b07c5f3f8c516e1897e840f613e100bb286627f"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed0/state.json",
+      "size": 530,
+      "sha256": "5111eca2558c37636c7d64ed2865bef3a374d2265017686fff91f7fe44c42b3e"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed1/engineering-validation.json",
+      "size": 5098,
+      "sha256": "6ff46d9366a7db1a6b69ed905c708586ad259fb43ba1d192f5df9a3380106aad"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed1/state.json",
+      "size": 530,
+      "sha256": "9fda3017e1aefab588b06f5baaa75c316fde02e8cefb800a30ca1745f8dcd2f2"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed2/engineering-validation.json",
+      "size": 5102,
+      "sha256": "784ebe81b957b631d521a3d1d8eb1341427d7189b6caf695df7cced9d698a142"
+    },
+    {
+      "path": "docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed2/state.json",
+      "size": 530,
+      "sha256": "45f7889df1cd43d742f387e02d2468c5537d1fd95bac884b0b68c8c6a968a886"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/README.md",
+      "size": 1592,
+      "sha256": "c117e9cbc6ab0b0d2923507e2bf716c9ff362ae984f64c525cb1d2904d4292ac"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/WP3-FROZEN-MODELS-SHA256-MANIFEST.json",
+      "size": 6594,
+      "sha256": "a124a0676019da5ede6b03a96b83d243b376016aea5c5e1f0b8710b5a7788e9d"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/A-seed0/model-final.zip",
+      "size": 158370,
+      "sha256": "8cfcde6d4c88bbcc01dbf9b67dee3829c991474b0a8883a4479370f665c01c79"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/A-seed1/model-final.zip",
+      "size": 158375,
+      "sha256": "4334c44b3370c4f0adaa345ca280d190850fda9599736cc561ed6cbb71425831"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/A-seed2/model-final.zip",
+      "size": 158371,
+      "sha256": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/B-seed0/model-final.zip",
+      "size": 158370,
+      "sha256": "d76719fb04c5eee1a03e1b0885989f44faad6543d3a1fea9aa24fe6ac55867d6"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/B-seed1/model-final.zip",
+      "size": 158375,
+      "sha256": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/B-seed2/model-final.zip",
+      "size": 158368,
+      "sha256": "18f17c3f07d3e62b43364f3f4c6572b3e08b3307a4ae47137b80342188ad0dae"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/C-seed0/model-final.zip",
+      "size": 158370,
+      "sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/C-seed1/model-final.zip",
+      "size": 158375,
+      "sha256": "1089a4ddb826d8a52a3960f2415fc920ee1b87cedda6d062d661e4f3244440e7"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/C-seed2/model-final.zip",
+      "size": 158371,
+      "sha256": "156ee0f2194f3aedb36cce3917cc4121994b53fa0f0c942c2de548b9e2ea32b7"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/D-seed0/model-final.zip",
+      "size": 158371,
+      "sha256": "318f76813b69f8457dc169b6b3a89dd5f3aa2f2f765170075e0e48ab9f0e0109"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/D-seed1/model-final.zip",
+      "size": 158374,
+      "sha256": "70892fdb0e93ffdc67c36e18e92c1ba70f7ce9f6d6dc41916370781f6f18fc0c"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/D-seed2/model-final.zip",
+      "size": 158371,
+      "sha256": "212cca532ed1411246687821002ef55f62329ddcab18af2ff08f8e5b9b154cdc"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/EVIDENCE-AUDIT-RECEIPT.json",
+      "size": 1038,
+      "sha256": "faabb5be46e402670e70ef94088e2cd11923bc2c4d8cc0f991710f46ea61720b"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/OWNER-TRAINDEV-FINAL-SUMMARY.json",
+      "size": 30991,
+      "sha256": "fda89da26dd725d297736e5994259b53b1d59e57b92e5e391b461f45187c9c68"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/README.md",
+      "size": 1634,
+      "sha256": "f93b66da7f518bdb3e4929b0572b0cf71439df3ecca58b2c1c4d034bca8ec899"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/REGRESSION-GUARDED-ADMISSION.json",
+      "size": 495,
+      "sha256": "d439434353cd2f7fd78f47a2332a2189179040839345efc942eb34868bf9e735"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/REGRESSION-GUARDED-CONTROLLER-EXIT.json",
+      "size": 232,
+      "sha256": "d01a3ae1487668d4570de67ccde4ad8a9493d615a7dd4a01044f5aecf928c3b0"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/RUN-CONSOLE.txt",
+      "size": 1311836,
+      "sha256": "63c166f8fe4eb8bbc571111fcb32df7f1df628f71793c0d2701eccbddb54c0a6"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/RUN-MANIFEST.json",
+      "size": 738384,
+      "sha256": "bf91b6102701378aabb2f4a0feacedc498e04304a4cd9aafc76fca2de6daf765"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/RUN-STATE-INITIAL.json",
+      "size": 361,
+      "sha256": "2ec1c7d4b8b2bf2e3fb4bca1364a6a7db6bdb9ba66d86a51930830ff84c8d548"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/WP3-CANDIDATE-COMPARISON.md",
+      "size": 1227,
+      "sha256": "d1356973b43b447dce6eb80fa568e884fdf4e914b0a64d8fe13effb047087081"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/WP3-FAILURE-DISTRIBUTION.svg",
+      "size": 1157,
+      "sha256": "07e6d67dbfb54bbe458cb34ea0f51acf5fa2ac49c223f20a1b115900cc86f89a"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/WP3-FINAL-STATUS.md",
+      "size": 538,
+      "sha256": "a6e37e13e8be2f41e6e80969e894cee917f7301c33467fa55d85602ca6af7bf9"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/WP3-FULL06-TECHNICAL-CLOSEOUT-20261028.md",
+      "size": 5044,
+      "sha256": "bcc5f8b2025b70502e2eff2f1f729efad3424fe2ec3e3c27f3c7ede0599111b2"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/WP3-LEARNING-PROGRESS.svg",
+      "size": 2218,
+      "sha256": "b03970b48e064f81200dd45b4a4aaf01beca6a30eb77e77267e5b059268415a9"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/WP3-MODEL-COMPARISON.svg",
+      "size": 1062,
+      "sha256": "999485c4ffef0be1c91e734e20293205dbe3f4491c6cb9b0a9cb61ee58a94a1e"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/WP3-OUTPUT-SHA256-MANIFEST.json",
+      "size": 11948,
+      "sha256": "1bc69c491e369cd07d2b464e8d2f4bb51914081b0825aee82fc4e5418c961e13"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/WP3-STATISTICAL-READINESS.md",
+      "size": 488,
+      "sha256": "873de71a4c9213484c26f7ff1b018b765248d8549eef2b8eeb6488c5f64351c9"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/WP3-TRAIN-EVALUATION.json",
+      "size": 81246,
+      "sha256": "534873b21672467e990155bab6223ffca3bd9cae13f0a3240a4dcd05de8a5ed1"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/000-C-seed0-straight-sprint-v1-nominal.jsonl",
+      "size": 43967,
+      "sha256": "d2f8df0ec9bbb8b7a6e02a08bae56bc1e0bcdafc82e7f6101d4905a01951a13e"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/001-C-seed0-straight-sprint-v1-randomized_train.jsonl",
+      "size": 44949,
+      "sha256": "724898c69745276a78d4377e90efa8dda927945d7845393560ea1c8cc69faeb3"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/002-C-seed0-slalom-v1-nominal.jsonl",
+      "size": 42826,
+      "sha256": "97ffaf859b7bea636f1b78ad2dce05ccc20cd6a7ce2e5623e2c70e46d157a6f2"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/003-C-seed0-slalom-v1-randomized_train.jsonl",
+      "size": 44009,
+      "sha256": "1b3329ca3bf22be57445e26a2b15f4c28e2d5c8585c0351df403689f4e95e355"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/004-C-seed0-right-turn-v1-nominal.jsonl",
+      "size": 45447,
+      "sha256": "f9e4805ffea17d2a7f4e0d6f42f971f6a5f1abf75d17fd69ab9ea0483c48a719"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/005-C-seed0-right-turn-v1-randomized_train.jsonl",
+      "size": 46646,
+      "sha256": "9656884031f050a64c5f69fbe54af9f5f90fe3f92e8787c736d6ebd3d650a85f"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/006-C-seed0-ramp-v1-nominal.jsonl",
+      "size": 43897,
+      "sha256": "f66c6b8e61db2e33d84f099f78fbff470b1b43b3a8b992a3c771e76c473001ec"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/007-C-seed0-ramp-v1-randomized_train.jsonl",
+      "size": 44977,
+      "sha256": "0e13cfd4ea72667c90ad8f6f1a86f277c6a8a3904eb80a8918385fec0faed6bc"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/008-A-seed0-straight-sprint-v1-nominal.jsonl",
+      "size": 45981,
+      "sha256": "8d93bf38cbac04c1ca6787401d95ab5d3246d38a6e9487bc1b11404107c6183e"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/009-A-seed0-straight-sprint-v1-randomized_train.jsonl",
+      "size": 46998,
+      "sha256": "94f52ac1d6587d2ad9bae636d555471788bb5b376e0a30c181db7b3863e05f39"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/010-A-seed0-slalom-v1-nominal.jsonl",
+      "size": 44405,
+      "sha256": "5b70f8d73c6c881462cc3f494fbcf8bb27211b4b3299d8f0797e03b1dede764e"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/011-A-seed0-slalom-v1-randomized_train.jsonl",
+      "size": 45548,
+      "sha256": "7d932e58f008d6268ac715216757b8479a8782c5ca696bd4d211798e6cf4eb5a"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/012-A-seed0-right-turn-v1-nominal.jsonl",
+      "size": 45222,
+      "sha256": "08fccaa32de370262eca55cf5450b1a14549fd35a66f10d85b0fa26c65faca13"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/013-A-seed0-right-turn-v1-randomized_train.jsonl",
+      "size": 46546,
+      "sha256": "8a770cf22731dd44cb61e1e17c1f33de7aca27bf93b2846c0a3ccf16707bde80"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/014-A-seed0-ramp-v1-nominal.jsonl",
+      "size": 44802,
+      "sha256": "72a13283ec89e88724f22cfd56d72694bb552adae9653f3e5c866c0f1df28598"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/015-A-seed0-ramp-v1-randomized_train.jsonl",
+      "size": 45622,
+      "sha256": "be69cd5b2c782901c3e64f6376bdedae655ac1139d36f50bf83ac6bca0e639ca"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/016-B-seed0-straight-sprint-v1-nominal.jsonl",
+      "size": 46881,
+      "sha256": "d35322a0fa29ca15eae320880797c5bf98cb10cf95a670d28e9afc8f7c20b2b1"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/017-B-seed0-straight-sprint-v1-randomized_train.jsonl",
+      "size": 47968,
+      "sha256": "69a4f5ada2353260227f68fd7ca93bc1b6018c6fcb5be64c339529784d3460ce"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/018-B-seed0-slalom-v1-nominal.jsonl",
+      "size": 45268,
+      "sha256": "b03fb020141e60e20095806381180d15d52845243ebb10ed3d016c77c6c3ba7a"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/019-B-seed0-slalom-v1-randomized_train.jsonl",
+      "size": 46377,
+      "sha256": "2a925b6560f683f63f79a7f3d4a2f45d09b62f4a0b2c69c8fb38e3bbd0e406c9"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/020-B-seed0-right-turn-v1-nominal.jsonl",
+      "size": 46226,
+      "sha256": "e16ea4cde2ece61917caf5ddb23f14016e6bf82e58e72687df44b1b3509ce857"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/021-B-seed0-right-turn-v1-randomized_train.jsonl",
+      "size": 47210,
+      "sha256": "acb7e9d8ed056c9457a16cc1f7de084f7a7e8c891561c470fdd2b9dfe9dd9086"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/022-B-seed0-ramp-v1-nominal.jsonl",
+      "size": 45591,
+      "sha256": "4b712b172aac0ca70b116a9f2fac14681b1c442b74a67e70eb9794f45c7c45db"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/023-B-seed0-ramp-v1-randomized_train.jsonl",
+      "size": 46581,
+      "sha256": "096cbebf7feae3469b77560651eebef89b93300d2d9871ee4f274f84876df5b6"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/024-D-seed0-straight-sprint-v1-nominal.jsonl",
+      "size": 45478,
+      "sha256": "44112cb76d14f59247ed1773ef1eead3bc025d09820a023637d70d199736ef2f"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/025-D-seed0-straight-sprint-v1-randomized_train.jsonl",
+      "size": 46548,
+      "sha256": "03d905bd316899eb7a6bd09b895691ab332f42be3461cbb39b360f3a8911bcb4"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/026-D-seed0-slalom-v1-nominal.jsonl",
+      "size": 44388,
+      "sha256": "274c18e8073ff46b770b8384b51737e2da5891314f120f428f555e5a98727760"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/027-D-seed0-slalom-v1-randomized_train.jsonl",
+      "size": 45484,
+      "sha256": "dcd1a3ec313f2dee0bd488172f66f19b96434508222504ddf3e58c898f2a648e"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/028-D-seed0-right-turn-v1-nominal.jsonl",
+      "size": 44874,
+      "sha256": "d13962d55178c9aec73dae2f708d5c8bea0ca98bfdaf89381fa04ee69e4b67ea"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/029-D-seed0-right-turn-v1-randomized_train.jsonl",
+      "size": 45952,
+      "sha256": "221f2c8a055d86fc19958dd7ed11c1c58037df8f4952aed3333a075a92f0cb21"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/030-D-seed0-ramp-v1-nominal.jsonl",
+      "size": 44163,
+      "sha256": "8bb708706f3592a39c11ad048df1a9e2bce2fc2f292d3af8da88e65c1790d49e"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/031-D-seed0-ramp-v1-randomized_train.jsonl",
+      "size": 45216,
+      "sha256": "2e862a794b5e0be77040da7cbda56407e95b43408bb6ce73c5645dfc29e9633e"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/032-A-seed1-straight-sprint-v1-nominal.jsonl",
+      "size": 43986,
+      "sha256": "e4a1de66ab6de1d42423e7ab9db4f7492116fb5f014ced947075611f2bf2ed7e"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/033-A-seed1-straight-sprint-v1-randomized_train.jsonl",
+      "size": 45035,
+      "sha256": "063dd305ceda5da6babf2b5a8e9e00aa09e634ec61256df6c4d75df1a99a7ac3"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/034-A-seed1-slalom-v1-nominal.jsonl",
+      "size": 44415,
+      "sha256": "e5ad1be77cd698183570e751a786e9b77198d34e070fc5d7fa4e43648c2086d2"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/035-A-seed1-slalom-v1-randomized_train.jsonl",
+      "size": 45438,
+      "sha256": "fe75f8005398731fe48c441606e8a7db8ed4280e376f2f1233a538d806031fec"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/036-A-seed1-right-turn-v1-nominal.jsonl",
+      "size": 45569,
+      "sha256": "50ef05582fb4994969ac10509ebd5aeebcdbb44fd3946c7efe9b7bb7d3f23a5b"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/037-A-seed1-right-turn-v1-randomized_train.jsonl",
+      "size": 46580,
+      "sha256": "69fdda9e7c98f35e464909cb8e06844a52b88000524f44ddb671eddf65b650c1"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/038-A-seed1-ramp-v1-nominal.jsonl",
+      "size": 42723,
+      "sha256": "61767d6907f3390aa81eb06a217abbaa80d45e31f34d89f00ce7f41b5c11e6b4"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/039-A-seed1-ramp-v1-randomized_train.jsonl",
+      "size": 43765,
+      "sha256": "9df0ff220f7e2aa7b1598b5e3a1813d50442a78b836977c5d2c77005ab9a5e53"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/040-B-seed1-straight-sprint-v1-nominal.jsonl",
+      "size": 44001,
+      "sha256": "3ea0d1e616984d94921cc2ebdff8ca9178d24f4330d3f83c04f0ab40997fefb7"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/041-B-seed1-straight-sprint-v1-randomized_train.jsonl",
+      "size": 45100,
+      "sha256": "bc8663c38e016cac8c04668c2649b9553f7fdcd9e888928c0ce731314b57e6b5"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/042-B-seed1-slalom-v1-nominal.jsonl",
+      "size": 44326,
+      "sha256": "8eec2426fca184cf7e6674be06c366cb07cd4387ab2f86ea3e4222a45c21c8c5"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/043-B-seed1-slalom-v1-randomized_train.jsonl",
+      "size": 45294,
+      "sha256": "d00170b57105da0cf53b4b306a467b2dc6e5673d4626ea61b9d79ec10fe418fa"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/044-B-seed1-right-turn-v1-nominal.jsonl",
+      "size": 45543,
+      "sha256": "5b95c0804b38439409dfde20a7d4e79336aae9b8166f61f54bd9798582502dd2"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/045-B-seed1-right-turn-v1-randomized_train.jsonl",
+      "size": 46643,
+      "sha256": "0f393e49eedd24836e09314c881a72144212b73e6a50c13cd713df427d8b9569"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/046-B-seed1-ramp-v1-nominal.jsonl",
+      "size": 42633,
+      "sha256": "9ef7b3118095fc7d5cbfa42810ecc280b640038fa8e4a148b1a550b58e276dd2"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/047-B-seed1-ramp-v1-randomized_train.jsonl",
+      "size": 43756,
+      "sha256": "7abdeb25a15c4b59a4bbb33b57764c791491b7d971f4168fb10d8e5a7d04b244"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/048-C-seed1-straight-sprint-v1-nominal.jsonl",
+      "size": 44007,
+      "sha256": "a19ebb3c66602a75ab3de64f8d7cfcebfb0e8b94488f69419b15f9c25126daba"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/049-C-seed1-straight-sprint-v1-randomized_train.jsonl",
+      "size": 45000,
+      "sha256": "d14f2189b25dc5ec834cba5f9bf392dde2f8cc02d88bbcb10b8bc3107e44e5d5"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/050-C-seed1-slalom-v1-nominal.jsonl",
+      "size": 44399,
+      "sha256": "c2b58b1b46f4f798aa0e3cf9d6149cb72bb1db6ac608c56267d9d402cb64f0a1"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/051-C-seed1-slalom-v1-randomized_train.jsonl",
+      "size": 45469,
+      "sha256": "6de727363e3563f1a965332955e47d04f05852441582c9376a0074a5a94e85a2"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/052-C-seed1-right-turn-v1-nominal.jsonl",
+      "size": 45608,
+      "sha256": "e082b64fb198f3d5864d13574ada8a5a800a9d1e6cd622c35c123a9f395df64e"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/053-C-seed1-right-turn-v1-randomized_train.jsonl",
+      "size": 46642,
+      "sha256": "a3343a409224a01c26abadb4d15905cdfe4d99a3798e5e5542472e68f8f04225"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/054-C-seed1-ramp-v1-nominal.jsonl",
+      "size": 42777,
+      "sha256": "8d61d28976903d0bc5cdd68bd7e358c2ca6f262f8e4a53314921150b08b7ba6d"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/055-C-seed1-ramp-v1-randomized_train.jsonl",
+      "size": 43781,
+      "sha256": "2cf7d31811a4854675c8aa8919ed4791612c706c06dc2bea4494eaff99d66126"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/056-D-seed1-straight-sprint-v1-nominal.jsonl",
+      "size": 46865,
+      "sha256": "56b20f1315a1bffd8b5c0972dbb948a0bde1f7640531a46ce16682919fbc9293"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/057-D-seed1-straight-sprint-v1-randomized_train.jsonl",
+      "size": 47839,
+      "sha256": "8401cb5ce076901042c2dc57cc0554433daa26cba11f4b768d7680891c80efd7"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/058-D-seed1-slalom-v1-nominal.jsonl",
+      "size": 45092,
+      "sha256": "dd2790c488adcc222d866aec797154fa929de0e34a8c1b4bc9ecc3cf17510a9b"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/059-D-seed1-slalom-v1-randomized_train.jsonl",
+      "size": 46233,
+      "sha256": "f33e74ef971145596b2bbadd8f1572974a98ed35c5bdc841db7b4d334d622318"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/060-D-seed1-right-turn-v1-nominal.jsonl",
+      "size": 46209,
+      "sha256": "e9f11c84ab6252566875fbd3db2e0b212ac73dd10f3930a68b5ba2762db4138a"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/061-D-seed1-right-turn-v1-randomized_train.jsonl",
+      "size": 47315,
+      "sha256": "6fbf9ca41c257e99261b0017d18895b29f0c2d38df03dbcd73bb5a9609f2de2b"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/062-D-seed1-ramp-v1-nominal.jsonl",
+      "size": 45486,
+      "sha256": "464b596754fab5a8cadf957a9fee9099e5cb2bc46c84a7056b9e7cba57114cd7"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/063-D-seed1-ramp-v1-randomized_train.jsonl",
+      "size": 46531,
+      "sha256": "3195d088fa4318e8f2d555ffc7b5e45b33a0c3d031af232b5448c7b8e6d24d48"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/064-A-seed2-straight-sprint-v1-nominal.jsonl",
+      "size": 44048,
+      "sha256": "1b679fad68f4ab60a572c9f63842e258a42534093e1eddcc345678808ba8a928"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/065-A-seed2-straight-sprint-v1-randomized_train.jsonl",
+      "size": 45015,
+      "sha256": "e49f2c1c6deb34f046882cd5c112a0c4a98bb67c4f37576ca07cfc5212a46848"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/066-A-seed2-slalom-v1-nominal.jsonl",
+      "size": 43626,
+      "sha256": "e9cdf687b990730a7b09460164262cec3f9422591966194b55b398841eb351dc"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/067-A-seed2-slalom-v1-randomized_train.jsonl",
+      "size": 44614,
+      "sha256": "52f03160aaa733f3729efbd6760bf09432d8099be430b405e2b7311aa4930ef5"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/068-A-seed2-right-turn-v1-nominal.jsonl",
+      "size": 45444,
+      "sha256": "db0524f2b011a2c78a067600f5650b91fde2134c5cd96fe4b195c440af7efc9a"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/069-A-seed2-right-turn-v1-randomized_train.jsonl",
+      "size": 46530,
+      "sha256": "5c9cf15f2c797fed8b60205d51e32629b83c8dcc36e54872d13aa0416d121812"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/070-A-seed2-ramp-v1-nominal.jsonl",
+      "size": 42601,
+      "sha256": "8f6d1ff78e6989e1a14c707e5914da2bcee9fe8a86e3c5b2eea19505a0fa0498"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/071-A-seed2-ramp-v1-randomized_train.jsonl",
+      "size": 43745,
+      "sha256": "60e9ab22df1eaab8cd03fc56e6889e3547dbd30d499841548f1fa874a45f2a2a"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/072-B-seed2-straight-sprint-v1-nominal.jsonl",
+      "size": 44077,
+      "sha256": "900a08b82e88e7d477a55b7b0149a7e6661cca4672cc5fdf1605c9052a257b61"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/073-B-seed2-straight-sprint-v1-randomized_train.jsonl",
+      "size": 45081,
+      "sha256": "a5b287a3ab14d2d9ed43b4e46377ed49622eb7aaa1e93960b9c9a908b10945d9"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/074-B-seed2-slalom-v1-nominal.jsonl",
+      "size": 44722,
+      "sha256": "9e737817679225579a1a47f33ea503bad3ed62c6e79d2c164acaccd1a043b828"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/075-B-seed2-slalom-v1-randomized_train.jsonl",
+      "size": 45765,
+      "sha256": "eebefbd0f6128da7700995a6b9bba43d5927a4083569cf4cb303fd880bcdd744"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/076-B-seed2-right-turn-v1-nominal.jsonl",
+      "size": 45597,
+      "sha256": "01e3086b96371689845112aede7a07f3529f27b3bda60e021f48193de263e886"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/077-B-seed2-right-turn-v1-randomized_train.jsonl",
+      "size": 46663,
+      "sha256": "75d2095fc2df645f52ddea6e76437814ad30fbe01bf4804080677f6d769e9d05"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/078-B-seed2-ramp-v1-nominal.jsonl",
+      "size": 44033,
+      "sha256": "3047b2f2e3e0740a54d288ee8d8ac4e59b4b08cd5e82ae60941a8740bdb7394c"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/079-B-seed2-ramp-v1-randomized_train.jsonl",
+      "size": 45101,
+      "sha256": "158c0f31ec67e7dde2b46e067d577a859a59ea1e141dfdc5c98ac2071208e432"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/080-C-seed2-straight-sprint-v1-nominal.jsonl",
+      "size": 45412,
+      "sha256": "b202a74039dda877ed36fffb02725aed4451efeb93489addc4ccf7125be9585c"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/081-C-seed2-straight-sprint-v1-randomized_train.jsonl",
+      "size": 46555,
+      "sha256": "6600dfff88bd22a679b73386717cc35873b98d5e8afe0f79138f3407a7ba3df0"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/082-C-seed2-slalom-v1-nominal.jsonl",
+      "size": 44341,
+      "sha256": "dfd0d09f98f03c1b204b083d1efe75cda526ba3d2cf5e24252f18667dc86173e"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/083-C-seed2-slalom-v1-randomized_train.jsonl",
+      "size": 45419,
+      "sha256": "2819188d439730ed8bc7fae859f2da9b16b318137b230e35761a55e6cd6cca53"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/084-C-seed2-right-turn-v1-nominal.jsonl",
+      "size": 44824,
+      "sha256": "c59c5a9651e8e204501487d64361478eea781ecb881d099b55305a302494d37f"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/085-C-seed2-right-turn-v1-randomized_train.jsonl",
+      "size": 45959,
+      "sha256": "45c3c1467eeb89aa8e353a63709e44fe289559d6d6ff386f91468bd29a54ce23"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/086-C-seed2-ramp-v1-nominal.jsonl",
+      "size": 44132,
+      "sha256": "498ddee20496131d711f66582c5147f22bc9324ffde80ad5d9717af0a71e07a8"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/087-C-seed2-ramp-v1-randomized_train.jsonl",
+      "size": 45212,
+      "sha256": "be8a4865840cce1ab7ff8e0a0694d3f6a842619fea458c562be83d7b218af397"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/088-D-seed2-straight-sprint-v1-nominal.jsonl",
+      "size": 46474,
+      "sha256": "7b0227bafece5c74ae4478872aa7b8b2031ec365c378f8ef0c96e514949266c4"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/089-D-seed2-straight-sprint-v1-randomized_train.jsonl",
+      "size": 47731,
+      "sha256": "e9e19267bf100f7a54825a732182bd72c1926e1c7938040089fe5cb3f6bae18a"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/090-D-seed2-slalom-v1-nominal.jsonl",
+      "size": 44743,
+      "sha256": "6f80345e4c4df6d9ef8dbb2648c947587c6104598b95545236367c222bf69a59"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/091-D-seed2-slalom-v1-randomized_train.jsonl",
+      "size": 45886,
+      "sha256": "0e3af15790f51f9b00060e8adc8dc97ce1ea83867a2caab5c479906b5beb855a"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/092-D-seed2-right-turn-v1-nominal.jsonl",
+      "size": 46039,
+      "sha256": "795c9b34b68888475ec144d6f96d067ffe60be7367bb3ee099748175bce19a59"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/093-D-seed2-right-turn-v1-randomized_train.jsonl",
+      "size": 47019,
+      "sha256": "e7e40b9186b7c44dffb0f88cf6076929657147834bbbe5841406423bfc2df1a7"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/094-D-seed2-ramp-v1-nominal.jsonl",
+      "size": 45384,
+      "sha256": "33d76bf881f8a3dbfcfffd4914d0f0b5b7bb843473991aa3b77f992d387df8fa"
+    },
+    {
+      "path": "docs/research/evidence/wp3-issue51-full06-traindev-20261027/cells/095-D-seed2-ramp-v1-randomized_train.jsonl",
+      "size": 46290,
+      "sha256": "5bb48c7c877749a27a7079dd86eb8c8c624f47e152994a467d3979c6b758b718"
+    },
+    {
+      "path": "docs/research/exploratory-demo-quickstart.md",
+      "size": 3094,
+      "sha256": "cdd69f09c94e567aa69dfffc73abcb9a67e6d0cbdb1e44ca67e2b3c76424b53c"
+    },
+    {
+      "path": "docs/research/h01-canonical-c2-protocol-v2-2026-10-13.md",
+      "size": 4679,
+      "sha256": "fb1c10eb88886761064290795ae4bc3d36d0e00b05832fe3afc4f94020b9beb5"
+    },
+    {
+      "path": "docs/research/simulation-only-ppo-amendment-v1.md",
+      "size": 4524,
+      "sha256": "cf436ed775158001ba113730cbc3df37d35d1f27883e68714548a41ab188c720"
+    },
+    {
+      "path": "docs/research/straight-demo-curriculum-v2-proposal.md",
+      "size": 1496,
+      "sha256": "b32834d83f312cd8255cc7542c9976660c44dc78ad2184b781841fc485844624"
+    },
+    {
+      "path": "docs/research/straight-exploratory-permit-preflight-v1.md",
+      "size": 9735,
+      "sha256": "6b84c6009add5509e60c0e6603030d8005b11a009631e123981a4dd5d0bd8372"
+    },
+    {
+      "path": "docs/research/wp0-wp7-deep-audit-2026-10-13.md",
+      "size": 15655,
+      "sha256": "9598e613349eb2adda0ed2bde6e959b3cfd21ae018c4c11897bae8be25bbd092"
+    },
+    {
+      "path": "docs/research/wp3-unsupported-contact-terminal-v1.md",
+      "size": 1742,
+      "sha256": "1d603586339c6a6c8109dfd65bbfe0a3e572b19e4144e5e61b31c303e736e3d1"
+    },
+    {
+      "path": "docs/research/wp7-6dof-sloped-multievents-v1-2026-10-14.md",
+      "size": 3814,
+      "sha256": "0bd7a3add7a286db2ee94fdd265db4f9c25ae0eb5263c3a730f4b2ed83668eb8"
+    },
+    {
+      "path": "docs/research/wp7-angular-impulse-landing-v1-2026-10-14.md",
+      "size": 4014,
+      "sha256": "4ddc82e1d4fa4c72e19b5ef1949663d9f90c38e921e3e39475884dccc027d877"
+    },
+    {
+      "path": "docs/research/wp7-atlas-phase-lifecycle-v2-2026-10-18.md",
+      "size": 3637,
+      "sha256": "510a9f8f175ae9526d5ed54145da4382bdfeaa2ff885d57d43e6c7e07e19c5d8"
+    },
+    {
+      "path": "docs/research/wp7-automatic-edge-release-v1-2026-10-13.md",
+      "size": 4319,
+      "sha256": "247ec31aafde6a0c951cb06999ec961713a45089ada6e6942ff9a8352ddbbe02"
+    },
+    {
+      "path": "docs/research/wp7-ballistic-landing-v1-2026-10-13.md",
+      "size": 4575,
+      "sha256": "5f5b1ab3f747cb6083c2ab8f9dd80ace54a5d24a533202682766dd572ca5a139"
+    },
+    {
+      "path": "docs/research/wp7-c2-candidate-builder-reconstruction.md",
+      "size": 3225,
+      "sha256": "83b19f620540eee13199f5c36b42f4dd3dd9e783a0e328a46310bab21dcc432f"
+    },
+    {
+      "path": "docs/research/wp7-c2-gym-navigation-reconstruction.md",
+      "size": 1857,
+      "sha256": "bf5c25160ca19d1893df0f1ce2ba220d482009c82f8b40d32b4ba118debf7dd7"
+    },
+    {
+      "path": "docs/research/wp7-c2-highwater-reward-reconstruction.md",
+      "size": 2504,
+      "sha256": "fcfede67a5dffc6a4a869414deb1095b76ddb890a67fab5d9fefcc4a23d9b0d8"
+    },
+    {
+      "path": "docs/research/wp7-c2-offtrack-reconstruction.md",
+      "size": 2795,
+      "sha256": "8ad7c90f609bb312ce8b0b58137c68d60d87b74d81641949d1a53f3d11b6773b"
+    },
+    {
+      "path": "docs/research/wp7-c2-route-assets-reconstruction.md",
+      "size": 3213,
+      "sha256": "f604548c2376c93729b46c9141c801cd2147f44979e2695091cce6c912c8db9e"
+    },
+    {
+      "path": "docs/research/wp7-c2-route-projection-reconstruction.md",
+      "size": 2059,
+      "sha256": "90bdc1198286ee134a32f58125c15d37bcfc8b62836f5648b40dc78c4e556965"
+    },
+    {
+      "path": "docs/research/wp7-checkpoint-observer-reconstruction-2026-10-11.md",
+      "size": 2151,
+      "sha256": "96ff50cb723864636bc7ffda196a1539d57a129dfbade5eef57a803f6eb97fa4"
+    },
+    {
+      "path": "docs/research/wp7-contact-manifold-rebound-v1-2026-10-14.md",
+      "size": 3978,
+      "sha256": "34296bb1faff226f4bd8175165ccecc52f34e5ed95db714fb9aafdc578cd91a3"
+    },
+    {
+      "path": "docs/research/wp7-control-evaluation-worker-2026-10-16.md",
+      "size": 4744,
+      "sha256": "ded77b753e9174d25ef3167de761e4b2cb2f74a99227b1364d3ada0f9232a0bc"
+    },
+    {
+      "path": "docs/research/wp7-core-completion-phase-a-2026-10-16.md",
+      "size": 3573,
+      "sha256": "d1f0a9fae84c61e0cfafcea6d61597e02b51353c9c5535a2ad7abb51cb02dcbf"
+    },
+    {
+      "path": "docs/research/wp7-core-completion-report-2026-10-16.md",
+      "size": 17796,
+      "sha256": "6cfddc04ef0c5da7daf20a2e472bf75e3bda0efe4ddd0d8f9c6d258bead44c17"
+    },
+    {
+      "path": "docs/research/wp7-core-execution-closure-2026-10-16.md",
+      "size": 3931,
+      "sha256": "87c12abb882c496b628b88bc2eff4aba8dc3a399686f5fb098f84a457f17af59"
+    },
+    {
+      "path": "docs/research/wp7-core-readiness-90-plan-2026-10-16.md",
+      "size": 5887,
+      "sha256": "034d9798368c8166672257ec682d686b960f083056d78e6d7139a81d211fd1d5"
+    },
+    {
+      "path": "docs/research/wp7-coupled-ramp-contact-2026-10-17.md",
+      "size": 6459,
+      "sha256": "cc2a1c5639f85681557c424747f3e45b1040721739cadbf57d0725b9dc0765cb"
+    },
+    {
+      "path": "docs/research/wp7-directed-center-feasibility-2026-10-17.md",
+      "size": 4455,
+      "sha256": "51d143d42900e4ef2a83a204dc05c0978dcd46d4be19a5f9a7b9b633252ff2e4"
+    },
+    {
+      "path": "docs/research/wp7-distance-ground-motion-2026-10-16.md",
+      "size": 5801,
+      "sha256": "12ff0aa627685f6cfa2a118a950aa98f67222e287d31998d48992fe26bd61bdc"
+    },
+    {
+      "path": "docs/research/wp7-dual-seed-3d-swept-body-proxy-2026-10-12.md",
+      "size": 5920,
+      "sha256": "eca363f1fd15c89b807b23111ab8e5566ec20dbff1a70904001cba0b60dae85a"
+    },
+    {
+      "path": "docs/research/wp7-dual-seed-train-trajectory-audit-2026-10-12.md",
+      "size": 6362,
+      "sha256": "228a14b30662dccbf9c44a8f7ad4c542fcb6381839deea2b1ac4bf4fcb9e1f86"
+    },
+    {
+      "path": "docs/research/wp7-evaluator-progress-audit.md",
+      "size": 2539,
+      "sha256": "b28158b00b8ed9d0f9eb3bfc1add05a294010d8af73af4c58cc08a79b54f9617"
+    },
+    {
+      "path": "docs/research/wp7-executed-planar-feasibility-2026-10-16.md",
+      "size": 8437,
+      "sha256": "64fc14cc91aae727bed41ac1a9d92c60857eece7024126b6a904e7539de8f235"
+    },
+    {
+      "path": "docs/research/wp7-exploratory-live-calibration-2026-10-11.md",
+      "size": 2928,
+      "sha256": "e02758236c00089daa019e43be10c1a96597b4adda6f655a8760c211fc18e585"
+    },
+    {
+      "path": "docs/research/wp7-geometry-and-stochastic-screen-2026-10-13.md",
+      "size": 7079,
+      "sha256": "3fdfc93e7e4fbddda9b183884c042bcee63c1bcd8e7ddb2276d3495fa7bb96f8"
+    },
+    {
+      "path": "docs/research/wp7-hard-route-outcome-v2-2026-10-18.md",
+      "size": 4930,
+      "sha256": "dce83431a8db44e4b184052a81b550d997432fb2570fe2891686b8948db6f799"
+    },
+    {
+      "path": "docs/research/wp7-independent-suspension-dynamics-v1-2026-10-13.md",
+      "size": 3231,
+      "sha256": "eccbb6703398f986000cce0cdd70f67c87b4cb7ce5e5c6022e3f62eccab5bc30"
+    },
+    {
+      "path": "docs/research/wp7-lifecycle-race-closure-2026-10-16.md",
+      "size": 3785,
+      "sha256": "c572ea4bf201e36b61a3ab881a15aa55e64834947287743042c085884c81e888"
+    },
+    {
+      "path": "docs/research/wp7-multisurface-contact-v1-2026-10-13.md",
+      "size": 2716,
+      "sha256": "378b9fd68441024cf2c891c09f8b366b5427cab4ae2f4f914ce84494eff92b10"
+    },
+    {
+      "path": "docs/research/wp7-ode-enclosure-yaw-tire-v1-2026-10-15.md",
+      "size": 5646,
+      "sha256": "0fb5f4d0dd25a0a705e55cac94f82f80069e78f8dadcde7b81d5a3dc4d1e64f5"
+    },
+    {
+      "path": "docs/research/wp7-owner-decisions-and-preregistration-2026-10-13.md",
+      "size": 6906,
+      "sha256": "be180a9a497d11d637c001fd899f58ca373ca8267fbe28d0bce7d0fd7ce002f5"
+    },
+    {
+      "path": "docs/research/wp7-owner-execution-profile-v2-2026-10-18.md",
+      "size": 3674,
+      "sha256": "3899ec0787655a1fec1980a952e916bd562fb4a7c4b8692f5e3c6062109883ff"
+    },
+    {
+      "path": "docs/research/wp7-physics-to-gym-integration-v1-2026-10-15.md",
+      "size": 14025,
+      "sha256": "5edf9a5e8589f7844b918489e7ff111c37dc4e0c010806f1caf76f19b124342f"
+    },
+    {
+      "path": "docs/research/wp7-pilot-milestone-evidence-mock-2026-10-11.md",
+      "size": 4506,
+      "sha256": "5fc4e7b8a8ed1a3537b3fc735e5f01b7c668a6224ab08d5bdcc26949a67b5843"
+    },
+    {
+      "path": "docs/research/wp7-pilot-preflight-reconstruction.md",
+      "size": 3564,
+      "sha256": "e5bf2b017182b2bf2db93406b5a3a39baf4a4c634040d17ef63c753c061312f9"
+    },
+    {
+      "path": "docs/research/wp7-planar-ramp-wheel-support-2026-10-13.md",
+      "size": 4672,
+      "sha256": "bb9b18c3bd9657f78998e5997007921257ec0a7bcb029984c42b2ba69ecf35e3"
+    },
+    {
+      "path": "docs/research/wp7-portable-evidence-paths-2026-10-18.md",
+      "size": 1148,
+      "sha256": "85a7ce76e9e06c59b2beefdc43d889486096cca585bf6c5eecb27c9034b39222"
+    },
+    {
+      "path": "docs/research/wp7-pv5-engineering-readiness-2026-10-16.md",
+      "size": 13805,
+      "sha256": "f2cac296639e0ea5baf45e02045cbdccffb906e907e78833df7bc61beed8af8c"
+    },
+    {
+      "path": "docs/research/wp7-pv5-race-failure-decision-v1.md",
+      "size": 4265,
+      "sha256": "19b05edda57e5c13543e3eeeddfba4c3b02c014294b649ad91004e5a670e2714"
+    },
+    {
+      "path": "docs/research/wp7-pv5-transition-domains-v1.md",
+      "size": 20136,
+      "sha256": "dbf21b6fab5403e81a49b99f5821bf047b9e580511aa3fc2c3a8ef256659b7d4"
+    },
+    {
+      "path": "docs/research/wp7-ramp-force-consistency-2026-10-17.md",
+      "size": 8303,
+      "sha256": "ab73415f1507afdae580bc1536ef15326ca0eb7c404fc44c25187ae49eb19cb9"
+    },
+    {
+      "path": "docs/research/wp7-ramp-recovery-acceptance-2026-10-18.md",
+      "size": 5623,
+      "sha256": "f3af1740022427e59e8742726a1fa2c37774d1d3873e2e8646bde27e6350ce5a"
+    },
+    {
+      "path": "docs/research/wp7-reconstruction-2026-10-11.md",
+      "size": 4244,
+      "sha256": "f99ee96883fcfb3828d2044bab1c0b4d5e8b9dca764d5b19010f03736d526b9c"
+    },
+    {
+      "path": "docs/research/wp7-registered-evaluation-worker-2026-10-18.md",
+      "size": 1920,
+      "sha256": "51d97cd516d5e3bd6a395fd28905e419fb95f23d6731e7a93c1477ef4494b134"
+    },
+    {
+      "path": "docs/research/wp7-remediation-1b-2b-3b-4a-2026-10-13.md",
+      "size": 7783,
+      "sha256": "8afcdf0b1a94f5e1556fadf0ed94616b3b9dcfd2a6d6b7449c601f804f9ac302"
+    },
+    {
+      "path": "docs/research/wp7-retrospective-freeze-readiness-2026-10-13.md",
+      "size": 5700,
+      "sha256": "3bed857ecc7c09fbd5eb731e3770e08264908cd1219bd6ce3a391e402fe09bfd"
+    },
+    {
+      "path": "docs/research/wp7-right-turn-arc-feasibility-2026-10-16.md",
+      "size": 6061,
+      "sha256": "32b911025ab73c2d8a4d91d729c0636195a2c929e355d28f8d3b6b3cb1932b4f"
+    },
+    {
+      "path": "docs/research/wp7-right-turn-centerline-corridor-2026-10-13.md",
+      "size": 5013,
+      "sha256": "8c0a9f505db94a495242156c4be08fee91eb2c9ed18d01ba4e4c5126ce0da792"
+    },
+    {
+      "path": "docs/research/wp7-rotating-compliant-flight-v3-2026-10-18.md",
+      "size": 3351,
+      "sha256": "d83537c0eddbc2b26b70a1f64fd9961192964e8cb46754a9312923fce9327b33"
+    },
+    {
+      "path": "docs/research/wp7-rotating-owner-profile-v3-2026-10-18.md",
+      "size": 2343,
+      "sha256": "ecb11d4cf2b63a93d6d12712a059ec3e1f0fc88336d1eac1435346159b877a17"
+    },
+    {
+      "path": "docs/research/wp7-run-evidence-review-2026-10-16.md",
+      "size": 4864,
+      "sha256": "dca00e45ffdbd2aee2cbd1e6e77a41bcf2d8420eb683e3d636ae25956004f3a9"
+    },
+    {
+      "path": "docs/research/wp7-scientific-acceptance-execution-audit-2026-10-15.md",
+      "size": 5493,
+      "sha256": "410ec0bfebcbf7785f9281c3fc41931039c6767e2990a48bbdce6cad7de098b5"
+    },
+    {
+      "path": "docs/research/wp7-scientific-unblock-protocol-v1-2026-10-15.md",
+      "size": 5988,
+      "sha256": "bb512bc52f67da890d314f7c2142828b39dd40b85335022e5d514445baeee706"
+    },
+    {
+      "path": "docs/research/wp7-sloped-clearance-tilted-landing-v1-2026-10-14.md",
+      "size": 4456,
+      "sha256": "71a927d1b829397b76fdfeb945b51f80de2c1a382b7432c1546912f2a1ec6c98"
+    },
+    {
+      "path": "docs/research/wp7-spatial-compliant-lifecycle-2026-10-17.md",
+      "size": 4624,
+      "sha256": "08a4acf4f22a9bc00de030251521b4e5db125f804f9e1bcc40902805dceee65f"
+    },
+    {
+      "path": "docs/research/wp7-spatial-ground-contact-2026-10-17.md",
+      "size": 5773,
+      "sha256": "69ae2f63c3150542bc38e380d438b18bf97781f0652af020a3d6842c5155ba4a"
+    },
+    {
+      "path": "docs/research/wp7-spatial-ramp-reset-tracking-2026-10-17.md",
+      "size": 2401,
+      "sha256": "6d6f8174e3d10246d2074bbfd5654feaca6981b24f6772c4209da668e7b31cba"
+    },
+    {
+      "path": "docs/research/wp7-spatial-train-profile-2026-10-17.md",
+      "size": 4329,
+      "sha256": "3c8c74cb08badcaca898da38215f6f4c0dd1d5fb7f2e2209781064e7b06cc61e"
+    },
+    {
+      "path": "docs/research/wp7-torque-free-swept-ccd-v1-2026-10-14.md",
+      "size": 4410,
+      "sha256": "7f4499c3dc328ff9337a768672e420dd445246d2ae1ff3b34d4b80ccd436a246"
+    },
+    {
+      "path": "docs/research/wp7-train-checkpoint-evaluator-reconstruction.md",
+      "size": 2189,
+      "sha256": "fa570b7294c3d8e101cab097ebbdf5d8e210f59dfa1485e2218a9ebbbbe336ef"
+    },
+    {
+      "path": "docs/research/wp7-train-control-acceptance-2026-10-18.md",
+      "size": 4740,
+      "sha256": "77756aa4ffc208110abe75ec51902723503f557aca7681435c23d870d81765d0"
+    },
+    {
+      "path": "docs/research/wp7-train-dynamic-route-audit-2026-10-11.md",
+      "size": 3908,
+      "sha256": "92dbad17ebbb93aa5c6389139b9d26637fae47c9dc6bbc1e164ce877d4c9b9ee"
+    },
+    {
+      "path": "docs/research/wp7-training-admission-cohort-review-2026-10-18.md",
+      "size": 7388,
+      "sha256": "00375ad08dd0261e3b5b82474529d597de703417624093b522a9f475ae80e7e2"
+    },
+    {
+      "path": "docs/research/wp7-training-owner-decision-register-2026-10-18.md",
+      "size": 10674,
+      "sha256": "b2242e8fef161e7bdf70c4199f87baa4f0c8c21b4bc579067a1a620757497842"
+    },
+    {
+      "path": "docs/research/wp7-unilateral-spatial-contact-2026-10-17.md",
+      "size": 2693,
+      "sha256": "042503c6cd12f0a892bceb1fa01902f95d024eca175a3ca973d6447e274d0352"
+    },
+    {
+      "path": "docs/research/wp7-whole-body-road-union-2026-10-13.md",
+      "size": 4921,
+      "sha256": "58dc38e8db1d3926b61da7ef9435eb66d47d1f4fdb5653a7a30198f8d53a9a77"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-27-deterministic-simulation-runtime.md",
+      "size": 11447,
+      "sha256": "a37c46bc05da8f915f83b48d0da78d2f0fc2bc12bc55c2c50aac1a89d4efe0e3"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-27-local-frame-observation-encoding.md",
+      "size": 11348,
+      "sha256": "2825adf5d112fb0448ae0c1d1aa9d149de63f0a119489aa7483659d02278a30c"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-27-sandbox-physics-core.md",
+      "size": 8539,
+      "sha256": "5d681974ea6af0e5156ee7ecda05caac9d535e2d66f8f3292519a70d088fcde2"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-27-track-world-model.md",
+      "size": 8418,
+      "sha256": "33e4ad188b3690149603e91e9118c624f53521752b77a44aa49fee12251943d1"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-27-vehicle-perception-rangefinders.md",
+      "size": 10684,
+      "sha256": "bc9715d6aba2567e40d848e0579c414766025827e5f9f494a8393e122e79e9ab"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-27-world-interaction-resolver.md",
+      "size": 11381,
+      "sha256": "932ffa9062c828a064a73a8b60ed0b22de5860aec7c4be49e648f839f562aae4"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-28-composable-transition-rewards.md",
+      "size": 14302,
+      "sha256": "3cbbc5ec6c1386f9592236a08c13a3f516e9902a145bfbdae647fa567e8d7d4f"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-28-gymnasium-environment.md",
+      "size": 15680,
+      "sha256": "f0645a1b31f94e7a6a6e6dd852fc69b5535287301a919b183b5d209c922d6ae4"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-28-policy-action-mapping.md",
+      "size": 8676,
+      "sha256": "1a6219980ad01907be5f999263e394383dbf4ef46114e6658c323098151cc770"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-28-race-progress-episode-semantics.md",
+      "size": 15417,
+      "sha256": "0f5a7bf9307347cda4aab7aef02adfcfb2436bc32e0fca0855929113e0623fac"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-29-multi-track-sampling.md",
+      "size": 18992,
+      "sha256": "279df57956290b7d38f9f042e8ebbb3eef15f8cc23740771182f93b81d4970b4"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-29-ppo-baseline-model.md",
+      "size": 17546,
+      "sha256": "7605150ce22e05ff174a5f656a0605688dc58b3d202f085bff15e26be6a7eb5e"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-29-vectorized-ppo-training.md",
+      "size": 24535,
+      "sha256": "4c0a69dff32555348391f1a0c99be567782f6b48082124f5fe2280fca47b6574"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-30-training-orchestration.md",
+      "size": 21232,
+      "sha256": "d86c033a6207bd39ccbb35ca7f1397917f219181c511318e2abc50e92b8a760c"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-10-01-canonical-experiment-definition.md",
+      "size": 13573,
+      "sha256": "e3b205e0b3d8709b32129d838a3644d81b4deac6b9c9c8e3efba0472298bc5d0"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-10-01-track-asset-contract.md",
+      "size": 18246,
+      "sha256": "8b8a87cd301ff39850d7dcdf79581a1bce1122d26b57a1d1e9a7412c3e73b875"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-10-02-environment-protocol-freeze.md",
+      "size": 14121,
+      "sha256": "17f8ad4013d40fef0d5fa6abbd07e42b73c15277f5ac8e205cb1e62b02aa6d6e"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-10-02-train-heldout-split.md",
+      "size": 16605,
+      "sha256": "3b9c70f10ef58fe498bd22e7d22a23c5fd37aaabe9024decf5e845bb9592de43"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-10-03-canonical-track-mechanics-amendment.md",
+      "size": 14875,
+      "sha256": "649380c30d3a74cab5a2fcbfbbd1887981ebd02a2d17f9db4551baab71a38675"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-10-03-evaluation-telemetry.md",
+      "size": 17330,
+      "sha256": "454feb2ab082971b51ad4c96244e502eb5403d8e620a9be6c0bbd034f3e4ad78"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-10-04-evaluator-metrics.md",
+      "size": 26162,
+      "sha256": "0710a9063dc3f38240b42c6911cb9920b58f87dfed0b31c6fb81cca8ad1c9836"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-10-04-run-provenance.md",
+      "size": 36813,
+      "sha256": "c9891b11be0ec6ab909abc4cea83d556635c47f22afe2d8b3daf540e57d31b50"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-27-deterministic-simulation-runtime-design.md",
+      "size": 9527,
+      "sha256": "77b76a38de7ab0f11c95dad36750136cff1fcf8c82a8cd6ff63016bb7075c839"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-27-local-frame-observation-encoding-design.md",
+      "size": 12184,
+      "sha256": "d36cbfd3617882b4c0435f3c5c25332acc19d9db62bff8c0047739dfebc4dd91"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-27-policy-action-mapping-design.md",
+      "size": 8928,
+      "sha256": "da1865e8813315943b2ea38c1edbe408880d8440dd38185e5a7bd339d8409f55"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-27-sandbox-physics-core-design.md",
+      "size": 9282,
+      "sha256": "ccaa65ad370adeabd803cef3d96547d3f184684c70a8aca7bd579617dcf20aab"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-27-track-world-model-design.md",
+      "size": 9706,
+      "sha256": "54ec1c50621ec9c0c63feb3f564db223e11111a1e6eaec91acae4443aa45ab78"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-27-vehicle-perception-rangefinders-design.md",
+      "size": 8798,
+      "sha256": "b90273583fceecec0fc8dacdef84b9ee1190e406994805c8719046a9f2123c8c"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-27-world-interaction-resolver-design.md",
+      "size": 10231,
+      "sha256": "fd5378f5ef22570d55e2070f1bf08ecf6a0fcf74ee73895c56303ac2438e921d"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-28-composable-transition-reward-design.md",
+      "size": 12860,
+      "sha256": "f268509938875a63a8573b9eefe962e251bf770623dc1cc5a14496eb85ff5419"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-28-gymnasium-environment-design.md",
+      "size": 15923,
+      "sha256": "b0f3cd89c44c6c856f528b71cecb2e39ee568a2f38873a5204879425b1249787"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-28-ppo-baseline-model-design.md",
+      "size": 23603,
+      "sha256": "54f59842b881bad90cb6fabd2a0c159d1c8ae8e57af6ff42521a09f7416853fa"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-28-race-progress-episode-semantics-design.md",
+      "size": 17172,
+      "sha256": "e0ce208b78684c9211322dd98e91c72cb7398935b063835396251bc3f71765ed"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-29-multi-track-sampling-design.md",
+      "size": 13245,
+      "sha256": "8519d52b6f605209c6c22e8ee11b822fa8c1d6bac19dee287fea6d607d037726"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-29-vectorized-ppo-training-design.md",
+      "size": 20905,
+      "sha256": "bb0269f20b1a11fdca02c8d3c4464ceee0b96f4fb13a4a9e8e0d4ba8e7b76d90"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-30-training-orchestration-design.md",
+      "size": 16981,
+      "sha256": "21faa431dff360aebdc04e59be0cc598ff26403a80a8e4d859c86be9a256ee66"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-01-canonical-experiment-definition-design.md",
+      "size": 14242,
+      "sha256": "6b5891bff2d3cf0fd7d4b913c9793e44eb91eb377a6a5531d2822633a9742a78"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-01-environment-protocol-freeze-design.md",
+      "size": 16442,
+      "sha256": "93fb1f710fc64b206a968bb253bb8c648229bb5b790d687cdfd2de6db60b25de"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-01-track-asset-contract-design.md",
+      "size": 17469,
+      "sha256": "bb608a68e72d8c2973914755d57ac65d3951a14e9bf59f5385fb15f6c2bf4a06"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-02-canonical-track-mechanics-amendment-design.md",
+      "size": 13022,
+      "sha256": "18077b210787a80196e22add08b5c77f97f079ced8f180606ece07599633bf61"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-02-train-heldout-split-design.md",
+      "size": 15094,
+      "sha256": "7f3b6491a926ec95a16521a32fe90590ab0b83d969bd485b643f832fe06d019d"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-03-evaluation-telemetry-design.md",
+      "size": 15140,
+      "sha256": "d3e6900335b23d8b493a685f8accd584085b04568949dc2ec680a05b3f0c979d"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-03-evaluator-metrics-design.md",
+      "size": 17675,
+      "sha256": "2950bec395a90decaaddb036c3c573784ff5b5af4db11c67450f2f8c9c1c317a"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-10-04-run-provenance-design.md",
+      "size": 23593,
+      "sha256": "afd5662c8446603605ec3ea73f494ea56880e41156de7c22a9f3abf17b2952ed"
+    },
+    {
+      "path": "f1rl/README.md",
+      "size": 1091,
+      "sha256": "1ddab59dd7f045830327a9c22af7661c68970b886e4b8a4e1ee8890f15250f55"
+    },
+    {
+      "path": "f1rl/__init__.py",
+      "size": 27,
+      "sha256": "6e154d05b0201ee3fd3b391b6a2cfbd3dd73db24d428ecd0c5a19692951cbba0"
+    },
+    {
+      "path": "f1rl/api/README.md",
+      "size": 445,
+      "sha256": "d31e6ca75c3d156d734c956faccc339545ee7cfc7055ccb6d8397f636bde3771"
+    },
+    {
+      "path": "f1rl/api/routes/README.md",
+      "size": 396,
+      "sha256": "302d49380ecf952f8a1866397a2fb2dde0debc22f5298e30ed6052e5473542ba"
+    },
+    {
+      "path": "f1rl/drivers/README.md",
+      "size": 464,
+      "sha256": "3252977dc68d2e41585b573ea3ade7a0590c1c88e70bd03418f409ae7fabcd9a"
+    },
+    {
+      "path": "f1rl/exploratory/__init__.py",
+      "size": 81,
+      "sha256": "c4530c37706f44c43f0800a8f7d3ca6bf6ba6dd2970d829a3c339fcc26dcb54f"
+    },
+    {
+      "path": "f1rl/exploratory/abcd.py",
+      "size": 12731,
+      "sha256": "c49b3321852359b2e5c7faba277819881d65ce8971663c9bfa02f7073d887eed"
+    },
+    {
+      "path": "f1rl/exploratory/cli.py",
+      "size": 2135,
+      "sha256": "6e54506f9f02b42da86f084a0e540da6b4014e51f8e83ba84bdf242ae167c7b6"
+    },
+    {
+      "path": "f1rl/exploratory/config.py",
+      "size": 8642,
+      "sha256": "c69f7b3c75c371cdb2cd3563ebc7b792b65914e3f5f84bd66086f8b1e95608bc"
+    },
+    {
+      "path": "f1rl/exploratory/permit.py",
+      "size": 13427,
+      "sha256": "af9aa3350ed210aabbd5fff1605fd9955f9a13f01b6ed90f572e92be3aae3a15"
+    },
+    {
+      "path": "f1rl/exploratory/pilot.py",
+      "size": 17517,
+      "sha256": "a12f05eeefabea4d01dee5fde697fb297810d4d1601e65325e532638546421c0"
+    },
+    {
+      "path": "f1rl/exploratory/reward.py",
+      "size": 5012,
+      "sha256": "6848b3bd2720e30403329cd90f79b0a05dde8177228ff59f9ed25c7f86aca82e"
+    },
+    {
+      "path": "f1rl/learning/README.md",
+      "size": 3590,
+      "sha256": "1461eb1b001baf29352f79e762a6cae6a232ee6dc5f6a313cd4936a2bdc9de47"
+    },
+    {
+      "path": "f1rl/learning/__init__.py",
+      "size": 1391,
+      "sha256": "a6d698bbba9da6e100925fd6ca5114ddbaf6592a3f90d859d00e6094c02d0b17"
+    },
+    {
+      "path": "f1rl/learning/action.py",
+      "size": 1985,
+      "sha256": "ffaf01c549a32eeafd2f825e666c30d83599e77c03a3490838814da71fdef98d"
+    },
+    {
+      "path": "f1rl/learning/algorithms/README.md",
+      "size": 2884,
+      "sha256": "b7abe14be042e2b568c60681a9762e6073e25a4d1d5a8409e5ecf047b59878af"
+    },
+    {
+      "path": "f1rl/learning/algorithms/__init__.py",
+      "size": 77,
+      "sha256": "2adabf5d81a711c4c2375c7db6cb384baceae4159f5e3f423a72f2497655fd80"
+    },
+    {
+      "path": "f1rl/learning/algorithms/ppo.py",
+      "size": 22287,
+      "sha256": "be40a3823c79f5331b9b9480953fb3f4fb2061c1edc93d7241ac6860f5f4907a"
+    },
+    {
+      "path": "f1rl/learning/corridor_acceptance.py",
+      "size": 4012,
+      "sha256": "a5aba332abf60e1a3b3a7635f91de920a3e9d39d04d9fc8709a9f87277b8e9e7"
+    },
+    {
+      "path": "f1rl/learning/corridor_audit.py",
+      "size": 9480,
+      "sha256": "29ce06fe8c270b65622f70f3ce4357d76559b0dfba5b3f33b2cf6101772a391a"
+    },
+    {
+      "path": "f1rl/learning/crash_terminal_registered.py",
+      "size": 9336,
+      "sha256": "376a6c4074a721ecd56f5805e280585a0843f075b089b837b1a01e868c9027eb"
+    },
+    {
+      "path": "f1rl/learning/episode/__init__.py",
+      "size": 401,
+      "sha256": "be8275dd2b81c8decf3330c272728aa2a2a67fc880752484fe6247b4093edeba"
+    },
+    {
+      "path": "f1rl/learning/episode/progress.py",
+      "size": 3548,
+      "sha256": "282d79666f13c4521e0b4ee634379beccc8e21f8842673072524edcb64d4a4b7"
+    },
+    {
+      "path": "f1rl/learning/episode/route.py",
+      "size": 4284,
+      "sha256": "33a0c6a04f8ac39b283b784d42c1ab1bc3d826a544e73146f338084a97e3c772"
+    },
+    {
+      "path": "f1rl/learning/episode/status.py",
+      "size": 1115,
+      "sha256": "ed0a60768e6185acc2c14e3be23317d16594c32dc50b961ae601901b029c0e9b"
+    },
+    {
+      "path": "f1rl/learning/evaluation/README.md",
+      "size": 400,
+      "sha256": "86ee02ae19a9fd4ad831390eeb0820bdb57227048a81fc32f5f87f33215d8e81"
+    },
+    {
+      "path": "f1rl/learning/evaluation/__init__.py",
+      "size": 283,
+      "sha256": "18434feb726c99930575b5e68340de8fb6dd743e46104a4757bab534d1089808"
+    },
+    {
+      "path": "f1rl/learning/evaluation/crash_contract.py",
+      "size": 4743,
+      "sha256": "6ed055b49b211d0cd32c8421007cffd1690782e4272078ec07f725e873eb1023"
+    },
+    {
+      "path": "f1rl/learning/evaluation/evaluator.py",
+      "size": 16047,
+      "sha256": "f9d945f7fa6b3e1017495102a7507e23e4ee4e85d2fc7f166f990aee6cd36695"
+    },
+    {
+      "path": "f1rl/learning/evaluation/metrics.py",
+      "size": 13352,
+      "sha256": "14538d0f1058cc028d0aab6ad626261f031135df0f27fed1da217cc2a27f0477"
+    },
+    {
+      "path": "f1rl/learning/evidence_backup.py",
+      "size": 5213,
+      "sha256": "7da7709198a170a99f97d9eec91f8ba063e201fd9777036bd2495bd8a869bdde"
+    },
+    {
+      "path": "f1rl/learning/experiments/__init__.py",
+      "size": 1007,
+      "sha256": "575058c078a0aebc84ecda4040246f11d4a382f89653372456455ba05f9b6724"
+    },
+    {
+      "path": "f1rl/learning/experiments/c2_alignment.py",
+      "size": 3162,
+      "sha256": "f0dea751e167391396106bd8cae921c7fb89ea12b3f50b046952b0b3e5c84a74"
+    },
+    {
+      "path": "f1rl/learning/experiments/definition.py",
+      "size": 25983,
+      "sha256": "31ec33106232937a85c62686fddcde3c166fb02039a6edcce868b884aeafbb24"
+    },
+    {
+      "path": "f1rl/learning/experiments/split.py",
+      "size": 2046,
+      "sha256": "033a967e35f502d41617627de3d3acc2ea45ed183ab3be7074d67d09872983ce"
+    },
+    {
+      "path": "f1rl/learning/freeze_readiness.py",
+      "size": 26507,
+      "sha256": "60446ec463fd46c649e51e8ab5bc2a698bb92302001a8253da064e88f43eaace"
+    },
+    {
+      "path": "f1rl/learning/geometry_review.py",
+      "size": 2455,
+      "sha256": "c01fe1287139cfad35a28d737e3dd2380aba10cd9ee5e123b8e9bcc6cf2f4ef0"
+    },
+    {
+      "path": "f1rl/learning/gym_environment.py",
+      "size": 36512,
+      "sha256": "9bf2be0531ea23297e84ccf2a63c97b4338e288dbca45251283ab7c3ff6563db"
+    },
+    {
+      "path": "f1rl/learning/hard_route_outcome.py",
+      "size": 5822,
+      "sha256": "0ab49b0a7797433b91a9d4615769575157619a26faa2a7d60e6cfebb827afcf5"
+    },
+    {
+      "path": "f1rl/learning/observation.py",
+      "size": 4033,
+      "sha256": "cafc642561f939fa5a5de7f2fdb3f7dbf941cd27242680a699566dda4179cbb8"
+    },
+    {
+      "path": "f1rl/learning/offtrack.py",
+      "size": 2105,
+      "sha256": "112e27adbab6d62f52277d1ce60cd7a908a85ace342376e860872550774b17d4"
+    },
+    {
+      "path": "f1rl/learning/owner_acceptance.py",
+      "size": 13325,
+      "sha256": "b39fe4347f1a0e66fab614385db512f8b7d208f402720ccb5c2a0432090bfe1d"
+    },
+    {
+      "path": "f1rl/learning/pilot_milestones.py",
+      "size": 17583,
+      "sha256": "9dab7db4a7da58db510bb40bc8ab7eda213ad1b4a12115e7313ff5ca38569b2a"
+    },
+    {
+      "path": "f1rl/learning/pilot_preflight.py",
+      "size": 8320,
+      "sha256": "053bcc05b930580496fabf00d109af758221ba19527688370c255bc96925847d"
+    },
+    {
+      "path": "f1rl/learning/provenance.py",
+      "size": 18044,
+      "sha256": "066b8d88184a25977d6686c637d970f1147cb52ed330420d7ca47bc38bde0d2e"
+    },
+    {
+      "path": "f1rl/learning/reconstruction.py",
+      "size": 8953,
+      "sha256": "dd030291e9f6a660af6a821d81695dc7352f9a73b5ea05992a78dc36cc6fe9fe"
+    },
+    {
+      "path": "f1rl/learning/rewards/README.md",
+      "size": 1242,
+      "sha256": "5747dd613049103d815ddfb5d7e8d563fc72e60e3668cc578b7d6b108fadce08"
+    },
+    {
+      "path": "f1rl/learning/rewards/__init__.py",
+      "size": 467,
+      "sha256": "1f04034498be7e5a9434e6d4f99af80df0c03f69c0c0776fedaf702f3eacd21e"
+    },
+    {
+      "path": "f1rl/learning/rewards/core.py",
+      "size": 4535,
+      "sha256": "989efc64ca316f271ffcb074be56dd5ec5c7edbdd4ccb244c3ddb8a8e40e24ee"
+    },
+    {
+      "path": "f1rl/learning/rewards/terms.py",
+      "size": 3880,
+      "sha256": "59d185a77db4e1a45b2395b882326789e62cfd9776abdaa5e9054cf54906661f"
+    },
+    {
+      "path": "f1rl/learning/robustness_acceptance.py",
+      "size": 3422,
+      "sha256": "444608c6e4e9473a00f00653378a68ee04c38109233672fcbd52de586c45cf68"
+    },
+    {
+      "path": "f1rl/learning/robustness_screen.py",
+      "size": 7606,
+      "sha256": "9afb1c517fde4619f8b14224820d89076459cffb815a6cf3d521d89194c4ef33"
+    },
+    {
+      "path": "f1rl/learning/roll_envelope_registered.py",
+      "size": 4287,
+      "sha256": "d2de82627e273b25aa55b520f2a112a9ef0dbd0f5eb2f80af03478e61a69dcf4"
+    },
+    {
+      "path": "f1rl/learning/route_navigation.py",
+      "size": 6771,
+      "sha256": "01d89f2704a2c400dcf319e9c47a77d2297a62fb7ab659addd050799ff3bef28"
+    },
+    {
+      "path": "f1rl/learning/swept_volume_audit.py",
+      "size": 14032,
+      "sha256": "659e9d102e470fecda2819d5c05657c36d2cbfeff1dba67740675602454218e9"
+    },
+    {
+      "path": "f1rl/learning/train_checkpoint.py",
+      "size": 4140,
+      "sha256": "8444c57e0f154fd55080ff11bb0e3a56d535cfd497fcf9e2bb93d2375b3acca8"
+    },
+    {
+      "path": "f1rl/learning/train_reset.py",
+      "size": 8833,
+      "sha256": "aa1fba6d87b52f2d4a719d05072e05fa64ddd2ae068b1e879eb5de8e7c2ec985"
+    },
+    {
+      "path": "f1rl/learning/training/README.md",
+      "size": 4891,
+      "sha256": "8dd9ead9a1bf80c4d62a05e5063c7ce3e1d3ce929bf2ae7af95c8e774109eb65"
+    },
+    {
+      "path": "f1rl/learning/training/__init__.py",
+      "size": 565,
+      "sha256": "8e8bb814c834b60e18a9757ad976f543f189b82dc54232247ca9468893088dd2"
+    },
+    {
+      "path": "f1rl/learning/training/config.py",
+      "size": 7547,
+      "sha256": "fffab98f9b50267f1a8a2ef5a73caa5b53478e575621dfb7d41b889de039314f"
+    },
+    {
+      "path": "f1rl/learning/training/env_factory.py",
+      "size": 10854,
+      "sha256": "d439369b6a7c8153f91eb3f9e207b7e36080c0590a8783fcc0cd28b2e8bc48f1"
+    },
+    {
+      "path": "f1rl/learning/training/runner.py",
+      "size": 18051,
+      "sha256": "4c4ef5fea48b253071cbadfc581c06e05551df50f96e66a6fe64424117402c73"
+    },
+    {
+      "path": "f1rl/learning/training/telemetry.py",
+      "size": 26625,
+      "sha256": "7c846bb5d8f2da014b3fcaf8be37c70d19abdb29af0205e9362e8eb38a5e3d97"
+    },
+    {
+      "path": "f1rl/learning/training/vector_env.py",
+      "size": 6772,
+      "sha256": "368a820815161c0032d7ee44a04da3bd729092e629992df2549b2b3c3c02bcbe"
+    },
+    {
+      "path": "f1rl/learning/trajectory_audit.py",
+      "size": 9723,
+      "sha256": "9812484032c7e37ba713908bad139ef420678977769eac44ba1c504979ea3767"
+    },
+    {
+      "path": "f1rl/learning/wp7_race.py",
+      "size": 11400,
+      "sha256": "d6610b4b1fd2a55d73c1167f1bb337a7bb4bf151550277df88261b849f704b57"
+    },
+    {
+      "path": "f1rl/local_demo/__init__.py",
+      "size": 59,
+      "sha256": "dfb7237440f46c768ba57dfc5eeb5cf70b0394986d5b81c8ab638682c6e08cbd"
+    },
+    {
+      "path": "f1rl/local_demo/admission.py",
+      "size": 4690,
+      "sha256": "b68a5e1c6572280e1c696154a8c96d11fcee70dfd148b5376020af7281434ca5"
+    },
+    {
+      "path": "f1rl/local_demo/campaign.py",
+      "size": 77518,
+      "sha256": "7f1e93186337c410b307d88e55b0507beaa377f2515c541f8363984d23cee52b"
+    },
+    {
+      "path": "f1rl/local_demo/evaluation.py",
+      "size": 48080,
+      "sha256": "9f67c97cf015c741c97772cc21176856ec4cba9ab23a8bfe2bb0d2bb102c9f2f"
+    },
+    {
+      "path": "f1rl/local_demo/runner.py",
+      "size": 47959,
+      "sha256": "24a77267305615e29c48a2e6cff764bc411070eba23d1ccdaeeaef14590d292d"
+    },
+    {
+      "path": "f1rl/research/simulation_only_protocol.py",
+      "size": 6090,
+      "sha256": "94c110117b77640e58045221ed76a56f5129a1c113c297f0ba91e4734d8ff6d8"
+    },
+    {
+      "path": "f1rl/research/simulation_only_statistics.py",
+      "size": 14792,
+      "sha256": "131cda49211473815987c44ce04cef88c67d91e1097e654c564e674360223e14"
+    },
+    {
+      "path": "f1rl/research/simulation_parameter_provenance.py",
+      "size": 7749,
+      "sha256": "8fcc3f764c85a384fb2214288f917f3f8b83e04017727413087e0f9865ca3109"
+    },
+    {
+      "path": "f1rl/research/simulation_validation.py",
+      "size": 11458,
+      "sha256": "7d1cfece061ddc760d848e1bb66e727a6eb1007fa15dfad4cec8e6eeb939a173"
+    },
+    {
+      "path": "f1rl/research/wp2_execution_permit.py",
+      "size": 11811,
+      "sha256": "796cb009b420ffcccd78fcece935741488f9f5542a74a1a03d8418a427bcc262"
+    },
+    {
+      "path": "f1rl/research/wp2_statistics.py",
+      "size": 16568,
+      "sha256": "e49ac93b9fcbab0d66c7a1f43c01dd01a9148a29da85a6aebf429d4d393e2577"
+    },
+    {
+      "path": "f1rl/research/wp3_crash_contract_registration.py",
+      "size": 8307,
+      "sha256": "8fd875b48b6c5775439c7588328c67b4c60142d262b5d87f0f0f1a889b31458c"
+    },
+    {
+      "path": "f1rl/research/wp3_current_eval_gate.py",
+      "size": 5037,
+      "sha256": "edaf867be2428344c37462fe3c827ae95b635c6196d08b199fef1055d9864cf2"
+    },
+    {
+      "path": "f1rl/research/wp3_eval_only_admission.py",
+      "size": 10530,
+      "sha256": "01a0e8dd0c728e501f4f711df0f77e789373525cfd9101f9be402ec0dd0f4c08"
+    },
+    {
+      "path": "f1rl/research/wp3_eval_only_coordinator.py",
+      "size": 17778,
+      "sha256": "993d44aa053ade400f2cae9f2e7eccccbc1b6a0e9ddfd5e81460a2e4a4c2efe6"
+    },
+    {
+      "path": "f1rl/research/wp3_issue51_latest_gate.py",
+      "size": 3974,
+      "sha256": "e9bf7c4720b51c47b460e48bf70823a7693ce4804d1b93cd69ada28b6e97cdec"
+    },
+    {
+      "path": "f1rl/research/wp3_owner_train_dev_eval.py",
+      "size": 19871,
+      "sha256": "066d4c832cdb1456ef1d4b6ea1d374843aeffa52b4491228204f13f4b5203198"
+    },
+    {
+      "path": "f1rl/research/wp3_owner_train_dev_reports.py",
+      "size": 14641,
+      "sha256": "5376086ec601d2397c2781f7dc76d0c95ddc18c7ed1cf5665b27f195686dc451"
+    },
+    {
+      "path": "f1rl/research/wp3_physics_release_gate.py",
+      "size": 3467,
+      "sha256": "913fb0e32a72f01fa408eca4e31b3ae803eaf9783c803ec37337a5356190c0fe"
+    },
+    {
+      "path": "f1rl/research/wp3_v4_technical_acceptance.py",
+      "size": 11573,
+      "sha256": "b7de9f59b8fb7ade6166991db6c061ff2e34bd5b1f8899bbef3253f6344ee7e5"
+    },
+    {
+      "path": "f1rl/research/wp7_admission.py",
+      "size": 13913,
+      "sha256": "48dd9cbc829ffd8f2c4184a1e66d8904e618d5f43ca51d2ba4c3ee2b4167a42a"
+    },
+    {
+      "path": "f1rl/research/wp7_arc_trajectory.py",
+      "size": 18840,
+      "sha256": "04184402c22368570a1ecb7f0a01f9ae57fc31a5fcb2e02e1ae867b268e7fea0"
+    },
+    {
+      "path": "f1rl/research/wp7_calibration_readiness.py",
+      "size": 6118,
+      "sha256": "2fd30ddad0c50677a8589f979587a44de8bc850f9a6df341efc2273b68f69057"
+    },
+    {
+      "path": "f1rl/research/wp7_cell_evaluation.py",
+      "size": 16322,
+      "sha256": "d548d75977f56ae87f6f9dc9028e7ad37185942f257554568708c0d2ad6c1133"
+    },
+    {
+      "path": "f1rl/research/wp7_executed_feasibility.py",
+      "size": 34039,
+      "sha256": "b826ec2f652133d9436cf32c6bcfc7e36aad7b1585d381f8d62752d210fb026e"
+    },
+    {
+      "path": "f1rl/research/wp7_execution.py",
+      "size": 4946,
+      "sha256": "6cf138e4371feea95d87baa4a195876727c4db98c9862884a418a93d4e04d4b9"
+    },
+    {
+      "path": "f1rl/research/wp7_historical_provenance.py",
+      "size": 4932,
+      "sha256": "63eeb86da88a7f2c5b94eacf6cd06e29d4b340e5b63157315dd22d3a35165f9e"
+    },
+    {
+      "path": "f1rl/research/wp7_planar_trajectory.py",
+      "size": 9807,
+      "sha256": "c30dc9cba3fd7446c19cfeb11da00454b1eea25a4906ec63d2eb0f8e0a22df24"
+    },
+    {
+      "path": "f1rl/research/wp7_protocol.py",
+      "size": 25776,
+      "sha256": "8cbd97ce7ee37174387fd391d2de98d96b5bd2150355b462f62ad9db9ef691c8"
+    },
+    {
+      "path": "f1rl/research/wp7_readiness.py",
+      "size": 6814,
+      "sha256": "947e536a31d0f03192d103f6cb1809ab45c4e43ec7e531a62eaae902ced11ec7"
+    },
+    {
+      "path": "f1rl/research/wp7_reference_benchmarks.py",
+      "size": 3699,
+      "sha256": "79d505b51fe18604a6d2f6839e636fa6d0f6c84d7c33adab4e46c05e52c5cd90"
+    },
+    {
+      "path": "f1rl/research/wp7_robustness_gate.py",
+      "size": 5372,
+      "sha256": "3e1a7937c5627319dff5a2bf0a79ffbb408c956bc82dd34649392144f8e003a3"
+    },
+    {
+      "path": "f1rl/research/wp7_run_manifest.py",
+      "size": 9054,
+      "sha256": "2f06a1cc2a40427a61a452f5ee7de552b29316ab7edd18a301c8ecac333daa10"
+    },
+    {
+      "path": "f1rl/research/wp7_track_feasibility.py",
+      "size": 12884,
+      "sha256": "c9e0dfbfa3ba268811dc13b4957783227e3843631a111ab16e511b69b68c540b"
+    },
+    {
+      "path": "f1rl/research/wp7_train_acceptance.py",
+      "size": 9202,
+      "sha256": "4a7488503e33a47951fa0bfa90029c67cc2029569d6517130ba53c6de697dae7"
+    },
+    {
+      "path": "f1rl/research/wp7_trusted_reviews.py",
+      "size": 6364,
+      "sha256": "9c80ae452f518aaf9274ac337879ce2cfab27e8dca3efc8a7f7d56977ad84d85"
+    },
+    {
+      "path": "f1rl/runtime/README.md",
+      "size": 2109,
+      "sha256": "b11eab6f43fd4ba2b1f90fb38f2b8b0a04ca903ad4cc7736d72e0fed94441cd3"
+    },
+    {
+      "path": "f1rl/runtime/__init__.py",
+      "size": 180,
+      "sha256": "24bbd62d84aa3b9481582f4d2c4836f8c8836346f1899c89b75d8c741d5fb84f"
+    },
+    {
+      "path": "f1rl/runtime/physics.py",
+      "size": 40992,
+      "sha256": "169bc11946d75f5e640cd4bd8d0263d95f2bc27d51b7705229d8df9046ecedf2"
+    },
+    {
+      "path": "f1rl/runtime/road_crash_validation.py",
+      "size": 17132,
+      "sha256": "01405469e24f054f86096b890df78262080221bdfedf9bb010c0e212ea8d1d67"
+    },
+    {
+      "path": "f1rl/runtime/roll_envelope_validation.py",
+      "size": 6407,
+      "sha256": "c3d0cb7a940f82479199235f3d6285ba77b9f1d6263bfa8a2b44c43b692dbc77"
+    },
+    {
+      "path": "f1rl/runtime/simulation.py",
+      "size": 8632,
+      "sha256": "1b5d445ad6478fab141273adbb9c08e81729bfe5454d73bde93d9dc1eea5a7c1"
+    },
+    {
+      "path": "f1rl/sandbox/README.md",
+      "size": 1207,
+      "sha256": "316a5ac6688b2ae95e30ea4df68fd757e2a6ab570ecc3923830b234732dc2abf"
+    },
+    {
+      "path": "f1rl/sandbox/__init__.py",
+      "size": 50,
+      "sha256": "fc59814fd989113be1d72376b75fa0554156f77a2ac2066cf5618163859f81b1"
+    },
+    {
+      "path": "f1rl/sandbox/accepted_contact_transition.py",
+      "size": 9367,
+      "sha256": "466da4df5987f3df974400a93816166db9c48a34b742a42bd82f61b627d2deed"
+    },
+    {
+      "path": "f1rl/sandbox/accepted_road_body_contact.py",
+      "size": 6042,
+      "sha256": "181af34386ee8c146a2873798c0cc8181342ace7fda58a678f8a74cc5b9756af"
+    },
+    {
+      "path": "f1rl/sandbox/angular_landing_impulse.py",
+      "size": 7836,
+      "sha256": "ab60f54223029759ea8879ba26c726b35339368d575731c5acd912fca4f2e125"
+    },
+    {
+      "path": "f1rl/sandbox/ballistic_body_impact.py",
+      "size": 5203,
+      "sha256": "ac5949c316df651c8dbfc5a0dbece7952a9c891f64e330ac3e321165d15ab00e"
+    },
+    {
+      "path": "f1rl/sandbox/ballistic_flight.py",
+      "size": 31746,
+      "sha256": "525c0c96fabd5b5e11cb9c9f132ff11247f7727ec7eb9293335be962b992e33c"
+    },
+    {
+      "path": "f1rl/sandbox/body_collision.py",
+      "size": 9719,
+      "sha256": "a3f78fa5be7ba55231d858e8caa13d98d68bf48c18275ddc2fec0c3d0ed08c11"
+    },
+    {
+      "path": "f1rl/sandbox/body_impact.py",
+      "size": 2964,
+      "sha256": "f951dc9d1232067f72048516cf7125ba02d1a498dbaacd70c4116bf8c3d3f1ae"
+    },
+    {
+      "path": "f1rl/sandbox/center_trajectory.py",
+      "size": 4638,
+      "sha256": "0657ae8e3438df7139cfeeacf2a5b5416a6c72c8d89ffe9e086bdd9a00f18383"
+    },
+    {
+      "path": "f1rl/sandbox/certified_edge_impact.py",
+      "size": 7667,
+      "sha256": "7ac2229d52598b2112864f5a6feea31c5d1d55dcd7bfcd4da2089e8c40934eae"
+    },
+    {
+      "path": "f1rl/sandbox/certified_face_impact.py",
+      "size": 4916,
+      "sha256": "c729926b6f1e23d075cc70a872fc28c7c057ba3aa1f1ce5b004368c5918f541d"
+    },
+    {
+      "path": "f1rl/sandbox/contact_manifold.py",
+      "size": 10524,
+      "sha256": "4f5559bffd19976a8a177efee69da406c74fd2e371627aba6dfa265cd5c0feb0"
+    },
+    {
+      "path": "f1rl/sandbox/coupled_longitudinal_dynamics.py",
+      "size": 14363,
+      "sha256": "82d1b36876b299703e107d9ebc486d9290c9f7655fc49c6ead7e645e3ae63c25"
+    },
+    {
+      "path": "f1rl/sandbox/directed_center_crossing.py",
+      "size": 2780,
+      "sha256": "a7612039a8e4fe80e9d1d11c8dd4fbdbb39f79fa7b457811a36cc61503eab1cb"
+    },
+    {
+      "path": "f1rl/sandbox/dynamics/README.md",
+      "size": 845,
+      "sha256": "2650914744d3129fc51df8850000692f907404b465cc4cece9f5717bf01d59b6"
+    },
+    {
+      "path": "f1rl/sandbox/dynamics/__init__.py",
+      "size": 55,
+      "sha256": "03540bd00412f86043775812a913751bd2b393f5c43edb91cb11e7c9c830d130"
+    },
+    {
+      "path": "f1rl/sandbox/dynamics/air_dynamics.py",
+      "size": 718,
+      "sha256": "28535b2ef7f5bc177bcb1c5c5cb510a71427bfda3106df8eb388132383ee5f8e"
+    },
+    {
+      "path": "f1rl/sandbox/dynamics/ground_dynamics.py",
+      "size": 2106,
+      "sha256": "13b95a20446bfa18aa2304a88c2d3bffc61dd89ed38035174026f868800578ad"
+    },
+    {
+      "path": "f1rl/sandbox/dynamics/integrator.py",
+      "size": 6236,
+      "sha256": "1ef246e473a412d7c21fcf42d1c2be212941a95b58b2783e76aadeb175ab83d3"
+    },
+    {
+      "path": "f1rl/sandbox/dynamics/modifiers.py",
+      "size": 649,
+      "sha256": "066bfacf1371319ed827d184caa388666fbebc2e39e60813de9ec5f26592c31d"
+    },
+    {
+      "path": "f1rl/sandbox/dynamics/vehicle_dynamics.py",
+      "size": 993,
+      "sha256": "3ed1d665d8c378feb630f3b98fdc054a65b19cc32269605ac23294adde01c9d4"
+    },
+    {
+      "path": "f1rl/sandbox/entities/README.md",
+      "size": 761,
+      "sha256": "01f1870e82ef596ed29bf9c6bdb8943fbb99bf0e7145d1a72b1a09d322c8778d"
+    },
+    {
+      "path": "f1rl/sandbox/entities/__init__.py",
+      "size": 59,
+      "sha256": "0fa682d9a328eef6125d2e1eb5a5a66c4194af6f968af47b003ae4846f90c50f"
+    },
+    {
+      "path": "f1rl/sandbox/entities/_validation.py",
+      "size": 488,
+      "sha256": "7f73798a5f39851bf79a1d952aa412a2e703c22182b0277b1c931f046ec5b2fb"
+    },
+    {
+      "path": "f1rl/sandbox/entities/boost_pad.py",
+      "size": 431,
+      "sha256": "b89df3565f8473f40a0b5bdcce48c822fd15dc69294778f6369d373b64f88e5e"
+    },
+    {
+      "path": "f1rl/sandbox/entities/checkpoint.py",
+      "size": 476,
+      "sha256": "c9672d6a9ef64762470be1c8d140b4f5efb2542b2f651f701cabbfe7ddedf3ac"
+    },
+    {
+      "path": "f1rl/sandbox/entities/finish_line.py",
+      "size": 295,
+      "sha256": "122bd6b98c628354874c0983ff41fbb8cddab385a16801b9cb245ffa14ed30e0"
+    },
+    {
+      "path": "f1rl/sandbox/entities/obstacle.py",
+      "size": 293,
+      "sha256": "9b4e6c5dd3980bb176976bcc4a040e1c2eb561ddb359424aec459c1b17420ef6"
+    },
+    {
+      "path": "f1rl/sandbox/entities/score_pickup.py",
+      "size": 479,
+      "sha256": "8455095c830776041ee6b72a104788d03ce68fc6f3bfde05042aad24bd16cf10"
+    },
+    {
+      "path": "f1rl/sandbox/entities/slow_zone.py",
+      "size": 678,
+      "sha256": "c6d7a5828ab4bc9020aee50a20566279463e959718d4f9d3bd77a80c83e92f9b"
+    },
+    {
+      "path": "f1rl/sandbox/euler_ode_clearance.py",
+      "size": 7305,
+      "sha256": "90564de7aee2bb7fc516a3436936a7140efe7a2164b9cae68f9370e39a811327"
+    },
+    {
+      "path": "f1rl/sandbox/finite_tire_footprint_v4.py",
+      "size": 4996,
+      "sha256": "ce3abd4af370a0d68a63881b8904f7545db10f88d549b24300ecff05a2c227c6"
+    },
+    {
+      "path": "f1rl/sandbox/geometry/README.md",
+      "size": 536,
+      "sha256": "781ae0f987245ac6b1093b8eb416400bd8b493784a4f9523e7743b1d1a952ed2"
+    },
+    {
+      "path": "f1rl/sandbox/geometry/__init__.py",
+      "size": 52,
+      "sha256": "3f010a016665a4f157560fd0a3178263aa70e00af776784bf58121d94978965e"
+    },
+    {
+      "path": "f1rl/sandbox/geometry/rotation.py",
+      "size": 3494,
+      "sha256": "628a720f3c9a8262a0ead1e37e2fde2880e6287cf34b8a974a1ec760e613a769"
+    },
+    {
+      "path": "f1rl/sandbox/geometry/vector.py",
+      "size": 1989,
+      "sha256": "f5e7f051aa34e198cf39eb043ba89b99d6861616862cd2aa890b11b99686d065"
+    },
+    {
+      "path": "f1rl/sandbox/grounded_yaw_dynamics.py",
+      "size": 5869,
+      "sha256": "9eaffb2955107d7aa299214edf3a9d75b20707dc11e6523eb04943baa6faee83"
+    },
+    {
+      "path": "f1rl/sandbox/independent_suspension_dynamics.py",
+      "size": 15567,
+      "sha256": "42315d58601c8c85986835e0ef5d6fe48593e903f282af6dc6e0b8b07ea00e03"
+    },
+    {
+      "path": "f1rl/sandbox/interactions/README.md",
+      "size": 476,
+      "sha256": "eaec97f27ef9b3e35021a08fd2334a50f15f86ca677ed29e41b477851d5adde5"
+    },
+    {
+      "path": "f1rl/sandbox/interactions/__init__.py",
+      "size": 43,
+      "sha256": "554fdfcc6cc685e960a026da4448001a569108dec34a6a1946ac76110d2bac96"
+    },
+    {
+      "path": "f1rl/sandbox/interactions/events.py",
+      "size": 952,
+      "sha256": "df60ebf9f60863a967aa66f61e2ad85038c93499a49ee7ca005c455184cbee43"
+    },
+    {
+      "path": "f1rl/sandbox/interactions/resolver.py",
+      "size": 2217,
+      "sha256": "fb00b2f34cfc10dbd0a9eb1fa4267331e13260d3e743fa30cbee711da73ee1ff"
+    },
+    {
+      "path": "f1rl/sandbox/interactions/state.py",
+      "size": 711,
+      "sha256": "306f89f67bcc670b2319dad5d1c800a1a51160a7c8c07be8a8352fc20429e93e"
+    },
+    {
+      "path": "f1rl/sandbox/linear_first_body_contact.py",
+      "size": 4639,
+      "sha256": "60da3479ade1d3a79e1e29eff23f3a077a47fe6ded47e6d4b6dd5eb7c1dc1a95"
+    },
+    {
+      "path": "f1rl/sandbox/manifold_flight.py",
+      "size": 12252,
+      "sha256": "53b76a1ef60f8aba17cc8b52cf35cb01178f43e2279ed87e11a3cf34401d37c2"
+    },
+    {
+      "path": "f1rl/sandbox/multi_surface_support.py",
+      "size": 17568,
+      "sha256": "f4e06dfd84a2393fae7db3b0f239691ec5a715baba967989daaee7e4d59879d7"
+    },
+    {
+      "path": "f1rl/sandbox/obb_feature_contact.py",
+      "size": 3419,
+      "sha256": "7ae5770822e560540611d5ebb69ac599a28fba38e8a2e76a69949ce0c8f4c2f6"
+    },
+    {
+      "path": "f1rl/sandbox/partial_wheel_release.py",
+      "size": 15098,
+      "sha256": "0c4f2ad544d857f099eb807cdfa8ce37fec4cab1fd3378b05695568c9ebb293e"
+    },
+    {
+      "path": "f1rl/sandbox/perception/README.md",
+      "size": 1107,
+      "sha256": "fe1adf166098c6312b48377a8a4a11a36d2cb33eede6651c6efbc44362d3cd04"
+    },
+    {
+      "path": "f1rl/sandbox/perception/__init__.py",
+      "size": 211,
+      "sha256": "5e5e3b75c43eb5fc66493fe01b0f7a10233129aca934e586df3960daaf130b27"
+    },
+    {
+      "path": "f1rl/sandbox/perception/rangefinder.py",
+      "size": 1930,
+      "sha256": "361c7aae5c9734fee0dea2c8f76eee4a54d2bc802c4b6240f6597666e129a14f"
+    },
+    {
+      "path": "f1rl/sandbox/perception/sensor_suite.py",
+      "size": 922,
+      "sha256": "39c03d169a0a3264b57c4064448dc04dd978a8a5afad1806e6a457b695f184b8"
+    },
+    {
+      "path": "f1rl/sandbox/physical_crash.py",
+      "size": 5967,
+      "sha256": "87cc7ccecdbdb1f0560cbb128940295785a5c28c37b2bc35ce73303244c25c3e"
+    },
+    {
+      "path": "f1rl/sandbox/ramp_support.py",
+      "size": 9610,
+      "sha256": "0efdcdab5c337466e6b93fae996f19a873c243c1b1a939a9f002b83fb0db01f5"
+    },
+    {
+      "path": "f1rl/sandbox/rigid_body_impact_response.py",
+      "size": 5723,
+      "sha256": "4e435f19c2b0cf44adee171c2142cecf4b8cc83e4b874bcc3322f06870b0657b"
+    },
+    {
+      "path": "f1rl/sandbox/road_footprint.py",
+      "size": 10371,
+      "sha256": "35da2cbe99fbec08ce45d8f945693a69137e52855daa6135bfd1bef25ea7ddf9"
+    },
+    {
+      "path": "f1rl/sandbox/roll_envelope_terminal.py",
+      "size": 3048,
+      "sha256": "d20a1fb6af6f01d2513c3475e2e5403a25b3bd3ea5982a0c2c3e2283474079aa"
+    },
+    {
+      "path": "f1rl/sandbox/rotating_touchdown.py",
+      "size": 9252,
+      "sha256": "16c4211e71796480321c44b3b021279ab3b1aca760092acfbdf27215581cc81a"
+    },
+    {
+      "path": "f1rl/sandbox/rules/README.md",
+      "size": 466,
+      "sha256": "9510390da58f45feeed1b540016ade3023de2301a9db15f7f62c7a6f0328525d"
+    },
+    {
+      "path": "f1rl/sandbox/rules/__init__.py",
+      "size": 27,
+      "sha256": "2b92937013f7303db895aeb88c277dc9122818c8d5cb43b52d5ffeafc9ad9f03"
+    },
+    {
+      "path": "f1rl/sandbox/rules/scoring.py",
+      "size": 570,
+      "sha256": "c589d3309b5af9570e757bb62e15c57e39bea5abd5ac9c302740fabcf82eb56a"
+    },
+    {
+      "path": "f1rl/sandbox/spatial_contact_dynamics.py",
+      "size": 57449,
+      "sha256": "a8059f8e6ffd0eb38d5f60fa0259955e62ecb086e1f421e657f7d9bda722fc90"
+    },
+    {
+      "path": "f1rl/sandbox/spatial_partial_wheel_contact.py",
+      "size": 4016,
+      "sha256": "7a755aa0b21069a41d1a7e65063a1eaf1e19787f4fe84529c13defa0af685956"
+    },
+    {
+      "path": "f1rl/sandbox/surface.py",
+      "size": 385,
+      "sha256": "0fa50fc4b069b95e1f0f15512d54fb6a49bc834571cbf26acdbdab53c8b52d1e"
+    },
+    {
+      "path": "f1rl/sandbox/swept_surface_clearance.py",
+      "size": 9525,
+      "sha256": "557855e9f4876e6406859ab2adc32832318d6f31d6cdc3a7d9eeecf406547713"
+    },
+    {
+      "path": "f1rl/sandbox/tire_calibration_contract.py",
+      "size": 4834,
+      "sha256": "3cd8cf5ef07477a76007d9d7c823b3da0ff009cf2a524e46f635884e2cdf02f7"
+    },
+    {
+      "path": "f1rl/sandbox/torque_free_rotation.py",
+      "size": 5863,
+      "sha256": "8f3ba12eba9f1243a4e320241c65268d6b7cf126e5f1537cccee56b1e4964f1b"
+    },
+    {
+      "path": "f1rl/sandbox/torque_free_swept_ccd.py",
+      "size": 12410,
+      "sha256": "4ad3c5b4fb3efbe5e44ac25d27a760502dc1d933061988d52aca37289768cdc9"
+    },
+    {
+      "path": "f1rl/sandbox/track/README.md",
+      "size": 477,
+      "sha256": "b51af946830bf4a697066bb9b6dcb862b8b8b6d306f68b6017ad40c97810b55c"
+    },
+    {
+      "path": "f1rl/sandbox/track/__init__.py",
+      "size": 34,
+      "sha256": "c68a78911a2732d52f54411425ae928409819f7fbefff08ef93e59d32e49a00d"
+    },
+    {
+      "path": "f1rl/sandbox/track/model.py",
+      "size": 3711,
+      "sha256": "f16d5ca5768c570b2a5672124b7b60d6ccec8178a49e3eed2ee9762131252c22"
+    },
+    {
+      "path": "f1rl/sandbox/track/patch.py",
+      "size": 2307,
+      "sha256": "c742aadf2e9ff434b4b53c15aaf1403aa46dc6dd3f6d436b4c3c5c3327717e8f"
+    },
+    {
+      "path": "f1rl/sandbox/track/query.py",
+      "size": 719,
+      "sha256": "2c09715e4a9b79d0bb4ee09fe2640194a412617765c4dcc69834b9b9d8140c92"
+    },
+    {
+      "path": "f1rl/sandbox/track/state.py",
+      "size": 1706,
+      "sha256": "6d528c945320e42e8c3d4864d74d0fe54b3565fb39dbb5a63a2d30b1b2af0a91"
+    },
+    {
+      "path": "f1rl/sandbox/track/volume.py",
+      "size": 3217,
+      "sha256": "31d89f31db132214c558e04cd340497919bae65b185e9e338b4bbc82c8416232"
+    },
+    {
+      "path": "f1rl/sandbox/vehicle.py",
+      "size": 2411,
+      "sha256": "6cd9354364b01f75f3c5df813a5a83d2ecbd68e2d04d2e68a621f277f849ded5"
+    },
+    {
+      "path": "f1rl/sandbox/wheel_bump_stop_impact.py",
+      "size": 5687,
+      "sha256": "42e832833e7848785c58b182c2b55315d9d9fee1f6d2e3a8f7d95559b3c136c6"
+    },
+    {
+      "path": "f1rl/sandbox/wheel_edge_overtravel_impact.py",
+      "size": 6092,
+      "sha256": "1ab222758d174301544552bdf81812a5bf5efe614ab7236083a16a9bd258b75d"
+    },
+    {
+      "path": "f1rl/sandbox/wheel_edge_release_energy.py",
+      "size": 2748,
+      "sha256": "8f381b59b1e4580afcda06d05d05732854b85c3e040c913b32a0deb6804ee42d"
+    },
+    {
+      "path": "f1rl/sandbox/world.py",
+      "size": 37376,
+      "sha256": "a989f77c4270522e57971b08292193fad47f91afbc73093b848a14c6a436db66"
+    },
+    {
+      "path": "f1rl/track_assets/__init__.py",
+      "size": 450,
+      "sha256": "e59c060016d63981b5ca481cf1b3f5847d109df14c2997db5b4710f61db7e26d"
+    },
+    {
+      "path": "f1rl/track_assets/canonical.py",
+      "size": 5046,
+      "sha256": "49e7571e4c48e6be51d1351982bbb4c26854b16224cec9026df59fcc0d838a36"
+    },
+    {
+      "path": "f1rl/track_assets/initial_state.py",
+      "size": 1503,
+      "sha256": "000237af8c2f0246580cf35ba39268d1cab69f5f92934d31d8771636e1d3ab6f"
+    },
+    {
+      "path": "f1rl/track_assets/loader.py",
+      "size": 11370,
+      "sha256": "a07e3141d7e96bfc2469a50d39a89047b9fdc4cec0474d06533d14a851122d77"
+    },
+    {
+      "path": "f1rl/track_assets/manifest.py",
+      "size": 3710,
+      "sha256": "34d98d1dca58ff8a4d6fb6ad5233786c236c5864b88bf550fde5311fec710870"
+    },
+    {
+      "path": "f1rl/track_assets/model.py",
+      "size": 4755,
+      "sha256": "cab68dc52d22e732f7a18c41ca0a614adcfd28ac5c2d7d232c74f22d3dda6798"
+    },
+    {
+      "path": "pyproject.toml",
+      "size": 739,
+      "sha256": "c07651c589d26b9d1b3d2a048941e3c4f1f5de74409bac479a9f4ba18923628c"
+    },
+    {
+      "path": "scripts/README.md",
+      "size": 412,
+      "sha256": "b122f829937bba3a6d4e50c2289564814d5a9c607afda0a382202e1d06bcf0dd"
+    },
+    {
+      "path": "scripts/benchmark_vector_envs.py",
+      "size": 3849,
+      "sha256": "3f64fbd7281ade6e2c95fcbe5fec449dc4334897fc6ef632b005b973480156bd"
+    },
+    {
+      "path": "scripts/build_demo_handoff.py",
+      "size": 8326,
+      "sha256": "694dcb68fc97b4aa001c63144f859e8a1035b76ae896ce2e0b20ac8832cd106d"
+    },
+    {
+      "path": "scripts/compare_driving.py",
+      "size": 3871,
+      "sha256": "f3bb052c09499a63ad509f4d05094703c849c0c5776cade9fc925674689c6a88"
+    },
+    {
+      "path": "scripts/diagnose_driving.py",
+      "size": 7441,
+      "sha256": "264c1d338024cb5133f055a5372cb41dbc55909ff5469eb501b0d50237c5aabb"
+    },
+    {
+      "path": "scripts/exploratory_ppo.py",
+      "size": 354,
+      "sha256": "77408475d31e01bc9f7036318934144c7b28894b157c12db9279986bd0ee2738"
+    },
+    {
+      "path": "scripts/launch_exploratory_demo.py",
+      "size": 7010,
+      "sha256": "20577f13689f851cfd5a5a0970afdff005fb6e0f8edf5b44db46708dc3126957"
+    },
+    {
+      "path": "scripts/local_demo.py",
+      "size": 2685,
+      "sha256": "94992c69354b02104f6401b65a3d5666880549536a9e25ea21f3811b458504a5"
+    },
+    {
+      "path": "scripts/restore_wp3_historical_evidence.py",
+      "size": 4486,
+      "sha256": "21b860634906c4581250bef8115e653bfb4205ba4ebc1ef761c2c2e779caa302"
+    },
+    {
+      "path": "scripts/run_inference.py",
+      "size": 3284,
+      "sha256": "9bd01258d32f228bba228e74aa4718a1225bc19bfd5830851cb0b2f01c89d10b"
+    },
+    {
+      "path": "scripts/smoke_consolidated_wp3_model.py",
+      "size": 772,
+      "sha256": "19a3c0d5f916bf1b435e4f3de78bedfbdd5e5e5a07885e3f17afe83bc7e8b205"
+    },
+    {
+      "path": "scripts/verify_consolidated_wp3_assets.py",
+      "size": 2683,
+      "sha256": "6163c13a23b54e0107f01e3149ffa1b7041595d0b5a6a5e807ea82c8db1d757e"
+    },
+    {
+      "path": "scripts/wp3_applied_crash_gym_smoke.py",
+      "size": 2255,
+      "sha256": "7175677c372f45a99d4cfc8c730012de7251b97cb61fa46ecea1b6cd2225ae8e"
+    },
+    {
+      "path": "scripts/wp3_applied_crash_live_smoke.py",
+      "size": 1499,
+      "sha256": "1497a033e0b11f55781349800c116bc04bb5890ae8bbc829436b6403e9c1096c"
+    },
+    {
+      "path": "scripts/wp3_campaign.py",
+      "size": 339,
+      "sha256": "41a7999f96a437c7a857dc76f2f891bada42cce6ced3002ff64121854aecdfba"
+    },
+    {
+      "path": "scripts/wp3_current_eval_gate.py",
+      "size": 708,
+      "sha256": "c4b812444202bd842ecf7535ba48da10cd1928541642058b1acaa47170584522"
+    },
+    {
+      "path": "scripts/wp3_eval_only_coordinator.py",
+      "size": 2299,
+      "sha256": "61a57e5734a80893f2fc6ad712e1362c4661d2c13fd529b125d7dbb418f59b0a"
+    },
+    {
+      "path": "scripts/wp3_eval_only_preflight.py",
+      "size": 1600,
+      "sha256": "b4c174e52347c43e0798f30b5cc1e28937f87d78308a9121b7d0da0dbd85e269"
+    },
+    {
+      "path": "scripts/wp3_owner_train_dev_eval.py",
+      "size": 2810,
+      "sha256": "2ec68332d6680b67e9aa3696e56774eb0bc99881b77dfbbe47046617e220e6e5"
+    },
+    {
+      "path": "scripts/wp3_physics_replay_preflight.py",
+      "size": 5505,
+      "sha256": "864e4ebd6c9b887591c90f08bf029a6f5bbd0df63b04db3359f112e48e9b9064"
+    },
+    {
+      "path": "scripts/wp3_register_crash_terminal_v1.py",
+      "size": 1499,
+      "sha256": "85edb0156dc67601d326cd71f7162975d6e57386a0fa2120d18cf7face44d0e5"
+    },
+    {
+      "path": "scripts/wp3_v4_technical_acceptance.py",
+      "size": 1626,
+      "sha256": "88394192a5fa11e791899733aefaf8784b6937f9752ef3ce93111130623a2bc4"
+    },
+    {
+      "path": "scripts/wp3_v4_three_replay_dev_crash_contract.py",
+      "size": 5319,
+      "sha256": "46170dc2253ea084130dc2337c2f0ca1ee96562b9d4eaa98cdd642426683d1c4"
+    },
+    {
+      "path": "scripts/wp3_v4_three_replay_impulse_audit.py",
+      "size": 5195,
+      "sha256": "bafb6b034215156d659d4fb855ed81bec6247de428e29b376db92dcb3972758a"
+    },
+    {
+      "path": "scripts/wp3_v4_three_replay_registered_crash_v1_corrected.py",
+      "size": 5413,
+      "sha256": "d8af6af7f327a31a6ea4474876d6f89e4534b8fce80fa02f4df78dfd45069451"
+    },
+    {
+      "path": "scripts/wp3_v4_three_replay_technical_acceptance.py",
+      "size": 5319,
+      "sha256": "92a3130db5e600faa7aea341a24fa3703729b123a38871c9ae447ddc2f9063ad"
+    },
+    {
+      "path": "scripts/wp3_v4_verify_technical_acceptance.py",
+      "size": 2011,
+      "sha256": "0521fb6044b1a2431c3993bbcd502c8176d1c37ead1e3c66bb47ff5568c793b0"
+    },
+    {
+      "path": "scripts/wp3_verify_crash_terminal_v1.py",
+      "size": 1878,
+      "sha256": "7d8b4ef0eb45db95ca6701db2846d023dc65718aadeea515f40cb61f0871d1b6"
+    },
+    {
+      "path": "scripts/wp7_audit_3d_swept_volume.py",
+      "size": 2613,
+      "sha256": "49a10fe4f972d0bd50d615e36230093609b71e7f66af105eed8c07d257170a2b"
+    },
+    {
+      "path": "scripts/wp7_audit_right_turn_corridor.py",
+      "size": 2169,
+      "sha256": "d12ab1cf3bf0a7321d4f0252cff0a4125e038076681782bd9c5c002d269c2790"
+    },
+    {
+      "path": "scripts/wp7_audit_train_feasibility.py",
+      "size": 1308,
+      "sha256": "8aaa7f85d71abbfaedc3f8b2dabfc738782949775c8432ac009ad0d429029a2c"
+    },
+    {
+      "path": "scripts/wp7_audit_train_trajectories.py",
+      "size": 2188,
+      "sha256": "69b7f67961c5e0efbe564d8bf57d4d4083fae0b1a229b586e445e7c6c221cee3"
+    },
+    {
+      "path": "scripts/wp7_capture_gpu.py",
+      "size": 658,
+      "sha256": "b514ec8dc56e67eefe29b00c4fa21886a112ece17ee34e438418f1e1f6727925"
+    },
+    {
+      "path": "scripts/wp7_certify_planar_execution.py",
+      "size": 3735,
+      "sha256": "4a3231c9faf4916c502416ee62d277418b78ed4d4980cfa9d7ca0a036172792f"
+    },
+    {
+      "path": "scripts/wp7_core_readiness.py",
+      "size": 749,
+      "sha256": "4cb99c6adcee0fda6cc18f8d17b9c32cac4458bdb67416e42f105ed53ad98883"
+    },
+    {
+      "path": "scripts/wp7_evidence_manifest.py",
+      "size": 2094,
+      "sha256": "0105e4c2f02f5170ca78b618d5fe2fb1df1dbf6f57716e6c2527fb25e89a4562"
+    },
+    {
+      "path": "scripts/wp7_freeze_readiness.py",
+      "size": 2801,
+      "sha256": "1b12d9376d68f6b0036fd1cae55ecd81946f3ce90efdbf88600385334de034ed"
+    },
+    {
+      "path": "scripts/wp7_historical_source_audit.py",
+      "size": 2716,
+      "sha256": "d015529d3cf21808021df5dd1b2b3e21f6a2314d473eac542480f986d15cf965"
+    },
+    {
+      "path": "scripts/wp7_pilot_preflight.py",
+      "size": 962,
+      "sha256": "7741e2b723cb2c91e9f9b908d37dc75d05ee287d17ce18e280fc62d8823a1e40"
+    },
+    {
+      "path": "scripts/wp7_ppo_fixture_worker.py",
+      "size": 9552,
+      "sha256": "61d7f0ed09a859026f55b320ff80d7c21169743f7681dd390a9ed53cc78afee2"
+    },
+    {
+      "path": "scripts/wp7_review_owner_acceptance.py",
+      "size": 1026,
+      "sha256": "77439bd5d499cebae7201753b3ea5a14fcf0d3da64818580fe6ef6f35b6c9fb9"
+    },
+    {
+      "path": "scripts/wp7_run_exploratory.py",
+      "size": 5032,
+      "sha256": "2b595cbaf0e35e01e151ec8cc597f364ee2f992b9dd010190d13b30be13f318a"
+    },
+    {
+      "path": "scripts/wp7_screen_train_action_sensitivity.py",
+      "size": 2938,
+      "sha256": "ea7eecac8856a1ba24b404a7716dd149dc443ca4d5f831269644eaa794092337"
+    },
+    {
+      "path": "scripts/wp7_train_acceptance.py",
+      "size": 707,
+      "sha256": "d5723c4d84ee6e1a2d2bdd754bc94eb068839adbb30d1042298cfd6233b42326"
+    },
+    {
+      "path": "scripts/wp7_training_admission.py",
+      "size": 1889,
+      "sha256": "324bdd8d4f913d477712622d22b00ceb7c3464030846a66b8c62854b6f82af6d"
+    },
+    {
+      "path": "scripts/wp7_verify_pilot_evidence.py",
+      "size": 669,
+      "sha256": "6146024afe4056cc47eb7f13079dc7907e245c80ae542c08437ebe7fa727bf55"
+    },
+    {
+      "path": "scripts/wp7_verify_run_evidence.py",
+      "size": 1478,
+      "sha256": "bf2f453190d4960dc093c00e1841094bc01dd62d0c044219b99c9ea0ad2e8c75"
+    },
+    {
+      "path": "tests/README.md",
+      "size": 479,
+      "sha256": "70a208ef0ef9bc45670c19798f0aa8f7990e6940eccefc2286583fa81cd787aa"
+    },
+    {
+      "path": "tests/integration/README.md",
+      "size": 393,
+      "sha256": "ed045ac052ddd92bcfb58ac2ae1f53b3ce70231f0ece5f2b02e6c51122069093"
+    },
+    {
+      "path": "tests/integration/helpers/subproc_multi_track_smoke.py",
+      "size": 1462,
+      "sha256": "1767b0d4e1d26bc3f3a16c28314f7301dc2ae528269282a082e8aef21105f531"
+    },
+    {
+      "path": "tests/integration/helpers/subproc_vector_smoke.py",
+      "size": 3075,
+      "sha256": "a6b432b53b0a7f5798fe133c8ab427c8fcb89fe396e1b630287588d352c1cf2e"
+    },
+    {
+      "path": "tests/integration/test_authored_route_env_reconstruction.py",
+      "size": 4291,
+      "sha256": "7134ac8aa4cadd80feecf22b106ef2eee3643eb610fca371920ccc53fc28a629"
+    },
+    {
+      "path": "tests/integration/test_canonical_ramp_recovery.py",
+      "size": 5928,
+      "sha256": "b712ad9f27188ee54469bd5c2eb5b859ec1c2985c6f3d81496d00e21d62ec1d2"
+    },
+    {
+      "path": "tests/integration/test_canonical_track_mechanics.py",
+      "size": 3412,
+      "sha256": "3897577b5d4384010674838159aa9021353aec257f47a6bdd35aba277da5d78d"
+    },
+    {
+      "path": "tests/integration/test_coupled_ground_motion.py",
+      "size": 6203,
+      "sha256": "f5528bd3459b0b20a12f2f17be28ca811b2554a08d9fd29b05a0a8d5b9a0b2b4"
+    },
+    {
+      "path": "tests/integration/test_distance_ground_motion.py",
+      "size": 13228,
+      "sha256": "035cdcdd42a3c0f51f48aa9b660ef7515f853fe3f63771a2ba17e50104d56dbe"
+    },
+    {
+      "path": "tests/integration/test_episode_integration.py",
+      "size": 4371,
+      "sha256": "c7d643004e1c50367123b473e89cf64a9e78290034ed8b3b7be904585c454989"
+    },
+    {
+      "path": "tests/integration/test_evaluation_telemetry.py",
+      "size": 8303,
+      "sha256": "2d0d5a66fafdf9339a9a9407e8a668ed27cee306d6d7a5e8fb816b3461081fe9"
+    },
+    {
+      "path": "tests/integration/test_evaluator_metrics.py",
+      "size": 9348,
+      "sha256": "d5f14521dc9d4ece9ded27323ac7cac3539890b90445493023c8efd120966031"
+    },
+    {
+      "path": "tests/integration/test_experiment_track_split_integration.py",
+      "size": 6126,
+      "sha256": "ae0ab3463a3a908254ccf43452fa9b907bc863c5671f96a5af37ef4a4b9293b3"
+    },
+    {
+      "path": "tests/integration/test_gym_environment_integration.py",
+      "size": 8409,
+      "sha256": "734e30b8c390a4071329838850fdba25c72182ba54c767def2509b14132c3d6b"
+    },
+    {
+      "path": "tests/integration/test_hard_route_terminal_v2.py",
+      "size": 9781,
+      "sha256": "f3fcec026715eef81392f50c77a7111560080c930a491fb4929ebcd744e349a3"
+    },
+    {
+      "path": "tests/integration/test_observation_encoding.py",
+      "size": 6085,
+      "sha256": "febc20f18a99a9e923f8ba9615588f30a97503145d2894f0921a611774636a75"
+    },
+    {
+      "path": "tests/integration/test_policy_action_integration.py",
+      "size": 4922,
+      "sha256": "64deba0eb6ef1f9fc6c4690e45ce0237a4d0810504f9a871fdd3cab852cd282e"
+    },
+    {
+      "path": "tests/integration/test_ppo_baseline_integration.py",
+      "size": 9776,
+      "sha256": "c14bae9dcd59e16dfa3c7c8503939d1a18c88567fff45a463e85efe98a8668e4"
+    },
+    {
+      "path": "tests/integration/test_pv5_lifecycle.py",
+      "size": 7515,
+      "sha256": "aadde6c2a5d56cdd3f383e26a28223b67d31306c4ff679da1d6aeb5a5930ca6e"
+    },
+    {
+      "path": "tests/integration/test_pv5_outcomes.py",
+      "size": 2022,
+      "sha256": "de610bdcfa5fc2e01a9b531e4aa9a48b41c52e2171da81288fdcd43102076d5d"
+    },
+    {
+      "path": "tests/integration/test_registered_train_execution.py",
+      "size": 2120,
+      "sha256": "9ea5f61bb5b48cee7564e261b9e9430651984749270a0fa01de3b2cf3e2d7ec0"
+    },
+    {
+      "path": "tests/integration/test_reward_integration.py",
+      "size": 7058,
+      "sha256": "77f10ea21dea6d07ccca1c62e1bea9577f9c25af252a39c136c0b8ea8de711f0"
+    },
+    {
+      "path": "tests/integration/test_run_provenance.py",
+      "size": 3606,
+      "sha256": "35c91e0448cf171473b5b33d4a68291affb212498422ec65891cabeaf9c74809"
+    },
+    {
+      "path": "tests/integration/test_sandbox_physics.py",
+      "size": 2649,
+      "sha256": "3d976e51a57db38ae7503175adb4b736a3655f4d050c05a042541a95458c004f"
+    },
+    {
+      "path": "tests/integration/test_simulation_runtime.py",
+      "size": 5170,
+      "sha256": "9b75f61be9856f49846b1737619aa033daadd4c8191e47c79576cacbc55c89e2"
+    },
+    {
+      "path": "tests/integration/test_spatial_compliant_gym.py",
+      "size": 9329,
+      "sha256": "88fe4dc72c14aaaf1b12cec5fe9d6c92e128a92f193a24e368aeba5312c0ca91"
+    },
+    {
+      "path": "tests/integration/test_spatial_ground_motion.py",
+      "size": 6104,
+      "sha256": "9cc429c7045f91f748153f0a49c94b21309a98e4567d6bd5fd4f8e0e7c8c170f"
+    },
+    {
+      "path": "tests/integration/test_track_asset_corpus.py",
+      "size": 9022,
+      "sha256": "aec6a13d5ae7ce6d360d46efd06a777bab79897631f195051afd402ad7f9bdfc"
+    },
+    {
+      "path": "tests/integration/test_track_world_model.py",
+      "size": 4893,
+      "sha256": "f0cb135551baa8c8dcb74fbddceb276c7754f2adab698f3fa9ce761c912f7e02"
+    },
+    {
+      "path": "tests/integration/test_training_orchestration_integration.py",
+      "size": 2904,
+      "sha256": "d0bbb6b87fe321affd7974cbe48d235d3650709862d7b5bf03da83cce0b7a0ca"
+    },
+    {
+      "path": "tests/integration/test_unilateral_spatial_motion.py",
+      "size": 2605,
+      "sha256": "22a70ae77e6edd7a7422a0d7c119de6d79b31b9b272cb814f2a263bcf86fc808"
+    },
+    {
+      "path": "tests/integration/test_vectorized_ppo_integration.py",
+      "size": 8611,
+      "sha256": "a3801a1b0eda4dfa8f51e1ac240ac2036626213612332c485c445924096882a3"
+    },
+    {
+      "path": "tests/integration/test_vehicle_perception.py",
+      "size": 3254,
+      "sha256": "374165205ba6c717329a5d44dbc96d8d43d89cc2c73dd74bd369729fa326437c"
+    },
+    {
+      "path": "tests/integration/test_versioned_braking_control.py",
+      "size": 4231,
+      "sha256": "e9f44f7b454c8beb1a149a4f9d99f6e88b69e401444f096f4604b439859a0dd0"
+    },
+    {
+      "path": "tests/integration/test_world_interactions.py",
+      "size": 7170,
+      "sha256": "02a236fa85bc4e935b57a39f57195648a2aa45ce9838ab0e716273fcbb64873a"
+    },
+    {
+      "path": "tests/integration/test_wp3_applied_crash_end_to_end.py",
+      "size": 7806,
+      "sha256": "291745f38a79f4438b75d79fc15100120ecde0cac29ae8d73a00cf07f541ddbb"
+    },
+    {
+      "path": "tests/integration/test_wp3_registered_crash_terminal_contract.py",
+      "size": 6406,
+      "sha256": "393076e505cacacf92766bcc0bca1432bf58814742180490ae9b40a7bf92e605"
+    },
+    {
+      "path": "tests/integration/test_wp7_lifecycle_race.py",
+      "size": 11642,
+      "sha256": "2376fd87b5701583cac0f07d1961c69379db60300315be043778e0c13a31701c"
+    },
+    {
+      "path": "tests/integration/test_wp7_physics_integration.py",
+      "size": 21721,
+      "sha256": "c3b1485bce2d10bf3cba9408b96c0bd55607a4200c4b6e68f9c5699969e4bd71"
+    },
+    {
+      "path": "tests/integration/test_wp7_race_contract.py",
+      "size": 8196,
+      "sha256": "80cc187dd7344f0936008b4d1b6fc7bf9a499d1a179a5c77dbade731ab915781"
+    },
+    {
+      "path": "tests/integration/test_wp7_slalom_dynamic_route_reconstruction.py",
+      "size": 3101,
+      "sha256": "cc94cd0e24257a9b90e1f4f196e9fbfc2d094d0b81ed78906ae6a511d243afff"
+    },
+    {
+      "path": "tests/integration/test_wp7_train_reset.py",
+      "size": 7558,
+      "sha256": "35e0e44cac06707b70ed1c84e39e38ebfade7d51c3e81b88eea189f610017502"
+    },
+    {
+      "path": "tests/learning/README.md",
+      "size": 265,
+      "sha256": "703fa5565f5647a93423706b408fa77a14d5e6b348b35a71c5cf3f374653c635"
+    },
+    {
+      "path": "tests/learning/algorithms/test_ppo_config.py",
+      "size": 4506,
+      "sha256": "e7c3ff2d6201c7ac2d712df4ad095ca251eef3c60d77125970c2c797ee825d69"
+    },
+    {
+      "path": "tests/learning/algorithms/test_ppo_model.py",
+      "size": 18576,
+      "sha256": "d5a772fad6a8e25f5ccd735925a24d23b4f7cddb81a5f4428cfa62c2e46cd779"
+    },
+    {
+      "path": "tests/learning/algorithms/test_ppo_runtime_adapter.py",
+      "size": 2230,
+      "sha256": "2099f187459a8c2092cc217a7bbd2677f48694c77175a9416fc1c09edd49ed5e"
+    },
+    {
+      "path": "tests/learning/episode/test_progress.py",
+      "size": 4786,
+      "sha256": "18e761813de1f4d2040e43fddc42c8863bfc4e1892b33048e783521d2ffc9773"
+    },
+    {
+      "path": "tests/learning/episode/test_route.py",
+      "size": 5715,
+      "sha256": "0f6987bfe4e7b2c4b15a4482ef1c85676f9ff2188730dae41370d837b687f3b4"
+    },
+    {
+      "path": "tests/learning/episode/test_status.py",
+      "size": 2025,
+      "sha256": "79eda6d00a5ba9fb1cdaca9236531a6ccd7e2434e276cf05e70c6ae104c650fb"
+    },
+    {
+      "path": "tests/learning/evaluation/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tests/learning/evaluation/mocks/__init__.py",
+      "size": 46,
+      "sha256": "0bbc8f1bc649970a7ce5fcf85a8e13bff317ff35ea3d2eb88a9997ef52307144"
+    },
+    {
+      "path": "tests/learning/evaluation/mocks/environments.py",
+      "size": 1254,
+      "sha256": "fee45c18c37184732bd4039d63344e71837d83f7a3fa723593fcede18a1f3074"
+    },
+    {
+      "path": "tests/learning/evaluation/mocks/policies.py",
+      "size": 1643,
+      "sha256": "f3ffb756abb802aa8a38cedabe356c66a68470607719b75efad26e4dee336b1c"
+    },
+    {
+      "path": "tests/learning/evaluation/test_authored_progress_evaluator.py",
+      "size": 2521,
+      "sha256": "693f07dc3db1e7dca292b7ece918e4f3739877f65f99a8caa3705a86ffdd4d9b"
+    },
+    {
+      "path": "tests/learning/evaluation/test_evaluator.py",
+      "size": 17449,
+      "sha256": "f4498ac40bf97fccd1b52cd82d6aa4ed65bc01ae7e20328141c97a5f9d85f9c6"
+    },
+    {
+      "path": "tests/learning/evaluation/test_isolated_ppo_cell.py",
+      "size": 6315,
+      "sha256": "49d95d01282c744fe80a5045df868fdcf6f61ef2d7b1ecc6f0ecd2d1eac5f148"
+    },
+    {
+      "path": "tests/learning/evaluation/test_metrics_contract.py",
+      "size": 6369,
+      "sha256": "7db0e00dd8706cbb0ee0775e69433098966cf3e5c929deda523aa4210d8f0cee"
+    },
+    {
+      "path": "tests/learning/evaluation/test_registered_ppo_worker.py",
+      "size": 4898,
+      "sha256": "149c8c1d51f107a4b4f5206c5158f1c580fbcc5a46fec6c84eeece990dfe698e"
+    },
+    {
+      "path": "tests/learning/evaluation/test_route_progress.py",
+      "size": 4845,
+      "sha256": "03b3aeab1d7d1cbeb595da591e058219956e4726a0740e90caecd2dabdf7b4a1"
+    },
+    {
+      "path": "tests/learning/evaluation/test_stochastic_cell.py",
+      "size": 5011,
+      "sha256": "b01e05c98e315c9773080395f6892dff3ad12aeaf0db205dbb693f158a99b3c4"
+    },
+    {
+      "path": "tests/learning/evaluation/test_track_summary.py",
+      "size": 4661,
+      "sha256": "506bb949cd0f47f04f35f1817e8035e53ff7d82b09684cb98b77caba52bccc89"
+    },
+    {
+      "path": "tests/learning/evaluation/test_train_checkpoint_recovery.py",
+      "size": 4101,
+      "sha256": "ac7781c6113325aae71c7527af4bb62a39b353e739e085a1e3dd1736bde479f2"
+    },
+    {
+      "path": "tests/learning/evaluation/test_wp3_crash_terminal_gate.py",
+      "size": 662,
+      "sha256": "fce8323bca730d8bd1714ac10913e76e197aad2f129b560cb765c2339233bb1d"
+    },
+    {
+      "path": "tests/learning/evaluation/test_wp3_hard_route_terminal_eval.py",
+      "size": 2541,
+      "sha256": "9b014a2cd9d4c40f676c5ae05221b6996acd06ec74c808ca7343fa5ff57fcc90"
+    },
+    {
+      "path": "tests/learning/experiments/test_c2_protocol_v2.py",
+      "size": 10295,
+      "sha256": "43b3de8a26e2a178cf7bfb689036057143227cfd137a6d0f112e5b638759169b"
+    },
+    {
+      "path": "tests/learning/experiments/test_checked_in_experiment.py",
+      "size": 4743,
+      "sha256": "b09d3ae452de49da34607e771d41a80baeca51aaf5769edacea3e9dff81ce356"
+    },
+    {
+      "path": "tests/learning/experiments/test_definition_contract.py",
+      "size": 6983,
+      "sha256": "195bda0356610190d9887ec3a54c9f1a4a0ae4ededb097c58f3255172b8101c2"
+    },
+    {
+      "path": "tests/learning/experiments/test_environment_protocol.py",
+      "size": 2951,
+      "sha256": "c364174ae3aeb3d3f136723d72247ca77c36ccfa34d04c27e04df58656096106"
+    },
+    {
+      "path": "tests/learning/experiments/test_experiment_boundaries.py",
+      "size": 3223,
+      "sha256": "8ee85a0135a294fea486bf69a33f38828ebf7f73e063f9501f50d685a0734470"
+    },
+    {
+      "path": "tests/learning/experiments/test_experiment_yaml.py",
+      "size": 6926,
+      "sha256": "9cfee96bc578f4de171d7d5660cfeb6327da4e0b1667cd509b724d2e0bbf0401"
+    },
+    {
+      "path": "tests/learning/experiments/test_frozen_experiment.py",
+      "size": 7763,
+      "sha256": "4e89a855f48ffbfdc3b9b5097cd412d607b2455fd57e2c5af760ec5fd6ed5efb"
+    },
+    {
+      "path": "tests/learning/experiments/test_track_split.py",
+      "size": 5255,
+      "sha256": "676869c5253d973afe7e0ee99dd44ebebbd0fbccaaacb5671b3c910e7f0fc488"
+    },
+    {
+      "path": "tests/learning/provenance/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tests/learning/provenance/test_capture.py",
+      "size": 6373,
+      "sha256": "2ceb2299caf0364ae30b6dea8541b1d6e49ce5112caa18e5f0a25c4950579c67"
+    },
+    {
+      "path": "tests/learning/provenance/test_contract.py",
+      "size": 7579,
+      "sha256": "dc09d6f5f3a5a4db3aec646103f775c48af66cfba2684f5255f3a5a2bade1873"
+    },
+    {
+      "path": "tests/learning/provenance/test_document.py",
+      "size": 3936,
+      "sha256": "996ea62a1e7eee1cec76a62b941c360900056296bc16b27f4a57ed1b29788f64"
+    },
+    {
+      "path": "tests/learning/provenance/test_file_fingerprints.py",
+      "size": 5909,
+      "sha256": "c01c5048aaa015373ded91e1a36be41933b110d57ec055690d928e4589e498db"
+    },
+    {
+      "path": "tests/learning/provenance/test_git_capture.py",
+      "size": 3247,
+      "sha256": "d6c23f3119982dc96aaeb8ed00c6e18ca207f3c9d4bfc80ceb37a29c9f4068c6"
+    },
+    {
+      "path": "tests/learning/provenance/test_runtime_capture.py",
+      "size": 2603,
+      "sha256": "75c57007b8b202e0a025bd1ae7443fbc2c8355dd564e6307a07aef8e44053281"
+    },
+    {
+      "path": "tests/learning/provenance/test_writer.py",
+      "size": 5299,
+      "sha256": "40a890fd474e442f09153bf24653d0575b54302f83b795ff8b75f0b109dfbacb"
+    },
+    {
+      "path": "tests/learning/rewards/test_reward_composer.py",
+      "size": 3123,
+      "sha256": "76d221b8657fd91270626985f7a5075df4d5b5ce6a1c99e993442d64a16cf196"
+    },
+    {
+      "path": "tests/learning/rewards/test_reward_contract.py",
+      "size": 3288,
+      "sha256": "4d7cca62fc9ebf69824f21e53b3a0092ed1d9b06733a1bb6584cd5a61d20242c"
+    },
+    {
+      "path": "tests/learning/rewards/test_reward_terms.py",
+      "size": 3666,
+      "sha256": "aa31bce454f061f1c015c02b749643cd38f7786b9d1d3167351e68333fe49265"
+    },
+    {
+      "path": "tests/learning/rewards/test_route_highwater_reconstruction.py",
+      "size": 3397,
+      "sha256": "84b4a5df9aabb15f3f06892dc2c69b04c28712b8bb07daf931345282e69f2fd9"
+    },
+    {
+      "path": "tests/learning/test_action_contract.py",
+      "size": 1682,
+      "sha256": "2e9a7b8653f73039f0a73fb214dffed6e419142d3b5e7c001e6a56b510eb53cb"
+    },
+    {
+      "path": "tests/learning/test_action_mapping.py",
+      "size": 1489,
+      "sha256": "8386c7cd205f333e66afcc7f8dcee07c5dce507d050777c410f46d70f985d0e4"
+    },
+    {
+      "path": "tests/learning/test_corridor_acceptance_v1.py",
+      "size": 2892,
+      "sha256": "d3c533e8cf4cfa8fcf093213cec13415d2875984bb5d0785d8dcea49b5d2cde5"
+    },
+    {
+      "path": "tests/learning/test_corridor_audit_reconstruction.py",
+      "size": 3238,
+      "sha256": "d41f8fc46ef38c388d24ec97573b7800f7c8ea4fa4da6732323a155bbbd74506"
+    },
+    {
+      "path": "tests/learning/test_evidence_backup_manifest.py",
+      "size": 4195,
+      "sha256": "db30a7a54ecca50e086007da5480ca3356100ba25666130d8333ce241741929e"
+    },
+    {
+      "path": "tests/learning/test_freeze_readiness_reconstruction.py",
+      "size": 10076,
+      "sha256": "ab1cc7971daa9de1cae8e106f145db9e91f74b24bc324f2f5a5d8e7dddeb977c"
+    },
+    {
+      "path": "tests/learning/test_gym_environment.py",
+      "size": 21525,
+      "sha256": "a70229d52756159d40dff685493ac5aa8113f25cfdbfb9ee43b4389dd146d850"
+    },
+    {
+      "path": "tests/learning/test_hard_route_exit.py",
+      "size": 2650,
+      "sha256": "6ce343660486ecfd12f7686cd418ae7436470d85e0127c58cd4de5d10f2f1190"
+    },
+    {
+      "path": "tests/learning/test_observation_contract.py",
+      "size": 3245,
+      "sha256": "7c365f21f5d8d5f82c5b5900ff915c1867cbc3e8a17eab00286584c9ade5d5df"
+    },
+    {
+      "path": "tests/learning/test_observation_motion.py",
+      "size": 2988,
+      "sha256": "db54c00d2e85fcb6bf30ada9a6dcf154adfa998f520716815be0f0b12693af42"
+    },
+    {
+      "path": "tests/learning/test_observation_target.py",
+      "size": 3790,
+      "sha256": "d2956d2f401e477ab19dd505280dcda2cc4b04698fb8548d03a66d60f4fdd63d"
+    },
+    {
+      "path": "tests/learning/test_offtrack_reconstruction.py",
+      "size": 5145,
+      "sha256": "d1c3f96401abae6ab0ff6af9ac5c3b3dac0fbf9c50e9145026bcfd1cec6c25b8"
+    },
+    {
+      "path": "tests/learning/test_owner_acceptance_preregistration.py",
+      "size": 5214,
+      "sha256": "6f5be55f9e9da24cf31aa2b3d7652bd1258e6e462688c631cfba18ac8200135b"
+    },
+    {
+      "path": "tests/learning/test_pilot_preflight_reconstruction.py",
+      "size": 3311,
+      "sha256": "21a451d71ae1c4b34707de6cce27ba9b4f38ac527669d4693308f62e43771925"
+    },
+    {
+      "path": "tests/learning/test_recovery_builder.py",
+      "size": 3809,
+      "sha256": "ec6c0c79a4b753d1c954076d64d402bac9bf333684b2b9c3153f7e80e4930ca2"
+    },
+    {
+      "path": "tests/learning/test_robustness_acceptance_v1.py",
+      "size": 3517,
+      "sha256": "76bb1c86e65dba7d839a1a9299c3f733222a7182dc1df36ad4154edcf83feabc"
+    },
+    {
+      "path": "tests/learning/test_route_navigation_reconstruction.py",
+      "size": 3798,
+      "sha256": "cc99d945c85ece305fb792e2f00c61ee632df348412008adcd886ab4f7ba512a"
+    },
+    {
+      "path": "tests/learning/test_swept_volume_audit_reconstruction.py",
+      "size": 5884,
+      "sha256": "4aa3be67c94da19c91f5ee5253c0382bff55e4630495fd30f6a0d7e5b7b77885"
+    },
+    {
+      "path": "tests/learning/test_trajectory_audit_reconstruction.py",
+      "size": 1555,
+      "sha256": "3af797ef3a8df16c5e24bce67696aef5984a2d627cc826eb8994f9bc6a2c229c"
+    },
+    {
+      "path": "tests/learning/test_wp7_robustness_screen_reconstruction.py",
+      "size": 7461,
+      "sha256": "58ced8cb62f6b7b0dd1c7e7737031e18611ef103bed654a46f16b9ce63b7854d"
+    },
+    {
+      "path": "tests/learning/training/mocks/__init__.py",
+      "size": 59,
+      "sha256": "c79cc37d19aa58fd3a529c8ebdd6b09a5d183763e15372c9d4d15d3ad90a31ad"
+    },
+    {
+      "path": "tests/learning/training/mocks/mock_factories.py",
+      "size": 2741,
+      "sha256": "44c814d439307ec17d85ab9bca7af7aa34f7cd3c86ac9a5d06910dfb6f99f306"
+    },
+    {
+      "path": "tests/learning/training/mocks/mock_io.py",
+      "size": 655,
+      "sha256": "66a6f65f74403aec52e3c27f79607ffe43705569544f7a15a4d36284d1ca9eeb"
+    },
+    {
+      "path": "tests/learning/training/mocks/mock_ppo.py",
+      "size": 1848,
+      "sha256": "f458bda8620696307e55e4a7a0c5c97eaa92e691ea381cad03b483767d055685"
+    },
+    {
+      "path": "tests/learning/training/mocks/mock_provenance.py",
+      "size": 1579,
+      "sha256": "b012a993984b895b3dffd860e9936803caf239859bba00d7eb3c9face1da5fe5"
+    },
+    {
+      "path": "tests/learning/training/mocks/mock_vec_env.py",
+      "size": 401,
+      "sha256": "9f305ac115f39c97baef78adfb8285ca5f52d28c70de4f844708f323f90b19a3"
+    },
+    {
+      "path": "tests/learning/training/test_checkpoint_observer_reconstruction.py",
+      "size": 3213,
+      "sha256": "e0f5d6e2e18389bca33aa946cf0399a2a53c12221e304718a824e86ec564c36f"
+    },
+    {
+      "path": "tests/learning/training/test_env_factory.py",
+      "size": 4119,
+      "sha256": "ddab9a071dc4b7910a84f9de3c5addd347eb1b79ca06b63fba8f87ee12df7567"
+    },
+    {
+      "path": "tests/learning/training/test_final_observer_reconstruction.py",
+      "size": 2883,
+      "sha256": "ea26ecd2448990f4921f69bc099e0183b19e09a18b28235d1c2f9857726c53c0"
+    },
+    {
+      "path": "tests/learning/training/test_fullbody_training_gate.py",
+      "size": 4122,
+      "sha256": "b44e8dcc91116eacb501aae1b07db4f000e4bf28a4e708a9a25c6821e928edb2"
+    },
+    {
+      "path": "tests/learning/training/test_local_demo_smoke_telemetry.py",
+      "size": 11535,
+      "sha256": "9f85e6af29a4ebcc2e4e7658cf9621133cd1a7df4848983c43f2805525d68a9e"
+    },
+    {
+      "path": "tests/learning/training/test_pilot_milestone_recorder_reconstruction.py",
+      "size": 10558,
+      "sha256": "fc1e697589f45a8fb74f4e1e9f26504f7136d6accadede46600c572391584019"
+    },
+    {
+      "path": "tests/learning/training/test_pv5_backend_admission.py",
+      "size": 4745,
+      "sha256": "e68fc985217f9371bb5b1d07b1453c121101256e97676c72a7fd72c99f2766b5"
+    },
+    {
+      "path": "tests/learning/training/test_run_config.py",
+      "size": 5294,
+      "sha256": "89e5991568f3ea9167a52b9f57c9e3e4c02ef724e6a5bd2e0f7f98a3e3e0041f"
+    },
+    {
+      "path": "tests/learning/training/test_scenarios.py",
+      "size": 7204,
+      "sha256": "c046ccf1accbe5549bdd362645fc6dec7dc271ea75a2238e1b88a1c412b9f136"
+    },
+    {
+      "path": "tests/learning/training/test_training_runner.py",
+      "size": 29343,
+      "sha256": "f56bc8a0a4cbaf36cb3d2824f87b780ae821fc8dfeec1b2befd2124f106373c1"
+    },
+    {
+      "path": "tests/learning/training/test_training_telemetry.py",
+      "size": 20679,
+      "sha256": "8e6217d0a2549a44e3d9109b929e531973888fdacc509cb3e1dc1a50fae4db00"
+    },
+    {
+      "path": "tests/learning/training/test_training_telemetry_real_reset.py",
+      "size": 13419,
+      "sha256": "36c9f1d5a4bb102dada80dbaf690a03e3c0c25e1d29046d4479050b95e705410"
+    },
+    {
+      "path": "tests/learning/training/test_vector_config.py",
+      "size": 4108,
+      "sha256": "bc47f45eb8925cd29ca0795058d42f583798b2e8b2c5f68f74240a49d3b94a2b"
+    },
+    {
+      "path": "tests/learning/training/test_vector_env.py",
+      "size": 16080,
+      "sha256": "d2f31ed0415b0309baa2aff9e86171dbf7cd8a7c583b28d365fc916ba4fbeebe"
+    },
+    {
+      "path": "tests/research/test_demo_curriculum.py",
+      "size": 5195,
+      "sha256": "95bd7a4c310c6819cbfe3fb387341b222c1ac0c60fcb53b98d6767eab3308d26"
+    },
+    {
+      "path": "tests/research/test_demo_launcher.py",
+      "size": 868,
+      "sha256": "70ee8d4ace26fde3df440dc45aaf975238e29903aed32513eb69781eedf3117b"
+    },
+    {
+      "path": "tests/research/test_demo_train_isolation.py",
+      "size": 690,
+      "sha256": "781fcc68fbc13709de897dd656e8fecee3b0e4d928edd18d78d400393ae50a22"
+    },
+    {
+      "path": "tests/research/test_exploratory_config.py",
+      "size": 5234,
+      "sha256": "4158720ca17e475dc5b98151299ac9b79d5e7b83f7c97ac21041b2ead0cb8d1b"
+    },
+    {
+      "path": "tests/research/test_exploratory_permit.py",
+      "size": 14707,
+      "sha256": "6aa6aeb9788a98ad505e49df2d1e488e868102ad9222740951ee3255cb47540e"
+    },
+    {
+      "path": "tests/research/test_exploratory_pilot.py",
+      "size": 22466,
+      "sha256": "8f3cc1ad9fa4dda67223f2f0b9bf9bcfbc9d322ad52b058f58f16f306536043f"
+    },
+    {
+      "path": "tests/research/test_improvement_diagnostics.py",
+      "size": 2474,
+      "sha256": "42976268d5b16debe1505521f71189452cf32ec23d6ae6801d2c4403360680d9"
+    },
+    {
+      "path": "tests/research/test_local_demo_runner.py",
+      "size": 17210,
+      "sha256": "efe9b81a8241368e43daae7ba4b83504e181fda90738f0aa0ffa6f63d44ab85f"
+    },
+    {
+      "path": "tests/research/test_local_demo_smoke_profile.py",
+      "size": 2400,
+      "sha256": "78491646aa812d12fd762b6a93de36e91469677efc151a1224fbaebbf64b2c4b"
+    },
+    {
+      "path": "tests/research/test_pv5_admission.py",
+      "size": 3186,
+      "sha256": "8e88d52337845964857e5b7d10f163a25d8b76d1a628eb1d1589c73918b9f58a"
+    },
+    {
+      "path": "tests/research/test_pv5_protocol.py",
+      "size": 4886,
+      "sha256": "3f347e28ebb2bd9652e59ebe71879a4f3c9c370e2ea60b1c7dcbc440b4ea7d35"
+    },
+    {
+      "path": "tests/research/test_pv5_track_feasibility.py",
+      "size": 2924,
+      "sha256": "64d1a29f7282eb56fd44996b887a8d52ea7ab788ee75d68adc34346d36119659"
+    },
+    {
+      "path": "tests/research/test_simulation_only_statistics.py",
+      "size": 5764,
+      "sha256": "0605586bb2bbfc26a5d16701286dc5cc90818d5728dfaa809adf138201d49fd8"
+    },
+    {
+      "path": "tests/research/test_simulation_only_validation.py",
+      "size": 2765,
+      "sha256": "5307d76ca318c37356e959321715521b4bd5fa2ef0e613760bf2c8616ba646d6"
+    },
+    {
+      "path": "tests/research/test_simulation_parameter_provenance.py",
+      "size": 4732,
+      "sha256": "bf4ab60b1fdf44bac979b4eece18785c7b79f4473a2f8089d1b5453e3df73bfe"
+    },
+    {
+      "path": "tests/research/test_wp2_execution_permit.py",
+      "size": 9092,
+      "sha256": "6009a83d0785d31a5e98bcbfd882215cfd37a6729b6509c257a8d25cdb78f0cf"
+    },
+    {
+      "path": "tests/research/test_wp2_experiment_contract.py",
+      "size": 4753,
+      "sha256": "4668563768827e3b2d8e1c180765c3c5c92a233e9f083fecffafd67757938785"
+    },
+    {
+      "path": "tests/research/test_wp2_statistics.py",
+      "size": 13960,
+      "sha256": "ff00837a9a346d4d70e84101f3b6fcfdbcd7752cb1d11e487ddaf05e0b541f3d"
+    },
+    {
+      "path": "tests/research/test_wp3_accepted_contact_transition.py",
+      "size": 4032,
+      "sha256": "5087393a11c904bfa9c1954f7e00f704a6cc09a7eca3a1be50e45662b7f222a0"
+    },
+    {
+      "path": "tests/research/test_wp3_accepted_road_body_contact.py",
+      "size": 2406,
+      "sha256": "e32b7c70e5ae723b0031d20f60cbcef1d2adccc78620e30d33674f38cb987f99"
+    },
+    {
+      "path": "tests/research/test_wp3_airborne_road_crash_v4.py",
+      "size": 4735,
+      "sha256": "cc450a05a92eec9f4fc6e795b0d6d289674e5b03e2382cd56efb42a7a5b343dd"
+    },
+    {
+      "path": "tests/research/test_wp3_ballistic_body_impact.py",
+      "size": 3931,
+      "sha256": "ac7a30531517cbb6e90c460a5e410887c3948e09bf93547823d4eb556c498c16"
+    },
+    {
+      "path": "tests/research/test_wp3_body_impact_bracket.py",
+      "size": 3294,
+      "sha256": "ea9a8756892e70a603a439cbbca4f17e7407c220c3247ab7bb12302f0d17ed22"
+    },
+    {
+      "path": "tests/research/test_wp3_bounded_road_patch_collision.py",
+      "size": 3391,
+      "sha256": "1c13efbf426286d755e293c9fa7dfe0c673bfaa05d6ce916140a2c5f6a6db15b"
+    },
+    {
+      "path": "tests/research/test_wp3_campaign.py",
+      "size": 7043,
+      "sha256": "23b1d603dce437c5178bc044d332116c3cd5c1ae5129258b038737240fd58402"
+    },
+    {
+      "path": "tests/research/test_wp3_certified_face_impact.py",
+      "size": 2659,
+      "sha256": "9de64133ffa9f59af1ae90ef305e0091aba75bcb4c2a865b1e8500809d2e99d9"
+    },
+    {
+      "path": "tests/research/test_wp3_crash_race_prefix.py",
+      "size": 3419,
+      "sha256": "c2d447512a8f6937160907e05a82b0378ad12a72e8c82007543cc5366a8b12b3"
+    },
+    {
+      "path": "tests/research/test_wp3_crash_terminal_registry.py",
+      "size": 4225,
+      "sha256": "de2f9c94f5171fa7b4de61b66bcfc006a7de03626a6672d9ad383dc5dac720f8"
+    },
+    {
+      "path": "tests/research/test_wp3_current_eval_gate.py",
+      "size": 2577,
+      "sha256": "e4b3250110f7af759260090904b76f32f8348de5368f5da94cf53981be390698"
+    },
+    {
+      "path": "tests/research/test_wp3_edge_release_energy.py",
+      "size": 1762,
+      "sha256": "d75a690dc146bff5f211bb0025fadaf5ab2a02e94739a96ff55635a99154063c"
+    },
+    {
+      "path": "tests/research/test_wp3_eval_only_admission.py",
+      "size": 4862,
+      "sha256": "e56a721f45bc5fb7efc3d542d7d86f8dff4f5ef7603cce743734212ad4dd7e10"
+    },
+    {
+      "path": "tests/research/test_wp3_eval_only_coordinator.py",
+      "size": 7914,
+      "sha256": "dbd07f3e722fa1a6b457cd3974823bba51a74b51bbd86dfdd668bdf91426df66"
+    },
+    {
+      "path": "tests/research/test_wp3_eval_report_writers_issue51.py",
+      "size": 3126,
+      "sha256": "94678a97cef06f0df8bc9c3fbd683b19a183ddc6cccb647ccb38fc24037e8017"
+    },
+    {
+      "path": "tests/research/test_wp3_evaluation_issue51.py",
+      "size": 1949,
+      "sha256": "eff9963910516901fa53ef9ecdd65f740515a9b77e0d2a656d77a9b67375dc4b"
+    },
+    {
+      "path": "tests/research/test_wp3_evidence_path_config.py",
+      "size": 935,
+      "sha256": "20bf601db70d236fd229e85f15217662f645b08a6ade1ebf6bbcc15b886f883c"
+    },
+    {
+      "path": "tests/research/test_wp3_finite_tire_footprint_v4.py",
+      "size": 2070,
+      "sha256": "a3ebfad2389ca09d7c4e79437787e1e6da5a03ad15baa6c3a78e08ccf83d186c"
+    },
+    {
+      "path": "tests/research/test_wp3_historical_restore.py",
+      "size": 2128,
+      "sha256": "aea18fc04b585620c751278df135c11819c78d7053c2eaadafb5a4df291f6169"
+    },
+    {
+      "path": "tests/research/test_wp3_issue51_latest_gate.py",
+      "size": 1557,
+      "sha256": "cf3a891db99f87327fcf6e8703da3d683a8fbb1ba43ba9ad240d30779a292317"
+    },
+    {
+      "path": "tests/research/test_wp3_linear_first_contact.py",
+      "size": 2518,
+      "sha256": "523b02b1d955c58ada9af777a23c616fef9383bb86ce9c719d6775b0e779e155"
+    },
+    {
+      "path": "tests/research/test_wp3_obb_feature_contact.py",
+      "size": 1678,
+      "sha256": "1b006466be356e1f64f8a975cf982ec0bbcacb18380829ca261177965fa535e0"
+    },
+    {
+      "path": "tests/research/test_wp3_owner_train_dev_eval.py",
+      "size": 11678,
+      "sha256": "fd39d23cd848a75a49be2015167cd1a3dc6814b8594adc7dc268ba1bc73fc3bf"
+    },
+    {
+      "path": "tests/research/test_wp3_physical_crash.py",
+      "size": 2173,
+      "sha256": "1879b353f13eba84165040abd9107ba63e489afc1c4df17e0353a155da1da367"
+    },
+    {
+      "path": "tests/research/test_wp3_physics_domain_regression.py",
+      "size": 3341,
+      "sha256": "2080bda250c6c52b95e9cf9427babea7e7bbb8c28717e204a7739a4caeb9ae94"
+    },
+    {
+      "path": "tests/research/test_wp3_physics_release_gate.py",
+      "size": 1596,
+      "sha256": "2c8cf0a03fec435e779a61e1f9b0f50c6eaff68e042473845762e4b8b554686f"
+    },
+    {
+      "path": "tests/research/test_wp3_rigid_body_impact_response.py",
+      "size": 4380,
+      "sha256": "7c61a2c3a8aa06f54ee226ee13dfa1f534d4ab6127fecc73584a515f29782204"
+    },
+    {
+      "path": "tests/research/test_wp3_road_crash_prefix_roundoff.py",
+      "size": 2069,
+      "sha256": "48307999d562cc46c29b9324a220bb1a3f238813507962c2c27fb10afcb8db61"
+    },
+    {
+      "path": "tests/research/test_wp3_roll_envelope_terminal_v4.py",
+      "size": 4636,
+      "sha256": "58ac6e10ccb95bd2d8fd86ab0c8fbe966b7bc58331a2588cb77092337e556b71"
+    },
+    {
+      "path": "tests/research/test_wp3_slerp_microstep_contact_regression.py",
+      "size": 1218,
+      "sha256": "139d1714a3b57281d6bfc96c1a88d2036c39b816d86b6e02cee075343bb58e82"
+    },
+    {
+      "path": "tests/research/test_wp3_spatial_partial_wheel_v4.py",
+      "size": 6966,
+      "sha256": "1b8e48dac343aa87272730e003536708695d47b3524f0f5a8c31babb0e04b979"
+    },
+    {
+      "path": "tests/research/test_wp3_supported_overhang.py",
+      "size": 2705,
+      "sha256": "22ef23f54bb8863ef40669ce7fc11a6f622395116e0844b315126d0f1ae86e56"
+    },
+    {
+      "path": "tests/research/test_wp3_unique_edge_contact_v4.py",
+      "size": 3958,
+      "sha256": "1ab103f6b07b6a11f3bd139279ffe2841f59d78b2453f968d2017996a699ffa3"
+    },
+    {
+      "path": "tests/research/test_wp3_v4_technical_acceptance.py",
+      "size": 3716,
+      "sha256": "7674f1d2bc8c714c278942387f16ab2a997dc73a1aa9bf020dd655876e42e4e9"
+    },
+    {
+      "path": "tests/research/test_wp3_wheel_bump_stop_impact.py",
+      "size": 2752,
+      "sha256": "3508b1cbf3b956c9864d251b63d3603fedc1eac53ee256a2e7b9708290ce471e"
+    },
+    {
+      "path": "tests/research/test_wp3_wheel_edge_overtravel_v4.py",
+      "size": 2620,
+      "sha256": "554918f76a5ec08084e90a0e4c133c2c0842858c24e56e16e2fa243abaf02e45"
+    },
+    {
+      "path": "tests/research/test_wp3_wheel_hard_stop_terminal_v4.py",
+      "size": 2415,
+      "sha256": "922db4138b824b09ea7105b2cb4f03a00c6001b9fe6581864e4fb0ace938acd7"
+    },
+    {
+      "path": "tests/research/test_wp7_admission_resolution.py",
+      "size": 13322,
+      "sha256": "9551f3f4af013f8a657fce07fc96453ba8fe0950c71d8580c3d81b7c9a8a16da"
+    },
+    {
+      "path": "tests/research/test_wp7_arc_trajectory.py",
+      "size": 8105,
+      "sha256": "ed15ad7a8d378f04c5ad2a1c30e5c9cf4afdbc3d74305ecccae4579ada1a9c31"
+    },
+    {
+      "path": "tests/research/test_wp7_atomic_evidence.py",
+      "size": 1398,
+      "sha256": "1fff54e42f7735b75fab1922e9be2bfb9ebf269abe4bc48c6febedb5b3d988be"
+    },
+    {
+      "path": "tests/research/test_wp7_calibration_readiness.py",
+      "size": 4849,
+      "sha256": "33317cf6e0e16c69869bf984437d0c32f0b3e27d60c7f23041835d0bad39d088"
+    },
+    {
+      "path": "tests/research/test_wp7_center_gate_feasibility.py",
+      "size": 9290,
+      "sha256": "3ac4e3c20e8ef494da0d154b6b20bc68b179b5479ec264d8c72f057664a76c04"
+    },
+    {
+      "path": "tests/research/test_wp7_core_readiness.py",
+      "size": 2383,
+      "sha256": "ba385c631a73467eb7067db06a62e55d4611a719bd35e1527a81429ead541bfb"
+    },
+    {
+      "path": "tests/research/test_wp7_coupled_ramp_execution.py",
+      "size": 2276,
+      "sha256": "9ebf8431d20e643ad71883973271d4a988972aefbf3b040448ea646194f69a29"
+    },
+    {
+      "path": "tests/research/test_wp7_cpu_identity.py",
+      "size": 2063,
+      "sha256": "916440dbec397dc260a02a6ee0f2f24c9c350d58cd622ec59719b5bc48efd195"
+    },
+    {
+      "path": "tests/research/test_wp7_executed_feasibility.py",
+      "size": 5995,
+      "sha256": "11bc56233067bc867d9e79c67a73758269e171414f42dbccddcc06fa4339da65"
+    },
+    {
+      "path": "tests/research/test_wp7_execution_binding.py",
+      "size": 3792,
+      "sha256": "663a5e112f5d60c5f0c6c40f0673b5a4dc6c049738046fe826bcdb54c0bf8289"
+    },
+    {
+      "path": "tests/research/test_wp7_historical_provenance.py",
+      "size": 5504,
+      "sha256": "176433a351ec4b8368653eb2bdc5012f96f77004c6fcbd9e339e3b219a423973"
+    },
+    {
+      "path": "tests/research/test_wp7_owner_profile.py",
+      "size": 7908,
+      "sha256": "301add63ae0a33510f2e236a36598b84034ad451a44224d9102abf0b6c74f589"
+    },
+    {
+      "path": "tests/research/test_wp7_owner_profile_execution.py",
+      "size": 2185,
+      "sha256": "05130f2b4d59c9c0bae736bfb331b70b81acfe4bc627788571ffb3b325d1ab56"
+    },
+    {
+      "path": "tests/research/test_wp7_planar_trajectory.py",
+      "size": 3941,
+      "sha256": "8c8185602940cae5a1aba4af366f25493847693065cebf4c9fe91bac49aa57c5"
+    },
+    {
+      "path": "tests/research/test_wp7_policy_seed_binding.py",
+      "size": 2952,
+      "sha256": "0c4e5c99715383f70b3c45c5cf832ae61aeef68696c387447d3037abc073d8e3"
+    },
+    {
+      "path": "tests/research/test_wp7_ramp_execution.py",
+      "size": 1526,
+      "sha256": "d7da862617685218c1aa62cd1d751e5c6e4c9b1f30d044a54ff9d850a6fa351d"
+    },
+    {
+      "path": "tests/research/test_wp7_reference_benchmarks.py",
+      "size": 5035,
+      "sha256": "bb0ce46fd3958e6f065ec0be51030c661bd6d0ca9ed678a6ed04f24f16419c48"
+    },
+    {
+      "path": "tests/research/test_wp7_robustness_gate.py",
+      "size": 3128,
+      "sha256": "bfb17c9832ea31f785aff030fdb28846f17c0cd1da2f89e733ec6fd4ca1a6426"
+    },
+    {
+      "path": "tests/research/test_wp7_rotating_owner_execution.py",
+      "size": 2109,
+      "sha256": "b044c182763044b0717eb07d3997b7e8f982439d78917cf9bd0f5bbd30bf6a80"
+    },
+    {
+      "path": "tests/research/test_wp7_rotating_owner_profile.py",
+      "size": 5740,
+      "sha256": "555af3af62f2307cffa02fca293ae5085eeacb0f78698fb4883f65560fc6b050"
+    },
+    {
+      "path": "tests/research/test_wp7_run_manifest.py",
+      "size": 4870,
+      "sha256": "9c521622a9792bb64847096791e4cf9d26166921fea8ac97b9ecf622ccd03a2c"
+    },
+    {
+      "path": "tests/research/test_wp7_spatial_profile.py",
+      "size": 5563,
+      "sha256": "0cbdb7670a07d1f5983d6798c1c0b6b7ac54f004948e8798563aaeb13d07c10e"
+    },
+    {
+      "path": "tests/research/test_wp7_spatial_profile_execution.py",
+      "size": 5819,
+      "sha256": "cf8f8614553ee0e4114f6b3dbb4cf9a6b63853564d81b83a99f54469a75c672f"
+    },
+    {
+      "path": "tests/research/test_wp7_spatial_ramp_execution.py",
+      "size": 1820,
+      "sha256": "049a348219ccf4027cc618a2b188a65f7440ee475dadd70108df597f34d8f038"
+    },
+    {
+      "path": "tests/research/test_wp7_spatial_ramp_tracking.py",
+      "size": 1864,
+      "sha256": "11f0d4e8b5a0aabccc17939f9655ae788d665fafee4d188dd071e0935da5960d"
+    },
+    {
+      "path": "tests/research/test_wp7_train_acceptance.py",
+      "size": 3113,
+      "sha256": "23e14b9a221fc7ab75b251bddb5d026d8cdc54c6b4b194c2b225529cc8929e7d"
+    },
+    {
+      "path": "tests/research/test_wp7_trusted_reviews.py",
+      "size": 3792,
+      "sha256": "d7f47d2afffc16a31ede24f7b6513e9e04e8a0f43514258ba3068b0688e6801d"
+    },
+    {
+      "path": "tests/runtime/README.md",
+      "size": 152,
+      "sha256": "d343b56bc4ffa6a246bb9a1727b142c8e71a93a3316e694cae7275194422e665"
+    },
+    {
+      "path": "tests/runtime/test_simulation_lifecycle.py",
+      "size": 3292,
+      "sha256": "db09a12da25322cf0571b0f761de7c11ef2a473cdfa25147bdb224aec9681042"
+    },
+    {
+      "path": "tests/runtime/test_simulation_step.py",
+      "size": 5018,
+      "sha256": "e2a6a4c5d07b9bf4c7b109a5d5bfcce710d0d19d52161b090d01188012667a6c"
+    },
+    {
+      "path": "tests/runtime/test_simulation_values.py",
+      "size": 2956,
+      "sha256": "35dfac23e17831ccc2e76e5a22ccd42e19e23e40a1b0380ee69c507d609229de"
+    },
+    {
+      "path": "tests/sandbox/README.md",
+      "size": 256,
+      "sha256": "9c8f3e98e4c9eb3cd5a585314cc0b735d3a1cc7fe9f6210f2c51d934516b7364"
+    },
+    {
+      "path": "tests/sandbox/perception/test_rangefinder.py",
+      "size": 4429,
+      "sha256": "f2c55b85ace046730670130dcdade70bd1179beadaf0a384169db352912e3aa3"
+    },
+    {
+      "path": "tests/sandbox/perception/test_sensor_suite.py",
+      "size": 2859,
+      "sha256": "13b0ec0077fc8695287a4485bbe4493a144122aaca7524114c9b4db70f53b18d"
+    },
+    {
+      "path": "tests/sandbox/test_air_dynamics.py",
+      "size": 1678,
+      "sha256": "d7b617710eb8b18e96d0151e218b6db538f2b97546d27c5bc591cf0dccd0ee13"
+    },
+    {
+      "path": "tests/sandbox/test_angular_landing_impulse.py",
+      "size": 4141,
+      "sha256": "d542aec68af9cc4aaa2fec25b4462b8e360710a9e26451e25ad534655bfe8fe1"
+    },
+    {
+      "path": "tests/sandbox/test_ballistic_flight.py",
+      "size": 14939,
+      "sha256": "d6e2c25bab7858b926f3d436e1e385e59ec1a34bd50ff5822385e7c4ba7c230f"
+    },
+    {
+      "path": "tests/sandbox/test_body_collision.py",
+      "size": 7334,
+      "sha256": "ff22ac37385b5a4645abdff0bb0ce6dee7743db99f6499af72adffb46b24bc96"
+    },
+    {
+      "path": "tests/sandbox/test_bounded_patch_clearance.py",
+      "size": 2989,
+      "sha256": "959ab7cc48cc5c7a803a572709b2350c9dcc6123644778ffdb6be5dfec96a2a3"
+    },
+    {
+      "path": "tests/sandbox/test_contact_manifold.py",
+      "size": 5797,
+      "sha256": "fa3a41710d1c04e44e303cae48c20f75de1c701cff31d24064a482f831adf5b2"
+    },
+    {
+      "path": "tests/sandbox/test_coupled_longitudinal_dynamics.py",
+      "size": 11119,
+      "sha256": "9a0aec01efa4cad78c5dff5ec22ac849e097ecbe3f25a01800b0beecfae35ce6"
+    },
+    {
+      "path": "tests/sandbox/test_directed_center_crossing.py",
+      "size": 2325,
+      "sha256": "caf79368a9012ad4886aa7d2dff10857c95f53c4b2640a19e187251bfa7db49b"
+    },
+    {
+      "path": "tests/sandbox/test_distance_ground_integrator.py",
+      "size": 3662,
+      "sha256": "3b0fddb5e4fcf02071e0e71b8086dd50d118ffecdd087d9ddada5f6a8e24b6ab"
+    },
+    {
+      "path": "tests/sandbox/test_euler_ode_clearance.py",
+      "size": 5612,
+      "sha256": "74a0cbe266cc789d905d49dcea4d87cc8403693643fc31e5015a723437413035"
+    },
+    {
+      "path": "tests/sandbox/test_geometry.py",
+      "size": 3236,
+      "sha256": "a42311789d250f069130a0b30a9804e93bf3e108c0087443ebe3448192a3487c"
+    },
+    {
+      "path": "tests/sandbox/test_ground_dynamics.py",
+      "size": 3242,
+      "sha256": "967fa94b8b7f79ed756adb0459d42b2369c07a983bfe456f8361829391c75eae"
+    },
+    {
+      "path": "tests/sandbox/test_ground_no_slip_reconstruction.py",
+      "size": 3734,
+      "sha256": "3fceae226cb9e94efad462c2d14658f8bc397f5033413a98a1081d595b7313d7"
+    },
+    {
+      "path": "tests/sandbox/test_grounded_yaw_dynamics.py",
+      "size": 2961,
+      "sha256": "f317f9130d1e09a882f19270632500843d87dd83d229d1d4cca6c172e5fe0534"
+    },
+    {
+      "path": "tests/sandbox/test_high_clearance_torque_free.py",
+      "size": 5265,
+      "sha256": "dfeb90c3f4cea98108ccce36af460ea9f13b4150756ce596616a793ac0e690e7"
+    },
+    {
+      "path": "tests/sandbox/test_independent_suspension_dynamics.py",
+      "size": 13014,
+      "sha256": "cbba169d964d3b3c96245cd551f41d93db1868c2304ee01aeb1ac8d6f280e549"
+    },
+    {
+      "path": "tests/sandbox/test_integrator.py",
+      "size": 4936,
+      "sha256": "549e486c79dfa04200f0dfc5435e0fd029cd9f4654296280acf8ffe99509c593"
+    },
+    {
+      "path": "tests/sandbox/test_interactions.py",
+      "size": 3013,
+      "sha256": "2b2cd08cc0ac6d231e5d2cb0a0ae08343045935c3978c190910462aaf9d06ece"
+    },
+    {
+      "path": "tests/sandbox/test_manifold_flight.py",
+      "size": 6391,
+      "sha256": "08b54371260a48982c8d602e4b70b708baabc2fc3193339b5f8c80bfd0179c1e"
+    },
+    {
+      "path": "tests/sandbox/test_motion_modifiers.py",
+      "size": 2800,
+      "sha256": "41c98dfb28e658e597543bfc04ab125d362bc4dce520ad6588c6f43887e73107"
+    },
+    {
+      "path": "tests/sandbox/test_multi_surface_support.py",
+      "size": 6787,
+      "sha256": "9ab998518be04a26d950c09281ffdae8d0e348b98d30e85ba1b976698ea60b4c"
+    },
+    {
+      "path": "tests/sandbox/test_partial_wheel_release.py",
+      "size": 12437,
+      "sha256": "9ad9ade7446fe640191f7c50533a4f4f87a1da83bcfb54a84b314cfcd3d48acb"
+    },
+    {
+      "path": "tests/sandbox/test_pv5_coplanar_contact.py",
+      "size": 2263,
+      "sha256": "2e474ce62045bab1bb67ba84a0b2dd1a3d34543c25c38612345dde1fe51c48f3"
+    },
+    {
+      "path": "tests/sandbox/test_pv5_rotating_contact.py",
+      "size": 1177,
+      "sha256": "1635e7808980c6f19389826a86a97f990df82ef23269f2e9b6c95cf01554b074"
+    },
+    {
+      "path": "tests/sandbox/test_ramp_support.py",
+      "size": 9539,
+      "sha256": "094bd16ee4eae7be2a8e41e97e70ed8ca8be293b4611c8c387834352d76a49d2"
+    },
+    {
+      "path": "tests/sandbox/test_road_footprint.py",
+      "size": 7596,
+      "sha256": "dab1e2906ef5ee088eebf7992e60c9271e3e277a01e8042a68badf09dd2c8389"
+    },
+    {
+      "path": "tests/sandbox/test_road_relative_suspension.py",
+      "size": 11761,
+      "sha256": "1aace505f0a5087fb0e64dca1f93000f62a443ae86297b6f580378ef2676981b"
+    },
+    {
+      "path": "tests/sandbox/test_rotating_impulse_landing.py",
+      "size": 6033,
+      "sha256": "52f6b42c8e7548db30648dadbe03b9265bbb9c3bc40b3be4c9edf8796c094b38"
+    },
+    {
+      "path": "tests/sandbox/test_scoring.py",
+      "size": 1056,
+      "sha256": "77ede0b908f17cbac613ec0416fbe837ef4f4c51d09ced8ad0bb606355c7bd2b"
+    },
+    {
+      "path": "tests/sandbox/test_sloped_clearance_tilted_landing.py",
+      "size": 7416,
+      "sha256": "27637557d0fbc547e68a77b5e3c1f07223e1950a80278b721892f58f3f8f8fae"
+    },
+    {
+      "path": "tests/sandbox/test_sloped_multi_event_flight.py",
+      "size": 5460,
+      "sha256": "3e6931e1d9e8b8c10e37b0fae9e7dbfdbdbcf6f1bdfa4ad284f653a48f246771"
+    },
+    {
+      "path": "tests/sandbox/test_spatial_atlas_lifecycle.py",
+      "size": 9110,
+      "sha256": "5c21bc3e051f1dd4263adcfb1501c360f2456352891344f213b71a50f2350bfc"
+    },
+    {
+      "path": "tests/sandbox/test_spatial_compliant_lifecycle.py",
+      "size": 6927,
+      "sha256": "354bd58e29b3f906706fa9d12b89ad816fb11f33d50286bdc25e1e9d8972acef"
+    },
+    {
+      "path": "tests/sandbox/test_spatial_contact_dynamics.py",
+      "size": 12267,
+      "sha256": "6c1ba9bacf7d7155dcbbfc6358190d57d4034bb97e84a092e48eff64033438b0"
+    },
+    {
+      "path": "tests/sandbox/test_spatial_rotating_lifecycle.py",
+      "size": 10672,
+      "sha256": "e1f496910e97433077af88bd700de3f9557ce210209cd01e691ca52b6058e8d3"
+    },
+    {
+      "path": "tests/sandbox/test_surface.py",
+      "size": 807,
+      "sha256": "3ba226a220835f7fe5aadd6948b8129a95c978a7165dc2e00c88a4372fe0d050"
+    },
+    {
+      "path": "tests/sandbox/test_timed_center_trajectory.py",
+      "size": 2619,
+      "sha256": "c28bfa6925cbeed2e8b40e6f537905b14e1f58883fc38826e3d2bdc99cc7ba43"
+    },
+    {
+      "path": "tests/sandbox/test_tire_calibration_contract.py",
+      "size": 3171,
+      "sha256": "88b538ee3e4ad2cc0249c0a701e4f514a10c6225d48bf6117cd22a08c5640135"
+    },
+    {
+      "path": "tests/sandbox/test_torque_free_rotation.py",
+      "size": 4345,
+      "sha256": "0db5dbd6f3c69cef2c5d200515e88c86f6d5ca4015d239aa8ad17ef49c8b4284"
+    },
+    {
+      "path": "tests/sandbox/test_torque_free_swept_ccd.py",
+      "size": 7315,
+      "sha256": "e1d9029f11487f05a367d8fe5595d8421cf9a3d3ea6ea4817d1ae31ab2b283e1"
+    },
+    {
+      "path": "tests/sandbox/test_unilateral_spatial_contact.py",
+      "size": 4902,
+      "sha256": "0a67b0d4cecd867bf5aa3bbf871767b1e87360f3715af89d156cf123ddfe721d"
+    },
+    {
+      "path": "tests/sandbox/test_vehicle.py",
+      "size": 2678,
+      "sha256": "0ff28e807a6f12f46c7479de0a0701a11664c0c1c08a23acaa50827c3d5c4dd5"
+    },
+    {
+      "path": "tests/sandbox/test_vehicle_dynamics.py",
+      "size": 1592,
+      "sha256": "ce2385cffc3baa0973e5783f28c3f2b24daccf03ef4daeb20899bfb5f3c45bc2"
+    },
+    {
+      "path": "tests/sandbox/test_world_grounded_yaw.py",
+      "size": 3593,
+      "sha256": "3e9d7868336d66594800e9267772c8cd74e9d4571f2ab59e84c0424dcd3e783d"
+    },
+    {
+      "path": "tests/sandbox/test_world_resolver.py",
+      "size": 3399,
+      "sha256": "3b1794db5a528d369d4f2cb1d2fe93a8b368753122c2da9d311bb8f28f0d81f6"
+    },
+    {
+      "path": "tests/sandbox/test_world_step.py",
+      "size": 4863,
+      "sha256": "2bfa84f8e132755fefbdea2c43bba85f68c6f6ea703a4226ef518a351cef55b6"
+    },
+    {
+      "path": "tests/sandbox/track/README.md",
+      "size": 134,
+      "sha256": "2fd62101ded575c50d49ab627691b4d97376a3822d56c104ab357aae83841569"
+    },
+    {
+      "path": "tests/sandbox/track/test_entities.py",
+      "size": 2591,
+      "sha256": "27160c71e1b352eee943d7344f8c0f1435b3a0a0704368befd73c16d5549e151"
+    },
+    {
+      "path": "tests/sandbox/track/test_model.py",
+      "size": 4111,
+      "sha256": "87a9c15b21b11f3adab23f821b39bd12d62850b33aaef16affa9414f862d3c2f"
+    },
+    {
+      "path": "tests/sandbox/track/test_patch.py",
+      "size": 2797,
+      "sha256": "f9d42a530628aa8bf4117b43c27fafaf88e729bd329379ef7ab79aa44057c27c"
+    },
+    {
+      "path": "tests/sandbox/track/test_state.py",
+      "size": 2000,
+      "sha256": "0ff1a9462d11515f80e615d1c3f1809ea04217281be56c7f3bb93c89701f4f02"
+    },
+    {
+      "path": "tests/sandbox/track/test_volume.py",
+      "size": 1585,
+      "sha256": "08e6ac1c266af3e61649d8ec7c232cf83d0e06fd05d7d0322aa6c5768decc66a"
+    },
+    {
+      "path": "tests/sandbox/track/test_volume_raycast.py",
+      "size": 3257,
+      "sha256": "933869145d94dfc6a7c4674ce20054770eb5424fecaa8eddaa321bccf36830a9"
+    },
+    {
+      "path": "tests/track_assets/test_boundaries.py",
+      "size": 3189,
+      "sha256": "491c8d2ce5cf1855fda7cd866d8cf535c425bec835a79b9d882be06d9874c3aa"
+    },
+    {
+      "path": "tests/track_assets/test_canonical.py",
+      "size": 5097,
+      "sha256": "d7a26e864125400f31f9da8b29babc5ee29b6ae3b4dfd9a99f494ae3b3af6c4b"
+    },
+    {
+      "path": "tests/track_assets/test_initial_state.py",
+      "size": 2308,
+      "sha256": "0dd9bfb03cdcdb7df8845958a720dfe6972ef5657374d94cb15ce78554adcec7"
+    },
+    {
+      "path": "tests/track_assets/test_loader.py",
+      "size": 7831,
+      "sha256": "c432b061b23444605ff543045f217920007560500f09505ba525bea214a87951"
+    },
+    {
+      "path": "tests/track_assets/test_manifest.py",
+      "size": 7314,
+      "sha256": "5fd62a4c0fb9f60882abc79063ff8703fe692d90d661b102ad82a7d70dbfc7a3"
+    },
+    {
+      "path": "tests/track_assets/test_model_contract.py",
+      "size": 741,
+      "sha256": "9cef97873dfe7af00c84763338131da2248eda4487b09cfa0ffd5869fae4b2a1"
+    },
+    {
+      "path": "tests/track_assets/test_navigation_v2_reconstruction.py",
+      "size": 4730,
+      "sha256": "46b20112cea8014e5664c2e683da82f4ff0c4773a0d597e2fc8464aec68ccc3a"
+    },
+    {
+      "path": "web/README.md",
+      "size": 4497,
+      "sha256": "ff920b61f4c61a7f2e25bb10c104e0846a381f813a47957e74ef5e01b183786e"
+    },
+    {
+      "path": "web/index.html",
+      "size": 534,
+      "sha256": "2dd1ad2e5cc0a28443229fb16408d437856673de83b90b217d310391859e91ca"
+    },
+    {
+      "path": "web/package-lock.json",
+      "size": 143221,
+      "sha256": "a97658cd53b13a6ce77603c8d6b174add37c8775af3e1a6481729dec29920ea9"
+    },
+    {
+      "path": "web/package.json",
+      "size": 810,
+      "sha256": "8e7898e6289dc436349375d177327c9c692e2e820ee5f81bc082d7f2ece16c56"
+    },
+    {
+      "path": "web/public/favicon.svg",
+      "size": 333,
+      "sha256": "301c963e0335eadbc1e04ef9d617cbd98538113514c4b3d0e327ed36580a8673"
+    },
+    {
+      "path": "web/src/App.tsx",
+      "size": 20199,
+      "sha256": "063963532304d2b64b9aee7a4988748e9d2e7aa2c4b5665f0f2340b0f9e9792a"
+    },
+    {
+      "path": "web/src/components/RacingScene.tsx",
+      "size": 13956,
+      "sha256": "89311d8c52666f4108252cbe71c6423e68f8df1cec8196109c18fafc4ad5fcfe"
+    },
+    {
+      "path": "web/src/components/RoadAttachments.test.tsx",
+      "size": 2062,
+      "sha256": "52ca5b33b155bd6366d545cde42358eb863abb5b6dab6bc4219060ff436b2404"
+    },
+    {
+      "path": "web/src/components/RoadAttachments.tsx",
+      "size": 4559,
+      "sha256": "716b035d8e3ff1d3d13c224b95e512f45f6667e67ad21bb9f85eb31c1daebd38"
+    },
+    {
+      "path": "web/src/components/SketchEditor.tsx",
+      "size": 6684,
+      "sha256": "fc60016ae15f6f1f5a4dfec0fe16c12fabf4a421e7c5903842fbcc7c909cbae8"
+    },
+    {
+      "path": "web/src/components/SolidRoad.tsx",
+      "size": 4051,
+      "sha256": "fc486d1f0eb28498262a26706e8e57918848f6718c81b9839481dc9edf94133f"
+    },
+    {
+      "path": "web/src/lib/elevation.test.ts",
+      "size": 1769,
+      "sha256": "c9fcb327a73c28bbd51132d37f42606b420156993a2d7225c1b6d67c688914d8"
+    },
+    {
+      "path": "web/src/lib/elevation.ts",
+      "size": 3428,
+      "sha256": "8c604d13581bb0d767733ec72d21d665bbd859dbff488b57464d611b4a59b80b"
+    },
+    {
+      "path": "web/src/lib/replay.test.ts",
+      "size": 1147,
+      "sha256": "f5b3fcb6380002d6bb86bd33b2abb2bfc781cb625a2e0e837c67b643d829d3fa"
+    },
+    {
+      "path": "web/src/lib/replay.ts",
+      "size": 2937,
+      "sha256": "0414d595de77afcdcdce8742778c8240ef5e743e510b0a5a854a9b533694e8e8"
+    },
+    {
+      "path": "web/src/lib/track.test.ts",
+      "size": 1763,
+      "sha256": "43df32e12a14874884acc5bccc7d05f32a32c2f674ce244021c31ed62484eb53"
+    },
+    {
+      "path": "web/src/lib/track.ts",
+      "size": 7777,
+      "sha256": "331a4a01fa35b6fbd64b1515ca6488a760867e1f4743548070b6953366dde9ad"
+    },
+    {
+      "path": "web/src/main.tsx",
+      "size": 237,
+      "sha256": "b861c6b80529618428d17d0eb9c4f0ed25d2c78c93f652324f81ccc11894f697"
+    },
+    {
+      "path": "web/src/styles.css",
+      "size": 18289,
+      "sha256": "3f701832858624a5b15332777076b65e869b436e563a68994d8c095e41d03417"
+    },
+    {
+      "path": "web/tsconfig.json",
+      "size": 659,
+      "sha256": "748d39405600722d678c571a95d97ea471c83a5d79bf05c539301df4e1ccc92a"
+    },
+    {
+      "path": "web/vite.config.ts",
+      "size": 188,
+      "sha256": "0eea511d4f91016240830441e46bbb6f5b54bc954a0c15bd4c92c1341b2e3402"
+    }
+  ]
+}

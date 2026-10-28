@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "F1-RL baseline architecture",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1200,
+      650
+    ],
+    "repository": {
+      "url": "https://github.com/onsra520/F1-RL",
+      "provider": "github",
+      "link_mode": "local-only",
+      "revision": "a909a251083d937bce23e229111d0c1c1a9947f3"
+    }
+  },
+  "components": [
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "Racing sandbox",
+      "sublabel": "React / Three.js",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        200,
+        70
+      ],
+      "sources": [
+        {
+          "path": "web/src/main.tsx"
+        }
+      ]
+    },
+    {
+      "id": "entry",
+      "type": "backend",
+      "label": "Python entry points",
+      "sublabel": "CLI and local demo",
+      "pos": [
+        350,
+        80
+      ],
+      "size": [
+        220,
+        70
+      ],
+      "sources": [
+        {
+          "path": "scripts/run_inference.py"
+        }
+      ]
+    },
+    {
+      "id": "learning",
+      "type": "backend",
+      "label": "Gym and PPO",
+      "sublabel": "observations, training",
+      "pos": [
+        660,
+        80
+      ],
+      "size": [
+        220,
+        70
+      ],
+      "sources": [
+        {
+          "path": "f1rl/learning/gym_environment.py"
+        }
+      ]
+    },
+    {
+      "id": "physics",
+      "type": "backend",
+      "label": "Simulation",
+      "sublabel": "physics and world",
+      "pos": [
+        660,
+        340
+      ],
+      "size": [
+        220,
+        70
+      ],
+      "sources": [
+        {
+          "path": "f1rl/runtime/simulation.py"
+        }
+      ]
+    },
+    {
+      "id": "tracks",
+      "type": "database",
+      "label": "Track assets",
+      "sublabel": "authored TRAIN tracks",
+      "pos": [
+        350,
+        340
+      ],
+      "size": [
+        220,
+        70
+      ],
+      "sources": [
+        {
+          "path": "f1rl/track_assets/manifest.py"
+        }
+      ]
+    },
+    {
+      "id": "evidence",
+      "type": "security",
+      "label": "Scientific gates",
+      "sublabel": "provenance and evidence",
+      "pos": [
+        960,
+        340
+      ],
+      "size": [
+        210,
+        70
+      ],
+      "sources": [
+        {
+          "path": "f1rl/research/wp3_eval_only_admission.py"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "entry",
+      "to": "learning",
+      "label": "inference and training",
+      "labelAt": [
+        615,
+        164
+      ]
+    },
+    {
+      "from": "learning",
+      "to": "physics",
+      "label": "environment steps",
+      "labelAt": [
+        770,
+        210
+      ]
+    },
+    {
+      "from": "tracks",
+      "to": "physics",
+      "label": "track geometry"
+    },
+    {
+      "from": "learning",
+      "to": "evidence",
+      "label": "admission"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Boundary",
+      "items": [
+        "UI and Python runtime have no bridge.",
+        "Scientific evaluation remains blocked pending review."
+      ]
+    }
+  ]
+}

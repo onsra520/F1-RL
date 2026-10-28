@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "visual-check",
+  "evidenceKind": "automated-browser",
+  "status": "fail",
+  "visualReview": "pending",
+  "artifact": {
+    "path": "D:\\Projects\\.worktrees\\F1-RL\\architecture-modularization\\docs\\architecture\\baseline-dependency-map.html",
+    "sha256": "61215518d94f2b51bf54c63a6fb22b4239fab826e827e60aec28c92b59d41e1f",
+    "bytes": 801852
+  },
+  "state": {
+    "detail": "read",
+    "motion": "still"
+  },
+  "chrome": {
+    "status": "available",
+    "executable": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
+  },
+  "diagnostics": [
+    {
+      "code": "viewer/visual-check-runtime",
+      "severity": "error",
+      "message": "visual-check could not complete its Chrome inspection.",
+      "subject": {
+        "artifact": "D:\\Projects\\.worktrees\\F1-RL\\architecture-modularization\\docs\\architecture\\baseline-dependency-map.html"
+      },
+      "evidence": {
+        "reason": "Chrome DevTools process exit failed: Chrome closed with exit code 0\nChrome process: exit code 0."
+      },
+      "supportedFixes": [
+        "resolve the reported Chrome inspection error, then rerun visual-check"
+      ]
+    }
+  ],
+  "containment": {
+    "status": "fail",
+    "viewports": []
+  },
+  "readability": {
+    "status": "fail",
+    "minimumProjectedNodeTextPx": 6,
+    "viewports": []
+  },
+  "viewerChrome": {
+    "status": "fail",
+    "viewports": []
+  },
+  "captures": {
+    "status": "fail",
+    "screenshots": [],
+    "contactSheet": null
+  },
+  "sidecars": {
+    "receipt": "baseline-dependency-map.visual-check.json",
+    "contactSheet": "baseline-dependency-map.visual-check.html"
+  },
+  "error": "Chrome DevTools process exit failed: Chrome closed with exit code 0\nChrome process: exit code 0."
+}
