@@ -39,3 +39,24 @@ The main integration can be used for the next phase of **implementing**
 a typed Python track-to-runtime compiler and real PPO Replay transport.
 It is not a scientific certification or a claim that PPO finishes every
 track (Right Turn has no FULL-06 finishes).
+
+## Engineering integration gate — 2026-10-28
+
+- Frontend from the combined integration tree: npm ci PASS; npm test 12/12 PASS;
+  TypeScript typecheck PASS; production Vite build PASS.
+- Physics v4, WP3 evaluation/coordinator, runtime, and preservation regressions
+  from the combined integration tree: 346/346 pytest PASS (exit 0).
+- Provenance fixture-only regression: 56/56 PASS using the original frozen model
+  archive, paired roster, and immutable source provenance. Tests relying on the
+  historical absolute D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1 require
+  a local fixture path and are not portable without provisioning it.
+- The exhaustive Python research WP7 suite was halted after reaching 75% with
+  no new recorded failures because multiple heavy fresh-process spatial-track
+  certification tests made it impractical as the MVP integration gate.
+  DO NOT report exhaustive full pytest PASS for this integration commit.
+  This is a targeted engineering MVP acceptance, not scientific acceptance.
+- Full-06 evaluation evidence on its separate evidence branch was independently
+  audited, including 5,760/5,760 episode start/completion records and 96/96
+  per-cell SHA-256 checks (not rerun by this merge).
+- Preserve the original two main workflows, the external evidence branch,
+  the sealed HELD-OUT boundary, and all original trained model checkpoints.
