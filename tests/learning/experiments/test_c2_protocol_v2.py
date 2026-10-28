@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from src.learning.experiments import (
+from src.rl.experiments import (
     ExperimentDefinition,
     ExperimentSemantics,
     OffTrackExperimentConfig,
@@ -155,8 +155,8 @@ def test_v2_unresolved_route_reward_is_not_freezeable() -> None:
 
 
 def test_canonical_c2_matches_actual_train_candidate_without_heldout_rollouts() -> None:
-    from src.learning.experiments.c2_alignment import verify_draft_c2_alignment
-    from src.learning.reconstruction import RecoveryCandidate
+    from src.rl.experiments.c2_alignment import verify_draft_c2_alignment
+    from src.rl.reconstruction import RecoveryCandidate
 
     candidate = RecoveryCandidate.from_yaml(Path("configs/recovery/wp7-c2-candidate.yml"))
     verify_draft_c2_alignment(ExperimentDefinition.from_yaml(V2), candidate)
@@ -167,8 +167,8 @@ def test_canonical_c2_matches_actual_train_candidate_without_heldout_rollouts() 
     ("ride_height", 0.7),
 ])
 def test_candidate_alignment_rejects_environment_drift(field, value) -> None:
-    from src.learning.experiments.c2_alignment import verify_draft_c2_alignment
-    from src.learning.reconstruction import RecoveryCandidate
+    from src.rl.experiments.c2_alignment import verify_draft_c2_alignment
+    from src.rl.reconstruction import RecoveryCandidate
 
     canonical = ExperimentDefinition.from_yaml(V2)
     candidate = RecoveryCandidate.from_yaml(Path("configs/recovery/wp7-c2-candidate.yml"))
@@ -178,8 +178,8 @@ def test_candidate_alignment_rejects_environment_drift(field, value) -> None:
 
 
 def test_candidate_alignment_rejects_reward_and_corridor_drift() -> None:
-    from src.learning.experiments.c2_alignment import verify_draft_c2_alignment
-    from src.learning.reconstruction import RecoveryCandidate
+    from src.rl.experiments.c2_alignment import verify_draft_c2_alignment
+    from src.rl.reconstruction import RecoveryCandidate
 
     canonical = ExperimentDefinition.from_yaml(V2)
     candidate = RecoveryCandidate.from_yaml(Path("configs/recovery/wp7-c2-candidate.yml"))
@@ -194,8 +194,8 @@ def test_candidate_alignment_rejects_reward_and_corridor_drift() -> None:
 
 
 def test_candidate_alignment_rejects_fake_freeze_or_seed_promotion() -> None:
-    from src.learning.experiments.c2_alignment import verify_draft_c2_alignment
-    from src.learning.reconstruction import RecoveryCandidate
+    from src.rl.experiments.c2_alignment import verify_draft_c2_alignment
+    from src.rl.reconstruction import RecoveryCandidate
 
     canonical = ExperimentDefinition.from_yaml(V2)
     candidate = RecoveryCandidate.from_yaml(Path("configs/recovery/wp7-c2-candidate.yml"))

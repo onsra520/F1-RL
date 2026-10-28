@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 
 from .reward import validate as validate_demo
-from ..research.wp7_protocol import digest
+from ..validation.wp7_protocol import digest
 
 
 MANIFEST = 'configs/research/straight-demo-abcd-v1.json'
@@ -203,7 +203,7 @@ def verify_candidate_run_manifest(repository_root, run_manifest):
 
 def authorize_candidate_run(repository_root, run_manifest, envelope, *, now=None):
     """Reject draft experiments before consulting permits or creating a claim."""
-    from ..research.wp2_execution_permit import claim_repository_wp2_execution_permit
+    from ..validation.wp2_execution_permit import claim_repository_wp2_execution_permit
     manifest = load_abcd_manifest(repository_root)
     if manifest['status'] != 'APPROVED — PREREGISTERED':
         raise ValueError('A/B/C/D remains draft; approved preregistration is required before permit authorization')

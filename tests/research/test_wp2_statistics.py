@@ -2,7 +2,7 @@ from hashlib import sha256
 
 import pytest
 
-from src.research.wp2_statistics import (
+from src.validation.wp2_statistics import (
     CellResult,
     confirmatory_factorial_contrasts,
     confirmatory_robustness_gate,

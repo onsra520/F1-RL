@@ -3,12 +3,12 @@ from dataclasses import replace
 
 import pytest
 
-from src.learning.algorithms.ppo import PPOConfig
-from src.learning.training.config import TrainingRunConfig, VectorEnvConfig
-from src.learning.training.env_factory import TrainingScenario, TrainingScenarioSet
-from src.learning.training.runner import TrainingRunner
-from src.sandbox.body_collision import VehicleBodyGeometry
-from src.sandbox.geometry.vector import Vec3
+from src.rl.algorithms.ppo import PPOConfig
+from src.training.config import TrainingRunConfig, VectorEnvConfig
+from src.training.env_factory import TrainingScenario, TrainingScenarioSet
+from src.training.runner import TrainingRunner
+from src.simulation.body_collision import VehicleBodyGeometry
+from src.simulation.geometry.vector import Vec3
 from tests.learning.training.mocks.mock_factories import make_factory, make_scenario_set
 
 
@@ -52,7 +52,7 @@ def test_prospective_multitrack_requires_identical_body_geometry() -> None:
 
 
 def test_ramp_support_policy_requires_full_body_geometry():
-    from src.sandbox.ramp_support import WheelContactPoints, PlanarRampPolicy
+    from src.simulation.ramp_support import WheelContactPoints, PlanarRampPolicy
     wheels = WheelContactPoints(
         Vec3(-.5,-.3,.8),Vec3(.5,-.3,.8),
         Vec3(-.5,-.3,-.8),Vec3(.5,-.3,-.8),
@@ -63,7 +63,7 @@ def test_ramp_support_policy_requires_full_body_geometry():
 
 
 def test_multitrack_rejects_different_ramp_contact_policies():
-    from src.sandbox.ramp_support import WheelContactPoints, PlanarRampPolicy
+    from src.simulation.ramp_support import WheelContactPoints, PlanarRampPolicy
     wheels = WheelContactPoints(
         Vec3(-.5,-.3,.8),Vec3(.5,-.3,.8),
         Vec3(-.5,-.3,-.8),Vec3(.5,-.3,-.8),
@@ -80,7 +80,7 @@ def test_multitrack_rejects_different_ramp_contact_policies():
 
 
 def test_fullbody_with_ramp_policy_still_cannot_train(tmp_path):
-    from src.sandbox.ramp_support import WheelContactPoints, PlanarRampPolicy
+    from src.simulation.ramp_support import WheelContactPoints, PlanarRampPolicy
     wheels = WheelContactPoints(
         Vec3(-.5,-.3,.8),Vec3(.5,-.3,.8),
         Vec3(-.5,-.3,-.8),Vec3(.5,-.3,-.8),

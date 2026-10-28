@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.learning.provenance import (
+from src.rl.provenance import (
     _fingerprint_canonical_files,
     _fingerprint_file,
 )

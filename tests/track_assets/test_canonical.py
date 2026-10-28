@@ -2,12 +2,12 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.track.model import TrackWorld
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.track_assets import SpawnPose, TrackAsset
-from src.track_assets.canonical import _build_track_asset
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.track.model import TrackWorld
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.tracks import SpawnPose, TrackAsset
+from src.tracks.canonical import _build_track_asset
 
 
 EMPTY_WORLD_HASH = "934b882bec775fa4fbf7c398296f7683e7fed50177ec572a7d6395652dbb8788"

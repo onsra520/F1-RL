@@ -2,7 +2,7 @@
 from dataclasses import replace
 import pytest
 
-from src.research.wp7_robustness_gate import (
+from src.validation.wp7_robustness_gate import (
     RobustnessCell,one_sided_cp_lower,evaluate_train_robustness,
 )
 

@@ -3,13 +3,13 @@ from math import atan2, cos, pi, sin, tan
 
 import pytest
 
-from src.research.wp7_track_feasibility import PARAMETERS
-from src.sandbox.dynamics.ground_dynamics import compute_ground_motion
-from src.sandbox.dynamics.integrator import integrate, integrate_ground_distance
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.surface import SurfaceContact
-from src.sandbox.vehicle import VehicleControl, VehicleState
+from src.validation.wp7_track_feasibility import PARAMETERS
+from src.simulation.dynamics.ground_dynamics import compute_ground_motion
+from src.simulation.dynamics.integrator import integrate, integrate_ground_distance
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.surface import SurfaceContact
+from src.simulation.vehicle import VehicleControl, VehicleState
 
 CONTACT = SurfaceContact(Vec3(0.,0.,0.),Vec3(0.,1.,0.))
 PARAMS = replace(PARAMETERS,rolling_drag=0.,max_acceleration=4.,max_ground_speed=1.)

@@ -2,15 +2,15 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from src.sandbox.entities.boost_pad import BoostPad
-from src.sandbox.entities.checkpoint import Checkpoint
-from src.sandbox.entities.finish_line import FinishLine
-from src.sandbox.entities.obstacle import Obstacle
-from src.sandbox.entities.score_pickup import ScorePickup
-from src.sandbox.entities.slow_zone import SlowZone
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.track.volume import OrientedBoxVolume
+from src.simulation.entities.boost_pad import BoostPad
+from src.simulation.entities.checkpoint import Checkpoint
+from src.simulation.entities.finish_line import FinishLine
+from src.simulation.entities.obstacle import Obstacle
+from src.simulation.entities.score_pickup import ScorePickup
+from src.simulation.entities.slow_zone import SlowZone
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.track.volume import OrientedBoxVolume
 
 
 def volume() -> OrientedBoxVolume:

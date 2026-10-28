@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.learning.provenance import _capture_runtime_provenance
+from src.rl.provenance import _capture_runtime_provenance
 
 
 EXPECTED = (
@@ -65,7 +65,7 @@ def test_real_runtime_capture_matches_installed_distribution_versions() -> None:
 
 def test_provenance_module_does_not_import_frameworks_for_versions() -> None:
     root = Path(__file__).parents[3]
-    source = (root / "src" / "learning" / "provenance.py").read_text(
+    source = (root / "src" / "rl" / "provenance.py").read_text(
         encoding="utf-8"
     )
 
@@ -76,6 +76,8 @@ def test_provenance_module_does_not_import_frameworks_for_versions() -> None:
         "import torch",
         "from gymnasium",
         "import gymnasium",
+        "from src.rl.algorithms",
+        "from src.training.vector_env",
         "from .algorithms",
         "from ..algorithms",
         "from .training.vector_env",

@@ -6,7 +6,7 @@ import pytest
 import yaml
 
 from src.exploratory.config import resolve
-from src.learning.training.config import TrainingRunConfig
+from src.training.config import TrainingRunConfig
 
 
 ROOT = Path(__file__).resolve().parents[2]

@@ -14,9 +14,9 @@ import platform
 import time
 from weakref import WeakKeyDictionary
 
-from ..research.wp7_protocol import digest
-from ..research.wp7_run_manifest import read_json
-from ..research.wp7_trusted_reviews import _fields, _hex, _utc
+from ..validation.wp7_protocol import digest
+from ..validation.wp7_run_manifest import read_json
+from ..validation.wp7_trusted_reviews import _fields, _hex, _utc
 from .config import resolve, TRACK, PROFILE
 
 POLICY = f'singletrack-{TRACK}-seed0'
@@ -77,7 +77,7 @@ def verify_authorization(envelope, registry, *, permit_sha256, now=None):
 
 
 def runtime_identity():
-    from ..research.wp7_protocol import _cpu_model
+    from ..validation.wp7_protocol import _cpu_model
     return dict(python=platform.python_version(), implementation=platform.python_implementation(),
         system=platform.system(), release=platform.release(), architecture=platform.machine(),
         cpu=_cpu_model(), logical_processors=os.cpu_count(), packages={p: metadata.version(p) for p in
@@ -86,7 +86,7 @@ def runtime_identity():
 
 def prepare(root, output):
     """Pure preparation: source/config inspection, no reset/model/rollout/learning."""
-    from ..research.wp7_protocol import build_protocol
+    from ..validation.wp7_protocol import build_protocol
     root, output = Path(root).resolve(strict=True), Path(output).resolve()
     if output.is_relative_to(root):
         raise ValueError('pilot output must be external to source checkout')
@@ -181,8 +181,8 @@ class Budget:
 
 def admitted(env):
     """Recognize only live, specifically issued env capabilities, never flags."""
-    from ..learning.gym_environment import F1RLEnv
-    from ..learning.algorithms.ppo import single_vec_env_child
+    from ..rl.gym_environment import F1RLEnv
+    from ..rl.algorithms.ppo import single_vec_env_child
     if isinstance(env, F1RLEnv):
         entry = _sessions.get(env)
         if entry is None or not entry[1]:
@@ -219,12 +219,12 @@ class Session:
     def validate(self):
         self.budget.check()
         authorize(self.root, self.permit, self.envelope)
-        from ..learning.algorithms.ppo import validate_cpu_runtime
+        from ..rl.algorithms.ppo import validate_cpu_runtime
         validate_cpu_runtime(self.permit['limits']['threads'])
 
     def create_env(self, *, learning=False, episode=None):
         from dataclasses import replace
-        from ..research.wp7_protocol import build_protocol, prepare_training_scenarios
+        from ..validation.wp7_protocol import build_protocol, prepare_training_scenarios
         self.validate()
         if type(learning) is not bool:
             raise ValueError('explicit learning/inference environment purpose required')

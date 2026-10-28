@@ -4,11 +4,11 @@ from hashlib import sha256
 
 import pytest
 
-from src.research.wp7_calibration_readiness import (
+from src.validation.wp7_calibration_readiness import (
     REQUIRED_UNITS, EvidencePayload, evaluate_calibration_readiness,
     compare_restored_evidence,
 )
-from src.sandbox.tire_calibration_contract import (
+from src.simulation.tire_calibration_contract import (
     MeasuredPhysicsParameter, PhysicsCalibrationRegister, REQUIRED_WP7_MEASUREMENTS,
 )
 

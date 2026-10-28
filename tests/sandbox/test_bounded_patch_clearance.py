@@ -3,8 +3,8 @@ from dataclasses import replace
 from math import cos, tan
 import pytest
 
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.multi_surface_support import certify_multisurface_support
+from src.simulation.geometry.vector import Vec3
+from src.simulation.multi_surface_support import certify_multisurface_support
 from tests.sandbox.test_road_relative_suspension import ramp_translation
 
 
@@ -20,8 +20,8 @@ def test_real_crest_body_is_not_tested_against_upper_plane_behind_its_patch():
 
 
 def test_interior_crest_penetration_is_rejected_with_valid_wheel_travel():
-    from src.sandbox.track.patch import PlanarSurfacePatch
-    from src.sandbox.geometry.rotation import Quaternion
+    from src.simulation.track.patch import PlanarSurfacePatch
+    from src.simulation.geometry.rotation import Quaternion
     factory, vehicle, _, policy = ramp_translation()
     normal_left = Vec3(-.2, 1., 0.).normalized()
     normal_right = Vec3(.2, 1., 0.).normalized()
@@ -43,8 +43,8 @@ def test_unregistered_clearance_versions_are_rejected(version):
 
 
 def test_numerically_unsupported_scale_is_not_a_penetration_witness():
-    from src.sandbox.track.patch import PlanarSurfacePatch
-    from src.sandbox.geometry.rotation import Quaternion
+    from src.simulation.track.patch import PlanarSurfacePatch
+    from src.simulation.geometry.rotation import Quaternion
     factory, vehicle, _, policy = ramp_translation()
     vehicle = replace(vehicle, position=Vec3(1e7, .5, 0.), orientation=Quaternion.identity())
     road = PlanarSurfacePatch('large-offset', Vec3(1e7, 0., 0.), Vec3(0., 0., 1.), Vec3(0., 1., 0.), 12., 20.)

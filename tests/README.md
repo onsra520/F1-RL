@@ -11,4 +11,4 @@ Automated verification of the F1-RL core and adapters.
 - `runtime/` — session and simulation-loop behavior.
 - `integration/` — cross-layer tests such as API/runtime and policy/sandbox flows.
 
-Tests should mirror ownership boundaries in `f1rl/`.
+Tests should mirror ownership boundaries in `src/`.

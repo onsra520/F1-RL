@@ -4,10 +4,10 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from src.learning.offtrack import OffTrackConfig, OffTrackState
-from src.learning.rewards import OffTrackPenalty, RewardComposer, RewardTransition
-from src.learning.route_navigation import AuthoredRoute
-from src.sandbox.geometry.vector import Vec3
+from src.rl.offtrack import OffTrackConfig, OffTrackState
+from src.rl.rewards import OffTrackPenalty, RewardComposer, RewardTransition
+from src.rl.route_navigation import AuthoredRoute
+from src.simulation.geometry.vector import Vec3
 from tests.integration.test_authored_route_env_reconstruction import _factory
 
 
@@ -100,7 +100,7 @@ def test_offtrack_penalty_requires_guidance_and_config() -> None:
 
 
 def test_multitrack_scenarios_share_offtrack_rules_but_keep_distinct_navigation() -> None:
-    from src.learning.training.env_factory import TrainingScenario, TrainingScenarioSet
+    from src.training.env_factory import TrainingScenario, TrainingScenarioSet
 
     first=replace(_factory("straight-sprint-v1",guided=True),offtrack_config=OffTrackConfig(6.0,3))
     second=replace(_factory("ramp-v1",guided=True),offtrack_config=OffTrackConfig(6.0,3))

@@ -2,8 +2,8 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from src.sandbox.rules.scoring import ScoreState, apply_score_events
-from src.sandbox.track.state import ScorePickupCollected
+from src.simulation.rules.scoring import ScoreState, apply_score_events
+from src.simulation.track.state import ScorePickupCollected
 
 
 def test_score_state_defaults_to_zero_and_validates_non_negative_integer() -> None:

@@ -4,11 +4,11 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from src.sandbox.spatial_contact_dynamics import SpatialContactPolicy
-from src.sandbox.coupled_longitudinal_dynamics import LongitudinalContactPolicy
-from src.sandbox.vehicle import VehicleControl
-from src.runtime.simulation import Simulation
-from src.learning.action import ActionContract
+from src.simulation.spatial_contact_dynamics import SpatialContactPolicy
+from src.simulation.coupled_longitudinal_dynamics import LongitudinalContactPolicy
+from src.simulation.vehicle import VehicleControl
+from src.core.simulation import Simulation
+from src.rl.action import ActionContract
 from tests.sandbox.test_road_relative_suspension import ramp_translation
 
 
@@ -38,8 +38,8 @@ def test_actual_simulation_publishes_spatial_impulse_and_complete_time_evidence(
 
 
 def test_actual_gym_steers_brakes_and_keeps_direct_ppo_guard_closed():
-    from src.learning.algorithms.ppo import PPOConfig,PPOModel
-    from src.research.wp7_admission import ScientificAdmissionError
+    from src.rl.algorithms.ppo import PPOConfig,PPOModel
+    from src.validation.wp7_admission import ScientificAdmissionError
     env=spatial_factory().create()
     try:
         observation,_=env.reset(seed=17)
@@ -67,8 +67,8 @@ def test_spatial_registration_rejects_fallback_or_mixed_solver(changes):
 
 
 def test_transition_rejects_missing_spatial_force_audit():
-    from src.sandbox.world import step_world
-    from src.runtime.physics import PhysicsTransitionError
+    from src.simulation.world import step_world
+    from src.core.physics import PhysicsTransitionError
     f=spatial_factory()
     r=step_world(f.track,f.initial_state,VehicleControl(.4,.5,0.),f.vehicle_parameters,
         .1,f.simulation_config.max_surface_distance,**f.physics_config.world_options())
@@ -78,9 +78,9 @@ def test_transition_rejects_missing_spatial_force_audit():
 
 
 def test_transition_recomputes_spatial_impulse_instead_of_trusting_zero_residual():
-    from src.sandbox.world import step_world
-    from src.sandbox.geometry.vector import Vec3
-    from src.runtime.physics import PhysicsTransitionError
+    from src.simulation.world import step_world
+    from src.simulation.geometry.vector import Vec3
+    from src.core.physics import PhysicsTransitionError
     f=spatial_factory()
     r=step_world(f.track,f.initial_state,VehicleControl(.4,.5,0.),f.vehicle_parameters,
         .1,f.simulation_config.max_surface_distance,**f.physics_config.world_options())
@@ -95,8 +95,8 @@ def test_transition_recomputes_spatial_impulse_instead_of_trusting_zero_residual
 
 @pytest.mark.parametrize('change',['infinite_ledger','negative_loss','infinite_summary','forged_summary'])
 def test_transition_rejects_invalid_or_self_asserted_spatial_work_ledger(change):
-    from src.sandbox.world import step_world
-    from src.runtime.physics import PhysicsTransitionError
+    from src.simulation.world import step_world
+    from src.core.physics import PhysicsTransitionError
     f=spatial_factory()
     r=step_world(f.track,f.initial_state,VehicleControl(.4,.5,0.),f.vehicle_parameters,
         .1,f.simulation_config.max_surface_distance,**f.physics_config.world_options())

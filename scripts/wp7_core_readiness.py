@@ -12,7 +12,7 @@ _entry_root = str(_EntryPath(__file__).resolve().parents[1])
 if _entry_root not in _entry_sys.path:
     _entry_sys.path.insert(0, _entry_root)
 
-from src.research.wp7_readiness import evaluate_readiness
+from src.validation.wp7_readiness import evaluate_readiness
 
 
 def main() -> int:

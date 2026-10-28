@@ -3,11 +3,11 @@ from math import sqrt
 
 import pytest
 
-from src.learning.corridor_audit import (
+from src.rl.corridor_audit import (
     clip_xz_segment_to_patch,continuous_union_road_coverage,
 )
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.track.patch import PlanarSurfacePatch
+from src.simulation.geometry.vector import Vec3
+from src.simulation.track.patch import PlanarSurfacePatch
 
 
 def road(name,origin,forward,width,length):

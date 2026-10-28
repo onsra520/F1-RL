@@ -1,10 +1,10 @@
 import pytest
 
-from src.sandbox.entities.score_pickup import ScorePickup
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.track.state import TrackState, collect_score_pickups
-from src.sandbox.track.volume import OrientedBoxVolume
+from src.simulation.entities.score_pickup import ScorePickup
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.track.state import TrackState, collect_score_pickups
+from src.simulation.track.volume import OrientedBoxVolume
 
 
 def pickup(identifier: str, points: int) -> ScorePickup:

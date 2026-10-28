@@ -2,8 +2,8 @@ from copy import deepcopy
 
 import pytest
 
-from src.learning.action import PolicyAction, map_policy_action
-from src.sandbox.vehicle import VehicleControl
+from src.rl.action import PolicyAction, map_policy_action
+from src.simulation.vehicle import VehicleControl
 
 
 @pytest.mark.parametrize(

@@ -2,12 +2,12 @@ import json
 
 import pytest
 
-from src.research.wp7_cell_evaluation import save_cell_evidence
-from src.research.wp7_protocol import digest
+from src.validation.wp7_cell_evaluation import save_cell_evidence
+from src.validation.wp7_protocol import digest
 
 
 def test_failed_publication_leaves_no_partial_file_or_temporary_file(tmp_path, monkeypatch):
-    import src.research.wp7_cell_evaluation as module
+    import src.validation.wp7_cell_evaluation as module
     record = dict(status='invalid_aborted', scientific_acceptance=False)
     record['sha256'] = digest(record)
     def fail(source, target):
@@ -20,7 +20,7 @@ def test_failed_publication_leaves_no_partial_file_or_temporary_file(tmp_path, m
 
 
 def test_destination_created_during_publication_is_never_overwritten(tmp_path, monkeypatch):
-    import src.research.wp7_cell_evaluation as module
+    import src.validation.wp7_cell_evaluation as module
     real_link = module.os.link
     record = {'status':'completed'}
     record['sha256'] = digest(record)

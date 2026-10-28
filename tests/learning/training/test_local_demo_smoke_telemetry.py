@@ -3,17 +3,17 @@ import json
 
 import numpy as np
 
-from src.learning.pilot_preflight import TRAIN_IDS
-from src.learning.training.config import VectorEnvConfig
-from src.learning.training.telemetry import TrainingTelemetryRecorder
-from src.learning.training.vector_env import _SampledF1RLEnv, make_multi_track_vector_env
-from src.local_demo.runner import (
+from src.rl.pilot_preflight import TRAIN_IDS
+from src.training.config import VectorEnvConfig
+from src.training.telemetry import TrainingTelemetryRecorder
+from src.training.vector_env import _SampledF1RLEnv, make_multi_track_vector_env
+from src.interfaces.runner import (
     _candidate_reward,
     _install_demo_reward,
     _validate_smoke_telemetry,
 )
-from src.research.simulation_only_protocol import load_simulation_only_manifest
-from src.research.wp7_protocol import (
+from src.validation.simulation_only_protocol import load_simulation_only_manifest
+from src.validation.wp7_protocol import (
     build_protocol,
     load_registration,
     prepare_scenarios,

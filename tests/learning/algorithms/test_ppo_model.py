@@ -1,21 +1,21 @@
 import numpy as np
 import pytest
 
-from src.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
-from src.learning.algorithms.ppo import PPOConfig, PPOModel
-from src.learning.gym_environment import F1RLEnv
-from src.runtime.simulation import SimulationConfig
-from src.sandbox.entities.finish_line import FinishLine
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.interactions.state import InteractionState
-from src.sandbox.perception.sensor_suite import SensorSuite
-from src.sandbox.rules.scoring import ScoreState
-from src.sandbox.track.model import TrackWorld
-from src.sandbox.track.state import TrackState
-from src.sandbox.track.volume import OrientedBoxVolume
-from src.sandbox.vehicle import VehicleParameters, VehicleState
-from src.sandbox.world import WorldState
+from src.rl import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
+from src.rl.algorithms.ppo import PPOConfig, PPOModel
+from src.rl.gym_environment import F1RLEnv
+from src.core.simulation import SimulationConfig
+from src.simulation.entities.finish_line import FinishLine
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.interactions.state import InteractionState
+from src.simulation.perception.sensor_suite import SensorSuite
+from src.simulation.rules.scoring import ScoreState
+from src.simulation.track.model import TrackWorld
+from src.simulation.track.state import TrackState
+from src.simulation.track.volume import OrientedBoxVolume
+from src.simulation.vehicle import VehicleParameters, VehicleState
+from src.simulation.world import WorldState
 
 
 def _env() -> F1RLEnv:
@@ -115,7 +115,7 @@ def test_create_accepts_auto_device() -> None:
 
 
 def test_explicit_cuda_must_not_silently_fall_back(monkeypatch: pytest.MonkeyPatch) -> None:
-    import src.learning.algorithms.ppo as ppo_module
+    import src.rl.algorithms.ppo as ppo_module
 
     class FakePPO:
         def __init__(self, *args: object, **kwargs: object) -> None:
@@ -296,7 +296,7 @@ def test_inference_only_load_predicts_but_cannot_learn(tmp_path) -> None:
 
 
 def test_load_cuda_must_not_silently_fall_back(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
-    import src.learning.algorithms.ppo as ppo_module
+    import src.rl.algorithms.ppo as ppo_module
 
     archive = tmp_path / "policy.zip"
     archive.write_bytes(b"placeholder")
@@ -413,7 +413,7 @@ def test_learn_progress_hook_reports_actual_cumulative_timesteps() -> None:
 def test_checkpoint_can_be_saved_while_telemetry_observer_is_active(tmp_path, monkeypatch):
     from stable_baselines3.common.vec_env import DummyVecEnv
 
-    import src.learning.algorithms.ppo as ppo_module
+    import src.rl.algorithms.ppo as ppo_module
 
     class Observer:
         def __init__(self):

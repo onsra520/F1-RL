@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.learning.pilot_preflight import build_pilot_preflight
+from src.rl.pilot_preflight import build_pilot_preflight
 
 ROOT=Path.cwd()
 CANDIDATE=ROOT/"configs/recovery/wp7-c2-candidate.yml"

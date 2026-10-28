@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from src.research.wp3_eval_only_admission import (
+from src.validation.wp3_eval_only_admission import (
     MODELS, build_eval_only_preflight, hash_file, refuse_full_eval,
 )
 

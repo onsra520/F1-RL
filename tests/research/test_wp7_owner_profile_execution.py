@@ -4,8 +4,8 @@ from dataclasses import replace
 import json
 import numpy as np
 import pytest
-from src.research.wp7_executed_feasibility import certify_spatial_profile_execution,replay_planar_execution
-from src.research.wp7_protocol import load_registration,prepare_scenarios
+from src.validation.wp7_executed_feasibility import certify_spatial_profile_execution,replay_planar_execution
+from src.validation.wp7_protocol import load_registration,prepare_scenarios
 ROOT=Path(__file__).resolve().parents[2]
 PROFILE='spatial_owner_v2'
 

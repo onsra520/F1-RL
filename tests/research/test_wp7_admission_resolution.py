@@ -4,8 +4,8 @@ import json
 
 import pytest
 
-from src.research.wp7_admission import ScientificAdmissionError, evaluate_admission
-from src.research.wp7_protocol import build_protocol
+from src.validation.wp7_admission import ScientificAdmissionError, evaluate_admission
+from src.validation.wp7_protocol import build_protocol
 
 ROOT = Path(__file__).resolve().parents[2]
 PROFILE = 'spatial_rotating_owner_v3'
@@ -27,7 +27,7 @@ def test_rotating_admission_preserves_authored_findings_without_claiming_missing
 
 
 def test_forged_admission_booleans_fail_at_parent_before_worker_or_model_access(monkeypatch):
-    import src.research.wp7_cell_evaluation as cell
+    import src.validation.wp7_cell_evaluation as cell
     protocol = build_protocol(ROOT, profile=PROFILE)
     fake = dict(training_authorized=True, authorization=dict(verified=True,
         protocol_sha256=protocol['sha256'], policy_id='multitrack-seed1',
@@ -41,7 +41,7 @@ def test_forged_admission_booleans_fail_at_parent_before_worker_or_model_access(
 
 def test_repository_anchor_verifier_authenticates_signatures_and_denies_self_anchor(tmp_path):
     from tests.research.test_wp7_trusted_reviews import signed_review, NOW
-    import src.research.wp7_trusted_reviews as reviews
+    import src.validation.wp7_trusted_reviews as reviews
     envelope, registry = signed_review()
     directory = tmp_path / 'configs/research'
     directory.mkdir(parents=True)
@@ -58,8 +58,8 @@ def test_repository_anchor_verifier_authenticates_signatures_and_denies_self_anc
 
 
 def test_registered_runner_denial_carries_its_verified_run_identity_before_allocation():
-    from src.research.wp7_execution import build_policy_execution
-    from src.learning.training.runner import TrainingRunner
+    from src.validation.wp7_execution import build_policy_execution
+    from src.training.runner import TrainingRunner
     binding = build_policy_execution(ROOT, 'multitrack-seed0', profile=PROFILE)
     # Output is not a registered parameter: keep the actual config and check no allocation.
     runner = TrainingRunner(binding.configuration)
@@ -80,8 +80,8 @@ def test_review_without_run_manifest_is_rejected_instead_of_accepted_as_authorit
 
 
 def test_preparation_verification_does_not_claim_restored_artifact_bytes(tmp_path):
-    from src.research.wp7_execution import build_policy_execution
-    import src.research.wp7_run_manifest as manifests
+    from src.validation.wp7_execution import build_policy_execution
+    import src.validation.wp7_run_manifest as manifests
     binding = build_policy_execution(ROOT, 'multitrack-seed0', profile=PROFILE)
     prepared = manifests.capture_registered_run(binding, run_id='metadata-only-fixture')
     artifact = tmp_path / 'opaque.zip'
@@ -110,9 +110,9 @@ def test_execution_verification_needs_explicit_new_output_and_registered_profile
 
 
 def test_registered_runner_reuses_prepared_identity_and_rejects_other_policy():
-    from src.research.wp7_execution import build_policy_execution
-    from src.research.wp7_run_manifest import capture_registered_run
-    from src.learning.training.runner import TrainingRunner
+    from src.validation.wp7_execution import build_policy_execution
+    from src.validation.wp7_run_manifest import capture_registered_run
+    from src.training.runner import TrainingRunner
     binding = build_policy_execution(ROOT, 'multitrack-seed0', profile=PROFILE)
     prepared = capture_registered_run(binding, run_id='owner-review-candidate-not-training')
     runner = TrainingRunner(binding.configuration)
@@ -128,10 +128,10 @@ def test_registered_runner_reuses_prepared_identity_and_rejects_other_policy():
 
 def test_registered_runner_checks_actual_runtime_of_prepared_manifest():
     from copy import deepcopy
-    from src.research.wp7_protocol import digest
-    from src.research.wp7_execution import build_policy_execution
-    from src.research.wp7_run_manifest import capture_registered_run
-    from src.learning.training.runner import TrainingRunner
+    from src.validation.wp7_protocol import digest
+    from src.validation.wp7_execution import build_policy_execution
+    from src.validation.wp7_run_manifest import capture_registered_run
+    from src.training.runner import TrainingRunner
     binding = build_policy_execution(ROOT, 'multitrack-seed0', profile=PROFILE)
     prepared = deepcopy(capture_registered_run(binding, run_id='runtime-drift-not-training'))
     runtime = prepared['runtime_manifest']
@@ -144,8 +144,8 @@ def test_registered_runner_checks_actual_runtime_of_prepared_manifest():
 
 def test_genuine_non_authorizing_reviews_cannot_turn_forged_report_into_permission(monkeypatch, tmp_path):
     from tests.research.test_wp7_trusted_reviews import signed_review, NOW
-    import src.research.wp7_cell_evaluation as cell
-    import src.research.wp7_trusted_reviews as reviews
+    import src.validation.wp7_cell_evaluation as cell
+    import src.validation.wp7_trusted_reviews as reviews
     envelope, registry = signed_review()
     directory = tmp_path / 'configs/research'
     directory.mkdir(parents=True)
@@ -170,10 +170,10 @@ def test_genuine_non_authorizing_reviews_cannot_turn_forged_report_into_permissi
     'authorized', 'permissions', 'failed_row', 'replay', 'source_changed'])
 def test_execution_summary_accepts_only_complete_current_non_authorizing_cohort(monkeypatch, tmp_path, mutation):
     from copy import deepcopy
-    from src.research.wp7_protocol import digest
-    import src.research.wp7_admission as admission
-    import src.research.wp7_train_acceptance as acceptance
-    import src.research.wp7_executed_feasibility as execution
+    from src.validation.wp7_protocol import digest
+    import src.validation.wp7_admission as admission
+    import src.validation.wp7_train_acceptance as acceptance
+    import src.validation.wp7_executed_feasibility as execution
     protocol = build_protocol(ROOT, profile=PROFILE)
     protocol = deepcopy(protocol)
     protocol['source']['dirty'] = False

@@ -10,13 +10,13 @@ from pathlib import Path
 
 import pytest
 
-from src.learning.freeze_readiness import (
+from src.rl.freeze_readiness import (
     BLOCKERS,
     validate_completed_seed_state,
     validate_linked_audits,
 )
-from src.learning.pilot_preflight import TRAIN_IDS
-from src.learning.training.config import TrainingRunConfig
+from src.rl.pilot_preflight import TRAIN_IDS
+from src.training.config import TrainingRunConfig
 
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -186,7 +186,7 @@ def test_scientific_gates_cannot_disappear_due_to_two_train_successes():
 
 
 def test_only_published_audits_may_change_since_original_train_commit():
-    from src.learning.freeze_readiness import verify_training_source_diff
+    from src.rl.freeze_readiness import verify_training_source_diff
     assert verify_training_source_diff((
         "f1rl/learning/trajectory_audit.py",
         "f1rl/learning/swept_volume_audit.py",
@@ -232,7 +232,7 @@ def fake_road_union():
 
 
 def test_right_turn_road_union_linked_but_not_promoted_to_approval():
-    from src.learning.freeze_readiness import validate_right_turn_road_union
+    from src.rl.freeze_readiness import validate_right_turn_road_union
     xz=validate_linked_audits(
         audit_type="trajectory_xz",document=fake_xz(),records=fake_records()
     )
@@ -258,7 +258,7 @@ def test_right_turn_road_union_linked_but_not_promoted_to_approval():
     ("is_approved_corner_cutting_threshold",True),
 ])
 def test_right_turn_road_union_mismatched_evidence_rejected(field,value):
-    from src.learning.freeze_readiness import validate_right_turn_road_union
+    from src.rl.freeze_readiness import validate_right_turn_road_union
     doc=fake_road_union()
     doc["audits"][0][field]=value
     xz=validate_linked_audits(

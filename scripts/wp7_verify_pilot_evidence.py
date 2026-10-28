@@ -12,7 +12,7 @@ _entry_root = str(_EntryPath(__file__).resolve().parents[1])
 if _entry_root not in _entry_sys.path:
     _entry_sys.path.insert(0, _entry_root)
 
-from src.learning.pilot_milestones import verify_pilot_evidence_manifest
+from src.rl.pilot_milestones import verify_pilot_evidence_manifest
 
 
 def main() -> int:

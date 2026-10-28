@@ -11,7 +11,7 @@ import argparse, json, sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from src.research.wp3_eval_only_coordinator import (
+from src.validation.wp3_eval_only_coordinator import (
     preflight, forbid_registered_full_eval, run_engineering)
 
 import os

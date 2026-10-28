@@ -2,23 +2,23 @@
 from dataclasses import replace
 import pytest
 
-from src.sandbox.ballistic_flight import (
+from src.simulation.ballistic_flight import (
     BallisticFlightPolicy, FlightState, FlightPhysicsError,
     advance_ballistic_flight,
 )
-from src.sandbox.contact_manifold import ContactManifoldPolicy
-from src.sandbox.body_collision import VehicleBodyGeometry
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.independent_suspension_dynamics import (
+from src.simulation.contact_manifold import ContactManifoldPolicy
+from src.simulation.body_collision import VehicleBodyGeometry
+from src.simulation.geometry.vector import Vec3
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState,
 )
-from src.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
-from src.sandbox.ramp_support import WheelContactPoints
-from src.sandbox.torque_free_rotation import TorqueFreeRotationPolicy
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.sandbox.track.volume import OrientedBoxVolume
-from src.sandbox.vehicle import VehicleState,VehicleControl,VehicleParameters
+from src.simulation.multi_surface_support import MultiSurfaceSuspensionPolicy
+from src.simulation.ramp_support import WheelContactPoints
+from src.simulation.torque_free_rotation import TorqueFreeRotationPolicy
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.simulation.track.volume import OrientedBoxVolume
+from src.simulation.vehicle import VehicleState,VehicleControl,VehicleParameters
 
 BODY=VehicleBodyGeometry(1.,.4,2.,Vec3(0.,.1,0.))
 W=WheelContactPoints(
@@ -103,11 +103,11 @@ def test_optin_requires_explicit_manifold_and_ground_inertia():
 
 
 def test_world_preserves_torque_free_angular_state_without_earning_events():
-    from src.sandbox.interactions.state import InteractionState
-    from src.sandbox.rules.scoring import ScoreState
-    from src.sandbox.track.model import TrackWorld
-    from src.sandbox.track.state import TrackState
-    from src.sandbox.world import WorldState,step_world
+    from src.simulation.interactions.state import InteractionState
+    from src.simulation.rules.scoring import ScoreState
+    from src.simulation.track.model import TrackWorld
+    from src.simulation.track.state import TrackState
+    from src.simulation.world import WorldState,step_world
     initial=air()
     state=WorldState(
         initial,TrackState(frozenset()),

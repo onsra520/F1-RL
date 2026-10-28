@@ -1,21 +1,23 @@
 from __future__ import annotations
 
 import ast
+
+from tests.dependency_rules import imports_project_layers
 from copy import deepcopy
 from math import pi
 from pathlib import Path
 
 import pytest
 
-from src.learning.observation import NavigationTarget, ObservationConfig, ObservationEncoder
-from src.sandbox.entities.obstacle import Obstacle
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.perception.rangefinder import RangefinderSpec
-from src.sandbox.perception.sensor_suite import SensorSuite
-from src.sandbox.track.model import TrackWorld
-from src.sandbox.track.volume import OrientedBoxVolume
-from src.sandbox.vehicle import VehicleState
+from src.rl.observation import NavigationTarget, ObservationConfig, ObservationEncoder
+from src.simulation.entities.obstacle import Obstacle
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.perception.rangefinder import RangefinderSpec
+from src.simulation.perception.sensor_suite import SensorSuite
+from src.simulation.track.model import TrackWorld
+from src.simulation.track.volume import OrientedBoxVolume
+from src.simulation.vehicle import VehicleState
 
 
 def _obstacle(obstacle_id: str, center: Vec3, orientation: Quaternion | None = None) -> Obstacle:
@@ -118,10 +120,11 @@ def _imported_modules(path: Path) -> tuple[str, ...]:
 
 
 def test_observation_module_has_no_forbidden_dependencies() -> None:
-    path = Path("src/learning/observation.py")
+    path = Path("src/rl/observation.py")
     modules = _imported_modules(path)
+    assert not imports_project_layers(path, ("core",))
     forbidden_prefixes = (
-        "src.runtime", "src.api", "src.drivers", "runtime", "api", "drivers",
+        "src.core", "src.api", "src.drivers", "runtime", "core", "src.core", "api", "drivers",
         "gymnasium", "numpy", "torch", "stable_baselines3", "fastapi", "websocket", "websockets",
     )
     assert not any(
@@ -134,17 +137,6 @@ def test_observation_module_has_no_forbidden_dependencies() -> None:
 
 
 def test_sandbox_does_not_import_learning() -> None:
-    offenders: list[str] = []
-    for path in Path("src/sandbox").rglob("*.py"):
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                if any(alias.name == "src.learning" or alias.name.startswith("src.learning.") for alias in node.names):
-                    offenders.append(str(path))
-            elif isinstance(node, ast.ImportFrom) and node.module:
-                module = node.module
-                if module == "src.learning" or module.startswith("src.learning."):
-                    offenders.append(str(path))
-                if node.level > 0 and (module == "learning" or module.startswith("learning.")):
-                    offenders.append(str(path))
-    assert offenders == []
+    directory = Path("src/simulation")
+    assert directory.is_dir()
+    assert not [path for path in directory.rglob("*.py") if imports_project_layers(path, ("rl", "training", "evaluation"))]

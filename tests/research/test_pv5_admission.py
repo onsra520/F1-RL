@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.research.wp7_admission import evaluate_admission, reject_research_training, ScientificAdmissionError
+from src.validation.wp7_admission import evaluate_admission, reject_research_training, ScientificAdmissionError
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -29,7 +29,7 @@ def test_absent_or_malformed_evidence_fails_closed_with_report(tmp_path):
 
 
 def test_hypothetical_green_software_cannot_override_owner_contract(monkeypatch):
-    import src.research.wp7_admission as admission
+    import src.validation.wp7_admission as admission
     monkeypatch.setattr(admission, "audit_train_tracks", lambda root: {"tracks": [], "manifest_sha256": "a"*64})
     report = admission.evaluate_admission(ROOT)
     assert report["authorization"]["verified"] is False
@@ -41,7 +41,7 @@ def test_hypothetical_green_software_cannot_override_owner_contract(monkeypatch)
 def test_software_timeout_returns_blocked_report_with_partial_diagnostics(monkeypatch,partial):
     import subprocess
     from types import SimpleNamespace
-    import src.research.wp7_admission as admission
+    import src.validation.wp7_admission as admission
     def timeout(command,**kwargs):
         budget=kwargs['timeout'];kwargs.clear()
         raise subprocess.TimeoutExpired(command,budget,output=partial,stderr=b'worker incomplete')

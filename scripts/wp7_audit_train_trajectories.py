@@ -16,7 +16,7 @@ _entry_root = str(_EntryPath(__file__).resolve().parents[1])
 if _entry_root not in _entry_sys.path:
     _entry_sys.path.insert(0, _entry_root)
 
-from src.learning.trajectory_audit import audit_trajectory_run
+from src.rl.trajectory_audit import audit_trajectory_run
 
 
 def main()->int:

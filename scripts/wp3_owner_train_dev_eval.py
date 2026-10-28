@@ -17,7 +17,7 @@ import sys
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from src.research.wp3_owner_train_dev_eval import new_run, load_run, run, snapshot
+from src.validation.wp3_owner_train_dev_eval import new_run, load_run, run, snapshot
 
 import os
 HISTORY=Path(os.environ.get("F1RL_WP3_EVIDENCE", r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1"))

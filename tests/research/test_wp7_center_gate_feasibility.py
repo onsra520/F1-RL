@@ -4,15 +4,15 @@ from dataclasses import replace
 
 import pytest
 
-from src.research.wp7_arc_trajectory import certify_arc_trajectory, search_right_turn_trajectory, ArcPath
-from src.track_assets import load_track_asset
+from src.validation.wp7_arc_trajectory import certify_arc_trajectory, search_right_turn_trajectory, ArcPath
+from src.tracks import load_track_asset
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture(scope='module')
 def registered_audit():
-    from src.research.wp7_track_feasibility import audit_train_tracks
+    from src.validation.wp7_track_feasibility import audit_train_tracks
     return audit_train_tracks(ROOT,search_alternatives=True,execute_controls=True,registered_center_gates=True)
 
 
@@ -39,9 +39,9 @@ def test_actual_right_turn_has_continuous_body_road_and_owner_center_gate_path()
 
 def test_actual_registered_right_turn_executes_center_gates_road_braking_and_replay(registered_audit):
     import numpy as np
-    from src.learning.action import ActionContract
-    from src.research.wp7_protocol import load_registration, prepare_scenarios
-    from src.research.wp7_executed_feasibility import certify_registered_center_execution, replay_planar_execution
+    from src.rl.action import ActionContract
+    from src.validation.wp7_protocol import load_registration, prepare_scenarios
+    from src.validation.wp7_executed_feasibility import certify_registered_center_execution, replay_planar_execution
     result = next(row['executed_planar_trajectory'] for row in registered_audit['tracks'] if row['track_id']=='right-turn-v1')
     assert result['status'] == 'executable_numerical_registered_center_path',result['blockers']
     assert result['gate_contract'] == 'directed_center_crossing_v1'
@@ -74,7 +74,7 @@ def test_actual_registered_right_turn_executes_center_gates_road_braking_and_rep
 
 
 def test_all_train_center_audit_keeps_physics_assets_and_admission_identities(registered_audit):
-    from src.research.wp7_track_feasibility import audit_train_tracks
+    from src.validation.wp7_track_feasibility import audit_train_tracks
     old = audit_train_tracks(ROOT)
     assert old['schema_version']=='wp7_body_track_audit_v1' and 'gate_contract' not in old
     assert registered_audit['schema_version']=='wp7_body_track_audit_v2'
@@ -99,10 +99,10 @@ def test_all_train_center_audit_keeps_physics_assets_and_admission_identities(re
 
 @pytest.mark.parametrize('change',['gate_miss','reordered','narrow_road','body_obstacle'])
 def test_center_gate_mode_preserves_finite_gate_order_and_full_body_geometry(change):
-    from src.sandbox.geometry.vector import Vec3
-    from src.sandbox.geometry.rotation import Quaternion
-    from src.sandbox.entities.obstacle import Obstacle
-    from src.sandbox.track.volume import OrientedBoxVolume
+    from src.simulation.geometry.vector import Vec3
+    from src.simulation.geometry.rotation import Quaternion
+    from src.simulation.entities.obstacle import Obstacle
+    from src.simulation.track.volume import OrientedBoxVolume
     asset=load_track_asset(ROOT/'assets/tracks/training/right-turn-v1.json')
     reference=search_right_turn_trajectory(asset,gate_contract='directed_center_crossing_v1')['path']
     path=ArcPath(tuple(reference['start_xz_m']),reference['start_yaw_rad'],
@@ -133,15 +133,15 @@ def test_unregistered_gate_semantics_fail_closed(contract):
 
 
 def test_center_execution_rejects_foreign_track_before_source_access(tmp_path):
-    from src.research.wp7_executed_feasibility import certify_registered_center_execution
+    from src.validation.wp7_executed_feasibility import certify_registered_center_execution
     with pytest.raises(ValueError,match='TRAIN'):
         certify_registered_center_execution(tmp_path/'missing','not-TRAIN')
 
 
 def test_center_replay_rejects_self_rehashed_gate_claim(registered_audit):
     from copy import deepcopy
-    from src.research.wp7_executed_feasibility import replay_planar_execution
-    from src.research.wp7_protocol import digest
+    from src.validation.wp7_executed_feasibility import replay_planar_execution
+    from src.validation.wp7_protocol import digest
     result=deepcopy(next(row['executed_planar_trajectory'] for row in registered_audit['tracks']
                          if row['track_id']=='right-turn-v1'))
     result['whole_body_gate_aperture_required']=True
@@ -152,6 +152,6 @@ def test_center_replay_rejects_self_rehashed_gate_claim(registered_audit):
 
 @pytest.mark.parametrize('selected',[None,1,'directed_center_crossing_v1',True])
 def test_center_audit_rejects_ambiguous_or_unused_selection(selected):
-    from src.research.wp7_track_feasibility import audit_train_tracks
+    from src.validation.wp7_track_feasibility import audit_train_tracks
     with pytest.raises(ValueError,match='registered center gates'):
         audit_train_tracks(ROOT,registered_center_gates=selected)

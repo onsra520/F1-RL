@@ -39,8 +39,8 @@ def main():
     args = parser.parse_args()
     import torch
     torch.set_num_threads(1)
-    from src.learning.algorithms.ppo import PPOModel
-    from src.research.wp7_protocol import load_registration, prepare_scenarios
+    from src.rl.algorithms.ppo import PPOModel
+    from src.validation.wp7_protocol import load_registration, prepare_scenarios
     from src.exploratory.pilot import evaluate_episode
     factory = prepare_scenarios(ROOT,load_registration(ROOT,profile='spatial_rotating_owner_v3'),seed_index=0).scenarios[0].factory
     args.output.mkdir(parents=True, exist_ok=False)

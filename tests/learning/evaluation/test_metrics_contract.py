@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from src.learning.evaluation import EpisodeMetrics, TrackEvaluationSummary
+from src.evaluation import EpisodeMetrics, TrackEvaluationSummary
 
 
 def _episode(**overrides: object) -> EpisodeMetrics:

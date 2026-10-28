@@ -16,7 +16,7 @@ _entry_root = str(_EntryPath(__file__).resolve().parents[1])
 if _entry_root not in _entry_sys.path:
     _entry_sys.path.insert(0, _entry_root)
 
-from src.learning.freeze_readiness import build_freeze_readiness_report
+from src.rl.freeze_readiness import build_freeze_readiness_report
 
 
 def main()->int:

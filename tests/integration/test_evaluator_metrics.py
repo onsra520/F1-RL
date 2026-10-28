@@ -3,33 +3,33 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.learning.algorithms.ppo import PPOConfig, PPOModel
-from src.learning.episode import EpisodeConfig
-from src.learning.evaluation import EvaluationPolicy, evaluate_episode
-from src.learning.experiments import ExperimentDefinition
-from src.learning.observation import ObservationConfig, ObservationEncoder
-from src.learning.rewards import (
+from src.rl.algorithms.ppo import PPOConfig, PPOModel
+from src.rl.episode import EpisodeConfig
+from src.evaluation import EvaluationPolicy, evaluate_episode
+from src.rl.experiments import ExperimentDefinition
+from src.rl.observation import ObservationConfig, ObservationEncoder
+from src.rl.rewards import (
     CollisionPenalty,
     RewardComposer,
     TargetProgressReward,
     TimePenalty,
 )
-from src.learning.training import F1RLEnvFactory
-from src.runtime import SimulationConfig
-from src.sandbox.entities.finish_line import FinishLine
-from src.sandbox.entities.obstacle import Obstacle
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.interactions.state import InteractionState
-from src.sandbox.perception import RangefinderSpec, SensorSuite
-from src.sandbox.rules.scoring import ScoreState
-from src.sandbox.track.model import TrackWorld
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.sandbox.track.state import TrackState
-from src.sandbox.track.volume import OrientedBoxVolume
-from src.sandbox.vehicle import VehicleParameters, VehicleState
-from src.sandbox.world import WorldState
-from src.track_assets import build_initial_world_state, load_track_asset
+from src.training import F1RLEnvFactory
+from src.core import SimulationConfig
+from src.simulation.entities.finish_line import FinishLine
+from src.simulation.entities.obstacle import Obstacle
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.interactions.state import InteractionState
+from src.simulation.perception import RangefinderSpec, SensorSuite
+from src.simulation.rules.scoring import ScoreState
+from src.simulation.track.model import TrackWorld
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.simulation.track.state import TrackState
+from src.simulation.track.volume import OrientedBoxVolume
+from src.simulation.vehicle import VehicleParameters, VehicleState
+from src.simulation.world import WorldState
+from src.tracks import build_initial_world_state, load_track_asset
 
 from tests.learning.evaluation.mocks.policies import ConstantPolicy
 
@@ -277,7 +277,7 @@ def test_ppo_model_satisfies_evaluation_policy_without_evaluator_sb3_import() ->
         )
         assert isinstance(model, EvaluationPolicy)
 
-        source = Path("src/learning/evaluation/evaluator.py").read_text(
+        source = Path("src/evaluation/evaluator.py").read_text(
             encoding="utf-8"
         ).lower()
         assert "stable_baselines3" not in source

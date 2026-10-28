@@ -1,3 +1,4 @@
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -14,7 +15,7 @@ def test_historical_record_verification_is_independent_of_current_source():
     assert 'ORIGINAL_SOURCE_RECONSTRUCTED' not in result.stdout
 import shutil
 import pytest
-from src.research.historical_source_records import verify_historical_records
+from src.validation.historical_source_records import verify_historical_records
 
 
 @pytest.mark.parametrize('relative', [
@@ -56,7 +57,7 @@ def test_existing_verify_entrypoints_report_historical_integrity(name):
 def test_forged_historical_source_bundle_is_rejected(tmp_path):
     import json
     import hashlib
-    from src.research.historical_source_records import verify_historical_records
+    from src.validation.historical_source_records import verify_historical_records
     name = 'WP3-PHYSICS-V4-TECHNICAL-ACCEPTANCE-20261024.json'
     original = ROOT / 'docs/research' / name
     dest = tmp_path / 'docs/research' / name
@@ -80,13 +81,13 @@ def test_current_attestation_cannot_replace_historical_record(tmp_path):
 
 
 def test_historical_allowlist_does_not_accept_migrated_physics():
-    from src.learning.freeze_readiness import verify_training_source_diff
+    from src.rl.freeze_readiness import verify_training_source_diff
     with pytest.raises(ValueError, match='training/simulator source changed'):
-        verify_training_source_diff(('src/sandbox/spatial_contact_dynamics.py',))
+        verify_training_source_diff(('src/simulation/spatial_contact_dynamics.py',))
 
 
 def test_legacy_receipt_builder_rejects_current_source_identity():
-    from src.research.wp3_v4_technical_acceptance import source_bound_acceptance
+    from src.validation.wp3_v4_technical_acceptance import source_bound_acceptance
     import os
     history = Path(os.environ['F1RL_WP3_EVIDENCE'])
     replay = ROOT / 'docs/research/WP3-V4AH-PHYSICS-V4-ACCEPTANCE-REPLAY-20261024.json'
@@ -96,10 +97,49 @@ def test_legacy_receipt_builder_rejects_current_source_identity():
 
 
 def test_legacy_crash_builder_rejects_current_source_identity():
-    from src.research.wp3_crash_contract_registration import assemble_registration
+    from src.validation.wp3_crash_contract_registration import assemble_registration
     import os
     history = Path(os.environ['F1RL_WP3_EVIDENCE'])
     replay = ROOT / 'docs/research/WP3-V4AJ-REGISTERED-CRASH-V1-THREE-REPLAY-20261024.json'
     receipt = ROOT / 'docs/research/WP3-CRASH-TERMINAL-V1-REGRESSION-20261024.txt'
     with pytest.raises(ValueError, match='historical source identity'):
         assemble_registration(ROOT, history, replay, receipt)
+
+
+@pytest.mark.parametrize("kind", ["physics", "crash"])
+def test_legacy_builder_never_reissues_when_current_bytes_match_record(monkeypatch, kind):
+    import os
+    from src.validation import wp3_v4_technical_acceptance as physics
+    from src.validation import wp3_crash_contract_registration as crash
+    history = Path(os.environ["F1RL_WP3_EVIDENCE"])
+    if kind == "physics":
+        module = physics
+        record = json.loads((ROOT / "docs/research/WP3-PHYSICS-V4-TECHNICAL-ACCEPTANCE-20261024.json").read_bytes())
+        bindings = record["source_bindings_sha256"]
+        replay = ROOT / "docs/research/WP3-V4AH-PHYSICS-V4-ACCEPTANCE-REPLAY-20261024.json"
+        receipt = ROOT / "docs/research/WP3-V4-PHYSICS-ENGINEERING-PYTEST-20261024.txt"
+    else:
+        module = crash
+        record = json.loads((ROOT / "docs/research/WP3-CRASH-TERMINAL-V1-TECHNICAL-REGISTRY-20261024.json").read_bytes())
+        bindings = record["source_files_sha256"]
+        replay = ROOT / "docs/research/WP3-V4AJ-REGISTERED-CRASH-V1-THREE-REPLAY-20261024.json"
+        receipt = ROOT / "docs/research/WP3-CRASH-TERMINAL-V1-REGRESSION-20261024.txt"
+    mapping = (("f1rl/learning/training/", "src/training/"), ("f1rl/learning/evaluation/", "src/evaluation/"), ("f1rl/learning/", "src/rl/"), ("f1rl/sandbox/", "src/simulation/"), ("f1rl/runtime/", "src/core/"))
+    current = {}
+    for historical, digest in bindings.items():
+        for before, after in mapping:
+            if historical.startswith(before):
+                current[(ROOT / (after + historical[len(before):])).resolve()] = digest
+                break
+        else:
+            raise AssertionError(historical)
+    actual_digest = module.digest_file
+    def matching_digest(path):
+        resolved = Path(path).resolve()
+        return current[resolved] if resolved in current else actual_digest(path)
+    monkeypatch.setattr(module, "digest_file", matching_digest)
+    with pytest.raises(ValueError, match="historical source identity"):
+        if kind == "physics":
+            module.source_bound_acceptance(ROOT, history, replay, test_receipt_file=receipt)
+        else:
+            module.assemble_registration(ROOT, history, replay, receipt)

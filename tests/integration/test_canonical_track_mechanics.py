@@ -1,15 +1,15 @@
 from dataclasses import replace
 from pathlib import Path
 
-from src.learning.experiments import ExperimentDefinition
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.interactions.state import InteractionState
-from src.sandbox.rules.scoring import ScoreState
-from src.sandbox.track.state import TrackState
-from src.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
-from src.sandbox.world import WorldState, step_world
-from src.track_assets import load_track_asset
+from src.rl.experiments import ExperimentDefinition
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.interactions.state import InteractionState
+from src.simulation.rules.scoring import ScoreState
+from src.simulation.track.state import TrackState
+from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
+from src.simulation.world import WorldState, step_world
+from src.tracks import load_track_asset
 
 
 TRACK_ROOT = Path("assets/tracks")

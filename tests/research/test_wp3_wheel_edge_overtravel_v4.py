@@ -1,15 +1,15 @@
 """First finite-tyre sidewall contact cannot forge a vertical bump stop."""
 from dataclasses import replace
 import pytest
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.vehicle import VehicleState
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.sandbox.rigid_body_impact_response import RigidBodyImpactMass
-from src.sandbox.wheel_edge_overtravel_impact import (
+from src.simulation.geometry.vector import Vec3
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.vehicle import VehicleState
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.simulation.rigid_body_impact_response import RigidBodyImpactMass
+from src.simulation.wheel_edge_overtravel_impact import (
     incoming_edge,entry_margin,apply_edge_overtravel_impulse_at_prefix,
 )
-from src.learning.crash_terminal_registered import SOURCES
+from src.rl.crash_terminal_registered import SOURCES
 
 P=((-1.,-1.),(1.,-1.),(1.,1.),(-1.,1.))
 Q=Quaternion.identity()

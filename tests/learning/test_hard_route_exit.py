@@ -1,9 +1,9 @@
 """First exit from the approved closed 4m tube around an authored route."""
 import pytest
-from src.learning.hard_route_outcome import first_hard_route_exit
-from src.learning.route_navigation import AuthoredRoute
-from src.track_assets.model import AuthoredNavigation
-from src.sandbox.geometry.vector import Vec3
+from src.rl.hard_route_outcome import first_hard_route_exit
+from src.rl.route_navigation import AuthoredRoute
+from src.tracks.model import AuthoredNavigation
+from src.simulation.geometry.vector import Vec3
 
 
 def route(points):

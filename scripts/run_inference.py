@@ -28,8 +28,8 @@ def main(argv=None):
         return alternate_result
     import torch
     torch.set_num_threads(1)
-    from src.learning.algorithms.ppo import PPOModel
-    from src.research.wp7_protocol import load_registration, prepare_scenarios
+    from src.rl.algorithms.ppo import PPOModel
+    from src.validation.wp7_protocol import load_registration, prepare_scenarios
     from src.exploratory.pilot import evaluate_episode
 
     registration = load_registration(ROOT, profile='spatial_rotating_owner_v3')

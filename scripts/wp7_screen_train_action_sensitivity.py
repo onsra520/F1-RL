@@ -14,8 +14,8 @@ _entry_root = str(_EntryPath(__file__).resolve().parents[1])
 if _entry_root not in _entry_sys.path:
     _entry_sys.path.insert(0, _entry_root)
 
-from src.learning.robustness_screen import screen_saved_train_policy
-from src.learning.geometry_review import load_geometry_review
+from src.rl.robustness_screen import screen_saved_train_policy
+from src.rl.geometry_review import load_geometry_review
 
 
 @contextmanager

@@ -1,20 +1,20 @@
 """Development owner race truncates checkpoint/reward at applied crash TOI."""
 from dataclasses import replace
 import pytest
-from src.sandbox.accepted_contact_transition import apply_certified_face_impulse
-from src.sandbox.physical_crash import first_applied_grounded_crash
-from src.sandbox.rigid_body_impact_response import RigidBodyImpactMass
-from src.sandbox.body_collision import VehicleBodyGeometry
-from src.sandbox.center_trajectory import CenterSegment
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.track.volume import OrientedBoxVolume
-from src.sandbox.entities.obstacle import Obstacle
-from src.runtime.simulation import SimulationSnapshot
-from src.runtime.physics import PhysicsTransitionAudit
-from src.learning.route_navigation import AuthoredRoute
-from src.learning.episode import RaceProgressState,RaceRoute
-from src.learning.wp7_race import WP7RaceConfig,advance_directed_race,RaceContractError
+from src.simulation.accepted_contact_transition import apply_certified_face_impulse
+from src.simulation.physical_crash import first_applied_grounded_crash
+from src.simulation.rigid_body_impact_response import RigidBodyImpactMass
+from src.simulation.body_collision import VehicleBodyGeometry
+from src.simulation.center_trajectory import CenterSegment
+from src.simulation.geometry.vector import Vec3
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.track.volume import OrientedBoxVolume
+from src.simulation.entities.obstacle import Obstacle
+from src.core.simulation import SimulationSnapshot
+from src.core.physics import PhysicsTransitionAudit
+from src.rl.route_navigation import AuthoredRoute
+from src.rl.episode import RaceProgressState,RaceRoute
+from src.rl.wp7_race import WP7RaceConfig,advance_directed_race,RaceContractError
 from tests.integration.test_wp7_race_contract import race_factory
 Q=Quaternion.identity()
 Z=Vec3(0.,0.,0.)

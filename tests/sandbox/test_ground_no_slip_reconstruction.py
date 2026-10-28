@@ -3,12 +3,12 @@ from math import cos, pi, sin
 
 import pytest
 
-from src.sandbox.dynamics.integrator import integrate
-from src.sandbox.dynamics.vehicle_dynamics import MotionDerivatives
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.surface import SurfaceContact
-from src.sandbox.vehicle import VehicleParameters, VehicleState
+from src.simulation.dynamics.integrator import integrate
+from src.simulation.dynamics.vehicle_dynamics import MotionDerivatives
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.surface import SurfaceContact
+from src.simulation.vehicle import VehicleParameters, VehicleState
 
 
 ZERO = Vec3(0.0, 0.0, 0.0)

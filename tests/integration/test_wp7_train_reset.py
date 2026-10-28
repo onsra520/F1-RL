@@ -4,9 +4,9 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from src.learning.train_reset import TrainResetConfig, SpawnFeasibilityError
-from src.track_assets.canonical import fingerprint_track_world
-from src.track_assets.model import TrackManifestEntry
+from src.rl.train_reset import TrainResetConfig, SpawnFeasibilityError
+from src.tracks.canonical import fingerprint_track_world
+from src.tracks.model import TrackManifestEntry
 from tests.integration.test_wp7_race_contract import race_factory
 
 
@@ -49,7 +49,7 @@ def test_repeated_seeded_gym_resets_use_independent_replayable_perturbation_stre
 
 @pytest.mark.parametrize("sign", [-1., 1.])
 def test_registered_spawn_range_endpoints_are_feasible(monkeypatch, sign):
-    import src.learning.train_reset as reset_module
+    import src.rl.train_reset as reset_module
     class EndpointRandom:
         def __init__(self, seed):
             pass
@@ -67,8 +67,8 @@ def test_registered_spawn_range_endpoints_are_feasible(monkeypatch, sign):
 
 
 def test_infeasible_draw_is_logged_and_redrawn_without_nominal_fallback(monkeypatch):
-    import src.learning.train_reset as reset_module
-    from src.sandbox.entities.obstacle import Obstacle
+    import src.rl.train_reset as reset_module
+    from src.simulation.entities.obstacle import Obstacle
     from tests.integration.test_wp7_race_contract import Vec3, Quaternion, OrientedBoxVolume
     class Draws:
         def __init__(self, seed):
@@ -91,7 +91,7 @@ def test_infeasible_draw_is_logged_and_redrawn_without_nominal_fallback(monkeypa
 
 
 def test_no_feasible_spawn_rejects_reset_and_cannot_step():
-    from src.sandbox.entities.obstacle import Obstacle
+    from src.simulation.entities.obstacle import Obstacle
     from tests.integration.test_wp7_race_contract import Vec3, Quaternion, OrientedBoxVolume
     base = race_factory(checkpoints=(), finish=50., speed=0.)
     wall = Obstacle("wall", OrientedBoxVolume(
@@ -118,16 +118,16 @@ def test_heldout_metadata_and_track_identity_drift_are_rejected():
     with pytest.raises(ValueError, match="identity is absent or mismatched"):
         replace(candidate, track=replace(candidate.track, surfaces=(
             replace(candidate.track.surfaces[0], width=30.),)))
-    from src.learning.training.env_factory import TrainingScenario
+    from src.training.env_factory import TrainingScenario
     with pytest.raises(ValueError, match="scenario ID"):
         TrainingScenario("other", candidate)
 
 
 @pytest.mark.parametrize("backend", ["dummy", "subproc"])
 def test_vector_rank_and_reset_sequence_survive_environment_recreation(backend):
-    from src.learning.training.env_factory import TrainingScenario, TrainingScenarioSet
-    from src.learning.training.vector_env import make_multi_track_vector_env
-    from src.learning.training.config import VectorEnvConfig
+    from src.training.env_factory import TrainingScenario, TrainingScenarioSet
+    from src.training.vector_env import make_multi_track_vector_env
+    from src.training.config import VectorEnvConfig
     candidate = randomized_factory()
     scenarios = TrainingScenarioSet((TrainingScenario(candidate.reset_track_id, candidate),))
     vec = make_multi_track_vector_env(scenarios, VectorEnvConfig(n_envs=2, backend=backend), 23)
@@ -148,9 +148,9 @@ def test_vector_rank_and_reset_sequence_survive_environment_recreation(backend):
 
 
 def test_reset_preparation_does_not_open_training_admission(tmp_path, monkeypatch):
-    from src.learning.algorithms.ppo import PPOConfig
-    from src.learning.training.config import TrainingRunConfig, VectorEnvConfig
-    from src.learning.training.runner import TrainingRunner
+    from src.rl.algorithms.ppo import PPOConfig
+    from src.training.config import TrainingRunConfig, VectorEnvConfig
+    from src.training.runner import TrainingRunner
     def forbidden(*args, **kwargs):
         raise AssertionError("admission bypass")
     monkeypatch.setattr(TrainingRunner, "_run", forbidden)

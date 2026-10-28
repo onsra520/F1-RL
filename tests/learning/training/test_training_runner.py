@@ -6,10 +6,10 @@ from types import SimpleNamespace
 
 import pytest
 
-import src.learning.training.runner as runner_module
-from src.learning.algorithms.ppo import PPOConfig
-from src.learning.training.config import TrainingRunConfig, VectorEnvConfig
-from src.learning.training.runner import (
+import src.training.runner as runner_module
+from src.rl.algorithms.ppo import PPOConfig
+from src.training.config import TrainingRunConfig, VectorEnvConfig
+from src.training.runner import (
     TrainingRunResult,
     TrainingRunner,
     _advance_checkpoint_schedule,

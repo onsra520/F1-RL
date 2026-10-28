@@ -1,9 +1,9 @@
 import pytest
 
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.track.model import TrackWorld
-from src.track_assets import SpawnPose, TrackAsset, TrackManifest
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.track.model import TrackWorld
+from src.tracks import SpawnPose, TrackAsset, TrackManifest
 
 
 ZERO_HASH = "0" * 64

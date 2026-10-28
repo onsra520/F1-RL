@@ -7,7 +7,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src.local_demo.campaign import main
+from src.interfaces.campaign import main
 
 
 if __name__ == "__main__":

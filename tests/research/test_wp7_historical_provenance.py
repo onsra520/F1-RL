@@ -12,7 +12,7 @@ import subprocess
 
 import pytest
 
-from src.research.wp7_historical_provenance import (
+from src.validation.wp7_historical_provenance import (
     ARCHIVED_SOURCE_PATHS, audit_archived_git_sources,
     audit_historical_manifest_file,
 )

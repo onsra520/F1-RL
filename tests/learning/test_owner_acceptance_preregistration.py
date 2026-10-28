@@ -5,10 +5,10 @@ from pathlib import Path
 import pytest
 import yaml
 
-from src.learning.owner_acceptance import OWNER_CODES, review_preregistered_contract
-from src.sandbox.body_collision import VehicleBodyGeometry
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.ramp_support import WheelContactPoints
+from src.rl.owner_acceptance import OWNER_CODES, review_preregistered_contract
+from src.simulation.body_collision import VehicleBodyGeometry
+from src.simulation.geometry.vector import Vec3
+from src.simulation.ramp_support import WheelContactPoints
 
 
 CONTRACT = Path("configs/recovery/wp7-owner-decisions-preregistered-v1.yml")

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import yaml
 
-from ..learning.algorithms.ppo import PPOConfig
+from ..rl.algorithms.ppo import PPOConfig
 
 TRACK = "straight-sprint-v1"
 PROFILE = "spatial_rotating_owner_v3"

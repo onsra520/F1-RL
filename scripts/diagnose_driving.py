@@ -21,7 +21,7 @@ def diagnostic_action(observation, yaw_rate):
 
 
 def trace_episode(factory, model, seed, controller, output):
-    from src.sandbox.geometry.vector import Vec3
+    from src.simulation.geometry.vector import Vec3
     env = replace(factory, reset_config=replace(factory.reset_config, seed=seed)).create()
     started = time.perf_counter()
     observation, info = env.reset(seed=seed)
@@ -111,8 +111,8 @@ def main():
     args = parser.parse_args()
     import torch
     from src.exploratory.config import resolve
-    from src.learning.algorithms.ppo import PPOModel
-    from src.research.wp7_protocol import load_registration, prepare_scenarios
+    from src.rl.algorithms.ppo import PPOModel
+    from src.validation.wp7_protocol import load_registration, prepare_scenarios
     settings = resolve(ROOT)
     torch.set_num_threads(settings['limits']['threads'])
     torch.set_num_interop_threads(settings['limits']['interop_threads'])

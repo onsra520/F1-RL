@@ -13,7 +13,7 @@ _entry_root = str(_EntryPath(__file__).resolve().parents[1])
 if _entry_root not in _entry_sys.path:
     _entry_sys.path.insert(0, _entry_root)
 
-from src.learning.corridor_audit import audit_right_turn_corridor
+from src.rl.corridor_audit import audit_right_turn_corridor
 
 
 def main()->int:

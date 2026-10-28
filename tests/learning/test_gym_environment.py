@@ -1,26 +1,26 @@
 import numpy as np
 import pytest
 
-from src.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
-from src.learning.gym_environment import F1RLEnv
-from src.learning.algorithms.ppo import PPOConfig, PPOModel
-from src.runtime.simulation import SimulationConfig
-from src.sandbox.entities.boost_pad import BoostPad
-from src.sandbox.entities.finish_line import FinishLine
-from src.sandbox.entities.obstacle import Obstacle
-from src.sandbox.entities.slow_zone import SlowZone
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.interactions.state import InteractionState
-from src.sandbox.perception.rangefinder import RangefinderSpec
-from src.sandbox.perception.sensor_suite import SensorSuite
-from src.sandbox.rules.scoring import ScoreState
-from src.sandbox.track.model import TrackWorld
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.sandbox.track.state import TrackState
-from src.sandbox.track.volume import OrientedBoxVolume
-from src.sandbox.vehicle import VehicleParameters, VehicleState
-from src.sandbox.world import WorldState
+from src.rl import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
+from src.rl.gym_environment import F1RLEnv
+from src.rl.algorithms.ppo import PPOConfig, PPOModel
+from src.core.simulation import SimulationConfig
+from src.simulation.entities.boost_pad import BoostPad
+from src.simulation.entities.finish_line import FinishLine
+from src.simulation.entities.obstacle import Obstacle
+from src.simulation.entities.slow_zone import SlowZone
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.interactions.state import InteractionState
+from src.simulation.perception.rangefinder import RangefinderSpec
+from src.simulation.perception.sensor_suite import SensorSuite
+from src.simulation.rules.scoring import ScoreState
+from src.simulation.track.model import TrackWorld
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.simulation.track.state import TrackState
+from src.simulation.track.volume import OrientedBoxVolume
+from src.simulation.vehicle import VehicleParameters, VehicleState
+from src.simulation.world import WorldState
 
 
 def _volume(center: Vec3) -> OrientedBoxVolume:
@@ -486,7 +486,7 @@ def test_modifier_telemetry_ids_are_deterministically_ordered() -> None:
 def test_simulation_step_failure_leaves_episode_active_and_progress_unchanged(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from src.runtime.simulation import Simulation
+    from src.core.simulation import Simulation
 
     env = _env()
     env.reset()
@@ -550,8 +550,8 @@ def test_bad_post_step_observation_requires_reset(monkeypatch: pytest.MonkeyPatc
 
 
 def test_learning_package_reexports_f1rl_env_without_regressing_existing_exports() -> None:
-    import src.learning as learning
-    from src.learning.gym_environment import F1RLEnv as DirectF1RLEnv
+    import src.rl as learning
+    from src.rl.gym_environment import F1RLEnv as DirectF1RLEnv
 
     assert learning.F1RLEnv is DirectF1RLEnv
     for name in (
@@ -573,8 +573,8 @@ def test_framework_dependency_boundaries_remain_one_way() -> None:
 
     root = Path(__file__).parents[2]
     lower_sources = [
-        *(root / "src" / "sandbox").rglob("*.py"),
-        *(root / "src" / "runtime").rglob("*.py"),
+        *(root / "src" / "simulation").rglob("*.py"),
+        *(root / "src" / "core").rglob("*.py"),
     ]
     lower_text = "\n".join(path.read_text(encoding="utf-8") for path in lower_sources)
     assert "import gymnasium" not in lower_text
@@ -587,7 +587,7 @@ def test_gym_adapter_has_no_model_registration_or_rendering_dependencies() -> No
     from pathlib import Path
 
     root = Path(__file__).parents[2]
-    source = (root / "src" / "learning" / "gym_environment.py").read_text(encoding="utf-8").lower()
+    source = (root / "src" / "rl" / "gym_environment.py").read_text(encoding="utf-8").lower()
 
     for forbidden in (
         "stable_baselines3",

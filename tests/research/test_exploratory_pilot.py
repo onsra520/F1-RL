@@ -197,10 +197,10 @@ def test_worker_orchestration_with_fake_model_only(
     tmp_path, monkeypatch, schedule, evaluation_fails, telemetry_failure, state_write_fails
 ):
     p = pilot()
-    from src.learning.algorithms.ppo import PPOConfig, PPOModel
+    from src.rl.algorithms.ppo import PPOConfig, PPOModel
     from dataclasses import asdict
     import torch
-    from src.learning.train_reset import derive_train_reset_draw_seed
+    from src.rl.train_reset import derive_train_reset_draw_seed
     permit = dict(sha256='a'*64, output_directory=str(tmp_path/'run'),
                   source={'commit_sha':'b'*40}, policy='singletrack-straight-sprint-v1-seed0',
                   track='straight-sprint-v1', seeds={'ppo':0, 'training_reset':1000},

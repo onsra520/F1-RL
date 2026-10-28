@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.learning.experiments import (
+from src.rl.experiments import (
     EpisodeExperimentConfig,
     EvaluationExperimentConfig,
     ExperimentDefinition,

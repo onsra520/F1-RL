@@ -6,7 +6,7 @@ from pathlib import Path
 import json,sys
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from src.research.wp3_current_eval_gate import (
+from src.validation.wp3_current_eval_gate import (
     require_latest_replay_evidence, require_registered_full_evaluation
 )
 def main():

@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from src.research.simulation_validation import (
+from src.validation.simulation_validation import (
     load_simulation_validation_protocol,
     run_simulation_validation,
 )
@@ -40,7 +40,7 @@ def test_simulation_validation_contract_rejects_missing_coverage_reference(tmp_p
 
 @pytest.mark.parametrize("boundary", ["reset", "transition"])
 def test_simulation_replay_rejects_changed_reset_protocol_identity(monkeypatch, boundary):
-    from src.learning.gym_environment import F1RLEnv
+    from src.rl.gym_environment import F1RLEnv
 
     if boundary == "reset":
         original = F1RLEnv.reset

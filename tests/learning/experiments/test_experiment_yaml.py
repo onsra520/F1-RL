@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from src.learning.experiments import ExperimentDefinition
+from src.rl.experiments import ExperimentDefinition
 
 
 VALID_DRAFT = """

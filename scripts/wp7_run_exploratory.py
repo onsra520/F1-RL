@@ -19,11 +19,11 @@ _entry_root = str(_EntryPath(__file__).resolve().parents[1])
 if _entry_root not in _entry_sys.path:
     _entry_sys.path.insert(0, _entry_root)
 
-from src.learning.pilot_milestones import PilotMilestoneRecorder, verify_pilot_evidence_manifest
-from src.learning.pilot_preflight import TRAIN_IDS, build_pilot_preflight
-from src.learning.reconstruction import RecoveryCandidate, build_training_scenarios
-from src.learning.training.config import TrainingRunConfig
-from src.learning.training.runner import TrainingRunner
+from src.rl.pilot_milestones import PilotMilestoneRecorder, verify_pilot_evidence_manifest
+from src.rl.pilot_preflight import TRAIN_IDS, build_pilot_preflight
+from src.rl.reconstruction import RecoveryCandidate, build_training_scenarios
+from src.training.config import TrainingRunConfig
+from src.training.runner import TrainingRunner
 
 
 def main() -> int:

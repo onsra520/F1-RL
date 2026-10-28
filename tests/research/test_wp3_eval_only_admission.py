@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from src.research.wp3_eval_only_admission import (
+from src.validation.wp3_eval_only_admission import (
     _roster_check,build_eval_only_preflight,digest,refuse_full_eval,
     MODELS,TRACKS,STRATA,REPLAY_CASES,
 )
@@ -102,7 +102,7 @@ def test_preflight_sha_and_finish_gates_are_fail_closed():
 
 
 def test_historical_source_files_remain_identical_to_referenced_hashes():
-    from src.research.wp3_eval_only_admission import hash_file
+    from src.validation.wp3_eval_only_admission import hash_file
     p=json.loads(GATE.read_text("utf8"))
     assert hash_file(HISTORY/"evaluation/evaluation-roster.json")==p["historical_roster_file_sha256"]
     assert hash_file(HISTORY/"WP3-EVAL-SOURCE-PROVENANCE.json")==p["historical_eval_provenance_sha256"]

@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.research.wp7_protocol import load_registration, prepare_scenarios
+from src.validation.wp7_protocol import load_registration, prepare_scenarios
 
 ROOT = Path(__file__).resolve().parents[2]
 

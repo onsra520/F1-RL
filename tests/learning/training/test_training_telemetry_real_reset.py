@@ -5,9 +5,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.learning.training.telemetry import TrainingTelemetryRecorder
-from src.learning.training.vector_env import _SampledF1RLEnv
-from src.research.wp7_protocol import build_protocol, prepare_training_scenarios
+from src.training.telemetry import TrainingTelemetryRecorder
+from src.training.vector_env import _SampledF1RLEnv
+from src.validation.wp7_protocol import build_protocol, prepare_training_scenarios
 
 
 ROOT = Path(__file__).resolve().parents[3]

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from src.research.wp3_current_eval_gate import (
+from src.validation.wp3_current_eval_gate import (
     CURRENT, OLD, EXPECTED, require_latest_replay_evidence,
     require_registered_full_evaluation,
 )
@@ -16,7 +16,7 @@ OLD = Path(os.environ.get("F1RL_WP3_EVIDENCE", str(OLD)))
 
 @pytest.fixture(autouse=True)
 def configured_replay_origin(monkeypatch):
-    import src.research.wp3_current_eval_gate as gate_module
+    import src.validation.wp3_current_eval_gate as gate_module
     original = gate_module.require_latest_replay_evidence
     monkeypatch.setattr(gate_module, 'require_latest_replay_evidence',
                         lambda: original(CURRENT, OLD))

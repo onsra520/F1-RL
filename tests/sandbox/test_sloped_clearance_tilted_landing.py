@@ -7,22 +7,22 @@ from math import sin, cos
 
 import pytest
 
-from src.sandbox.ballistic_flight import (
+from src.simulation.ballistic_flight import (
     BallisticFlightPolicy, FlightPhysicsError, FlightState, advance_ballistic_flight,
 )
-from src.sandbox.body_collision import VehicleBodyGeometry
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.independent_suspension_dynamics import (
+from src.simulation.body_collision import VehicleBodyGeometry
+from src.simulation.geometry.vector import Vec3
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState,
     SuspensionResolutionError,
 )
-from src.sandbox.multi_surface_support import _atlas, MultiSurfaceSuspensionPolicy
-from src.sandbox.partial_wheel_release import AutomaticTakeoffPolicy, integrate_partial_support
-from src.sandbox.ramp_support import WheelContactPoints
-from src.sandbox.swept_surface_clearance import certify_swept_chassis_clearance
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.sandbox.vehicle import VehicleState, VehicleControl, VehicleParameters
+from src.simulation.multi_surface_support import _atlas, MultiSurfaceSuspensionPolicy
+from src.simulation.partial_wheel_release import AutomaticTakeoffPolicy, integrate_partial_support
+from src.simulation.ramp_support import WheelContactPoints
+from src.simulation.swept_surface_clearance import certify_swept_chassis_clearance
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.simulation.vehicle import VehicleState, VehicleControl, VehicleParameters
 
 BODY = VehicleBodyGeometry(1., .4, 2., Vec3(0., .1, 0.))
 WHEELS = WheelContactPoints(
@@ -143,11 +143,11 @@ def test_landing_above_approved_tilt_is_rejected():
 
 
 def test_world_landing_maintains_nonzero_attitude_through_remainder():
-    from src.sandbox.world import WorldState,step_world
-    from src.sandbox.interactions.state import InteractionState
-    from src.sandbox.rules.scoring import ScoreState
-    from src.sandbox.track.model import TrackWorld
-    from src.sandbox.track.state import TrackState
+    from src.simulation.world import WorldState,step_world
+    from src.simulation.interactions.state import InteractionState
+    from src.simulation.rules.scoring import ScoreState
+    from src.simulation.track.model import TrackWorld
+    from src.simulation.track.state import TrackState
 
     start=vehicle(y=.9,vy=-1.,pitch=.025,roll=.015,grounded=False)
     world=WorldState(

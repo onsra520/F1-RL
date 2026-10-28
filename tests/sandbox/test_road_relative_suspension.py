@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from src.research.wp7_protocol import load_registration, prepare_scenarios
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.independent_suspension_dynamics import (
+from src.validation.wp7_protocol import load_registration, prepare_scenarios
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.independent_suspension_dynamics import (
     SuspensionDynamicsState, SuspensionResolutionError, angular_velocity_for_suspension,
     integrate_independent_suspension, suspension_orientation,
 )
@@ -50,8 +50,8 @@ def test_actual_ramp_constant_translation_does_not_create_damping_or_pitch():
 
 def test_actual_ramp_simulation_preserves_steady_road_driven_state():
     from math import sin
-    from src.runtime.simulation import Simulation
-    from src.sandbox.vehicle import VehicleControl
+    from src.core.simulation import Simulation
+    from src.simulation.vehicle import VehicleControl
 
     factory, vehicle, dynamic, policy = ramp_translation()
     physics = replace(factory.physics_config, independent_suspension_policy=policy,
@@ -116,7 +116,7 @@ def test_legacy_physics_document_pin_and_new_model_identity():
 
 
 def test_new_force_model_cannot_silently_enter_legacy_partial_support():
-    from src.sandbox.partial_wheel_release import AutomaticTakeoffPolicy, integrate_partial_support
+    from src.simulation.partial_wheel_release import AutomaticTakeoffPolicy, integrate_partial_support
     factory, vehicle, dynamic, policy = ramp_translation()
     with pytest.raises(SuspensionResolutionError, match='force model'):
         integrate_partial_support(vehicle, vehicle, dynamic, policy, factory.physics_config.body_geometry,
@@ -150,8 +150,8 @@ def test_gap_rate_cannot_use_inconsistent_stored_velocities(change):
 
 
 def test_reduced_road_profile_does_not_silently_enable_steering_dynamics():
-    from src.runtime.simulation import Simulation
-    from src.sandbox.vehicle import VehicleControl
+    from src.core.simulation import Simulation
+    from src.simulation.vehicle import VehicleControl
     factory, vehicle, dynamic, policy = ramp_translation()
     physics = replace(factory.physics_config, independent_suspension_policy=policy,
                       ground_motion_version='legacy_euler_v1')
@@ -166,11 +166,11 @@ def test_reduced_road_profile_does_not_silently_enable_steering_dynamics():
 @pytest.mark.parametrize('entrypoint', ['ballistic', 'manifold', 'world'])
 def test_direct_lifecycle_entrypoints_reject_the_unimplemented_force_regime(entrypoint):
     from tests.integration.test_wp7_lifecycle_race import lifecycle_race_factory
-    from src.sandbox.ballistic_flight import advance_ballistic_flight, FlightPhysicsError
-    from src.sandbox.manifold_flight import advance_manifold_flight
-    from src.sandbox.multi_surface_support import _atlas
-    from src.sandbox.world import step_world
-    from src.sandbox.vehicle import VehicleControl
+    from src.simulation.ballistic_flight import advance_ballistic_flight, FlightPhysicsError
+    from src.simulation.manifold_flight import advance_manifold_flight
+    from src.simulation.multi_surface_support import _atlas
+    from src.simulation.world import step_world
+    from src.simulation.vehicle import VehicleControl
     factory = lifecycle_race_factory(launch=False)
     physics = factory.physics_config
     policy = replace(physics.independent_suspension_policy, force_model='road_relative_vertical_v2')

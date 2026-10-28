@@ -8,7 +8,7 @@ import subprocess
 import sys
 import time
 
-from ..learning.training.telemetry import TrainingTelemetryRecorder
+from src.training.telemetry import TrainingTelemetryRecorder
 from .permit import Budget, PilotStopped, Session, authorize, read_json, _utc
 
 
@@ -173,7 +173,7 @@ def worker(root, permit, envelope):
     expiry_remaining = (_utc(envelope['payload']['expires_at_utc'])-datetime.now(timezone.utc)).total_seconds()
     budget = Budget(deadline=min(deadline, time.monotonic()+expiry_remaining-.05),
                     learning_limit=permit['limits']['learning_timesteps'])
-    from ..learning.algorithms.ppo import PPOConfig, PPOModel, configure_cpu_runtime
+    from ..rl.algorithms.ppo import PPOConfig, PPOModel, configure_cpu_runtime
     configure_cpu_runtime(permit['limits']['threads'], permit['limits']['interop_threads'])
 
     output = Path(permit['output_directory'])

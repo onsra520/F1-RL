@@ -1,22 +1,24 @@
 from __future__ import annotations
 
 import ast
+
+from tests.dependency_rules import imports_project_layers
 from pathlib import Path
 
-import src.learning as learning
-import src.learning.action as action_module
-import src.learning.observation as observation_module
-from src.learning.action import PolicyAction, map_policy_action
-from src.runtime.simulation import Simulation, SimulationConfig
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.interactions.state import InteractionState
-from src.sandbox.rules.scoring import ScoreState
-from src.sandbox.track.model import TrackWorld
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.sandbox.track.state import TrackState
-from src.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
-from src.sandbox.world import WorldState
+import src.rl as learning
+import src.rl.action as action_module
+import src.rl.observation as observation_module
+from src.rl.action import PolicyAction, map_policy_action
+from src.core.simulation import Simulation, SimulationConfig
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.interactions.state import InteractionState
+from src.simulation.rules.scoring import ScoreState
+from src.simulation.track.model import TrackWorld
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.simulation.track.state import TrackState
+from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
+from src.simulation.world import WorldState
 
 
 def _road() -> PlanarSurfacePatch:
@@ -92,10 +94,11 @@ def _imported_modules(path: Path) -> tuple[tuple[int, str], ...]:
 
 
 def test_action_module_has_no_forbidden_dependencies() -> None:
-    path = Path("src/learning/action.py")
+    path = Path("src/rl/action.py")
     imports = _imported_modules(path)
+    assert not imports_project_layers(path, ("core",))
     forbidden = (
-        "runtime", "api", "drivers", "observation", "rewards", "gymnasium",
+        "runtime", "core", "src.core", "api", "drivers", "observation", "rewards", "gymnasium",
         "numpy", "torch", "stable_baselines3", "fastapi", "websocket", "websockets",
     )
     for _, module in imports:
@@ -106,20 +109,6 @@ def test_action_module_has_no_forbidden_dependencies() -> None:
 
 
 def test_sandbox_does_not_import_learning() -> None:
-    offenders: list[str] = []
-    for path in Path("src/sandbox").rglob("*.py"):
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                if any(
-                    alias.name == "src.learning" or alias.name.startswith("src.learning.")
-                    for alias in node.names
-                ):
-                    offenders.append(str(path))
-            elif isinstance(node, ast.ImportFrom) and node.module:
-                module = node.module
-                if module == "src.learning" or module.startswith("src.learning."):
-                    offenders.append(str(path))
-                if node.level > 0 and (module == "learning" or module.startswith("learning.")):
-                    offenders.append(str(path))
-    assert offenders == []
+    directory = Path("src/simulation")
+    assert directory.is_dir()
+    assert not [path for path in directory.rglob("*.py") if imports_project_layers(path, ("rl", "training", "evaluation"))]

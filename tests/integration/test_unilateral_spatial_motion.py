@@ -2,8 +2,8 @@
 from dataclasses import replace
 import numpy as np
 
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.geometry.rotation import Quaternion
 from tests.integration.test_spatial_ground_motion import spatial_factory
 
 

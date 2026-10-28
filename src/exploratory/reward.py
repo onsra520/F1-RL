@@ -1,8 +1,8 @@
 """Versioned demo-only curriculum; never changes registered Gym/physics outcomes."""
 from math import isfinite
 
-from ..sandbox.independent_suspension_dynamics import SuspensionResolutionError
-from ..sandbox.ballistic_flight import FlightPhysicsError
+from ..simulation.independent_suspension_dynamics import SuspensionResolutionError
+from ..simulation.ballistic_flight import FlightPhysicsError
 
 REGISTERED = {'version': 'registered'}
 

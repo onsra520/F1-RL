@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.learning.algorithms.ppo import PPOConfig
+from src.rl.algorithms.ppo import PPOConfig
 
 
 def test_ppo_config_defaults_match_baseline() -> None:

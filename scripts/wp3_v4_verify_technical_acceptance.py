@@ -5,7 +5,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from src.research.historical_source_records import verify_historical_records
+from src.validation.historical_source_records import verify_historical_records
 
 
 HISTORY = Path(os.environ.get('F1RL_WP3_EVIDENCE', r'D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1'))

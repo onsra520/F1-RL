@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-import src.learning.training.runner as runner_module
-from src.learning.algorithms.ppo import PPOConfig
-from src.learning.training.config import TrainingRunConfig, VectorEnvConfig
-from src.learning.training.runner import TrainingRunner
+import src.training.runner as runner_module
+from src.rl.algorithms.ppo import PPOConfig
+from src.training.config import TrainingRunConfig, VectorEnvConfig
+from src.training.runner import TrainingRunner
 
 from tests.learning.training.mocks.mock_factories import make_scenario_set
 from tests.learning.training.mocks.mock_ppo import MockPPOModel

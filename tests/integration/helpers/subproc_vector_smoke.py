@@ -9,23 +9,23 @@ if str(_REPO_ROOT) not in sys.path:
 
 import numpy as np
 
-from src.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
-from src.learning.training.config import VectorEnvConfig
-from src.learning.training.env_factory import F1RLEnvFactory
-from src.learning.training.vector_env import make_vector_env
-from src.runtime.simulation import SimulationConfig
-from src.sandbox.entities.finish_line import FinishLine
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.interactions.state import InteractionState
-from src.sandbox.perception.sensor_suite import SensorSuite
-from src.sandbox.rules.scoring import ScoreState
-from src.sandbox.track.model import TrackWorld
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.sandbox.track.state import TrackState
-from src.sandbox.track.volume import OrientedBoxVolume
-from src.sandbox.vehicle import VehicleParameters, VehicleState
-from src.sandbox.world import WorldState
+from src.rl import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
+from src.training.config import VectorEnvConfig
+from src.training.env_factory import F1RLEnvFactory
+from src.training.vector_env import make_vector_env
+from src.core.simulation import SimulationConfig
+from src.simulation.entities.finish_line import FinishLine
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.interactions.state import InteractionState
+from src.simulation.perception.sensor_suite import SensorSuite
+from src.simulation.rules.scoring import ScoreState
+from src.simulation.track.model import TrackWorld
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.simulation.track.state import TrackState
+from src.simulation.track.volume import OrientedBoxVolume
+from src.simulation.vehicle import VehicleParameters, VehicleState
+from src.simulation.world import WorldState
 
 
 def _factory() -> F1RLEnvFactory:

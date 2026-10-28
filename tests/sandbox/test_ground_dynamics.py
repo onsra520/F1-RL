@@ -2,11 +2,11 @@ from math import cos, pi, sin
 
 import pytest
 
-from src.sandbox.dynamics.ground_dynamics import compute_ground_motion
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.surface import SurfaceContact
-from src.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from src.simulation.dynamics.ground_dynamics import compute_ground_motion
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.surface import SurfaceContact
+from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
 
 
 def parameters() -> VehicleParameters:

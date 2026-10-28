@@ -1,12 +1,12 @@
 """Versioned monotone phase crossings on continuous sloped road atlases."""
 from dataclasses import replace
 import pytest
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.vehicle import VehicleControl
-from src.sandbox.spatial_contact_dynamics import integrate_spatial_lifecycle,SpatialContactPolicy
-from src.sandbox.coupled_longitudinal_dynamics import LongitudinalContactPolicy
-from src.sandbox.multi_surface_support import _atlas,_contacts
-from src.sandbox.independent_suspension_dynamics import SuspensionResolutionError
+from src.simulation.geometry.vector import Vec3
+from src.simulation.vehicle import VehicleControl
+from src.simulation.spatial_contact_dynamics import integrate_spatial_lifecycle,SpatialContactPolicy
+from src.simulation.coupled_longitudinal_dynamics import LongitudinalContactPolicy
+from src.simulation.multi_surface_support import _atlas,_contacts
+from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
 from tests.sandbox.test_road_relative_suspension import ramp_translation
 
 
@@ -35,7 +35,7 @@ def test_actual_train_ramp_landing_requires_explicit_atlas_phase_version():
 
 
 def test_symmetric_mixed_normal_landing_uses_both_actual_patch_forces():
-    from src.sandbox.track.patch import PlanarSurfacePatch
+    from src.simulation.track.patch import PlanarSurfacePatch
     f,_,_,s=ramp_translation()
     s=replace(s,force_model='road_relative_unilateral_v3')
     patches=tuple(PlanarSurfacePatch(str(sign),Vec3(sign*5.,.25,4.),Vec3(0.,0.,1.),
@@ -56,9 +56,9 @@ def test_symmetric_mixed_normal_landing_uses_both_actual_patch_forces():
 
 
 def test_public_simulation_accepts_versioned_sloped_landing_with_distinct_identity():
-    from src.runtime.simulation import Simulation
-    from src.sandbox.ballistic_flight import FlightState
-    from src.sandbox.spatial_contact_dynamics import _suspension_state
+    from src.core.simulation import Simulation
+    from src.simulation.ballistic_flight import FlightState
+    from src.simulation.spatial_contact_dynamics import _suspension_state
     from tests.integration.test_spatial_compliant_gym import lifecycle_factory
     f,v,s,policy=sloped_landing()
     old=lifecycle_factory().physics_config
@@ -98,9 +98,9 @@ def test_new_atlas_phase_domain_rejects_unknown_selector():
 
 def test_actual_gym_owner_outcome_accepts_atlas_landing_with_valid_observation():
     import numpy as np
-    from src.learning.wp7_race import WP7RaceConfig
-    from src.sandbox.ballistic_flight import FlightState
-    from src.sandbox.spatial_contact_dynamics import _suspension_state
+    from src.rl.wp7_race import WP7RaceConfig
+    from src.simulation.ballistic_flight import FlightState
+    from src.simulation.spatial_contact_dynamics import _suspension_state
     from tests.integration.test_spatial_compliant_gym import lifecycle_factory
     f,v,s,policy=sloped_landing()
     config=replace(lifecycle_factory().physics_config,ground_motion_version='spatial_compliant_atlas_lifecycle_v2',
@@ -126,7 +126,7 @@ def test_actual_gym_owner_outcome_accepts_atlas_landing_with_valid_observation()
 
 def test_previous_owner_profile_physics_hash_and_schema_do_not_migrate():
     from pathlib import Path
-    from src.research.wp7_protocol import build_protocol
+    from src.validation.wp7_protocol import build_protocol
     protocol=build_protocol(Path(__file__).resolve().parents[2],profile='spatial_owner_v2')
     assert protocol['physics_sha256']=='1fc728b23f4fff8ccc5a683190608aaaa1d5d7a0f294c3079a4f771be4c2152f'
     assert protocol['physics']['schema_version']==6
@@ -134,10 +134,10 @@ def test_previous_owner_profile_physics_hash_and_schema_do_not_migrate():
 
 
 def test_atlas_transition_rejects_an_audit_claiming_the_previous_solver():
-    from src.runtime.physics import PhysicsTransitionError
-    from src.sandbox.world import step_world
-    from src.sandbox.ballistic_flight import FlightState
-    from src.sandbox.spatial_contact_dynamics import _suspension_state
+    from src.core.physics import PhysicsTransitionError
+    from src.simulation.world import step_world
+    from src.simulation.ballistic_flight import FlightState
+    from src.simulation.spatial_contact_dynamics import _suspension_state
     from tests.integration.test_spatial_compliant_gym import lifecycle_factory
     f,v,s,policy=sloped_landing()
     config=replace(lifecycle_factory().physics_config,ground_motion_version='spatial_compliant_atlas_lifecycle_v2',

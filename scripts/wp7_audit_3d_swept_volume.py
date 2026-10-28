@@ -13,7 +13,7 @@ _entry_root = str(_EntryPath(__file__).resolve().parents[1])
 if _entry_root not in _entry_sys.path:
     _entry_sys.path.insert(0, _entry_root)
 
-from src.learning.swept_volume_audit import audit_3d_swept_run
+from src.rl.swept_volume_audit import audit_3d_swept_run
 
 
 def main()->int:

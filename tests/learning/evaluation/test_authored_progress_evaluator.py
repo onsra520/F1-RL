@@ -4,8 +4,8 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from src.learning.evaluation import evaluate_episode
-from src.learning.training.env_factory import F1RLEnvFactory
+from src.evaluation import evaluate_episode
+from src.training.env_factory import F1RLEnvFactory
 from tests.integration.test_authored_route_env_reconstruction import _factory
 from tests.learning.evaluation.mocks.environments import ScriptedEvaluationEnv
 from tests.learning.evaluation.mocks.policies import ConstantPolicy

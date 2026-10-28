@@ -36,7 +36,7 @@ def test_timing_preserves_result_and_exception(monkeypatch):
 @pytest.mark.parametrize('axis', [0, 1, 2])
 @pytest.mark.parametrize('invalid', [float('inf'), -float('inf'), float('nan')])
 def test_vector_finite_validation_preserved(axis, invalid):
-    from src.sandbox.geometry.vector import Vec3
+    from src.simulation.geometry.vector import Vec3
     values = [0., 1., -1.]
     values[axis] = invalid
     with pytest.raises(ValueError, match='components must be finite'):

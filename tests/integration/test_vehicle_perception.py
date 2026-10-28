@@ -4,14 +4,16 @@ from pathlib import Path
 
 import pytest
 
-from src.sandbox.entities.obstacle import Obstacle
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.perception.rangefinder import RangefinderReading, RangefinderSpec
-from src.sandbox.perception.sensor_suite import SensorSuite
-from src.sandbox.track.model import TrackWorld
-from src.sandbox.track.volume import OrientedBoxVolume
-from src.sandbox.vehicle import VehicleState
+from tests.dependency_rules import imports_project_layers
+
+from src.simulation.entities.obstacle import Obstacle
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.perception.rangefinder import RangefinderReading, RangefinderSpec
+from src.simulation.perception.sensor_suite import SensorSuite
+from src.simulation.track.model import TrackWorld
+from src.simulation.track.volume import OrientedBoxVolume
+from src.simulation.vehicle import VehicleState
 
 
 def _obstacle(id_: str, center: Vec3) -> Obstacle:
@@ -75,11 +77,15 @@ def test_readings_are_raw_physical_measurements_only() -> None:
 
 
 def test_perception_source_has_no_forbidden_dependencies() -> None:
-    package_dir = Path(__file__).parents[2] / "src" / "sandbox" / "perception"
+    package_dir = Path(__file__).parents[2] / "src" / "simulation" / "perception"
+    assert package_dir.is_dir()
+    assert all(not imports_project_layers(path, ("rl", "training", "evaluation", "core")) for path in package_dir.glob("*.py"))
     source = "\n".join(path.read_text(encoding="utf-8").lower() for path in package_dir.glob("*.py"))
     forbidden = (
-        "src.learning",
-        "src.runtime",
+        "src.rl",
+        "src.training",
+        "src.evaluation",
+        "src.core",
         "src.api",
         "src.drivers",
         "gymnasium",

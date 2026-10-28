@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from src.learning.algorithms import ppo
+from src.rl.algorithms import ppo
 
 
 def test_runtime_configuration_and_limits_use_the_sb3_runtime(monkeypatch):

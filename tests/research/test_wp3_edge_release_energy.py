@@ -2,7 +2,7 @@
 from dataclasses import replace
 import pytest
 
-from src.sandbox.wheel_edge_release_energy import certify_wheel_edge_release_energy
+from src.simulation.wheel_edge_release_energy import certify_wheel_edge_release_energy
 
 A=frozenset({0,1,2,3})
 B=frozenset({1,2,3})

@@ -2,7 +2,7 @@ from pathlib import Path
 
 
 def test_demo_factory_never_opens_heldout_assets(monkeypatch):
-    from src.research.wp7_protocol import load_registration, prepare_scenarios
+    from src.validation.wp7_protocol import load_registration, prepare_scenarios
     original = Path.open
 
     def guarded(path, *args, **kwargs):

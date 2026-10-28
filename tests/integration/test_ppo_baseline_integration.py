@@ -7,21 +7,21 @@ import numpy as np
 
 from stable_baselines3.common.env_checker import check_env
 
-from src.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
-from src.learning.algorithms.ppo import PPOConfig, PPOModel
-from src.learning.gym_environment import F1RLEnv
-from src.runtime.simulation import SimulationConfig
-from src.sandbox.entities.finish_line import FinishLine
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.interactions.state import InteractionState
-from src.sandbox.perception.sensor_suite import SensorSuite
-from src.sandbox.rules.scoring import ScoreState
-from src.sandbox.track.model import TrackWorld
-from src.sandbox.track.state import TrackState
-from src.sandbox.track.volume import OrientedBoxVolume
-from src.sandbox.vehicle import VehicleParameters, VehicleState
-from src.sandbox.world import WorldState
+from src.rl import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
+from src.rl.algorithms.ppo import PPOConfig, PPOModel
+from src.rl.gym_environment import F1RLEnv
+from src.core.simulation import SimulationConfig
+from src.simulation.entities.finish_line import FinishLine
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.interactions.state import InteractionState
+from src.simulation.perception.sensor_suite import SensorSuite
+from src.simulation.rules.scoring import ScoreState
+from src.simulation.track.model import TrackWorld
+from src.simulation.track.state import TrackState
+from src.simulation.track.volume import OrientedBoxVolume
+from src.simulation.vehicle import VehicleParameters, VehicleState
+from src.simulation.world import WorldState
 
 
 def _smoke_env() -> F1RLEnv:
@@ -142,18 +142,18 @@ def _direct_imports(path: Path) -> tuple[str, ...]:
 
 
 def test_algorithm_package_exports_only_approved_ppo_surface() -> None:
-    from src.learning.algorithms import PPOConfig as ExportedConfig
-    from src.learning.algorithms import PPOModel as ExportedModel
+    from src.rl.algorithms import PPOConfig as ExportedConfig
+    from src.rl.algorithms import PPOModel as ExportedModel
 
     assert ExportedConfig is PPOConfig
     assert ExportedModel is PPOModel
 
-    import src.learning.algorithms as algorithms
+    import src.rl.algorithms as algorithms
     assert algorithms.__all__ == ["PPOConfig", "PPOModel"]
 
 
 def test_base_learning_package_does_not_reexport_optional_ppo() -> None:
-    import src.learning as learning
+    import src.rl as learning
     assert not hasattr(learning, "PPOConfig")
     assert not hasattr(learning, "PPOModel")
 
@@ -169,9 +169,9 @@ def blocked(name, *args, **kwargs):
         raise ImportError("blocked torch")
     return original(name, *args, **kwargs)
 builtins.__import__ = blocked
-import src.learning
-assert not hasattr(src.learning, "PPOConfig")
-assert not hasattr(src.learning, "PPOModel")
+import src.rl
+assert not hasattr(src.rl, "PPOConfig")
+assert not hasattr(src.rl, "PPOModel")
 '''
     completed = subprocess.run(
         [sys.executable, "-c", code],
@@ -193,19 +193,19 @@ def test_model_framework_imports_are_limited_to_backends() -> None:
         if any(module == "torch" or module.startswith("torch.") for module in modules):
             torch_owners.append(path.as_posix())
 
-    assert sorted(sb3_owners) == ["src/learning/algorithms/ppo.py", "src/learning/training/vector_env.py"]
+    assert sorted(sb3_owners) == ["src/rl/algorithms/ppo.py", "src/training/vector_env.py"]
     assert torch_owners == []
 
 
 def test_lower_layers_remain_free_of_model_framework_dependencies() -> None:
     paths = [
-        *Path("src/sandbox").rglob("*.py"),
-        *Path("src/runtime").rglob("*.py"),
-        Path("src/learning/gym_environment.py"),
-        Path("src/learning/action.py"),
-        Path("src/learning/observation.py"),
-        *Path("src/learning/rewards").rglob("*.py"),
-        *Path("src/learning/episode").rglob("*.py"),
+        *Path("src/simulation").rglob("*.py"),
+        *Path("src/core").rglob("*.py"),
+        Path("src/rl/gym_environment.py"),
+        Path("src/rl/action.py"),
+        Path("src/rl/observation.py"),
+        *Path("src/rl/rewards").rglob("*.py"),
+        *Path("src/rl/episode").rglob("*.py"),
     ]
     forbidden = ("stable_baselines3", "torch")
     offenders: list[str] = []
@@ -248,7 +248,7 @@ def test_generated_policy_archive_is_ignored_and_untracked() -> None:
 
 
 def test_algorithm_docs_describe_implemented_ppo_contract() -> None:
-    text = Path("src/learning/algorithms/README.md").read_text(encoding="utf-8").lower()
+    text = Path("src/rl/algorithms/README.md").read_text(encoding="utf-8").lower()
     for token in (
         "stable-baselines3",
         ".[rl]",
@@ -265,7 +265,7 @@ def test_algorithm_docs_describe_implemented_ppo_contract() -> None:
 
 
 def test_learning_docs_mark_ppo_baseline_implemented_but_future_layers_pending() -> None:
-    text = Path("src/learning/README.md").read_text(encoding="utf-8").lower()
+    text = Path("src/rl/README.md").read_text(encoding="utf-8").lower()
     assert "ppo baseline" in text
     assert "implemented" in text
     assert "vectorized" in text

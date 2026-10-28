@@ -2,8 +2,8 @@ from math import cos, pi, sin, sqrt
 
 import pytest
 
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.track.patch import PlanarSurfacePatch
+from src.simulation.geometry.vector import Vec3
+from src.simulation.track.patch import PlanarSurfacePatch
 
 
 def flat_patch() -> PlanarSurfacePatch:

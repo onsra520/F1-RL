@@ -2,13 +2,13 @@ from dataclasses import replace
 from pathlib import Path
 import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from src.runtime.simulation import Simulation
-from src.sandbox.ballistic_flight import FlightState
-from src.sandbox.entities.obstacle import Obstacle
-from src.sandbox.track.volume import OrientedBoxVolume
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.vehicle import VehicleControl
-from src.sandbox.spatial_contact_dynamics import _suspension_state
+from src.core.simulation import Simulation
+from src.simulation.ballistic_flight import FlightState
+from src.simulation.entities.obstacle import Obstacle
+from src.simulation.track.volume import OrientedBoxVolume
+from src.simulation.geometry.vector import Vec3
+from src.simulation.vehicle import VehicleControl
+from src.simulation.spatial_contact_dynamics import _suspension_state
 from tests.integration.test_spatial_ground_motion import spatial_factory
 f=spatial_factory()
 p=replace(f.physics_config,mode="wp7_lifecycle_v1",ground_motion_version="spatial_road_edge_partial_lifecycle_v4",independent_suspension_policy=replace(f.physics_config.independent_suspension_policy,force_model="road_relative_unilateral_v3"))

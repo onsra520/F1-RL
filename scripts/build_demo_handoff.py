@@ -40,9 +40,9 @@ def main(argv=None):
             raise ValueError('paired improvement evidence must match this model')
     import torch
     torch.set_num_threads(1)
-    from src.learning.algorithms.ppo import PPOModel
+    from src.rl.algorithms.ppo import PPOModel
     from src.exploratory.pilot import weights_sha256
-    from src.research.wp7_protocol import load_registration, prepare_scenarios
+    from src.validation.wp7_protocol import load_registration, prepare_scenarios
     loaded = PPOModel.load(model, device='cpu')
     if loaded.num_timesteps != summary['learning_timesteps'] or weights_sha256(loaded) != summary['final_weights_sha256']:
         raise ValueError('saved model differs from learning summary')

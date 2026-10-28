@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from src.local_demo.evaluation import _summarize, _write_evaluation_reports
+from src.interfaces.evaluation import _summarize, _write_evaluation_reports
 
 def test_all_report_chart_writers_complete_and_are_idempotent():
     evaluation={

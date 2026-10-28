@@ -7,24 +7,24 @@ from math import pi
 
 import pytest
 
-from src.sandbox.ballistic_flight import (
+from src.simulation.ballistic_flight import (
     BallisticFlightPolicy, FlightPhysicsError, FlightState,
 )
-from src.sandbox.body_collision import VehicleBodyGeometry
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.independent_suspension_dynamics import (
+from src.simulation.body_collision import VehicleBodyGeometry
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState,
     SuspensionResolutionError,
 )
-from src.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
-from src.sandbox.partial_wheel_release import (
+from src.simulation.multi_surface_support import MultiSurfaceSuspensionPolicy
+from src.simulation.partial_wheel_release import (
     AutomaticTakeoffPolicy, integrate_partial_support,
     sample_partial_wheels, _flat_atlas,
 )
-from src.sandbox.ramp_support import WheelContactPoints
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.sandbox.vehicle import VehicleState, VehicleControl, VehicleParameters
+from src.simulation.ramp_support import WheelContactPoints
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.simulation.vehicle import VehicleState, VehicleControl, VehicleParameters
 
 
 BODY = VehicleBodyGeometry(1., .4, 2., Vec3(0., .1, 0.))
@@ -163,11 +163,11 @@ def test_bad_release_policy_inputs_rejected(options):
 
 
 def _world(vehicle):
-    from src.sandbox.interactions.state import InteractionState
-    from src.sandbox.rules.scoring import ScoreState
-    from src.sandbox.track.model import TrackWorld
-    from src.sandbox.track.state import TrackState
-    from src.sandbox.world import WorldState
+    from src.simulation.interactions.state import InteractionState
+    from src.simulation.rules.scoring import ScoreState
+    from src.simulation.track.model import TrackWorld
+    from src.simulation.track.state import TrackState
+    from src.simulation.world import WorldState
     world = WorldState(
         vehicle, TrackState(frozenset()),
         InteractionState(frozenset(), frozenset()), ScoreState(),
@@ -179,7 +179,7 @@ def _world(vehicle):
 
 
 def test_world_auto_takeoff_switches_to_ballistic_for_remaining_time():
-    from src.sandbox.world import step_world
+    from src.simulation.world import step_world
     source = pose(speed=15.)
     track, state, parameters = _world(source)
     result = step_world(
@@ -203,10 +203,10 @@ def test_world_auto_takeoff_switches_to_ballistic_for_remaining_time():
 
 
 def test_world_marks_only_verified_auto_takeoff_obstacle_contact():
-    from src.sandbox.ballistic_flight import FlightPhysicsError
-    from src.sandbox.entities.obstacle import Obstacle
-    from src.sandbox.track.volume import OrientedBoxVolume
-    from src.sandbox.world import step_world
+    from src.simulation.ballistic_flight import FlightPhysicsError
+    from src.simulation.entities.obstacle import Obstacle
+    from src.simulation.track.volume import OrientedBoxVolume
+    from src.simulation.world import step_world
 
     track, state, parameters = _world(pose(speed=15.))
     wall = Obstacle("wall", OrientedBoxVolume(
@@ -226,7 +226,7 @@ def test_world_marks_only_verified_auto_takeoff_obstacle_contact():
 
 
 def test_world_no_automatic_policy_retains_legacy_optin_path():
-    from src.sandbox.world import step_world
+    from src.simulation.world import step_world
     source = pose()
     track, state, parameters = _world(source)
     result = step_world(
@@ -240,7 +240,7 @@ def test_world_no_automatic_policy_retains_legacy_optin_path():
 
 
 def test_world_refuses_auto_policy_without_complete_optin():
-    from src.sandbox.world import step_world
+    from src.simulation.world import step_world
     source = pose()
     track, state, parameters = _world(source)
     with pytest.raises(ValueError, match="automatic_takeoff_policy requires"):
@@ -253,10 +253,10 @@ def test_world_refuses_auto_policy_without_complete_optin():
 
 
 def test_world_auto_departure_cannot_collect_airborne_reward():
-    from src.sandbox.entities.score_pickup import ScorePickup
-    from src.sandbox.track.volume import OrientedBoxVolume
-    from src.sandbox.track.model import TrackWorld
-    from src.sandbox.world import step_world
+    from src.simulation.entities.score_pickup import ScorePickup
+    from src.simulation.track.volume import OrientedBoxVolume
+    from src.simulation.track.model import TrackWorld
+    from src.simulation.world import step_world
     source = pose(speed=15.)
     track, state, parameters = _world(source)
     volume = OrientedBoxVolume(Vec3(0.,.3,2.9),Vec3(2.,2.,1.),
@@ -274,7 +274,7 @@ def test_world_auto_departure_cannot_collect_airborne_reward():
 
 
 def test_world_keeps_same_auto_policy_during_subsequent_airborne_frame():
-    from src.sandbox.world import step_world
+    from src.simulation.world import step_world
     track, state, parameters = _world(pose(speed=15.))
     opts = dict(
         body_geometry=BODY,
@@ -296,7 +296,7 @@ def test_world_keeps_same_auto_policy_during_subsequent_airborne_frame():
 
 
 def test_fast_angular_motion_cannot_alias_shortest_arc_sweep():
-    from src.sandbox.ballistic_flight import advance_ballistic_flight
+    from src.simulation.ballistic_flight import advance_ballistic_flight
     spinning = VehicleState(
         Vec3(0.,10.,5.), Vec3(0.,0.,300.),
         Quaternion.identity(), Vec3(0.,100.,0.), False,

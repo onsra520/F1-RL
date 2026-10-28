@@ -2,8 +2,8 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.surface import SurfaceContact
+from src.simulation.geometry.vector import Vec3
+from src.simulation.surface import SurfaceContact
 
 
 def test_surface_contact_accepts_unit_normal_and_is_frozen() -> None:

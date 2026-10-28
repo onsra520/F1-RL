@@ -5,8 +5,8 @@ import os
 import json
 import pytest
 
-from src.research.wp3_crash_contract_registration import assemble_registration
-from src.learning.crash_terminal_registered import _sha
+from src.validation.wp3_crash_contract_registration import assemble_registration
+from src.rl.crash_terminal_registered import _sha
 
 ROOT=Path(__file__).resolve().parents[2]
 HISTORY=Path(os.environ.get("F1RL_WP3_EVIDENCE", r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1"))
@@ -15,7 +15,7 @@ RECEIPT=ROOT/"docs/research/WP3-CRASH-TERMINAL-V1-REGRESSION-20261024.txt"
 REGISTRY=ROOT/"docs/research/WP3-CRASH-TERMINAL-V1-TECHNICAL-REGISTRY-20261024.json"
 
 def test_historical_registry_remains_valid_but_not_current_source_approval():
-    from src.research.historical_source_records import verify_historical_records
+    from src.validation.historical_source_records import verify_historical_records
     assert verify_historical_records(ROOT, HISTORY)["status"] == "HISTORICAL_RECORD_INTEGRITY_VERIFIED"
     with pytest.raises(ValueError, match="historical source identity"):
         assemble_registration(ROOT,HISTORY,REPLAY,RECEIPT)

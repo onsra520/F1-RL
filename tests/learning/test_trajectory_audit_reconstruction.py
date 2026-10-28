@@ -3,7 +3,7 @@ from math import sqrt
 
 import pytest
 
-from src.learning.trajectory_audit import segment_rect_clearance_xz
+from src.rl.trajectory_audit import segment_rect_clearance_xz
 
 
 @pytest.mark.parametrize("a,b,expected", [

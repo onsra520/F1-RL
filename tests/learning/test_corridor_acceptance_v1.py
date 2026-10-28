@@ -1,10 +1,10 @@
 """Synthetic authored-route tests; no training or HELD-OUT asset access."""
 import pytest
 
-from src.learning.corridor_acceptance import screen_authored_route_sweep
-from src.learning.route_navigation import AuthoredRoute
-from src.sandbox.geometry.vector import Vec3
-from src.track_assets.model import AuthoredNavigation
+from src.rl.corridor_acceptance import screen_authored_route_sweep
+from src.rl.route_navigation import AuthoredRoute
+from src.simulation.geometry.vector import Vec3
+from src.tracks.model import AuthoredNavigation
 
 
 def route_straight():

@@ -16,11 +16,11 @@ _entry_root = str(_EntryPath(__file__).resolve().parents[1])
 if _entry_root not in _entry_sys.path:
     _entry_sys.path.insert(0, _entry_root)
 
-from src.research.wp7_cell_evaluation import (
+from src.validation.wp7_cell_evaluation import (
     _execute_cell, _fixture_identity, _registered_cell_admission, _registered_model_snapshot,
 )
-from src.research.wp7_protocol import digest, evaluation_seed, prepare_evaluation_factory, validate_protocol
-from src.learning.training.env_factory import F1RLEnvFactory
+from src.validation.wp7_protocol import digest, evaluation_seed, prepare_evaluation_factory, validate_protocol
+from src.training.env_factory import F1RLEnvFactory
 
 
 def run_fixture(payload):
@@ -78,7 +78,7 @@ def _run_cell(payload,*,registered):
         import random
         import numpy as np
         import torch
-        from src.learning.algorithms.ppo import PPO, PPOModel
+        from src.rl.algorithms.ppo import PPO, PPOModel
 
         torch.set_num_threads(1)
         torch.use_deterministic_algorithms(True)
@@ -156,7 +156,7 @@ def _run_cell(payload,*,registered):
             record['worker']['loaded_models']=loaded_models
         valid = [r for r in record["episodes"] if r['valid']]
         successes = sum(r['metrics']['success'] for r in valid)
-        from src.research.wp7_robustness_gate import one_sided_cp_lower
+        from src.validation.wp7_robustness_gate import one_sided_cp_lower
         lower = one_sided_cp_lower(successes,len(valid)) if valid else None
         record["numerical_summary"] = {
             "valid_trials":len(valid),"successes":successes,"one_sided_cp95_lower":lower,

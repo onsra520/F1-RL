@@ -3,15 +3,15 @@ from dataclasses import replace
 
 import pytest
 
-from src.sandbox.coupled_longitudinal_dynamics import LongitudinalContactPolicy
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.independent_suspension_dynamics import SuspensionResolutionError
-from src.sandbox.multi_surface_support import _atlas
-from src.sandbox.spatial_contact_dynamics import (
+from src.simulation.coupled_longitudinal_dynamics import LongitudinalContactPolicy
+from src.simulation.geometry.vector import Vec3
+from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
+from src.simulation.multi_surface_support import _atlas
+from src.simulation.spatial_contact_dynamics import (
     SpatialContactPolicy, integrate_spatial_road_edge_lifecycle,
 )
-from src.sandbox.spatial_partial_wheel_contact import sample_spatial_partial_wheels
-from src.sandbox.vehicle import VehicleControl
+from src.simulation.spatial_partial_wheel_contact import sample_spatial_partial_wheels
+from src.simulation.vehicle import VehicleControl
 from tests.sandbox.test_partial_wheel_release import CONTACT,PHYSICS,road,pose,BODY
 
 PLAN=(road(),)
@@ -28,7 +28,7 @@ def test_support_count_at_authored_platform_edges(z,expected):
 
 
 def test_road_half_width_leaves_two_wheels_supported():
-    from src.sandbox.track.patch import PlanarSurfacePatch
+    from src.simulation.track.patch import PlanarSurfacePatch
     narrow=road(width=1.,length=20.)
     atlas=_atlas((narrow,),CONTACT.seam_height_tolerance_m)
     s=sample_spatial_partial_wheels(
@@ -38,14 +38,14 @@ def test_road_half_width_leaves_two_wheels_supported():
 
 
 def test_single_wheel_can_be_supported_on_asymmetric_edge():
-    from src.sandbox.track.patch import PlanarSurfacePatch
+    from src.simulation.track.patch import PlanarSurfacePatch
     patch=PlanarSurfacePatch("one",Vec3(-.4,0.,.8),Vec3(0,0,1),Vec3(0,1,0),.15,.15)
     atlas=_atlas((patch,),CONTACT.seam_height_tolerance_m)
     assert sample_spatial_partial_wheels(pose(),CONTACT,atlas).support_count==1
 
 
 def test_three_wheel_case_with_one_missing_footprint():
-    from src.sandbox.track.patch import PlanarSurfacePatch
+    from src.simulation.track.patch import PlanarSurfacePatch
     # Keep front-right, rear-left, rear-right; front-left outside.
     a=PlanarSurfacePatch("left-rear",Vec3(-.4,0.,-.8),Vec3(0,0,1),Vec3(0,1,0),.4,.4)
     b=PlanarSurfacePatch("right",Vec3(.4,0.,0.),Vec3(0,0,1),Vec3(0,1,0),.4,2.3)
@@ -85,7 +85,7 @@ def test_optin_lifecycle_handles_safe_four_supported_reference():
 
 
 def test_new_mode_cannot_modify_original_supported_v3_path():
-    from src.sandbox.spatial_contact_dynamics import integrate_spatial_lifecycle
+    from src.simulation.spatial_contact_dynamics import integrate_spatial_lifecycle
     from tests.sandbox.test_road_relative_suspension import ramp_translation
     fac,_,_,s=ramp_translation()
     p=replace(s,force_model="road_relative_unilateral_v3")

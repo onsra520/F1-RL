@@ -4,15 +4,15 @@ from math import pi, sin, cos
 
 import pytest
 
-from src.sandbox.body_collision import VehicleBodyGeometry
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.multi_surface_support import (
+from src.simulation.body_collision import VehicleBodyGeometry
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.multi_surface_support import (
     MultiSurfaceSuspensionPolicy, certify_multisurface_support,
 )
-from src.sandbox.ramp_support import WheelContactPoints
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.sandbox.vehicle import VehicleState
+from src.simulation.ramp_support import WheelContactPoints
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.simulation.vehicle import VehicleState
 
 BODY = VehicleBodyGeometry(1., .4, 2., Vec3(0., .1, 0.))
 WHEELS = WheelContactPoints(Vec3(-.4, -.3, .8), Vec3(.4, -.3, .8),
@@ -137,13 +137,13 @@ def test_invalid_policy_rejected(key, value):
 
 
 def test_world_multi_surface_policy_is_explicit_and_mutually_exclusive():
-    from src.sandbox.interactions.state import InteractionState
-    from src.sandbox.ramp_support import PlanarRampPolicy
-    from src.sandbox.rules.scoring import ScoreState
-    from src.sandbox.track.model import TrackWorld
-    from src.sandbox.track.state import TrackState
-    from src.sandbox.vehicle import VehicleControl, VehicleParameters
-    from src.sandbox.world import WorldState, step_world
+    from src.simulation.interactions.state import InteractionState
+    from src.simulation.ramp_support import PlanarRampPolicy
+    from src.simulation.rules.scoring import ScoreState
+    from src.simulation.track.model import TrackWorld
+    from src.simulation.track.state import TrackState
+    from src.simulation.vehicle import VehicleControl, VehicleParameters
+    from src.simulation.world import WorldState, step_world
 
     road = TrackWorld(surfaces=(patch("before", -2.), patch("after", 2.)))
     original = car(0.)

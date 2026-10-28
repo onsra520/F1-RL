@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from src.learning.episode import EpisodeConfig, EpisodeStatus, RaceProgressState, episode_status
+from src.rl.episode import EpisodeConfig, EpisodeStatus, RaceProgressState, episode_status
 
 
 @pytest.mark.parametrize("max_steps", [True, 0, -1, 1.0, "1", None])

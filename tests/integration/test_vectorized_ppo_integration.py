@@ -7,8 +7,10 @@ import sys
 
 import numpy as np
 
-from src.learning.training.config import VectorEnvConfig
-from src.learning.training.vector_env import make_vector_env
+from tests.dependency_rules import imports_project_layers
+
+from src.training.config import VectorEnvConfig
+from src.training.vector_env import make_vector_env
 from tests.learning.training.test_vector_env import _factory, _scenario_set
 
 
@@ -29,7 +31,7 @@ def test_real_dummy_vector_env_reset_step_smoke() -> None:
 
 
 def test_real_vectorized_ppo_training_save_load_and_continue(tmp_path) -> None:
-    from src.learning.algorithms.ppo import PPOConfig, PPOModel
+    from src.rl.algorithms.ppo import PPOConfig, PPOModel
 
     first_vector = make_vector_env(_factory(), VectorEnvConfig(n_envs=2))
     second_vector = make_vector_env(_factory(), VectorEnvConfig(n_envs=2))
@@ -94,8 +96,8 @@ def test_guarded_multi_track_subproc_smoke_script() -> None:
 
 
 def test_real_multi_track_ppo_training_smoke() -> None:
-    from src.learning.algorithms.ppo import PPOConfig, PPOModel
-    from src.learning.training.vector_env import make_multi_track_vector_env
+    from src.rl.algorithms.ppo import PPOConfig, PPOModel
+    from src.training.vector_env import make_multi_track_vector_env
 
     vector = make_multi_track_vector_env(
         _scenario_set(),
@@ -153,8 +155,8 @@ def test_vector_benchmark_cli_reports_positive_diagnostics_for_subproc() -> None
 
 
 def test_training_package_exports_exact_optional_surface() -> None:
-    import src.learning as learning
-    import src.learning.training as training
+    import src.rl as learning
+    import src.training as training
 
     assert training.__all__ == (
         "F1RLEnvFactory",
@@ -196,22 +198,20 @@ def test_vector_production_dependency_boundaries_are_exact() -> None:
             torch_owners.append(path.as_posix())
 
     assert sorted(sb3_owners) == [
-        "src/learning/algorithms/ppo.py",
-        "src/learning/training/vector_env.py",
+        "src/rl/algorithms/ppo.py",
+        "src/training/vector_env.py",
     ]
     assert torch_owners == []
     assert "stable_baselines3" not in _direct_imports(
-        Path("src/learning/training/env_factory.py")
+        Path("src/training/env_factory.py")
     )
-    assert all(
-        not module.startswith("src.learning")
-        for path in (*Path("src/sandbox").rglob("*.py"), *Path("src/runtime").rglob("*.py"))
-        for module in _direct_imports(path)
-    )
+    directories = (Path("src/simulation"), Path("src/core"))
+    assert all(directory.is_dir() for directory in directories)
+    assert all(not imports_project_layers(path, ("rl", "training", "evaluation")) for directory in directories for path in directory.rglob("*.py"))
 
 
 def test_training_docs_describe_vectorized_contract() -> None:
-    text = Path("src/learning/training/README.md").read_text(encoding="utf-8").lower()
+    text = Path("src/training/README.md").read_text(encoding="utf-8").lower()
     for token in (
         "same-track",
         "dummy",
@@ -230,14 +230,14 @@ def test_training_docs_describe_vectorized_contract() -> None:
 
 
 def test_algorithm_docs_describe_single_and_vector_training_contract() -> None:
-    text = Path("src/learning/algorithms/README.md").read_text(encoding="utf-8").lower()
+    text = Path("src/rl/algorithms/README.md").read_text(encoding="utf-8").lower()
     assert "f1rlenv" in text
     assert "vecenv" in text
     assert "single-observation" in text
 
 
 def test_learning_docs_mark_vectorized_ppo_implemented_and_future_layers_pending() -> None:
-    text = Path("src/learning/README.md").read_text(encoding="utf-8").lower()
+    text = Path("src/rl/README.md").read_text(encoding="utf-8").lower()
     assert "vectorized ppo" in text
     assert "implemented" in text
     assert "multi-track" in text

@@ -7,21 +7,21 @@ from dataclasses import replace
 
 import pytest
 
-from src.sandbox.angular_landing_impulse import AngularLandingImpulsePolicy
-from src.sandbox.ballistic_flight import (
+from src.simulation.angular_landing_impulse import AngularLandingImpulsePolicy
+from src.simulation.ballistic_flight import (
     BallisticFlightPolicy, FlightPhysicsError, FlightState,
     advance_ballistic_flight,
 )
-from src.sandbox.body_collision import VehicleBodyGeometry
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.independent_suspension_dynamics import (
+from src.simulation.body_collision import VehicleBodyGeometry
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState,
 )
-from src.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
-from src.sandbox.ramp_support import WheelContactPoints
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.sandbox.vehicle import VehicleState, VehicleControl, VehicleParameters
+from src.simulation.multi_surface_support import MultiSurfaceSuspensionPolicy
+from src.simulation.ramp_support import WheelContactPoints
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.simulation.vehicle import VehicleState, VehicleControl, VehicleParameters
 
 BODY=VehicleBodyGeometry(1.,.4,2.,Vec3(0.,.1,0.))
 WHEELS=WheelContactPoints(
@@ -118,11 +118,11 @@ def test_rebound_with_positive_restitution_does_not_fake_grounded():
 
 
 def test_world_preserves_rate_state_after_accepted_angular_touchdown():
-    from src.sandbox.interactions.state import InteractionState
-    from src.sandbox.rules.scoring import ScoreState
-    from src.sandbox.track.model import TrackWorld
-    from src.sandbox.track.state import TrackState
-    from src.sandbox.world import WorldState,step_world
+    from src.simulation.interactions.state import InteractionState
+    from src.simulation.rules.scoring import ScoreState
+    from src.simulation.track.model import TrackWorld
+    from src.simulation.track.state import TrackState
+    from src.simulation.world import WorldState,step_world
 
     state=airborne()
     world=WorldState(

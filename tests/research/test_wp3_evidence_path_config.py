@@ -9,7 +9,7 @@ def test_wp3_evidence_root_can_be_configured(tmp_path):
     env = dict(os.environ, F1RL_WP3_EVIDENCE=str(tmp_path))
     code = '''
 import importlib.util, pathlib
-from src.research import wp3_current_eval_gate
+from src.validation import wp3_current_eval_gate
 assert wp3_current_eval_gate.OLD == pathlib.Path(%r)
 for file in pathlib.Path("scripts").glob("wp3*.py"):
     text = file.read_text(encoding="utf8")

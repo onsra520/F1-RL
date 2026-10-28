@@ -5,14 +5,14 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from src.research.wp7_protocol import load_registration,prepare_scenarios
-from src.sandbox.ballistic_flight import FlightState
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.independent_suspension_dynamics import SuspensionResolutionError
-from src.sandbox.multi_surface_support import _atlas,_contacts
-from src.sandbox.spatial_contact_dynamics import _suspension_state
-from src.track_assets.canonical import fingerprint_track_world
+from src.validation.wp7_protocol import load_registration,prepare_scenarios
+from src.simulation.ballistic_flight import FlightState
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
+from src.simulation.multi_surface_support import _atlas,_contacts
+from src.simulation.spatial_contact_dynamics import _suspension_state
+from src.tracks.canonical import fingerprint_track_world
 
 ROOT=Path(__file__).resolve().parents[2]
 PHYSICS_SHA='fe6e753f1471e83f8103bae5ad64e050d316c3ddb9186c51cba3c27a3e8ddf5b'

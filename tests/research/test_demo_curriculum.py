@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from src.exploratory.reward import REGISTERED, apply_training_curriculum, validate
-from src.sandbox.geometry.vector import Vec3
+from src.simulation.geometry.vector import Vec3
 
 CONFIG = {'version':'straight_route_stability_demo_v1', 'training_corridor_m':2.,
           'lateral_penalty_per_m2_s':2., 'terminal_penalty':25.}
@@ -35,7 +35,7 @@ def test_demo_curriculum_rejects_unsupported_scope(changes):
 
 
 def test_demo_training_stops_before_reproducible_invalid_support_boundary():
-    from src.research.wp7_protocol import load_registration, prepare_scenarios
+    from src.validation.wp7_protocol import load_registration, prepare_scenarios
     root = Path(__file__).resolve().parents[2]
     factory = prepare_scenarios(root,load_registration(root,profile='spatial_rotating_owner_v3'),seed_index=0).scenarios[0].factory
     env = replace(factory,reset_config=replace(factory.reset_config,seed=10000)).create()

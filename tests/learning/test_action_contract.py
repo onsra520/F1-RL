@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError, fields
 
 import pytest
 
-from src.learning.action import (
+from src.rl.action import (
     ACTION_HIGH,
     ACTION_LOW,
     ACTION_NAMES,

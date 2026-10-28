@@ -5,7 +5,7 @@ from math import atan2, cos, sin, tan
 import numpy as np
 import pytest
 
-from src.learning.action import ActionContract
+from src.rl.action import ActionContract
 from tests.integration.test_wp7_lifecycle_race import lifecycle_race_factory
 
 
@@ -89,7 +89,7 @@ def test_research_brake_contract_cannot_select_legacy_euler_steering():
 
 def test_current_registered_scenarios_explicitly_bind_distance_ground_motion():
     from pathlib import Path
-    from src.research.wp7_execution import build_policy_execution
+    from src.validation.wp7_execution import build_policy_execution
     binding = build_policy_execution(Path(__file__).resolve().parents[2],'multitrack-seed0')
     assert {s.factory.physics_config.ground_motion_version for s in binding.scenarios.scenarios} == {'arc_distance_v1'}
 
@@ -98,7 +98,7 @@ def test_current_registered_scenarios_explicitly_bind_distance_ground_motion():
 @pytest.mark.parametrize('body_only',[False,True])
 def test_every_research_braking_boundary_requires_distance_registration(direct,body_only):
     from dataclasses import fields
-    from src.learning.gym_environment import F1RLEnv
+    from src.rl.gym_environment import F1RLEnv
     base = lifecycle_race_factory(launch=False)
     kwargs = {field.name:getattr(base,field.name) for field in fields(base) if field.init}
     if body_only:
@@ -110,7 +110,7 @@ def test_every_research_braking_boundary_requires_distance_registration(direct,b
 
 
 def test_accelerating_partial_support_checks_each_actual_substep_distance():
-    from src.sandbox.independent_suspension_dynamics import SuspensionResolutionError
+    from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
     base = lifecycle_race_factory(launch=False,finish=20.)
     physics = replace(base.physics_config,ground_motion_version='arc_distance_v1',
         automatic_takeoff_policy=replace(base.physics_config.automatic_takeoff_policy,max_substep_xz_m=.003))
@@ -131,7 +131,7 @@ def test_accelerating_partial_support_checks_each_actual_substep_distance():
 
 
 def test_distance_step_without_automatic_release_uses_same_stop_law():
-    from src.learning.wp7_race import WP7RaceConfig
+    from src.rl.wp7_race import WP7RaceConfig
     base = lifecycle_race_factory(launch=False,finish=20.)
     physics = replace(base.physics_config,mode='wp7_suspension_v1',ballistic_flight_policy=None,
         automatic_takeoff_policy=None,ground_motion_version='arc_distance_v1')
@@ -153,11 +153,11 @@ def test_distance_step_without_automatic_release_uses_same_stop_law():
 
 
 def test_transition_audit_rejects_forged_zero_distance_yaw():
-    from src.runtime.physics import PhysicsTransitionError
-    from src.sandbox.geometry.rotation import Quaternion
-    from src.sandbox.geometry.vector import Vec3
-    from src.sandbox.vehicle import VehicleControl
-    from src.sandbox.world import step_world
+    from src.core.physics import PhysicsTransitionError
+    from src.simulation.geometry.rotation import Quaternion
+    from src.simulation.geometry.vector import Vec3
+    from src.simulation.vehicle import VehicleControl
+    from src.simulation.world import step_world
     base = lifecycle_race_factory(launch=False,finish=20.)
     physics = replace(base.physics_config,ground_motion_version='arc_distance_v1')
     initial = base.initial_state
@@ -179,7 +179,7 @@ def test_distance_registration_rejects_legacy_suspension_rate_mapping():
 
 
 def test_braking_with_rear_wheel_support_and_no_center_contact():
-    from src.sandbox.ballistic_flight import FlightState
+    from src.simulation.ballistic_flight import FlightState
     from tests.integration.test_pv5_lifecycle import lifecycle_config
     from tests.integration.test_wp7_physics_integration import world, ROAD, TrackWorld, Vec3, simulation, VehicleControl
     initial = world(speed=.5,flight=FlightState('grounded'))
@@ -195,8 +195,8 @@ def test_braking_with_rear_wheel_support_and_no_center_contact():
 
 
 def test_missing_center_and_wheel_support_never_falls_back_to_air_motion():
-    from src.sandbox.ballistic_flight import FlightState
-    from src.sandbox.independent_suspension_dynamics import SuspensionResolutionError
+    from src.simulation.ballistic_flight import FlightState
+    from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
     from tests.integration.test_pv5_lifecycle import lifecycle_config
     from tests.integration.test_wp7_physics_integration import world, ROAD, TrackWorld, Vec3, simulation, VehicleControl
     initial = world(speed=.5,flight=FlightState('grounded'))
@@ -218,10 +218,10 @@ def test_distance_version_cannot_combine_unregistered_physics_modes(mode):
 
 @pytest.mark.parametrize('displacement',[(.1,0.,0.),(0.,0.,-.1)])
 def test_transition_audit_rejects_sideways_or_backward_arc_chord(displacement):
-    from src.runtime.physics import PhysicsTransitionError
-    from src.sandbox.geometry.vector import Vec3
-    from src.sandbox.vehicle import VehicleControl
-    from src.sandbox.world import step_world
+    from src.core.physics import PhysicsTransitionError
+    from src.simulation.geometry.vector import Vec3
+    from src.simulation.vehicle import VehicleControl
+    from src.simulation.world import step_world
     base = lifecycle_race_factory(launch=False,finish=20.)
     physics = replace(base.physics_config,ground_motion_version='arc_distance_v1')
     initial = base.initial_state

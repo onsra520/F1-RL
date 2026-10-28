@@ -1,20 +1,17 @@
-# `f1rl`
+# Python package
 
-## Purpose
+`src` contains the active Python implementation.
 
-The Python domain core of F1-RL. Everything required to simulate, train, evaluate, and run an autonomous racing agent belongs behind this package boundary.
+- `core`: simulation session orchestration and physics adapters.
+- `simulation`: deterministic world, vehicle geometry and contact physics.
+- `tracks`: portable track assets, validation, fingerprints and initial state.
+- `rl`: actions, observations, rewards, Gym environment and PPO interface.
+- `training`: training orchestration and configuration.
+- `evaluation`: episode evaluation, metrics and crash contracts.
+- `validation`: research gates, evidence verification and engineering attestation.
+- `interfaces`: local demo and execution interfaces.
+- `exploratory`: restricted exploratory execution.
 
-## Subdirectories
+Simulation must not import the track persistence or RL layers. Track persistence may use simulation domain types, but must not import RL, runtime frameworks or frontend code. Scientific identities and historical source paths remain recorded in immutable evidence.
 
-- `sandbox/` — deterministic racing world and vehicle simulation.
-- `track_assets/` — portable JSON track persistence, semantic fingerprints, manifest integrity, and deterministic initial-state derivation.
-- `learning/` — Gymnasium adapter, observations, actions, rewards, algorithms, training, and evaluation.
-- `drivers/` — human and learned-policy control adapters.
-- `runtime/` — orchestration of live simulation sessions.
-- `api/` — FastAPI adapter for external clients.
-
-## Dependency rule
-
-`sandbox/` is the lowest deterministic domain layer and must not import `track_assets/`, learning, runtime, API, or web concerns. `track_assets/` may depend on sandbox domain types, but must not depend on learning/runtime frameworks, Gymnasium, Stable-Baselines3, PyTorch, FastAPI, or frontend/editor code.
-
-Lower-level domain code must not import the web client.
+An HTTP API, websocket transport and human driver adapter remain planned; no UI-to-Python bridge is implemented.

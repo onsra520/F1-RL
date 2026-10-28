@@ -3,8 +3,8 @@ from pathlib import Path
 from dataclasses import replace
 import numpy as np
 import pytest
-from src.research.wp7_protocol import build_protocol,load_registration,prepare_scenarios,protocol_profile
-from src.research.wp7_execution import build_policy_execution
+from src.validation.wp7_protocol import build_protocol,load_registration,prepare_scenarios,protocol_profile
+from src.validation.wp7_execution import build_policy_execution
 ROOT=Path(__file__).resolve().parents[2]
 PROFILE='spatial_rotating_owner_v3'
 
@@ -43,8 +43,8 @@ def test_four_actual_train_factories_reset_and_step_with_one_rotating_physics_id
 
 
 def test_binding_rejects_profile_migration_and_training_stays_closed():
-    from src.research.wp7_admission import ScientificAdmissionError
-    from src.learning.training.runner import TrainingRunner
+    from src.validation.wp7_admission import ScientificAdmissionError
+    from src.training.runner import TrainingRunner
     b=build_policy_execution(ROOT,'multitrack-seed2',profile=PROFILE)
     b.validate(b.configuration,b.scenarios)
     with pytest.raises(ValueError):
@@ -53,7 +53,7 @@ def test_binding_rejects_profile_migration_and_training_stays_closed():
         TrainingRunner(b.configuration).run_registered(b)
     assert denied.value.report['protocol']['sha256']==b.protocol_sha256
     assert all(not value for value in denied.value.report['owner_permissions'].values())
-    from src.research.wp7_run_manifest import capture_registered_run,verify_run_manifest
+    from src.validation.wp7_run_manifest import capture_registered_run,verify_run_manifest
     manifest=capture_registered_run(b,run_id='rotating-owner-preparation')
     assert manifest['protocol']['schema_version']=='wp7_bound_protocol_v4'
     assert verify_run_manifest(manifest,None,expected_sha256=manifest['sha256'])['training_authorized'] is False
@@ -72,7 +72,7 @@ def test_new_registration_cannot_silently_change_motion_version(monkeypatch):
 
 
 def test_rotating_evaluation_preparation_separates_policy_and_environment_rng():
-    from src.research.wp7_protocol import prepare_evaluation_factory
+    from src.validation.wp7_protocol import prepare_evaluation_factory
     p=build_protocol(ROOT,profile=PROFILE)
     first,identity=prepare_evaluation_factory(ROOT,p,'multitrack-seed1','ramp-v1','randomized_train',7)
     second,repeated=prepare_evaluation_factory(ROOT,p,'multitrack-seed1','ramp-v1','randomized_train',7)

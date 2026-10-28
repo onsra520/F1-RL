@@ -12,7 +12,7 @@ _entry_root = str(_EntryPath(__file__).resolve().parents[1])
 if _entry_root not in _entry_sys.path:
     _entry_sys.path.insert(0, _entry_root)
 
-from src.learning.pilot_preflight import build_pilot_preflight
+from src.rl.pilot_preflight import build_pilot_preflight
 
 
 def main() -> int:

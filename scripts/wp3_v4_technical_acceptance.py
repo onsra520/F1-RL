@@ -3,7 +3,7 @@ from pathlib import Path
 import json,sys
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from src.research.wp3_v4_technical_acceptance import source_bound_acceptance
+from src.validation.wp3_v4_technical_acceptance import source_bound_acceptance
 import os
 HISTORY=Path(os.environ.get("F1RL_WP3_EVIDENCE", r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1"))
 REPLAY=ROOT/"docs/research/WP3-V4AH-PHYSICS-V4-ACCEPTANCE-REPLAY-20261024.json"

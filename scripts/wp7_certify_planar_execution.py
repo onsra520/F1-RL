@@ -10,13 +10,13 @@ _entry_root = str(_EntryPath(__file__).resolve().parents[1])
 if _entry_root not in _entry_sys.path:
     _entry_sys.path.insert(0, _entry_root)
 
-from src.learning.pilot_preflight import TRAIN_IDS
-from src.research.wp7_executed_feasibility import (
+from src.rl.pilot_preflight import TRAIN_IDS
+from src.validation.wp7_executed_feasibility import (
     certify_planar_execution, certify_ramp_execution, certify_coupled_ramp_execution, replay_planar_execution,
     certify_registered_center_execution,
     certify_spatial_ramp_execution, certify_spatial_profile_execution,
 )
-from src.research.wp7_protocol import _unique
+from src.validation.wp7_protocol import _unique
 
 
 def _nonfinite(value):

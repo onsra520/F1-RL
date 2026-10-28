@@ -3,11 +3,11 @@ from pathlib import Path
 
 import numpy as np
 
-from src.research.simulation_parameter_provenance import (
+from src.validation.simulation_parameter_provenance import (
     _within_domain,
     build_parameter_provenance,
 )
-from src.sandbox.tire_calibration_contract import REQUIRED_WP7_MEASUREMENTS
+from src.simulation.tire_calibration_contract import REQUIRED_WP7_MEASUREMENTS
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -36,7 +36,8 @@ def test_parameter_manifest_binds_all_wp7_names_to_runtime_and_legal_domains():
     for row in report["parameters"]:
         bounds = row["legal_bounds"]
         assert bounds["unit"] == row["unit"]
-        assert bounds["source"]
+        assert bounds["source"] == row["legal_domain_source"]
+        assert (ROOT / bounds["source"].split(":", 1)[0]).is_file()
         for value_key in ("configured_value", "runtime_value"):
             value = row[value_key]
             if value is None:
@@ -53,7 +54,7 @@ def test_parameter_manifest_binds_all_wp7_names_to_runtime_and_legal_domains():
 
 
 def test_each_consumed_parameter_has_deterministic_finite_sensitivity():
-    from src.research.wp7_protocol import load_registration, prepare_scenarios
+    from src.validation.wp7_protocol import load_registration, prepare_scenarios
 
     base = load_registration(ROOT, profile="spatial_rotating_owner_v3")
     parameter_paths = {

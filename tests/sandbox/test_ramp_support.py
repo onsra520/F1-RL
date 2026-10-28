@@ -4,12 +4,12 @@ from math import cos, pi, sin
 
 import pytest
 
-from src.sandbox.body_collision import VehicleBodyGeometry
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.ramp_support import WheelContactPoints, certify_single_planar_ramp
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.sandbox.vehicle import VehicleState
+from src.simulation.body_collision import VehicleBodyGeometry
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.ramp_support import WheelContactPoints, certify_single_planar_ramp
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.simulation.vehicle import VehicleState
 
 
 BODY = VehicleBodyGeometry(1., .4, 2., Vec3(0., 0., 0.))
@@ -145,13 +145,13 @@ def test_wheel_specs_are_explicit_and_ordered():
 
 
 def test_world_step_accepts_opted_in_synthetic_single_ramp():
-    from src.sandbox.interactions.state import InteractionState
-    from src.sandbox.rules.scoring import ScoreState
-    from src.sandbox.ramp_support import PlanarRampPolicy
-    from src.sandbox.track.model import TrackWorld
-    from src.sandbox.track.state import TrackState
-    from src.sandbox.vehicle import VehicleControl, VehicleParameters
-    from src.sandbox.world import WorldState, step_world
+    from src.simulation.interactions.state import InteractionState
+    from src.simulation.rules.scoring import ScoreState
+    from src.simulation.ramp_support import PlanarRampPolicy
+    from src.simulation.track.model import TrackWorld
+    from src.simulation.track.state import TrackState
+    from src.simulation.vehicle import VehicleControl, VehicleParameters
+    from src.simulation.world import WorldState, step_world
 
     patch,q=surface(pi/6.)
     initial=car(patch,q)
@@ -172,13 +172,13 @@ def test_world_step_accepts_opted_in_synthetic_single_ramp():
 
 
 def test_world_rejects_multisurface_seam_without_support_rule():
-    from src.sandbox.interactions.state import InteractionState
-    from src.sandbox.rules.scoring import ScoreState
-    from src.sandbox.ramp_support import PlanarRampPolicy
-    from src.sandbox.track.model import TrackWorld
-    from src.sandbox.track.state import TrackState
-    from src.sandbox.vehicle import VehicleControl, VehicleParameters
-    from src.sandbox.world import WorldState, step_world
+    from src.simulation.interactions.state import InteractionState
+    from src.simulation.rules.scoring import ScoreState
+    from src.simulation.ramp_support import PlanarRampPolicy
+    from src.simulation.track.model import TrackWorld
+    from src.simulation.track.state import TrackState
+    from src.simulation.vehicle import VehicleControl, VehicleParameters
+    from src.simulation.world import WorldState, step_world
 
     patch,q=surface(pi/6.)
     initial=car(patch,q)
@@ -194,13 +194,13 @@ def test_world_rejects_multisurface_seam_without_support_rule():
 
 
 def test_world_rejects_ramp_policy_without_body():
-    from src.sandbox.interactions.state import InteractionState
-    from src.sandbox.rules.scoring import ScoreState
-    from src.sandbox.ramp_support import PlanarRampPolicy
-    from src.sandbox.track.model import TrackWorld
-    from src.sandbox.track.state import TrackState
-    from src.sandbox.vehicle import VehicleControl, VehicleParameters
-    from src.sandbox.world import WorldState, step_world
+    from src.simulation.interactions.state import InteractionState
+    from src.simulation.rules.scoring import ScoreState
+    from src.simulation.ramp_support import PlanarRampPolicy
+    from src.simulation.track.model import TrackWorld
+    from src.simulation.track.state import TrackState
+    from src.simulation.vehicle import VehicleControl, VehicleParameters
+    from src.simulation.world import WorldState, step_world
     patch,q=surface(pi/6.)
     initial=car(patch,q)
     world=WorldState(initial,TrackState(frozenset()),
@@ -214,7 +214,7 @@ def test_world_rejects_ramp_policy_without_body():
 
 @pytest.mark.parametrize("value",[0.,-1.,float("nan"),True])
 def test_policy_rejects_unreviewable_contact_tolerance(value):
-    from src.sandbox.ramp_support import PlanarRampPolicy
+    from src.simulation.ramp_support import PlanarRampPolicy
     with pytest.raises(ValueError,match="tolerance"):
         PlanarRampPolicy(WHEELS,value)
 

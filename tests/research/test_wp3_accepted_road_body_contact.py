@@ -1,14 +1,14 @@
 """Finite road patch first-contact -> rigid normal impulse, no prior overlap."""
 from dataclasses import replace
 import pytest
-from src.sandbox.accepted_road_body_contact import apply_first_road_body_contact
-from src.sandbox.body_collision import VehicleBodyGeometry
-from src.sandbox.geometry.rotation import Quaternion
-from src.sandbox.geometry.vector import Vec3
-from src.sandbox.rigid_body_impact_response import RigidBodyImpactMass
-from src.sandbox.multi_surface_support import _atlas
-from src.sandbox.track.patch import PlanarSurfacePatch
-from src.sandbox.vehicle import VehicleState
+from src.simulation.accepted_road_body_contact import apply_first_road_body_contact
+from src.simulation.body_collision import VehicleBodyGeometry
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.geometry.vector import Vec3
+from src.simulation.rigid_body_impact_response import RigidBodyImpactMass
+from src.simulation.multi_surface_support import _atlas
+from src.simulation.track.patch import PlanarSurfacePatch
+from src.simulation.vehicle import VehicleState
 
 Q=Quaternion.identity()
 Z=Vec3(0.,0.,0.)
