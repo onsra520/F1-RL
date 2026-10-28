@@ -1015,6 +1015,214 @@
       "bytes": 81246,
       "sha256": "534873b21672467e990155bab6223ffca3bd9cae13f0a3240a4dcd05de8a5ed1",
       "purpose": "FULL-06 original-byte evidence (raw archive)"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/evaluation/issue51-v1/evaluation/evaluation-roster.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/evaluation/evaluation-roster.json",
+      "bytes": 730395,
+      "sha256": "1530a54a636f80cacc096f2ed86d9e89fd5e7c7a7429873deb2fe366bcd859dc",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/A-seed0/engineering-validation.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed0/engineering-validation.json",
+      "bytes": 5097,
+      "sha256": "94d5461de87901cb8d0d8af2729312c02b593a38cd9e5b14dbac53f2ca62d801",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/A-seed0/state.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed0/state.json",
+      "bytes": 530,
+      "sha256": "b93c57a8e35726199a0e4731c33d849f0c8fc71ef63f22a6ff6d1af41ba1d5ca",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/A-seed1/engineering-validation.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed1/engineering-validation.json",
+      "bytes": 5099,
+      "sha256": "1c1c80c5fe2470678f4cdad2932c7eb68308afebe8904386d31e4fa3a3830ab0",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/A-seed1/state.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed1/state.json",
+      "bytes": 530,
+      "sha256": "a3038f8fc5eb6cebc0c5802a46bdebb07fcc93a4267fa0f50c8857affecd2ece",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/A-seed2/engineering-validation.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed2/engineering-validation.json",
+      "bytes": 5099,
+      "sha256": "da5470dbb67af6cd664abad9e9572d74e19c36cf42a3f2e3b8464ce6bd689ec9",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/A-seed2/state.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed2/state.json",
+      "bytes": 530,
+      "sha256": "1afb16a86c5569039c39ae6ed0f7da4110fd21638b93fe2c0e1b9356b31ae64d",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/B-seed0/engineering-validation.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed0/engineering-validation.json",
+      "bytes": 5097,
+      "sha256": "ec96441cc2789f4007c6c67b0120cc64fca1be23d906511fbe3057ab171b0b45",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/B-seed0/state.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed0/state.json",
+      "bytes": 530,
+      "sha256": "1dfb11116f57bcb803e6d3312a8c01f9e56744d9a3f1bd779e356dd2031ecf48",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/B-seed1/engineering-validation.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed1/engineering-validation.json",
+      "bytes": 5099,
+      "sha256": "f32c17e398683c5e59b1f161bf777b99bd12ea6bbefc68f3e38318d05bb91c5b",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/B-seed1/state.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed1/state.json",
+      "bytes": 530,
+      "sha256": "111c5e54a34bd972808fe7fd1b97ed9d97337a52e44ec47f8fbb2a8962fcc206",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/B-seed2/engineering-validation.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed2/engineering-validation.json",
+      "bytes": 5098,
+      "sha256": "b47df7ab1504d8066e2ac6a40900197976c1e0edb5215f25ae361b7d19b02141",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/B-seed2/state.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed2/state.json",
+      "bytes": 530,
+      "sha256": "9d2cb7ad8c8712dbc1a04ef21599c4c44ad0ee44fc364017da3fe9dfda4b5ed5",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/C-seed0/engineering-validation.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed0/engineering-validation.json",
+      "bytes": 5099,
+      "sha256": "aa83f8f518e89cd02e1721b55474b28b24de6333ade70079cc40b1b6f5e94b97",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/C-seed0/state.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed0/state.json",
+      "bytes": 530,
+      "sha256": "292c937c5d3922d7c880ad5f7f2429bc88cf54016423bc24c6cd60f2719e02f5",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/C-seed1/engineering-validation.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed1/engineering-validation.json",
+      "bytes": 5099,
+      "sha256": "47bff322771ba371fd14c379e92bc0567ad8323451f8ee39a1b76dbd6eba1496",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/C-seed1/state.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed1/state.json",
+      "bytes": 530,
+      "sha256": "a7e61acbc1f9fa1d278d2adc9874b9e286236217bd3aec02cbf3cd8998eda97e",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/C-seed2/engineering-validation.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed2/engineering-validation.json",
+      "bytes": 5098,
+      "sha256": "58490f0734cfd6f7ef5f1fe6a99178db925e1f8aeec882dfbf5ca1bc50d52dbf",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/C-seed2/state.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed2/state.json",
+      "bytes": 530,
+      "sha256": "c8ea97359afdcca3fbd0eba87ca3f6a802b5bf96c0fef33b3f913409937ce8d4",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/D-seed0/engineering-validation.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed0/engineering-validation.json",
+      "bytes": 5099,
+      "sha256": "490c41295bb365516e3fc6586b07c5f3f8c516e1897e840f613e100bb286627f",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/D-seed0/state.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed0/state.json",
+      "bytes": 530,
+      "sha256": "5111eca2558c37636c7d64ed2865bef3a374d2265017686fff91f7fe44c42b3e",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/D-seed1/engineering-validation.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed1/engineering-validation.json",
+      "bytes": 5098,
+      "sha256": "6ff46d9366a7db1a6b69ed905c708586ad259fb43ba1d192f5df9a3380106aad",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/D-seed1/state.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed1/state.json",
+      "bytes": 530,
+      "sha256": "9fda3017e1aefab588b06f5baaa75c316fde02e8cefb800a30ca1745f8dcd2f2",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/D-seed2/engineering-validation.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed2/engineering-validation.json",
+      "bytes": 5102,
+      "sha256": "784ebe81b957b631d521a3d1d8eb1341427d7189b6caf695df7cced9d698a142",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/models/D-seed2/state.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed2/state.json",
+      "bytes": 530,
+      "sha256": "45f7889df1cd43d742f387e02d2468c5537d1fd95bac884b0b68c8c6a968a886",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
+    },
+    {
+      "source_commit": "2ae51b61d6ee84bf8cbfb58013b2c92f87031df1",
+      "original_path": "handoff/wp3-khanh-bang-20261021/evaluation/issue51-v1/WP3-EVAL-SOURCE-PROVENANCE.json",
+      "destination": "docs/research/evidence/wp3-historical-admission-inputs/WP3-EVAL-SOURCE-PROVENANCE.json",
+      "bytes": 4796,
+      "sha256": "3b0b9c2bcdaf7614b7a1164b78a9ca0441bb8986488b8249c8614e1a63085349",
+      "purpose": "historical admission roster, provenance, state or engineering validation"
     }
   ]
 }

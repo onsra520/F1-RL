@@ -1,0 +1,155 @@
+{
+  "candidate_id": "D",
+  "checkpoints": [
+    {
+      "path": "checkpoints/checkpoint-4096.zip",
+      "sha256": "fdf2f833834678dfaa02aae0af23798c31352c0b4ac847e98e975bf0a1d3d89b",
+      "size_bytes": 158381,
+      "timesteps": 4096
+    },
+    {
+      "path": "checkpoints/checkpoint-8192.zip",
+      "sha256": "2580b553fd07355e9de1cd2b629d1bdc76f9bb555c1bfaf049259e821489ff9a",
+      "size_bytes": 158379,
+      "timesteps": 8192
+    },
+    {
+      "path": "checkpoints/checkpoint-12288.zip",
+      "sha256": "84a294b8d79286bf1ec6ce9c880e3d900efe51ed629cab4a5c04a7e71a286f7b",
+      "size_bytes": 158380,
+      "timesteps": 12288
+    },
+    {
+      "path": "checkpoints/checkpoint-16384.zip",
+      "sha256": "7bcbed65f7121614a325b1cdf778353c41e90a18492538adad564f27e161e507",
+      "size_bytes": 158380,
+      "timesteps": 16384
+    },
+    {
+      "path": "checkpoints/checkpoint-20480.zip",
+      "sha256": "da6a301dbe74cf94037070ad40fa6a5bb40bbb526dc22180e7aa13657114bd53",
+      "size_bytes": 158381,
+      "timesteps": 20480
+    },
+    {
+      "path": "checkpoints/checkpoint-24576.zip",
+      "sha256": "57ba27309197ecc1c4e03963d5fb8c46d8999e931c4412fd954418232461bb38",
+      "size_bytes": 158381,
+      "timesteps": 24576
+    },
+    {
+      "path": "checkpoints/checkpoint-28672.zip",
+      "sha256": "e6317506522624225e7fd56b70e376f6ffd19eb1fd594ab5441f2262c6e71ea6",
+      "size_bytes": 158381,
+      "timesteps": 28672
+    },
+    {
+      "path": "checkpoints/checkpoint-32768.zip",
+      "sha256": "3c58b548ed6554dc936d9232bd8c1da518f7489705caf2d0f0c513f225e27a60",
+      "size_bytes": 158383,
+      "timesteps": 32768
+    },
+    {
+      "path": "checkpoints/checkpoint-36864.zip",
+      "sha256": "6d231ee95a05f737f975106d831075bf73623cef678dd712f56c24598e9dfe60",
+      "size_bytes": 158382,
+      "timesteps": 36864
+    },
+    {
+      "path": "checkpoints/checkpoint-40960.zip",
+      "sha256": "0427cbd3861f1470abea0f3ecfcb9dbf886ee2707e62a8b6d499755d03898282",
+      "size_bytes": 158382,
+      "timesteps": 40960
+    },
+    {
+      "path": "checkpoints/checkpoint-45056.zip",
+      "sha256": "082b3eca4730033e2973286fd3cc61ae9bf42487497fcb4704392d4a1203dba1",
+      "size_bytes": 158382,
+      "timesteps": 45056
+    },
+    {
+      "path": "checkpoints/checkpoint-49152.zip",
+      "sha256": "7ce9c12bf87cbe4b2d6ae0cd379f0298af9740fbc016c225533e8da552e3b0d7",
+      "size_bytes": 158381,
+      "timesteps": 49152
+    },
+    {
+      "path": "checkpoints/checkpoint-53248.zip",
+      "sha256": "136e8f0817a0f82641730c412425b8be6cd26bbe877a97b8a87fd9deffec68ef",
+      "size_bytes": 158383,
+      "timesteps": 53248
+    },
+    {
+      "path": "checkpoints/checkpoint-57344.zip",
+      "sha256": "bd7a2712199c6f23800f579f8bca20fef19c8cf2b8556ad1eb73780a77105e1c",
+      "size_bytes": 158380,
+      "timesteps": 57344
+    },
+    {
+      "path": "checkpoints/checkpoint-61440.zip",
+      "sha256": "72238d53b89b81c9269dcf8be8c4b3c8ce5a327153a59f89a064c29c582aba12",
+      "size_bytes": 158382,
+      "timesteps": 61440
+    },
+    {
+      "path": "checkpoints/checkpoint-65536.zip",
+      "sha256": "fe89b53a2d950fda7e5c1f7f1d48dfe71fd304c3be43613fb4919efeba31decb",
+      "size_bytes": 158382,
+      "timesteps": 65536
+    },
+    {
+      "path": "model-final.zip",
+      "sha256": "70892fdb0e93ffdc67c36e18e92c1ba70f7ce9f6d6dc41916370781f6f18fc0c",
+      "size_bytes": 158374,
+      "timesteps": 65536
+    }
+  ],
+  "episodes": 200,
+  "final_policy_weights_sha256": "9920f1307e1ae55521d9e8cdcb454acecc57fe0debd832ac9b4af4e0f94e0615",
+  "heldout_access": false,
+  "initial_policy_weights_sha256": "c10b41cc5fafa785784408e8b12486754e4fc60e053403eb9f817288fb6a0ee8",
+  "learning_timesteps": 65536,
+  "lifecycle": {
+    "automatic_resets_verified": 199,
+    "curriculum_terminations": 118,
+    "episode_count": 200,
+    "natural_terminations": 0,
+    "physics_abort_terminations": 26,
+    "terminal_transitions": 199,
+    "track_episode_counts": {
+      "ramp-v1": 48,
+      "right-turn-v1": 55,
+      "slalom-v1": 59,
+      "straight-sprint-v1": 38
+    },
+    "track_timestep_counts": {
+      "ramp-v1": 16003,
+      "right-turn-v1": 18089,
+      "slalom-v1": 18528,
+      "straight-sprint-v1": 12916
+    },
+    "truncations": 55
+  },
+  "model_id": "D-seed1",
+  "optimizer_steps": 10240,
+  "policy_weights_finite_at_all_checkpoints": true,
+  "ppo_update_rows": 256,
+  "run_id": "20261021T203949Z-82678b29dfcf",
+  "run_manifest_sha256": "4b303c388a6d124c079ede6bf55eeb4df401eaaeac9a3f220b59d2b22d4543fb",
+  "schema_version": "f1rl_wp3_model_engineering_validation_v1",
+  "scientific_evidence": false,
+  "seed_index": 1,
+  "sha256": "a473e1a29baa4120a2f3f4b434f76601fcf5be8d18a1fca498f1db5674664150",
+  "source_commit": "fe83f517479f3b990028d6409304fae83b8199a9",
+  "status": "ENGINEERING_PASS",
+  "telemetry": {
+    "bytes": 270484809,
+    "events": 65811,
+    "optimizer_steps": 10240,
+    "path": "training-telemetry.jsonl",
+    "sha256": "9dd918a18cb21524cd7ef9d196e912062c59b16ce0827a0ce37a2a90c9c84ae2",
+    "step_rows": 65536,
+    "update_rows": 256
+  },
+  "weights_changed": true
+}
