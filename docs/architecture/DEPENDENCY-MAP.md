@@ -21,3 +21,7 @@ A Python AST import scan shows cross-package import edges: learning → sandbox 
 Largest modules by lines: `local_demo/campaign.py` 1,237; `sandbox/spatial_contact_dynamics.py` 971; `local_demo/runner.py` 803; `local_demo/evaluation.py` 781; `learning/gym_environment.py` 702. Size alone does not establish a safe split.
 
 Baseline restore/bundle verification passed. Twelve model archives have no literal `f1rl` string in decoded SB3 `data` serialized fields; this is preliminary inspection, not proof that all pickle and binary members are independent of the old package name.
+
+## Current refactored source
+
+The current source-backed Archify map is [domain-map.html](domain-map.html), with [specification](domain-map.archify.json) pinned to source commit `ef555656e257bc8553ecd1594949d8bcceb4a5fb`. It passed 9/9 artifact checks. Automated browser inspection failed because Edge exited before DevTools connected; no visual review is claimed. Viewer controls use English. The older maps above remain historical snapshots.

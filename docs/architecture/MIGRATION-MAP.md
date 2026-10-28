@@ -1,15 +1,17 @@
 # Migration map
 
-Baseline `a909a251083d937bce23e229111d0c1c1a9947f3`. Intended root change: `f1rl/` → `src/` (no `src/f1rl`), with imports, module strings, entry points, packaging and tests updated in validated batches. Domain reorganization remains to be determined from source contracts; no old-to-new module mapping is yet approved.
+The package was moved directly from `f1rl/` to `src/`; no `f1rl` alias is installed. Baseline: `a909a251083d937bce23e229111d0c1c1a9947f3`.
 
-| Baseline | Intended responsibility | Risk |
-| --- | --- | --- |
-| `f1rl/sandbox`, `f1rl/runtime` | simulation and geometry | source-bound physics manifests, roll/crash terminal semantics |
-| `f1rl/track_assets`, sandbox track | tracks | path fingerprints and authored asset loading |
-| `f1rl/learning` | RL, training, evaluation | Gym contracts, PPO and serialized module references |
-| `f1rl/research`, `f1rl/exploratory` | validation and orchestration | registered source identities, fail-closed gates and signatures |
-| `f1rl/local_demo`, `scripts` | interfaces and entry points | subprocess module strings, working-directory and evidence paths |
-| `web` | frontend | independent app, Python bridge not implemented |
-| `docs/research/evidence` | immutable evidence | preserve paths, bytes and hashes |
+| Baseline | Current responsibility |
+| --- | --- |
+| `f1rl/runtime` | `src/core`: simulation sessions and physics adapters |
+| `f1rl/sandbox` | `src/simulation`: deterministic world, geometry and physics |
+| `f1rl/track_assets` | `src/tracks`: track assets and persistence |
+| `f1rl/learning` | `src/rl`: Gym, PPO interface, action, observation and rewards |
+| `f1rl/learning/training` | `src/training`: orchestration and training configuration |
+| `f1rl/learning/evaluation` | `src/evaluation`: episode evaluation and metrics |
+| `f1rl/research` | `src/validation`: evidence and research gates |
+| `f1rl/local_demo` | `src/interfaces`: demo and execution interfaces |
+| `f1rl/exploratory` | `src/exploratory`: restricted exploratory execution |
 
-A move-only experiment in an independent detached clone made the existing `source_bound_acceptance` fail on missing `f1rl/sandbox/spatial_contact_dynamics.py`. A compatible mapping must prove that source hashes still bind the actual migrated implementation, while historical keys, schemas, receipts and hashes retain their recorded meaning. No interpretation of a historical source identity as a new one may be introduced silently.
+The original names remain inside immutable historical records and the WP7 historical audit-only allow-list. Current source references in the software-only readiness matrix and newly generated source-provenance reports point to current files. Scientific schema identifiers and frozen evaluator and RNG descriptors retain their original values. Training YAML parsing was consolidated in `src/training/config_loading.py`; malformed input and path resolution continue to be verified by the existing configuration tests. README-only placeholders for an unimplemented API and driver adapter were consolidated into `src/README.md`; no UI–Python bridge was built.
