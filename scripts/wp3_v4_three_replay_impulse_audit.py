@@ -14,7 +14,8 @@ from f1rl.learning.algorithms.ppo import PPOModel
 from f1rl.local_demo.evaluation import _evaluate_episode
 from f1rl.research.wp7_protocol import build_protocol,prepare_evaluation_factory
 
-OLD=Path(r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1")
+import os
+OLD=Path(os.environ.get("F1RL_WP3_EVIDENCE", r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1"))
 OUT=ROOT/"docs"/"research"/"WP3-V4S-THREE-REPLAY-IMPULSE-AUDIT-20261024.json"
 CASES=(("C-seed0","right-turn-v1","nominal",0),
        ("A-seed1","ramp-v1","randomized_train",17),

@@ -10,7 +10,8 @@ from pathlib import Path
 import json
 
 BASE=Path(__file__).resolve().parents[2]
-OLD=Path(r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1")
+import os
+OLD=Path(os.environ.get("F1RL_WP3_EVIDENCE", r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1"))
 CURRENT=BASE/"docs/research/WP3-V4S-THREE-REPLAY-IMPULSE-AUDIT-20261024.json"
 EXPECTED=(
     ("C-seed0","right-turn-v1","nominal",0,"SuspensionResolutionError"),

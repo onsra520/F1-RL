@@ -14,7 +14,8 @@ sys.path.insert(0, str(ROOT))
 from f1rl.research.wp3_eval_only_coordinator import (
     preflight, forbid_registered_full_eval, run_engineering)
 
-HISTORY = Path(r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1")
+import os
+HISTORY = Path(os.environ.get("F1RL_WP3_EVIDENCE", r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1"))
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
