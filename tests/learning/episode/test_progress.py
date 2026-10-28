@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from f1rl.learning.episode import (
+from src.learning.episode import (
     RaceCheckpoint,
     RaceFinish,
     RaceProgressResult,
@@ -10,9 +10,9 @@ from f1rl.learning.episode import (
     RaceRoute,
     advance_race_progress,
 )
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
-from f1rl.sandbox.track.state import ScorePickupCollected
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
+from src.sandbox.track.state import ScorePickupCollected
 
 
 def _route() -> RaceRoute:

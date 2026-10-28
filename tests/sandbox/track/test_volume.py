@@ -3,9 +3,9 @@ from math import pi
 
 import pytest
 
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.track.volume import OrientedBoxVolume
 
 
 def test_identity_box_contains_interior_boundary_and_excludes_outside() -> None:

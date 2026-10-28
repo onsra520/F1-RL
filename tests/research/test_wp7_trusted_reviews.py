@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from f1rl.research.wp7_trusted_reviews import review_message, verify_run_reviews
+from src.research.wp7_trusted_reviews import review_message, verify_run_reviews
 
 NOW = datetime(2026, 10, 16, tzinfo=timezone.utc)
 

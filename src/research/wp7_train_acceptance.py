@@ -5,12 +5,12 @@ import json
 from pathlib import Path
 
 import numpy as np
-from f1rl.learning.pilot_preflight import TRAIN_IDS
-from f1rl.research.wp7_executed_feasibility import (
+from src.learning.pilot_preflight import TRAIN_IDS
+from src.research.wp7_executed_feasibility import (
     certify_spatial_profile_execution,replay_planar_execution,_execution_sources,_verify_module_origins,
 )
-from f1rl.research.wp7_protocol import build_protocol,digest,load_registration,prepare_scenarios
-from f1rl.track_assets.canonical import fingerprint_track_world
+from src.research.wp7_protocol import build_protocol,digest,load_registration,prepare_scenarios
+from src.track_assets.canonical import fingerprint_track_world
 
 PROFILE='spatial_rotating_owner_v3'
 

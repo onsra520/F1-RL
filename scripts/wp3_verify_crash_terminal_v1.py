@@ -5,7 +5,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from f1rl.research.historical_source_records import verify_historical_records
+from src.research.historical_source_records import verify_historical_records
 
 
 def main():

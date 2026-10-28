@@ -3,10 +3,10 @@ from math import pi
 
 import pytest
 
-from f1rl.sandbox.directed_center_crossing import directed_center_gate_crossing
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.directed_center_crossing import directed_center_gate_crossing
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.track.volume import OrientedBoxVolume
 
 
 def gate(*, orientation=Quaternion.identity(),x=1.,y=1.,depth=.01):

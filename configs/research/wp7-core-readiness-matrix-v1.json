@@ -11,7 +11,7 @@
           "weight": 45,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/runtime/simulation.py",
+          "source": "src/runtime/simulation.py",
           "test": "tests/integration/test_simulation_runtime.py",
           "blocker": null
         },
@@ -20,7 +20,7 @@
           "weight": 30,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/runtime/physics.py",
+          "source": "src/runtime/physics.py",
           "test": "tests/integration/test_pv5_lifecycle.py",
           "blocker": null
         },
@@ -29,7 +29,7 @@
           "weight": 25,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/runtime/simulation.py",
+          "source": "src/runtime/simulation.py",
           "test": "tests/runtime/test_simulation_step.py",
           "blocker": null
         }
@@ -51,7 +51,7 @@
           "weight": 45,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/sandbox/manifold_flight.py",
+          "source": "src/sandbox/manifold_flight.py",
           "test": "tests/integration/test_pv5_lifecycle.py",
           "blocker": null
         },
@@ -60,7 +60,7 @@
           "weight": 30,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/sandbox/spatial_contact_dynamics.py",
+          "source": "src/sandbox/spatial_contact_dynamics.py",
           "test": "tests/integration/test_canonical_ramp_recovery.py",
           "blocker": null
         },
@@ -69,7 +69,7 @@
           "weight": 25,
           "status": "implemented",
           "priority": "P1",
-          "source": "f1rl/sandbox/spatial_contact_dynamics.py",
+          "source": "src/sandbox/spatial_contact_dynamics.py",
           "test": "tests/integration/test_canonical_ramp_recovery.py",
           "blocker": null
         }
@@ -91,7 +91,7 @@
           "weight": 45,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/research/wp7_track_feasibility.py",
+          "source": "src/research/wp7_track_feasibility.py",
           "test": "tests/research/test_pv5_track_feasibility.py",
           "blocker": null
         },
@@ -100,7 +100,7 @@
           "weight": 30,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/research/wp7_executed_feasibility.py",
+          "source": "src/research/wp7_executed_feasibility.py",
           "test": "tests/research/test_wp7_rotating_owner_execution.py",
           "blocker": null
         },
@@ -109,7 +109,7 @@
           "weight": 25,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/research/wp7_executed_feasibility.py",
+          "source": "src/research/wp7_executed_feasibility.py",
           "test": "tests/research/test_wp7_rotating_owner_execution.py",
           "blocker": null
         }
@@ -131,7 +131,7 @@
           "weight": 45,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/learning/wp7_race.py",
+          "source": "src/learning/wp7_race.py",
           "test": "tests/integration/test_wp7_race_contract.py",
           "blocker": null
         },
@@ -140,7 +140,7 @@
           "weight": 30,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/learning/wp7_race.py",
+          "source": "src/learning/wp7_race.py",
           "test": "tests/integration/test_wp7_lifecycle_race.py",
           "blocker": null
         },
@@ -149,7 +149,7 @@
           "weight": 25,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/learning/wp7_race.py",
+          "source": "src/learning/wp7_race.py",
           "test": "tests/research/test_wp7_owner_profile.py",
           "blocker": null
         }
@@ -171,7 +171,7 @@
           "weight": 45,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/learning/train_reset.py",
+          "source": "src/learning/train_reset.py",
           "test": "tests/integration/test_wp7_train_reset.py",
           "blocker": null
         },
@@ -180,7 +180,7 @@
           "weight": 30,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/learning/gym_environment.py",
+          "source": "src/learning/gym_environment.py",
           "test": "tests/integration/test_wp7_physics_integration.py",
           "blocker": null
         },
@@ -189,7 +189,7 @@
           "weight": 25,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/learning/gym_environment.py",
+          "source": "src/learning/gym_environment.py",
           "test": "tests/integration/test_wp7_lifecycle_race.py",
           "blocker": null
         }
@@ -211,7 +211,7 @@
           "weight": 45,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/learning/observation.py",
+          "source": "src/learning/observation.py",
           "test": "tests/integration/test_observation_encoding.py",
           "blocker": null
         },
@@ -220,7 +220,7 @@
           "weight": 30,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/learning/action.py",
+          "source": "src/learning/action.py",
           "test": "tests/integration/test_policy_action_integration.py",
           "blocker": null
         },
@@ -229,7 +229,7 @@
           "weight": 25,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/learning/action.py",
+          "source": "src/learning/action.py",
           "test": "tests/research/test_wp7_rotating_owner_execution.py",
           "blocker": null
         }
@@ -251,7 +251,7 @@
           "weight": 45,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/learning/training/vector_env.py",
+          "source": "src/learning/training/vector_env.py",
           "test": "tests/integration/test_vectorized_ppo_integration.py",
           "blocker": null
         },
@@ -260,7 +260,7 @@
           "weight": 30,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/research/wp7_execution.py",
+          "source": "src/research/wp7_execution.py",
           "test": "tests/research/test_wp7_execution_binding.py",
           "blocker": null
         },
@@ -269,7 +269,7 @@
           "weight": 25,
           "status": "blocked",
           "priority": "P0",
-          "source": "f1rl/learning/training/runner.py",
+          "source": "src/learning/training/runner.py",
           "test": "tests/research/test_wp7_execution_binding.py",
           "blocker": "requires additional verified engineering or independent approval"
         }
@@ -291,7 +291,7 @@
           "weight": 45,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/learning/evaluation/evaluator.py",
+          "source": "src/learning/evaluation/evaluator.py",
           "test": "tests/learning/evaluation/test_evaluator.py",
           "blocker": null
         },
@@ -300,7 +300,7 @@
           "weight": 30,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/research/wp7_cell_evaluation.py",
+          "source": "src/research/wp7_cell_evaluation.py",
           "test": "tests/learning/evaluation/test_stochastic_cell.py",
           "blocker": null
         },
@@ -309,7 +309,7 @@
           "weight": 25,
           "status": "blocked",
           "priority": "P0",
-          "source": "f1rl/research/wp7_cell_evaluation.py",
+          "source": "src/research/wp7_cell_evaluation.py",
           "test": "tests/learning/evaluation/test_stochastic_cell.py",
           "blocker": "requires additional verified engineering or independent approval"
         }
@@ -331,7 +331,7 @@
           "weight": 45,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/research/wp7_protocol.py",
+          "source": "src/research/wp7_protocol.py",
           "test": "tests/research/test_pv5_protocol.py",
           "blocker": null
         },
@@ -340,7 +340,7 @@
           "weight": 30,
           "status": "implemented",
           "priority": "P0",
-          "source": "f1rl/research/wp7_admission.py",
+          "source": "src/research/wp7_admission.py",
           "test": "tests/research/test_pv5_admission.py",
           "blocker": null
         },
@@ -349,7 +349,7 @@
           "weight": 25,
           "status": "blocked",
           "priority": "P0",
-          "source": "f1rl/research/wp7_admission.py",
+          "source": "src/research/wp7_admission.py",
           "test": "tests/research/test_pv5_admission.py",
           "blocker": "requires additional verified engineering or independent approval"
         }

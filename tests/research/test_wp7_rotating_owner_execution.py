@@ -1,7 +1,7 @@
 """Actual owner-profile numerical witnesses, source-bound replay and Gym."""
 from pathlib import Path
 import pytest
-from f1rl.research.wp7_executed_feasibility import certify_spatial_profile_execution,replay_planar_execution
+from src.research.wp7_executed_feasibility import certify_spatial_profile_execution,replay_planar_execution
 ROOT=Path(__file__).resolve().parents[2]
 PROFILE='spatial_rotating_owner_v3'
 
@@ -23,8 +23,8 @@ def test_declared_owner_selection_executes_ordered_finish_stop_and_actual_gym(tr
     if track=='ramp-v1':
         assert prefix['mixed_normal_loaded_frames']>0
     if track=='straight-sprint-v1':
-        import f1rl.learning.training.env_factory as factory_module
-        from f1rl.learning.gym_environment import F1RLEnv
+        import src.learning.training.env_factory as factory_module
+        from src.learning.gym_environment import F1RLEnv
         close=F1RLEnv.close
         def foreign_after_close(env):
             close(env)

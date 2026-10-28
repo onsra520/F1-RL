@@ -9,7 +9,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 
-from f1rl.learning.trajectory_audit import audit_trajectory_run
+from src.learning.trajectory_audit import audit_trajectory_run
 
 
 def main()->int:

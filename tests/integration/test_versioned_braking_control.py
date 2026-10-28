@@ -4,7 +4,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from f1rl.learning.action import ActionContract
+from src.learning.action import ActionContract
 from tests.integration.test_wp7_lifecycle_race import lifecycle_race_factory
 
 
@@ -84,7 +84,7 @@ def test_invalid_brake_actions_rejected(action):
 
 
 def test_legacy_saved_model_cannot_silently_migrate_to_three_actions(tmp_path):
-    from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
+    from src.learning.algorithms.ppo import PPOConfig, PPOModel
     from tests.learning.evaluation.test_evaluator import _factory
     base = _factory(max_steps=2)
     old = base.create()

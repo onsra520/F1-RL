@@ -5,7 +5,7 @@ import os
 
 import pytest
 
-from f1rl.local_demo.campaign import (
+from src.local_demo.campaign import (
     CAMPAIGN_CONFIG,
     _validate_training_contact_terminal,
     _expected_campaign_config,
@@ -14,8 +14,8 @@ from f1rl.local_demo.campaign import (
     model_schedule,
     _windows_process_sample,
 )
-from f1rl.local_demo.evaluation import build_evaluation_roster
-from f1rl.research.simulation_only_protocol import load_simulation_only_manifest
+from src.local_demo.evaluation import build_evaluation_roster
+from src.research.simulation_only_protocol import load_simulation_only_manifest
 
 
 ROOT = __import__("pathlib").Path(__file__).parents[2]

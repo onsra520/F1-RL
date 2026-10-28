@@ -2,15 +2,15 @@ from math import pi
 
 import pytest
 
-from f1rl.learning.observation import ObservationConfig, ObservationEncoder
-from f1rl.sandbox.entities.obstacle import Obstacle
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.perception.rangefinder import RangefinderSpec
-from f1rl.sandbox.perception.sensor_suite import SensorSuite
-from f1rl.sandbox.track.model import TrackWorld
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleState
+from src.learning.observation import ObservationConfig, ObservationEncoder
+from src.sandbox.entities.obstacle import Obstacle
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.perception.rangefinder import RangefinderSpec
+from src.sandbox.perception.sensor_suite import SensorSuite
+from src.sandbox.track.model import TrackWorld
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleState
 
 
 def _obstacle(obstacle_id: str, center: Vec3, half_extents: Vec3 = Vec3(1.0, 1.0, 1.0)) -> Obstacle:

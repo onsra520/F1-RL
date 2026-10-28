@@ -3,8 +3,8 @@ from dataclasses import replace
 from pathlib import Path
 import pytest
 
-from f1rl.learning.training.runner import TrainingRunner
-from f1rl.research.wp7_execution import build_policy_execution
+from src.learning.training.runner import TrainingRunner
+from src.research.wp7_execution import build_policy_execution
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -43,7 +43,7 @@ def test_mismatch_denied_before_artifact_creation(tmp_path, mutation):
 
 def test_exact_binding_does_not_grant_permission():
     b = build_policy_execution(ROOT, "multitrack-seed1")
-    from f1rl.research.wp7_admission import ScientificAdmissionError
+    from src.research.wp7_admission import ScientificAdmissionError
     with pytest.raises(ScientificAdmissionError):
         TrainingRunner(b.configuration).run_registered(b)
 
@@ -57,7 +57,7 @@ def test_vector_configuration_mismatch_is_denied_without_other_mutations():
 
 
 def test_action_contract_change_requires_a_new_registered_execution():
-    from f1rl.learning.action import ActionContract
+    from src.learning.action import ActionContract
     b = build_policy_execution(ROOT,'singletrack-slalom-v1-seed2')
     original = b.scenarios.scenarios[0]
     changed = replace(original,factory=replace(original.factory,
@@ -69,7 +69,7 @@ def test_action_contract_change_requires_a_new_registered_execution():
 
 def test_execution_v2_receipt_exposes_actual_race_vector_and_checkpoint_identity():
     from dataclasses import asdict
-    from f1rl.learning.route_navigation import AuthoredRoute
+    from src.learning.route_navigation import AuthoredRoute
     b = build_policy_execution(ROOT,'singletrack-slalom-v1-seed2')
     f = b.scenarios.scenarios[0].factory
     r = b.receipt

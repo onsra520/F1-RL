@@ -45,7 +45,7 @@ _LOADED_SOURCE_SHA256 = sha256(Path(__file__).read_bytes()).hexdigest()
 
 
 def _execution_sources(root):
-    files = [*root.joinpath('f1rl').rglob('*.py'),*root.joinpath('scripts').glob('*.py'),
+    files = [*root.joinpath('src').rglob('*.py'),*root.joinpath('scripts').glob('*.py'),
              *root.joinpath('tests').rglob('*.py'),*root.joinpath('configs').rglob('*.yml'),
              *root.joinpath('configs').rglob('*.yaml'),*root.joinpath('configs').rglob('*.json'),
              root/'pyproject.toml',root/'assets/tracks/manifest.json',
@@ -57,7 +57,7 @@ def _execution_sources(root):
 
 def _verify_module_origins(root):
     for name,module in tuple(sys.modules.items()):
-        if name=='f1rl' or name.startswith('f1rl.'):
+        if name=='src' or name.startswith('src.'):
             path = getattr(module,'__file__',None)
             if path is not None and not Path(path).resolve().is_relative_to(root):
                 raise ValueError('worker imported foreign F1RL source')
@@ -135,7 +135,7 @@ def _certify_execution(repository_root,track_id,*,controls,ramp_profile,coupled_
     payload = json.dumps(dict(track_id=track_id,controls=controls,source=source,ramp_profile=ramp_profile,
                               coupled_profile=coupled_profile,center_gates=center_gates,spatial_profile=spatial_profile,selection=selection),allow_nan=False)
     bootstrap = ('import sys;sys.path.insert(0,sys.argv[1]);'
-                 'from f1rl.research.wp7_executed_feasibility import _worker;_worker()')
+                 'from src.research.wp7_executed_feasibility import _worker;_worker()')
     # A fresh cache prefix prevents stale checkout pyc files from supplying code.
     with tempfile.TemporaryDirectory(prefix='wp7-execution-') as cache:
         completed = subprocess.run([sys.executable,'-I','-B','-X',f'pycache_prefix={cache}',

@@ -1,11 +1,11 @@
 from math import cos, pi, sin
 
-from f1rl.sandbox.dynamics.integrator import integrate
-from f1rl.sandbox.dynamics.vehicle_dynamics import compute_motion
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.surface import SurfaceContact
-from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from src.sandbox.dynamics.integrator import integrate
+from src.sandbox.dynamics.vehicle_dynamics import compute_motion
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.surface import SurfaceContact
+from src.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
 
 
 def parameters() -> VehicleParameters:

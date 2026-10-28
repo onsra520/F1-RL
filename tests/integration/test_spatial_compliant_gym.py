@@ -1,9 +1,9 @@
 """Actual Simulation/Gym lifecycle with continuous compliant touchdown."""
 from dataclasses import replace
 import numpy as np
-from f1rl.sandbox.ballistic_flight import FlightState
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.learning.wp7_race import WP7RaceConfig
+from src.sandbox.ballistic_flight import FlightState
+from src.sandbox.geometry.vector import Vec3
+from src.learning.wp7_race import WP7RaceConfig
 from tests.integration.test_spatial_ground_motion import spatial_factory
 
 
@@ -108,9 +108,9 @@ def test_compliant_airborne_finish_precedes_same_tick_timeout():
 
 def test_compliant_reset_replays_and_preserves_vector_rank_identity():
     from tests.integration.test_wp7_train_reset import randomized_factory
-    from f1rl.learning.training.env_factory import TrainingScenario,TrainingScenarioSet
-    from f1rl.learning.training.vector_env import make_multi_track_vector_env
-    from f1rl.learning.training.config import VectorEnvConfig
+    from src.learning.training.env_factory import TrainingScenario,TrainingScenarioSet
+    from src.learning.training.vector_env import make_multi_track_vector_env
+    from src.learning.training.config import VectorEnvConfig
     base=randomized_factory()
     candidate=replace(base,physics_config=lifecycle_factory().physics_config,
         initial_state=replace(base.initial_state,flight=FlightState('grounded')),
@@ -136,7 +136,7 @@ def test_compliant_reset_replays_and_preserves_vector_rank_identity():
 
 
 def airborne_step_fixture():
-    from f1rl.sandbox.spatial_contact_dynamics import _suspension_state
+    from src.sandbox.spatial_contact_dynamics import _suspension_state
     f=lifecycle_factory()
     vehicle=replace(f.initial_state.vehicle,position=Vec3(0.,5.,4.),
                     velocity=Vec3(0.,.4905,10.),grounded=False)
@@ -148,11 +148,11 @@ def airborne_step_fixture():
 
 def test_ballistic_body_cannot_tunnel_through_thin_overhead_obstacle():
     import pytest
-    from f1rl.sandbox.entities.obstacle import Obstacle
-    from f1rl.sandbox.track.volume import OrientedBoxVolume
-    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
-    from f1rl.sandbox.world import step_world
-    from f1rl.sandbox.vehicle import VehicleControl
+    from src.sandbox.entities.obstacle import Obstacle
+    from src.sandbox.track.volume import OrientedBoxVolume
+    from src.sandbox.ballistic_flight import FlightPhysicsError
+    from src.sandbox.world import step_world
+    from src.sandbox.vehicle import VehicleControl
     f=airborne_step_fixture()
     obstacle=Obstacle('overhead',OrientedBoxVolume(Vec3(0.,5.9112625,4.5),Vec3(.05,.0005,.05),f.initial_state.vehicle.orientation))
     track=replace(f.track,obstacles=(obstacle,))
@@ -163,9 +163,9 @@ def test_ballistic_body_cannot_tunnel_through_thin_overhead_obstacle():
 
 def test_transition_rejects_a_forged_ballistic_interior_with_identical_endpoints():
     import pytest
-    from f1rl.runtime.physics import PhysicsTransitionError
-    from f1rl.sandbox.world import step_world
-    from f1rl.sandbox.vehicle import VehicleControl
+    from src.runtime.physics import PhysicsTransitionError
+    from src.sandbox.world import step_world
+    from src.sandbox.vehicle import VehicleControl
     f=airborne_step_fixture()
     r=step_world(f.track,f.initial_state,VehicleControl(0.,0.,0.),f.vehicle_parameters,.1,1.,
                  **f.physics_config.world_options())

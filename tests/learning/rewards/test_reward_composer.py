@@ -3,10 +3,10 @@ from math import inf
 
 import pytest
 
-from f1rl.learning.rewards.core import RewardComposer, RewardContribution, RewardResult, RewardTransition
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.vehicle import VehicleState
+from src.learning.rewards.core import RewardComposer, RewardContribution, RewardResult, RewardTransition
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.vehicle import VehicleState
 
 
 def vehicle(z: float = 0.0) -> VehicleState:

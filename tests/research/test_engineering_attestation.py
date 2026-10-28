@@ -22,7 +22,7 @@ def test_refuses_to_attest_a_dirty_source_tree(tmp_path):
 
 def test_historical_receipt_cannot_be_current_attestation():
     import json
-    from f1rl.research.engineering_attestation import verify_current_attestation
+    from src.research.engineering_attestation import verify_current_attestation
     historical = json.loads((ROOT / 'docs/research/WP3-PHYSICS-V4-TECHNICAL-ACCEPTANCE-20261024.json').read_bytes())
     import pytest
     with pytest.raises(ValueError, match='attestation schema'):
@@ -54,7 +54,7 @@ def make_clean_repo(tmp_path):
 
 def test_rejects_current_source_path_and_hash_mismatch(tmp_path):
     import pytest
-    from f1rl.research.engineering_attestation import verify_current_attestation
+    from src.research.engineering_attestation import verify_current_attestation
     repo, doc = make_clean_repo(tmp_path)
     doc['source_files'] = {'src/other.py': '0' * 64}
     with pytest.raises(ValueError, match='source file or bundle mismatch'):
@@ -63,7 +63,7 @@ def test_rejects_current_source_path_and_hash_mismatch(tmp_path):
 
 def test_rejects_wrong_commit_and_dirty_tree(tmp_path):
     import pytest
-    from f1rl.research.engineering_attestation import verify_current_attestation
+    from src.research.engineering_attestation import verify_current_attestation
     repo, doc = make_clean_repo(tmp_path)
     doc['source_commit'] = '0' * 40
     with pytest.raises(ValueError, match='source commit mismatch'):
@@ -75,7 +75,7 @@ def test_rejects_wrong_commit_and_dirty_tree(tmp_path):
 
 def test_rejects_scientific_approval_and_heldout(tmp_path):
     import pytest
-    from f1rl.research.engineering_attestation import verify_current_attestation
+    from src.research.engineering_attestation import verify_current_attestation
     repo, doc = make_clean_repo(tmp_path)
     for field in ('independent_scientific_approval', 'heldout_access', 'registered_scientific_evaluation_authorized', 'training_performed'):
         bad = dict(doc, **{field: True})
@@ -86,7 +86,7 @@ def test_rejects_scientific_approval_and_heldout(tmp_path):
 def test_historical_receipt_and_replay_cannot_be_used_for_current_execution(tmp_path):
     import hashlib
     import pytest
-    from f1rl.research.engineering_attestation import REQUIRED_TESTS, verify_current_attestation
+    from src.research.engineering_attestation import REQUIRED_TESTS, verify_current_attestation
     repo, doc = make_clean_repo(tmp_path)
     old_receipt = (repo / 'docs/research/WP3-V4-PHYSICS-ENGINEERING-PYTEST-20261024.txt').read_text(encoding='utf8')
     old_replay = (repo / 'docs/research/WP3-V4AH-PHYSICS-V4-ACCEPTANCE-REPLAY-20261024.json').read_text(encoding='utf8')
@@ -99,7 +99,7 @@ def test_historical_receipt_and_replay_cannot_be_used_for_current_execution(tmp_
 
 def test_rejects_incorrect_hash_for_current_source(tmp_path):
     import pytest
-    from f1rl.research.engineering_attestation import verify_current_attestation
+    from src.research.engineering_attestation import verify_current_attestation
     repo, doc = make_clean_repo(tmp_path)
     doc['source_files']['src/module.py'] = 'f' * 64
     with pytest.raises(ValueError, match='source file or bundle mismatch'):

@@ -2,7 +2,7 @@
 
 **F1-RL** is an interactive reinforcement learning sandbox for autonomous racing and obstacle avoidance.
 
-The project is designed around a Python-first RL core: the simulation, observations, rewards, training, and evaluation live in `f1rl/`; FastAPI exposes runtime state; React + Three.js provide the interactive editor and visualization layer.
+The project is designed around a Python-first RL core: the simulation, observations, rewards, training, and evaluation live in `src/`; FastAPI exposes runtime state; React + Three.js provide the interactive editor and visualization layer.
 
 ## Intended stack
 
@@ -14,7 +14,7 @@ The project is designed around a Python-first RL core: the simulation, observati
 
 ## Repository layout
 
-- `f1rl/` — project core and domain logic.
+- `src/` — project core and domain logic.
 - `web/` — browser UI, track editor, and Three.js visualization.
 - `assets/` — versioned tracks and other source assets.
 - `artifacts/` — generated checkpoints, exported policies, and evaluation outputs.

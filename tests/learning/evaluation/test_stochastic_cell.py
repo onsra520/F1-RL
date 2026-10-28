@@ -4,11 +4,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from f1rl.research.wp7_admission import ScientificAdmissionError
-from f1rl.research.wp7_cell_evaluation import (
+from src.research.wp7_admission import ScientificAdmissionError
+from src.research.wp7_cell_evaluation import (
     evaluate_registered_cell, execute_software_fixture_cell, policy_stochastic_seed,
 )
-from f1rl.research.wp7_protocol import build_protocol, evaluation_seed
+from src.research.wp7_protocol import build_protocol, evaluation_seed
 from .mocks.policies import ConstantPolicy, FailingPolicy
 from .test_evaluator import _factory
 
@@ -50,7 +50,7 @@ def test_stochastic_fixture_cell_separates_policy_and_environment_rng(tmp_path):
 
 
 def test_invalid_episode_aborts_cell_and_preserves_diagnostic(tmp_path):
-    from f1rl.learning.evaluation.evaluator import EvaluationPolicy
+    from src.learning.evaluation.evaluator import EvaluationPolicy
     protocol = _protocol()
     path = tmp_path / "fixture.zip"
     path.write_bytes(b"fixture")
@@ -85,7 +85,7 @@ def test_research_cell_denied_before_model_or_policy_access(tmp_path):
 
 @pytest.mark.parametrize("bad_seed", [-1, True, 2**32])
 def test_legacy_evaluator_rejects_invalid_seed(bad_seed):
-    from f1rl.learning.evaluation.evaluator import evaluate_episode
+    from src.learning.evaluation.evaluator import evaluate_episode
     with pytest.raises(ValueError, match="reset_seed"):
         evaluate_episode(
             track_id="fixture", factory=_factory(),
@@ -96,7 +96,7 @@ def test_legacy_evaluator_rejects_invalid_seed(bad_seed):
 
 def test_cell_evidence_persists_checksum_and_refuses_overwrite(tmp_path):
     import json
-    from f1rl.research.wp7_cell_evaluation import save_cell_evidence
+    from src.research.wp7_cell_evaluation import save_cell_evidence
     protocol = _protocol()
     model = tmp_path / "fixture.zip"
     model.write_bytes(b"synthetic model bytes")

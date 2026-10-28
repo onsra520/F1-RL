@@ -3,18 +3,18 @@ from math import pi
 
 import pytest
 
-from f1rl.sandbox.entities.boost_pad import BoostPad
-from f1rl.sandbox.entities.checkpoint import Checkpoint
-from f1rl.sandbox.entities.finish_line import FinishLine
-from f1rl.sandbox.entities.obstacle import Obstacle
-from f1rl.sandbox.entities.score_pickup import ScorePickup
-from f1rl.sandbox.entities.slow_zone import SlowZone
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.perception.rangefinder import RangefinderReading, RangefinderSpec, sense_rangefinder
-from f1rl.sandbox.track.model import TrackWorld
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleState
+from src.sandbox.entities.boost_pad import BoostPad
+from src.sandbox.entities.checkpoint import Checkpoint
+from src.sandbox.entities.finish_line import FinishLine
+from src.sandbox.entities.obstacle import Obstacle
+from src.sandbox.entities.score_pickup import ScorePickup
+from src.sandbox.entities.slow_zone import SlowZone
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.perception.rangefinder import RangefinderReading, RangefinderSpec, sense_rangefinder
+from src.sandbox.track.model import TrackWorld
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleState
 
 
 def _volume(center: Vec3) -> OrientedBoxVolume:

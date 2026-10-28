@@ -5,7 +5,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from f1rl.research.engineering_attestation import _identity, create_current_attestation, verify_current_attestation
+from src.research.engineering_attestation import _identity, create_current_attestation, verify_current_attestation
 
 
 def main():

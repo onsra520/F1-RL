@@ -5,7 +5,7 @@ import sys
 
 import pytest
 
-from f1rl.learning.experiments import (
+from src.learning.experiments import (
     EpisodeExperimentConfig,
     EvaluationExperimentConfig,
     ExperimentDefinition,
@@ -70,7 +70,7 @@ def test_frozen_replicates_require_unique_ppo_and_sampling_seeds(
 
 
 def test_base_learning_package_does_not_reexport_experiment_api() -> None:
-    import f1rl.learning as learning
+    import src.learning as learning
 
     assert not hasattr(learning, "ExperimentDefinition")
     assert not hasattr(learning, "ExperimentMetadata")
@@ -85,8 +85,8 @@ def blocked(name, *args, **kwargs):
         raise ImportError("blocked yaml")
     return original(name, *args, **kwargs)
 builtins.__import__ = blocked
-import f1rl.learning
-assert not hasattr(f1rl.learning, "ExperimentDefinition")
+import src.learning
+assert not hasattr(src.learning, "ExperimentDefinition")
 '''
     completed = subprocess.run(
         [sys.executable, "-c", code],

@@ -6,7 +6,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 
-from f1rl.learning.corridor_audit import audit_right_turn_corridor
+from src.learning.corridor_audit import audit_right_turn_corridor
 
 
 def main()->int:

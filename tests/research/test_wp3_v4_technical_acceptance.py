@@ -4,7 +4,7 @@ from pathlib import Path
 import os
 import pytest
 
-from f1rl.research.wp3_v4_technical_acceptance import (
+from src.research.wp3_v4_technical_acceptance import (
     source_bound_acceptance,SCHEMA,VERSION
 )
 
@@ -19,7 +19,7 @@ def check(replay=REPLAY,receipt=RECEIPT):
 
 
 def test_technical_evidence_can_be_source_bound_without_fake_reviewer():
-    from f1rl.research.historical_source_records import verify_historical_records
+    from src.research.historical_source_records import verify_historical_records
     assert verify_historical_records(ROOT, HISTORY)["status"] == "HISTORICAL_RECORD_INTEGRITY_VERIFIED"
     with pytest.raises(ValueError, match="historical source identity"):
         check()

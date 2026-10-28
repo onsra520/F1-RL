@@ -21,7 +21,7 @@ def diagnostic_action(observation, yaw_rate):
 
 
 def trace_episode(factory, model, seed, controller, output):
-    from f1rl.sandbox.geometry.vector import Vec3
+    from src.sandbox.geometry.vector import Vec3
     env = replace(factory, reset_config=replace(factory.reset_config, seed=seed)).create()
     started = time.perf_counter()
     observation, info = env.reset(seed=seed)
@@ -110,9 +110,9 @@ def main():
     parser.add_argument('--threads', type=int, nargs='+')
     args = parser.parse_args()
     import torch
-    from f1rl.exploratory.config import resolve
-    from f1rl.learning.algorithms.ppo import PPOModel
-    from f1rl.research.wp7_protocol import load_registration, prepare_scenarios
+    from src.exploratory.config import resolve
+    from src.learning.algorithms.ppo import PPOModel
+    from src.research.wp7_protocol import load_registration, prepare_scenarios
     settings = resolve(ROOT)
     torch.set_num_threads(settings['limits']['threads'])
     torch.set_num_interop_threads(settings['limits']['interop_threads'])

@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from f1rl.learning.algorithms.ppo import PPOConfig
-from f1rl.learning.training.config import TrainingRunConfig, VectorEnvConfig
+from src.learning.algorithms.ppo import PPOConfig
+from src.learning.training.config import TrainingRunConfig, VectorEnvConfig
 
 
 def _yaml(

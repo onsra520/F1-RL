@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 import pytest
-from f1rl.research.wp3_issue51_latest_gate import LATEST,OLD,source_bound_dev_crash_gate
+from src.research.wp3_issue51_latest_gate import LATEST,OLD,source_bound_dev_crash_gate
 
 
 OLD = Path(os.environ.get("F1RL_WP3_EVIDENCE", str(OLD)))

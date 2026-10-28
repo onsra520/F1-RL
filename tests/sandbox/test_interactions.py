@@ -1,14 +1,14 @@
 import pytest
 
-from f1rl.sandbox.entities.checkpoint import Checkpoint
-from f1rl.sandbox.entities.finish_line import FinishLine
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
-from f1rl.sandbox.interactions.resolver import resolve_entry_events
-from f1rl.sandbox.interactions.state import InteractionState
-from f1rl.sandbox.track.query import TrackQuery
-from f1rl.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.entities.checkpoint import Checkpoint
+from src.sandbox.entities.finish_line import FinishLine
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
+from src.sandbox.interactions.resolver import resolve_entry_events
+from src.sandbox.interactions.state import InteractionState
+from src.sandbox.track.query import TrackQuery
+from src.sandbox.track.volume import OrientedBoxVolume
 
 
 def volume() -> OrientedBoxVolume:

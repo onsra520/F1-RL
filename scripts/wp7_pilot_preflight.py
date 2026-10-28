@@ -5,7 +5,7 @@ import argparse
 import json
 from pathlib import Path
 
-from f1rl.learning.pilot_preflight import build_pilot_preflight
+from src.learning.pilot_preflight import build_pilot_preflight
 
 
 def main() -> int:

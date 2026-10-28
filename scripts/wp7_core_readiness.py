@@ -5,7 +5,7 @@ import argparse
 import json
 from pathlib import Path
 
-from f1rl.research.wp7_readiness import evaluate_readiness
+from src.research.wp7_readiness import evaluate_readiness
 
 
 def main() -> int:

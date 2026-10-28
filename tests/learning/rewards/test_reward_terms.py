@@ -2,13 +2,13 @@ from math import copysign, inf, nan
 
 import pytest
 
-from f1rl.learning.rewards.core import RewardTransition
-from f1rl.learning.rewards.terms import CollisionPenalty, TargetProgressReward, TimePenalty
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
-from f1rl.sandbox.track.state import ScorePickupCollected
-from f1rl.sandbox.vehicle import VehicleState
+from src.learning.rewards.core import RewardTransition
+from src.learning.rewards.terms import CollisionPenalty, TargetProgressReward, TimePenalty
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
+from src.sandbox.track.state import ScorePickupCollected
+from src.sandbox.vehicle import VehicleState
 
 
 def vehicle(position: Vec3) -> VehicleState:

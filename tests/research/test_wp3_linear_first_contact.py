@@ -2,12 +2,12 @@
 from dataclasses import replace
 
 import pytest
-from f1rl.sandbox.body_collision import VehicleBodyGeometry
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.linear_first_body_contact import certify_first_linear_body_contact
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleState
+from src.sandbox.body_collision import VehicleBodyGeometry
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.linear_first_body_contact import certify_first_linear_body_contact
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleState
 
 ZERO=Vec3(0.,0.,0.)
 BODY=VehicleBodyGeometry(.4,.4,.4,ZERO)

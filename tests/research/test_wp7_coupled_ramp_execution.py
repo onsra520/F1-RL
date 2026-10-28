@@ -4,8 +4,8 @@ from dataclasses import replace
 
 import numpy as np
 
-from f1rl.research.wp7_executed_feasibility import certify_coupled_ramp_execution, replay_planar_execution
-from f1rl.learning.action import ActionContract
+from src.research.wp7_executed_feasibility import certify_coupled_ramp_execution, replay_planar_execution
+from src.learning.action import ActionContract
 from tests.integration.test_coupled_ground_motion import coupled_factory
 
 

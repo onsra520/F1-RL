@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 
 def api():
-    return importlib.import_module('f1rl.exploratory.permit')
+    return importlib.import_module('src.exploratory.permit')
 
 
 @pytest.fixture
@@ -127,9 +127,9 @@ def test_wall_budget_applies_to_baselines_too():
 
 
 def test_unscoped_research_env_does_not_gain_permission():
-    from f1rl.learning.algorithms.ppo import _validate_training_admission
-    from f1rl.learning.gym_environment import F1RLEnv
-    from f1rl.research.wp7_admission import ScientificAdmissionError
+    from src.learning.algorithms.ppo import _validate_training_admission
+    from src.learning.gym_environment import F1RLEnv
+    from src.research.wp7_admission import ScientificAdmissionError
     env = object.__new__(F1RLEnv)
     env._requires_scientific_admission = True
     assert api().admitted(env) is False
@@ -137,7 +137,7 @@ def test_unscoped_research_env_does_not_gain_permission():
 
 
 def test_cli_without_execution_grant_denies_before_worker(tmp_path):
-    cli = importlib.import_module('f1rl.exploratory.cli')
+    cli = importlib.import_module('src.exploratory.cli')
     with pytest.raises(SystemExit) as exc:
         cli.main(['execute', '--permit', str(tmp_path/'absent.json')])
     assert exc.value.code == 2
@@ -168,7 +168,7 @@ def test_permit_drift_is_rejected(tmp_path, monkeypatch, change):
 
 
 def test_forged_env_flags_never_become_capability():
-    from f1rl.learning.gym_environment import F1RLEnv
+    from src.learning.gym_environment import F1RLEnv
     env = object.__new__(F1RLEnv)
     env._requires_scientific_admission = True
     env.exploratory_authorized = True
@@ -177,16 +177,16 @@ def test_forged_env_flags_never_become_capability():
 
 
 def test_inference_capability_cannot_authorize_learning():
-    from f1rl.learning.gym_environment import F1RLEnv
+    from src.learning.gym_environment import F1RLEnv
     env = object.__new__(F1RLEnv)
     api()._sessions[env] = (object(), False)
     assert api().admitted(env) is False
 
 
 def test_preflight_never_allocates_model_or_resets_gym(tmp_path, monkeypatch, capsys):
-    cli = importlib.import_module('f1rl.exploratory.cli')
-    from f1rl.learning.algorithms.ppo import PPOModel
-    from f1rl.learning.gym_environment import F1RLEnv
+    cli = importlib.import_module('src.exploratory.cli')
+    from src.learning.algorithms.ppo import PPOModel
+    from src.learning.gym_environment import F1RLEnv
     def forbidden(*args, **kwargs): pytest.fail('preflight allocated execution compute')
     monkeypatch.setattr(PPOModel, 'create', forbidden)
     monkeypatch.setattr(F1RLEnv, 'reset', forbidden)
@@ -211,9 +211,9 @@ def test_scoped_scalar_and_vector_guards_reauthenticate_revocation(tmp_path, mon
     import numpy as np
     from gymnasium.spaces import Box
     from stable_baselines3.common.vec_env import DummyVecEnv
-    from f1rl.learning.gym_environment import F1RLEnv
-    from f1rl.learning.algorithms.ppo import _validate_training_admission
-    from f1rl.exploratory.pilot import reserve, claim
+    from src.learning.gym_environment import F1RLEnv
+    from src.learning.algorithms.ppo import _validate_training_admission
+    from src.exploratory.pilot import reserve, claim
     p = api()
     private, envelope, registry = signed
     now = datetime.now(timezone.utc)
@@ -248,7 +248,7 @@ def test_scoped_scalar_and_vector_guards_reauthenticate_revocation(tmp_path, mon
 
 
 def test_exploratory_threads_match_config_and_available_processors():
-    from f1rl.exploratory.config import resolve
+    from src.exploratory.config import resolve
     from pathlib import Path
     config = resolve(Path(__file__).resolve().parents[2])
     import yaml
@@ -276,8 +276,8 @@ def test_session_rejects_cpu_threads_above_permit(monkeypatch):
 
 def test_cuda_loaded_model_cannot_learn_in_exploratory_context(monkeypatch):
     from types import SimpleNamespace
-    from f1rl.learning.algorithms.ppo import PPO
-    import f1rl.learning.algorithms.ppo as backend
+    from src.learning.algorithms.ppo import PPO
+    import src.learning.algorithms.ppo as backend
     env = object()
     monkeypatch.setattr(backend, '_validate_training_admission', lambda env: None)
     monkeypatch.setattr(api(), 'admitted', lambda env: True)

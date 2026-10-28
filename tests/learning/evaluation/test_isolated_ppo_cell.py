@@ -8,9 +8,9 @@ import numpy as np
 import pytest
 import torch
 
-from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
-from f1rl.research.wp7_cell_evaluation import execute_saved_ppo_fixture_cell
-from f1rl.research.wp7_protocol import build_protocol
+from src.learning.algorithms.ppo import PPOConfig, PPOModel
+from src.research.wp7_cell_evaluation import execute_saved_ppo_fixture_cell
+from src.research.wp7_protocol import build_protocol
 from .test_evaluator import _factory
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -45,9 +45,9 @@ def test_real_saved_ppo_stochastic_cell_replays_without_mutating_parent_rng(tmp_
     assert first['scientific_evidence'] is False
     assert first['fixture']['configuration']['episode_config']['max_steps'] == 2
     assert first['fixture']['action_contract']['version'] == 'steering-throttle-brake0-v1'
-    from f1rl.track_assets.canonical import fingerprint_track_world
+    from src.track_assets.canonical import fingerprint_track_world
     assert first['fixture']['world_sha256'] == fingerprint_track_world(args['factory'].track)
-    from f1rl.research.wp7_protocol import digest
+    from src.research.wp7_protocol import digest
     fixture = first['fixture']
     assert fixture['sha256'] == digest({k:v for k,v in fixture.items() if k != 'sha256'})
     assert all(row['policy_action_count'] == 2 for row in first['episodes'])
@@ -68,7 +68,7 @@ def test_wrong_model_identity_rejected_before_worker_start(tmp_path):
 
 
 def test_research_factory_rejected_before_model_access_even_if_subclass_lies(tmp_path):
-    from f1rl.learning.training.env_factory import F1RLEnvFactory
+    from src.learning.training.env_factory import F1RLEnvFactory
     from tests.integration.test_wp7_lifecycle_race import lifecycle_reset_factory
     class LyingFactory(F1RLEnvFactory):
         @property
@@ -106,7 +106,7 @@ def test_unavailable_explicit_cuda_never_silently_falls_back(tmp_path):
 
 
 def test_different_reward_implementations_with_same_fields_have_distinct_identity(tmp_path):
-    from f1rl.learning.rewards import RewardComposer, CollisionPenalty, OffTrackPenalty
+    from src.learning.rewards import RewardComposer, CollisionPenalty, OffTrackPenalty
     path,identity = saved_model(tmp_path)
     protocol = build_protocol(ROOT)
     records = []

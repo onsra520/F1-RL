@@ -2,8 +2,8 @@ from math import pi, sqrt
 
 import pytest
 
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
 
 
 def test_vec3_arithmetic_and_scalar_operations() -> None:

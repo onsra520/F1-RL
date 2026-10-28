@@ -128,7 +128,7 @@ def assemble_registration(
     if match is None or int(match.group(1))<330 or any(
         marker in text for marker in ("FAILED","ERROR","Traceback")):
         raise ValueError("test receipt invalid for versioned crash contract")
-    source={name:digest_file(root/name) for name in REQUIRED_SOURCES}
+    source={name:digest_file(root/name.replace("f1rl/", "src/", 1)) for name in REQUIRED_SOURCES}
     result={
         "schema_version":"wp3_crash_terminal_v1_technical_registry",
         "created_at_utc":datetime.now(timezone.utc).isoformat(),

@@ -6,8 +6,8 @@ from pathlib import Path
 import json
 import pytest
 
-from f1rl.research import wp3_eval_only_coordinator as co
-from f1rl.research.wp3_eval_only_admission import MODELS, STRATA, TRACKS
+from src.research import wp3_eval_only_coordinator as co
+from src.research.wp3_eval_only_admission import MODELS, STRATA, TRACKS
 
 
 def roster():
@@ -154,7 +154,7 @@ def test_cli_entrypoint_parses_as_python():
 
 
 def test_real_admission_gate_checksum_survives_bound_source_head(monkeypatch, tmp_path):
-    from f1rl.research.wp3_eval_only_admission import refuse_full_eval as original_gate
+    from src.research.wp3_eval_only_admission import refuse_full_eval as original_gate
     root, history = tmp_path / "root", tmp_path / "history"
     root.mkdir()
     history.mkdir()

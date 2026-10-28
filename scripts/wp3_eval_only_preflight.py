@@ -3,7 +3,7 @@ from pathlib import Path
 import json,sys
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from f1rl.research.wp3_eval_only_admission import build_eval_only_preflight,refuse_full_eval
+from src.research.wp3_eval_only_admission import build_eval_only_preflight,refuse_full_eval
 import os
 HISTORY=Path(os.environ.get("F1RL_WP3_EVIDENCE", r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1"))
 REPLAY=ROOT/"docs/research/WP3-CE0E55D-THREE-REPLAY-PREFLIGHT-20261024.json"

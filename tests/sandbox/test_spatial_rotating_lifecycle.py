@@ -1,11 +1,11 @@
 """Rotating compliant flight uses world-H dynamics and ballistic/SLERP CCD."""
 from dataclasses import replace
 import pytest
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.vehicle import VehicleControl
-from f1rl.sandbox.spatial_contact_dynamics import integrate_spatial_lifecycle
-from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.vehicle import VehicleControl
+from src.sandbox.spatial_contact_dynamics import integrate_spatial_lifecycle
+from src.sandbox.independent_suspension_dynamics import SuspensionResolutionError
 from tests.sandbox.test_spatial_atlas_lifecycle import sloped_landing
 
 
@@ -41,8 +41,8 @@ def test_variable_omega_free_flight_preserves_world_momentum_and_passive_energy(
 
 
 def test_ballistic_slerp_body_bound_blocks_hidden_overhead_contact():
-    from f1rl.sandbox.body_collision import sweep_body_against_obstacle,sweep_ballistic_body_against_obstacle
-    from f1rl.sandbox.track.volume import OrientedBoxVolume
+    from src.sandbox.body_collision import sweep_body_against_obstacle,sweep_ballistic_body_against_obstacle
+    from src.sandbox.track.volume import OrientedBoxVolume
     f,v,s,policy=rotating_air()
     v=replace(v,velocity=Vec3(0.,.4905,10.),angular_velocity=Vec3(0.,.2,0.))
     r=integrate_spatial_lifecycle(v,s,f.physics_config.body_geometry,f.track.surfaces,f.vehicle_parameters,
@@ -55,11 +55,11 @@ def test_ballistic_slerp_body_bound_blocks_hidden_overhead_contact():
 
 
 def test_public_rotating_ballistic_world_blocks_hidden_overhead_obstacle():
-    from f1rl.sandbox.spatial_contact_dynamics import _suspension_state
-    from f1rl.sandbox.world import step_world
-    from f1rl.sandbox.entities.obstacle import Obstacle
-    from f1rl.sandbox.track.volume import OrientedBoxVolume
-    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
+    from src.sandbox.spatial_contact_dynamics import _suspension_state
+    from src.sandbox.world import step_world
+    from src.sandbox.entities.obstacle import Obstacle
+    from src.sandbox.track.volume import OrientedBoxVolume
+    from src.sandbox.ballistic_flight import FlightPhysicsError
     from tests.integration.test_spatial_compliant_gym import airborne_step_fixture
     f=airborne_step_fixture()
     v=replace(f.initial_state.vehicle,angular_velocity=Vec3(0.,.2,0.))
@@ -73,8 +73,8 @@ def test_public_rotating_ballistic_world_blocks_hidden_overhead_obstacle():
 
 def test_rotating_takeoff_airborne_gates_landing_recovery_and_finish_share_one_gym_episode():
     import numpy as np
-    from f1rl.sandbox.spatial_contact_dynamics import _suspension_state
-    from f1rl.learning.wp7_race import WP7RaceConfig
+    from src.sandbox.spatial_contact_dynamics import _suspension_state
+    from src.learning.wp7_race import WP7RaceConfig
     from tests.integration.test_spatial_compliant_gym import moving_race_factory
     f=moving_race_factory()
     v=replace(f.initial_state.vehicle,angular_velocity=Vec3(0.,.2,0.))
@@ -114,7 +114,7 @@ def test_rotating_touchdown_on_actual_train_ramp_uses_gradient_phase_proof():
 
 
 def test_airborne_ground_actions_and_modifiers_do_not_change_torque_free_state():
-    from f1rl.sandbox.dynamics.modifiers import MotionModifiers
+    from src.sandbox.dynamics.modifiers import MotionModifiers
     f,v,s,policy=rotating_air()
     args=(v,s,f.physics_config.body_geometry,f.track.surfaces,f.vehicle_parameters)
     zero=integrate_spatial_lifecycle(*args,VehicleControl(0.,0.,0.),policy,dt=.1,phase_domain='atlas_rotating_v3')
@@ -142,9 +142,9 @@ def test_rotation_leaf_refines_before_a_possible_aliased_full_turn():
 
 
 def test_rotating_air_runtime_rejects_claimed_actuator_work():
-    from f1rl.runtime.physics import PhysicsTransitionError
-    from f1rl.sandbox.spatial_contact_dynamics import _suspension_state
-    from f1rl.sandbox.world import step_world
+    from src.runtime.physics import PhysicsTransitionError
+    from src.sandbox.spatial_contact_dynamics import _suspension_state
+    from src.sandbox.world import step_world
     from tests.integration.test_spatial_compliant_gym import airborne_step_fixture
     f=airborne_step_fixture()
     v=replace(f.initial_state.vehicle,angular_velocity=Vec3(.1,.2,.15))
@@ -161,7 +161,7 @@ def test_rotating_air_runtime_rejects_claimed_actuator_work():
 
 def test_seeded_world_h_integrator_matches_independent_body_euler_free_rotation():
     from random import Random
-    from f1rl.sandbox.torque_free_rotation import (AngularRigidBodyState,TorqueFreeRotationPolicy,advance_torque_free_rotation)
+    from src.sandbox.torque_free_rotation import (AngularRigidBodyState,TorqueFreeRotationPolicy,advance_torque_free_rotation)
     rng=Random(1027)
     f,base,s,policy=rotating_air()
     angular=TorqueFreeRotationPolicy(s.pitch_inertia_kg_m2,policy.yaw_inertia_kg_m2,s.roll_inertia_kg_m2,

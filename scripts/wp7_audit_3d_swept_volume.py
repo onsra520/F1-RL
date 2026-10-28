@@ -6,7 +6,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 
-from f1rl.learning.swept_volume_audit import audit_3d_swept_run
+from src.learning.swept_volume_audit import audit_3d_swept_run
 
 
 def main()->int:

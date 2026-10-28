@@ -2,7 +2,7 @@
 from pathlib import Path
 import pytest
 
-from f1rl.research.wp7_executed_feasibility import certify_ramp_execution, replay_planar_execution
+from src.research.wp7_executed_feasibility import certify_ramp_execution, replay_planar_execution
 
 
 def test_actual_ramp_profile_executes_gates_contact_and_stop_and_replays():

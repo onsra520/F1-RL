@@ -2,15 +2,15 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from f1rl.runtime.simulation import SimulationConfig, SimulationSnapshot, SimulationState
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.state import InteractionState
-from f1rl.sandbox.rules.scoring import ScoreState
-from f1rl.sandbox.track.query import TrackQuery
-from f1rl.sandbox.track.state import TrackState
-from f1rl.sandbox.vehicle import VehicleState
-from f1rl.sandbox.world import WorldState
+from src.runtime.simulation import SimulationConfig, SimulationSnapshot, SimulationState
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.state import InteractionState
+from src.sandbox.rules.scoring import ScoreState
+from src.sandbox.track.query import TrackQuery
+from src.sandbox.track.state import TrackState
+from src.sandbox.vehicle import VehicleState
+from src.sandbox.world import WorldState
 
 
 def _world() -> WorldState:

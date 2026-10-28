@@ -4,18 +4,18 @@ from math import pi
 
 import pytest
 
-from f1rl.sandbox.ballistic_flight import (
+from src.sandbox.ballistic_flight import (
     BallisticFlightPolicy, FlightPhysicsError, FlightState,
     authorize_takeoff, advance_ballistic_flight,
 )
-from f1rl.sandbox.body_collision import VehicleBodyGeometry
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
-from f1rl.sandbox.ramp_support import WheelContactPoints
-from f1rl.sandbox.track.patch import PlanarSurfacePatch
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleState
+from src.sandbox.body_collision import VehicleBodyGeometry
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
+from src.sandbox.ramp_support import WheelContactPoints
+from src.sandbox.track.patch import PlanarSurfacePatch
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleState
 
 BODY = VehicleBodyGeometry(1., .4, 2., Vec3(0., .1, 0.))
 WHEELS = WheelContactPoints(
@@ -199,15 +199,15 @@ def test_takeoff_or_airborne_phase_is_explicitly_versioned():
 
 
 def world_setup(*, phase="takeoff", vehicle=None, obstacles=(), road=None):
-    from f1rl.sandbox.independent_suspension_dynamics import (
+    from src.sandbox.independent_suspension_dynamics import (
         IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState,
     )
-    from f1rl.sandbox.interactions.state import InteractionState
-    from f1rl.sandbox.rules.scoring import ScoreState
-    from f1rl.sandbox.track.model import TrackWorld
-    from f1rl.sandbox.track.state import TrackState
-    from f1rl.sandbox.world import WorldState
-    from f1rl.sandbox.vehicle import VehicleParameters, VehicleControl
+    from src.sandbox.interactions.state import InteractionState
+    from src.sandbox.rules.scoring import ScoreState
+    from src.sandbox.track.model import TrackWorld
+    from src.sandbox.track.state import TrackState
+    from src.sandbox.world import WorldState
+    from src.sandbox.vehicle import VehicleParameters, VehicleControl
     initial = vehicle or car()
     track = TrackWorld(surfaces=(road or flat(),), obstacles=obstacles)
     state = WorldState(initial, TrackState(frozenset()),
@@ -225,7 +225,7 @@ def world_setup(*, phase="takeoff", vehicle=None, obstacles=(), road=None):
 
 
 def test_world_takeoff_to_airborne_to_landing_preserves_full_timestep():
-    from f1rl.sandbox.world import step_world
+    from src.sandbox.world import step_world
     track, state, control, params, dynamics = world_setup()
     first = step_world(track, state, control, params, .2, .5,
                        body_geometry=BODY, independent_suspension_policy=dynamics,
@@ -248,7 +248,7 @@ def test_world_takeoff_to_airborne_to_landing_preserves_full_timestep():
 
 
 def test_world_refuses_unapproved_flight_policy_or_missing_suspension():
-    from f1rl.sandbox.world import step_world
+    from src.sandbox.world import step_world
     track, state, control, params, dynamics = world_setup()
     with pytest.raises(ValueError, match="ballistic_flight_policy requires"):
         step_world(track, state, control, params, .1, .5, body_geometry=BODY,
@@ -260,11 +260,11 @@ def test_world_refuses_unapproved_flight_policy_or_missing_suspension():
 
 
 def test_world_airborne_triggers_cannot_award_checkpoint_or_pickup():
-    from f1rl.sandbox.entities.checkpoint import Checkpoint
-    from f1rl.sandbox.entities.finish_line import FinishLine
-    from f1rl.sandbox.entities.score_pickup import ScorePickup
-    from f1rl.sandbox.track.model import TrackWorld
-    from f1rl.sandbox.world import step_world
+    from src.sandbox.entities.checkpoint import Checkpoint
+    from src.sandbox.entities.finish_line import FinishLine
+    from src.sandbox.entities.score_pickup import ScorePickup
+    from src.sandbox.track.model import TrackWorld
+    from src.sandbox.world import step_world
     center = OrientedBoxVolume(Vec3(0., .3, 0.), Vec3(3., 3., 3.),
                                Quaternion.identity())
     track, state, control, params, dynamics = world_setup()
@@ -282,8 +282,8 @@ def test_world_airborne_triggers_cannot_award_checkpoint_or_pickup():
 
 
 def test_world_ballistic_collision_is_not_forged_as_successful_event():
-    from f1rl.sandbox.entities.obstacle import Obstacle
-    from f1rl.sandbox.world import step_world
+    from src.sandbox.entities.obstacle import Obstacle
+    from src.sandbox.world import step_world
     obstacle = Obstacle("wall", OrientedBoxVolume(
         Vec3(0., .5, 2.), Vec3(.5, 1., .05), Quaternion.identity(),
     ))
@@ -306,8 +306,8 @@ def test_zero_time_downward_wheel_contact_must_not_be_skipped():
 
 
 def test_no_hit_obstacle_still_checks_each_world_sweep_segment():
-    from f1rl.sandbox.entities.obstacle import Obstacle
-    from f1rl.sandbox.world import step_world
+    from src.sandbox.entities.obstacle import Obstacle
+    from src.sandbox.world import step_world
     far = Obstacle("far", OrientedBoxVolume(
         Vec3(100., 2., 100.), Vec3(1., 1., 1.), Quaternion.identity(),
     ))

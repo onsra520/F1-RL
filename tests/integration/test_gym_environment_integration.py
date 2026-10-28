@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from f1rl.learning import (
+from src.learning import (
     EpisodeConfig,
     NavigationTarget,
     ObservationConfig,
@@ -11,21 +11,21 @@ from f1rl.learning import (
     TargetProgressReward,
     TimePenalty,
 )
-from f1rl.learning.gym_environment import F1RLEnv
-from f1rl.runtime.simulation import SimulationConfig
-from f1rl.sandbox.entities.checkpoint import Checkpoint
-from f1rl.sandbox.entities.finish_line import FinishLine
-from f1rl.sandbox.entities.score_pickup import ScorePickup
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.state import InteractionState
-from f1rl.sandbox.perception.sensor_suite import SensorSuite
-from f1rl.sandbox.rules.scoring import ScoreState
-from f1rl.sandbox.track.model import TrackWorld
-from f1rl.sandbox.track.state import TrackState
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleParameters, VehicleState
-from f1rl.sandbox.world import WorldState
+from src.learning.gym_environment import F1RLEnv
+from src.runtime.simulation import SimulationConfig
+from src.sandbox.entities.checkpoint import Checkpoint
+from src.sandbox.entities.finish_line import FinishLine
+from src.sandbox.entities.score_pickup import ScorePickup
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.state import InteractionState
+from src.sandbox.perception.sensor_suite import SensorSuite
+from src.sandbox.rules.scoring import ScoreState
+from src.sandbox.track.model import TrackWorld
+from src.sandbox.track.state import TrackState
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleParameters, VehicleState
+from src.sandbox.world import WorldState
 
 
 def _volume(center: Vec3) -> OrientedBoxVolume:

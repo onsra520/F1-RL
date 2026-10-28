@@ -40,9 +40,9 @@ def main(argv=None):
             raise ValueError('paired improvement evidence must match this model')
     import torch
     torch.set_num_threads(1)
-    from f1rl.learning.algorithms.ppo import PPOModel
-    from f1rl.exploratory.pilot import weights_sha256
-    from f1rl.research.wp7_protocol import load_registration, prepare_scenarios
+    from src.learning.algorithms.ppo import PPOModel
+    from src.exploratory.pilot import weights_sha256
+    from src.research.wp7_protocol import load_registration, prepare_scenarios
     loaded = PPOModel.load(model, device='cpu')
     if loaded.num_timesteps != summary['learning_timesteps'] or weights_sha256(loaded) != summary['final_weights_sha256']:
         raise ValueError('saved model differs from learning summary')
@@ -54,7 +54,7 @@ def main(argv=None):
         'action_low': loaded._model.action_space.low.tolist(),
         'action_high': loaded._model.action_space.high.tolist()}
     dest.mkdir(parents=True)
-    paths = [*ROOT.joinpath('f1rl').rglob('*.py'),
+    paths = [*ROOT.joinpath('src').rglob('*.py'),
         ROOT/'scripts/run_inference.py', ROOT/'scripts/launch_exploratory_demo.py', ROOT/'START-DEMO.cmd',
         ROOT/'config.yml', ROOT/'assets/tracks/manifest.json',
         *ROOT.joinpath('assets/tracks/training').glob('*.json'),

@@ -1,9 +1,9 @@
 import pytest
 
-from f1rl.sandbox.center_trajectory import CenterSegment
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.center_trajectory import CenterSegment
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.track.volume import OrientedBoxVolume
 
 
 def test_ballistic_gate_uses_exact_height_instead_of_endpoint_chord():

@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.track.model import TrackWorld
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.track.model import TrackWorld
 
 _SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 

@@ -4,10 +4,10 @@ import hashlib
 import json
 from math import isfinite
 
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.track.model import TrackWorld
-from f1rl.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.track.model import TrackWorld
+from src.sandbox.track.volume import OrientedBoxVolume
 
 from .model import AuthoredNavigation, SpawnPose, TrackAsset
 

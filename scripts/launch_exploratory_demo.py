@@ -77,7 +77,7 @@ def main():
     alternate_result = ensure_runtime()
     if alternate_result is not None:
         return alternate_result
-    from f1rl.exploratory.permit import LOCAL_ACKNOWLEDGEMENT, prepare
+    from src.exploratory.permit import LOCAL_ACKNOWLEDGEMENT, prepare
 
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid4().hex[:8]
     evidence = ROOT.parent / ".evidence" / "F1-RL" / "demo" / run_id

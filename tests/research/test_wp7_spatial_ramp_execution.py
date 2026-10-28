@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 
-from f1rl.research.wp7_executed_feasibility import certify_spatial_ramp_execution, replay_planar_execution
+from src.research.wp7_executed_feasibility import certify_spatial_ramp_execution, replay_planar_execution
 from tests.integration.test_spatial_ground_motion import spatial_factory
 
 

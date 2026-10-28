@@ -1,20 +1,20 @@
-from f1rl.sandbox.entities.boost_pad import BoostPad
-from f1rl.sandbox.entities.checkpoint import Checkpoint
-from f1rl.sandbox.entities.finish_line import FinishLine
-from f1rl.sandbox.entities.obstacle import Obstacle
-from f1rl.sandbox.entities.score_pickup import ScorePickup
-from f1rl.sandbox.entities.slow_zone import SlowZone
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
-from f1rl.sandbox.interactions.state import InteractionState
-from f1rl.sandbox.rules.scoring import ScoreState
-from f1rl.sandbox.track.model import TrackWorld
-from f1rl.sandbox.track.patch import PlanarSurfacePatch
-from f1rl.sandbox.track.state import ScorePickupCollected, TrackState
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
-from f1rl.sandbox.world import WorldState, step_world
+from src.sandbox.entities.boost_pad import BoostPad
+from src.sandbox.entities.checkpoint import Checkpoint
+from src.sandbox.entities.finish_line import FinishLine
+from src.sandbox.entities.obstacle import Obstacle
+from src.sandbox.entities.score_pickup import ScorePickup
+from src.sandbox.entities.slow_zone import SlowZone
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
+from src.sandbox.interactions.state import InteractionState
+from src.sandbox.rules.scoring import ScoreState
+from src.sandbox.track.model import TrackWorld
+from src.sandbox.track.patch import PlanarSurfacePatch
+from src.sandbox.track.state import ScorePickupCollected, TrackState
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from src.sandbox.world import WorldState, step_world
 
 
 def road() -> PlanarSurfacePatch:

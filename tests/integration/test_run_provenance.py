@@ -4,9 +4,9 @@ import json
 from pathlib import Path
 import subprocess
 
-from f1rl.learning.experiments import ExperimentDefinition
-from f1rl.learning.provenance import capture_run_provenance, write_run_provenance
-from f1rl.track_assets import load_track_manifest
+from src.learning.experiments import ExperimentDefinition
+from src.learning.provenance import capture_run_provenance, write_run_provenance
+from src.track_assets import load_track_manifest
 
 
 ROOT = Path(__file__).parents[2]

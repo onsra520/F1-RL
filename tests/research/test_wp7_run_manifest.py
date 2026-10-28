@@ -6,9 +6,9 @@ import sys
 
 import pytest
 
-from f1rl.research.wp7_execution import build_policy_execution
-from f1rl.research.wp7_protocol import digest
-from f1rl.research.wp7_run_manifest import capture_registered_run, bind_run_artifacts, verify_run_manifest
+from src.research.wp7_execution import build_policy_execution
+from src.research.wp7_protocol import digest
+from src.research.wp7_run_manifest import capture_registered_run, bind_run_artifacts, verify_run_manifest
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -27,7 +27,7 @@ def test_actual_binding_runtime_and_checkpoint_bytes_verify_on_independent_resto
     (original/'checkpoint.zip').write_bytes(b'opaque-checkpoint-fixture')
     (restore/'checkpoint.zip').write_bytes((original/'checkpoint.zip').read_bytes())
     sealed = bind_run_artifacts(start, original)
-    import f1rl.research.wp7_protocol as protocol_module
+    import src.research.wp7_protocol as protocol_module
     def forbidden_recapture():
         raise AssertionError('restore must not substitute verifier-host runtime')
     monkeypatch.setattr(protocol_module, '_runtime', forbidden_recapture)
@@ -68,8 +68,8 @@ def test_manifest_requires_external_digest_and_rejects_rehashed_runtime_or_recei
 
 
 def test_runner_captures_preexecution_manifest_but_denies_research_before_artifacts():
-    from f1rl.learning.training.runner import TrainingRunner
-    from f1rl.research.wp7_admission import ScientificAdmissionError
+    from src.learning.training.runner import TrainingRunner
+    from src.research.wp7_admission import ScientificAdmissionError
     binding = build_policy_execution(ROOT, 'multitrack-seed2')
     runner = TrainingRunner(binding.configuration)
     with pytest.raises(ScientificAdmissionError):

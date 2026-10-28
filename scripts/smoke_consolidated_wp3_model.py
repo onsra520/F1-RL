@@ -4,8 +4,8 @@ import sys
 
 root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(root))
-from f1rl.learning.algorithms.ppo import PPOModel
-from f1rl.research.wp3_eval_only_coordinator import _production_episode
+from src.learning.algorithms.ppo import PPOModel
+from src.research.wp3_eval_only_coordinator import _production_episode
 
 model_path = root / 'docs/research/evidence/wp3-issue51-frozen-final-models-20261028/models/A-seed0/model-final.zip'
 model = PPOModel.load(model_path, device='cpu')

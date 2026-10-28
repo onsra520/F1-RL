@@ -3,7 +3,7 @@ import json
 import argparse
 from pathlib import Path
 
-from f1rl.research.wp7_track_feasibility import audit_train_tracks
+from src.research.wp7_track_feasibility import audit_train_tracks
 
 
 if __name__ == "__main__":

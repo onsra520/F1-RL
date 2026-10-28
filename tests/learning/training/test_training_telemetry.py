@@ -5,8 +5,8 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from f1rl.learning.training.telemetry import TrainingTelemetryRecorder
-from f1rl.learning.train_reset import derive_train_reset_draw_seed
+from src.learning.training.telemetry import TrainingTelemetryRecorder
+from src.learning.train_reset import derive_train_reset_draw_seed
 
 
 def _reset_contracts():
@@ -334,7 +334,7 @@ def test_recorder_freezes_declared_reset_contract_at_construction(tmp_path):
 
 
 def test_storage_preflight_reserves_the_full_declared_byte_bound(tmp_path, monkeypatch):
-    import f1rl.learning.training.telemetry as telemetry
+    import src.learning.training.telemetry as telemetry
     monkeypatch.setattr(telemetry.shutil, "disk_usage", lambda _path: SimpleNamespace(
         total=100_000_000, used=99_000_000, free=1_000_000))
     with pytest.raises(OSError, match="insufficient free space"):
@@ -348,7 +348,7 @@ def test_storage_preflight_reserves_the_full_declared_byte_bound(tmp_path, monke
 
 
 def test_training_start_preflights_vectorized_final_batch_overshoot(tmp_path, monkeypatch):
-    import f1rl.learning.training.telemetry as telemetry
+    import src.learning.training.telemetry as telemetry
     path = tmp_path / "vector-capacity.jsonl"
     recorder = TrainingTelemetryRecorder(
         path,

@@ -6,19 +6,19 @@ from math import pi
 
 import pytest
 
-from f1rl.sandbox.body_collision import VehicleBodyGeometry
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.state import InteractionState
-from f1rl.sandbox.road_footprint import (
+from src.sandbox.body_collision import VehicleBodyGeometry
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.state import InteractionState
+from src.sandbox.road_footprint import (
     body_xz_polygon, swept_body_road_union,
 )
-from f1rl.sandbox.rules.scoring import ScoreState
-from f1rl.sandbox.track.model import TrackWorld
-from f1rl.sandbox.track.patch import PlanarSurfacePatch
-from f1rl.sandbox.track.state import TrackState
-from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
-from f1rl.sandbox.world import WorldState, step_world
+from src.sandbox.rules.scoring import ScoreState
+from src.sandbox.track.model import TrackWorld
+from src.sandbox.track.patch import PlanarSurfacePatch
+from src.sandbox.track.state import TrackState
+from src.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from src.sandbox.world import WorldState, step_world
 
 
 IDENTITY=Quaternion.identity()

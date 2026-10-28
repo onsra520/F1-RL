@@ -217,7 +217,7 @@ def build_protocol(repository_root,*,profile='pv5_v1'):
             "content_sha256": entry.content_sha256,
             "initial_state_sha256": digest(json.loads(json.dumps(asdict(factory.initial_state),default=sorted))),
             "race_sha256": factory.race_config.provenance(factory.track, AuthoredRoute(factory.navigation))["sha256"]})
-    files = sorted([*root.joinpath("f1rl").rglob("*.py"), *root.joinpath("scripts").glob("*.py"),
+    files = sorted([*root.joinpath("src").rglob("*.py"), *root.joinpath("scripts").glob("*.py"),
         *root.joinpath("tests").rglob("*.py"),
         root / "pyproject.toml", _registration_path(root,profile),
         root / "configs/experiments/ppo-generalization-v1.yml", root / registration["training_profile"],

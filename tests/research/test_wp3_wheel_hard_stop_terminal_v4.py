@@ -2,17 +2,17 @@
 from dataclasses import replace
 import pytest
 
-from f1rl.sandbox.accepted_contact_transition import (
+from src.sandbox.accepted_contact_transition import (
     apply_certified_bump_stop_impulse,absorb_crash_center_prefix,
 )
-from f1rl.sandbox.center_trajectory import CenterSegment
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.rigid_body_impact_response import RigidBodyImpactMass
-from f1rl.sandbox.track.patch import PlanarSurfacePatch
-from f1rl.sandbox.vehicle import VehicleState
-from f1rl.sandbox.physical_crash import PhysicalCrash
-from f1rl.learning.crash_terminal_registered import SOURCES
+from src.sandbox.center_trajectory import CenterSegment
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.rigid_body_impact_response import RigidBodyImpactMass
+from src.sandbox.track.patch import PlanarSurfacePatch
+from src.sandbox.vehicle import VehicleState
+from src.sandbox.physical_crash import PhysicalCrash
+from src.learning.crash_terminal_registered import SOURCES
 
 Q=Quaternion.identity()
 Z=Vec3(0.,0.,0.)

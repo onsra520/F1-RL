@@ -2,9 +2,9 @@
 from hashlib import sha256
 from pathlib import Path
 import pytest
-from f1rl.research.wp7_protocol import build_protocol
-from f1rl.research.wp7_admission import ScientificAdmissionError
-from f1rl.research.wp7_cell_evaluation import evaluate_registered_cell
+from src.research.wp7_protocol import build_protocol
+from src.research.wp7_admission import ScientificAdmissionError
+from src.research.wp7_cell_evaluation import evaluate_registered_cell
 ROOT=Path(__file__).resolve().parents[3]
 PROFILE='spatial_rotating_owner_v3'
 
@@ -22,8 +22,8 @@ def test_registered_parent_and_worker_deny_before_model_or_environment_access(tm
 
 
 def bound_model(tmp_path):
-    from f1rl.research.wp7_execution import build_policy_execution
-    from f1rl.research.wp7_run_manifest import capture_registered_run,bind_run_artifacts
+    from src.research.wp7_execution import build_policy_execution
+    from src.research.wp7_run_manifest import capture_registered_run,bind_run_artifacts
     binding=build_policy_execution(ROOT,'multitrack-seed1',profile=PROFILE)
     prepared=capture_registered_run(binding,run_id='opaque-model-binding-not-training')
     artifacts=tmp_path/'artifacts';artifacts.mkdir()
@@ -35,7 +35,7 @@ def bound_model(tmp_path):
 
 
 def test_checkpoint_snapshot_binds_actual_bytes_policy_and_run_without_authorizing(tmp_path):
-    from f1rl.research.wp7_cell_evaluation import _registered_model_snapshot
+    from src.research.wp7_cell_evaluation import _registered_model_snapshot
     args=bound_model(tmp_path)
     blob,identity=_registered_model_snapshot(**args)
     assert blob==args['model_path'].read_bytes()
@@ -52,7 +52,7 @@ def test_checkpoint_snapshot_binds_actual_bytes_policy_and_run_without_authorizi
 
 
 def test_parent_boolean_cannot_admit_the_independent_worker_or_publish_evidence(tmp_path,monkeypatch):
-    import f1rl.research.wp7_cell_evaluation as module
+    import src.research.wp7_cell_evaluation as module
     args=bound_model(tmp_path)
     fake=dict(training_authorized=True,authorization=dict(verified=True,
         protocol_sha256=args['protocol']['sha256'],run_manifest_sha256=args['expected_run_manifest_sha256'],
@@ -67,7 +67,7 @@ def test_parent_boolean_cannot_admit_the_independent_worker_or_publish_evidence(
 
 
 def test_child_rechecks_signatures_even_if_its_report_booleans_are_forged(monkeypatch):
-    import f1rl.research.wp7_cell_evaluation as module
+    import src.research.wp7_cell_evaluation as module
     from scripts.wp7_ppo_fixture_worker import run_registered
     protocol = build_protocol(ROOT, profile=PROFILE)
     fake = dict(training_authorized=True, authorization=dict(verified=True,

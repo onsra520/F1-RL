@@ -2,14 +2,14 @@ import json
 
 import pytest
 
-from f1rl.sandbox.entities.boost_pad import BoostPad
-from f1rl.sandbox.entities.checkpoint import Checkpoint
-from f1rl.sandbox.entities.finish_line import FinishLine
-from f1rl.sandbox.entities.obstacle import Obstacle
-from f1rl.sandbox.entities.score_pickup import ScorePickup
-from f1rl.sandbox.entities.slow_zone import SlowZone
-from f1rl.sandbox.track.patch import PlanarSurfacePatch
-from f1rl.track_assets import load_track_asset
+from src.sandbox.entities.boost_pad import BoostPad
+from src.sandbox.entities.checkpoint import Checkpoint
+from src.sandbox.entities.finish_line import FinishLine
+from src.sandbox.entities.obstacle import Obstacle
+from src.sandbox.entities.score_pickup import ScorePickup
+from src.sandbox.entities.slow_zone import SlowZone
+from src.sandbox.track.patch import PlanarSurfacePatch
+from src.track_assets import load_track_asset
 
 
 def _volume(center):

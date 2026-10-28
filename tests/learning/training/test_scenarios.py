@@ -4,13 +4,13 @@ import gymnasium as gym
 import numpy as np
 import pytest
 
-from f1rl.learning import ObservationConfig, ObservationEncoder, RewardComposer, TimePenalty
-from f1rl.learning.training import env_factory
-from f1rl.learning.training.env_factory import F1RLEnvFactory
-from f1rl.runtime.simulation import SimulationConfig
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.perception.rangefinder import RangefinderSpec
-from f1rl.sandbox.perception.sensor_suite import SensorSuite
+from src.learning import ObservationConfig, ObservationEncoder, RewardComposer, TimePenalty
+from src.learning.training import env_factory
+from src.learning.training.env_factory import F1RLEnvFactory
+from src.runtime.simulation import SimulationConfig
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.perception.rangefinder import RangefinderSpec
+from src.sandbox.perception.sensor_suite import SensorSuite
 from tests.learning.training.test_env_factory import _factory
 
 

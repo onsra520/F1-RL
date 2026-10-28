@@ -1,18 +1,18 @@
 from pathlib import Path
 
-import f1rl.learning as learning
-from f1rl.learning.episode import EpisodeConfig, RaceProgressState, RaceRoute, advance_race_progress, episode_status
-from f1rl.sandbox.entities.checkpoint import Checkpoint
-from f1rl.sandbox.entities.finish_line import FinishLine
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.state import InteractionState
-from f1rl.sandbox.rules.scoring import ScoreState
-from f1rl.sandbox.track.model import TrackWorld
-from f1rl.sandbox.track.state import TrackState
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
-from f1rl.sandbox.world import WorldState, step_world
+import src.learning as learning
+from src.learning.episode import EpisodeConfig, RaceProgressState, RaceRoute, advance_race_progress, episode_status
+from src.sandbox.entities.checkpoint import Checkpoint
+from src.sandbox.entities.finish_line import FinishLine
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.state import InteractionState
+from src.sandbox.rules.scoring import ScoreState
+from src.sandbox.track.model import TrackWorld
+from src.sandbox.track.state import TrackState
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from src.sandbox.world import WorldState, step_world
 
 
 def _volume(center: Vec3) -> OrientedBoxVolume:
@@ -68,14 +68,14 @@ def test_zero_checkpoint_real_finish_and_status_precedence_are_deterministic() -
 
 def test_public_episode_exports_preserve_existing_learning_exports() -> None:
     for name in ("RaceCheckpoint", "RaceFinish", "RaceRoute", "RaceProgressState", "RaceProgressResult", "advance_race_progress", "EpisodeConfig", "EpisodeStatus", "episode_status"):
-        assert getattr(learning, name) is getattr(__import__("f1rl.learning.episode", fromlist=[name]), name)
+        assert getattr(learning, name) is getattr(__import__("src.learning.episode", fromlist=[name]), name)
     for name in ("ObservationConfig", "PolicyAction", "RewardTransition"):
         assert hasattr(learning, name)
 
 
 def test_episode_dependency_boundary_and_sandbox_reverse_dependency() -> None:
     root = Path(__file__).parents[2]
-    episode_source = "\n".join(path.read_text() for path in (root / "f1rl" / "learning" / "episode").glob("*.py"))
-    for forbidden in ("f1rl.runtime", "f1rl.api", "f1rl.drivers", "f1rl.learning.observation", "f1rl.learning.action", "f1rl.learning.rewards", "gymnasium", "numpy", "torch", "fastapi", "websocket"):
+    episode_source = "\n".join(path.read_text() for path in (root / "src" / "learning" / "episode").glob("*.py"))
+    for forbidden in ("src.runtime", "src.api", "src.drivers", "src.learning.observation", "src.learning.action", "src.learning.rewards", "gymnasium", "numpy", "torch", "fastapi", "websocket"):
         assert forbidden not in episode_source
-    assert all("f1rl.learning" not in path.read_text() for path in (root / "f1rl" / "sandbox").rglob("*.py"))
+    assert all("src.learning" not in path.read_text() for path in (root / "src" / "sandbox").rglob("*.py"))

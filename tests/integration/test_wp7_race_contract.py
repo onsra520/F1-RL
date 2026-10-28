@@ -4,14 +4,14 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from f1rl.learning.wp7_race import WP7RaceConfig
-from f1rl.learning.wp7_race import RaceContractError
-from f1rl.runtime.physics import PhysicsConfig
-from f1rl.runtime.simulation import SimulationConfig
-from f1rl.sandbox.entities.checkpoint import Checkpoint
-from f1rl.sandbox.entities.finish_line import FinishLine
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.track_assets.model import AuthoredNavigation
+from src.learning.wp7_race import WP7RaceConfig
+from src.learning.wp7_race import RaceContractError
+from src.runtime.physics import PhysicsConfig
+from src.runtime.simulation import SimulationConfig
+from src.sandbox.entities.checkpoint import Checkpoint
+from src.sandbox.entities.finish_line import FinishLine
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.track_assets.model import AuthoredNavigation
 from tests.integration.test_wp7_physics_integration import (
     BODY, SUSPENSION, factory, world, Vec3, Quaternion,
 )
@@ -150,8 +150,8 @@ def test_simultaneous_finish_and_checkpoint_order_is_rejected():
 
 
 def test_race_contract_cannot_mix_legacy_or_airborne_or_c2_semantics():
-    from f1rl.learning.offtrack import OffTrackConfig
-    from f1rl.sandbox.ballistic_flight import BallisticFlightPolicy, FlightState
+    from src.learning.offtrack import OffTrackConfig
+    from src.sandbox.ballistic_flight import BallisticFlightPolicy, FlightState
     candidate = race_factory()
     with pytest.raises(ValueError, match="grounded physics"):
         replace(candidate, physics_config=None)
@@ -167,7 +167,7 @@ def test_race_contract_cannot_mix_legacy_or_airborne_or_c2_semantics():
 
 
 def test_invalid_body_collision_takes_precedence_over_finish_and_requires_reset():
-    from f1rl.sandbox.entities.obstacle import Obstacle
+    from src.sandbox.entities.obstacle import Obstacle
     candidate = race_factory(max_steps=1)
     wall = Obstacle("wall", OrientedBoxVolume(
         Vec3(0., .8, 2.2), Vec3(.5, .8, .02), Quaternion.identity(),

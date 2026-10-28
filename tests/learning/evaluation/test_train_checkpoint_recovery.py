@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from f1rl.learning.evaluation.metrics import EpisodeMetrics
-from f1rl.learning.reconstruction import RecoveryCandidate
-from f1rl.learning import train_checkpoint as module
+from src.learning.evaluation.metrics import EpisodeMetrics
+from src.learning.reconstruction import RecoveryCandidate
+from src.learning import train_checkpoint as module
 
 ROOT=Path.cwd()
 CANDIDATE=ROOT/"configs/recovery/wp7-c2-candidate.yml"

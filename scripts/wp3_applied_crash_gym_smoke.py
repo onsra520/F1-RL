@@ -5,14 +5,14 @@ import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 
 import numpy as np
-from f1rl.sandbox.ballistic_flight import FlightState
-from f1rl.sandbox.entities.obstacle import Obstacle
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.spatial_contact_dynamics import _suspension_state
-from f1rl.learning.wp7_race import WP7RaceConfig
-from f1rl.learning.rewards import RewardComposer,TimePenalty
-from f1rl.learning.evaluation.evaluator import _valid_terminal_failure
+from src.sandbox.ballistic_flight import FlightState
+from src.sandbox.entities.obstacle import Obstacle
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.spatial_contact_dynamics import _suspension_state
+from src.learning.wp7_race import WP7RaceConfig
+from src.learning.rewards import RewardComposer,TimePenalty
+from src.learning.evaluation.evaluator import _valid_terminal_failure
 from tests.integration.test_spatial_ground_motion import spatial_factory
 f=spatial_factory()
 p=replace(f.physics_config,mode="wp7_lifecycle_v1",

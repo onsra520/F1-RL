@@ -1,6 +1,6 @@
 import pytest
 
-from f1rl.sandbox.multi_surface_support import certify_multisurface_support
+from src.sandbox.multi_surface_support import certify_multisurface_support
 from tests.research.test_wp3_physics_domain_regression import _factory, _pose
 
 

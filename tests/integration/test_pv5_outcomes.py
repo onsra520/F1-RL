@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 
 from tests.integration.test_wp7_race_contract import race_factory, sideways_factory
-from f1rl.learning.wp7_race import RaceContractError
-from f1rl.runtime.physics import PhysicsTransitionError
+from src.learning.wp7_race import RaceContractError
+from src.runtime.physics import PhysicsTransitionError
 
 
 @pytest.mark.parametrize("finish,max_steps,kind", [(.3, 1, "successful_finish"),
@@ -35,7 +35,7 @@ def test_uncertified_route_never_returns_a_ppo_sample():
 
 def test_invalid_physics_has_precedence_and_is_not_terminal_failure(monkeypatch):
     env = race_factory(max_steps=1).create()
-    from f1rl.runtime.simulation import Simulation
+    from src.runtime.simulation import Simulation
     def reject(*args, **kwargs):
         raise PhysicsTransitionError("unregistered recovery")
     try:

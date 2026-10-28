@@ -6,8 +6,8 @@ import argparse
 import json
 from pathlib import Path
 
-from f1rl.research.wp7_run_manifest import read_json, verify_run_manifest
-from f1rl.research.wp7_trusted_reviews import verify_run_reviews
+from src.research.wp7_run_manifest import read_json, verify_run_manifest
+from src.research.wp7_trusted_reviews import verify_run_reviews
 
 
 def main():

@@ -3,13 +3,13 @@ import argparse
 import json
 from pathlib import Path
 
-from f1rl.learning.pilot_preflight import TRAIN_IDS
-from f1rl.research.wp7_executed_feasibility import (
+from src.learning.pilot_preflight import TRAIN_IDS
+from src.research.wp7_executed_feasibility import (
     certify_planar_execution, certify_ramp_execution, certify_coupled_ramp_execution, replay_planar_execution,
     certify_registered_center_execution,
     certify_spatial_ramp_execution, certify_spatial_profile_execution,
 )
-from f1rl.research.wp7_protocol import _unique
+from src.research.wp7_protocol import _unique
 
 
 def _nonfinite(value):

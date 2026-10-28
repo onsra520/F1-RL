@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from f1rl.research.wp7_protocol import build_protocol,load_registration,prepare_scenarios,validate_protocol
-from f1rl.research.wp7_execution import build_policy_execution
+from src.research.wp7_protocol import build_protocol,load_registration,prepare_scenarios,validate_protocol
+from src.research.wp7_execution import build_policy_execution
 
 ROOT=Path(__file__).resolve().parents[2]
 PROFILE='spatial_ground_v1'
@@ -47,9 +47,9 @@ def test_spatial_policy_binding_reconstructs_exact_profile_and_seed_bundle(index
 
 
 def test_spatial_run_manifest_and_denial_keep_the_actual_profile_before_allocation(tmp_path):
-    from f1rl.research.wp7_run_manifest import capture_registered_run,verify_run_manifest
-    from f1rl.learning.training.runner import TrainingRunner
-    from f1rl.research.wp7_admission import ScientificAdmissionError
+    from src.research.wp7_run_manifest import capture_registered_run,verify_run_manifest
+    from src.learning.training.runner import TrainingRunner
+    from src.research.wp7_admission import ScientificAdmissionError
     b=build_policy_execution(ROOT,'multitrack-seed1',profile=PROFILE)
     record=capture_registered_run(b,run_id='spatial-preparation')
     assert record['protocol_sha256']==b.protocol_sha256
@@ -73,7 +73,7 @@ def test_unknown_profile_never_falls_back(profile):
 
 
 def test_spatial_audit_requires_actual_execution_before_source_access(tmp_path):
-    from f1rl.research.wp7_track_feasibility import audit_train_tracks
+    from src.research.wp7_track_feasibility import audit_train_tracks
     with pytest.raises(ValueError,match='profile.*execution'):
         audit_train_tracks(tmp_path/'absent',execution_profile=PROFILE)
 

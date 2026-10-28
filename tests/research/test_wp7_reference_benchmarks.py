@@ -5,25 +5,25 @@ All data are synthetic reference cases, NOT empirical vehicle measurements.
 from math import cos, sin
 import pytest
 
-from f1rl.research.wp7_reference_benchmarks import (
+from src.research.wp7_reference_benchmarks import (
     WP7_ANALYTIC_REFERENCES, AnalyticReferenceObservation,
     verify_analytic_references,
 )
-from f1rl.sandbox.ballistic_flight import _flight_pose
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.vehicle import VehicleState
-from f1rl.sandbox.torque_free_rotation import (
+from src.sandbox.ballistic_flight import _flight_pose
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.vehicle import VehicleState
+from src.sandbox.torque_free_rotation import (
     AngularRigidBodyState, TorqueFreeRotationPolicy,
     advance_torque_free_rotation,
 )
-from f1rl.sandbox.grounded_yaw_dynamics import (
+from src.sandbox.grounded_yaw_dynamics import (
     GroundedYawPolicy, advance_grounded_yaw,
 )
-from f1rl.sandbox.tire_calibration_contract import (
+from src.sandbox.tire_calibration_contract import (
     TireHubGeometry, sample_spherical_tire_contact,
 )
-from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from src.sandbox.track.patch import PlanarSurfacePatch
 
 TRACK = PlanarSurfacePatch(
     "plane", Vec3(0., 0., 0.), Vec3(0., 0., 1.),

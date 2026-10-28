@@ -3,11 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from f1rl.exploratory.abcd import (build_candidate_run_manifest, load_abcd_manifest,
+from src.exploratory.abcd import (build_candidate_run_manifest, load_abcd_manifest,
                                    validate_abcd_manifest, verify_candidate_run_manifest,
                                    authorize_candidate_run)
-from f1rl.exploratory.reward import validate as validate_demo
-from f1rl.research.wp2_statistics import holm_adjust
+from src.exploratory.reward import validate as validate_demo
+from src.research.wp2_statistics import holm_adjust
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,14 +48,14 @@ def test_prepared_run_manifest_binds_clean_source_candidate_and_statistical_desi
     assert binding['run_manifest_sha256'] == run['sha256']
     bad = dict(run)
     bad['training_authorized'] = True
-    from f1rl.research.wp7_protocol import digest
+    from src.research.wp7_protocol import digest
     bad['sha256'] = digest({key:value for key,value in bad.items() if key != 'sha256'})
     with pytest.raises(ValueError):
         verify_candidate_run_manifest(ROOT, bad)
 
 
 def test_draft_run_cannot_reach_worker_authorization_or_create_replay_claim(tmp_path, monkeypatch):
-    import f1rl.research.wp2_execution_permit as permit_module
+    import src.research.wp2_execution_permit as permit_module
 
     ledger = tmp_path / 'replay-ledger'
     monkeypatch.setattr(permit_module, '_replay_ledger_directory', lambda: ledger)
@@ -67,7 +67,7 @@ def test_draft_run_cannot_reach_worker_authorization_or_create_replay_claim(tmp_
 
 
 def test_draft_manifest_is_rejected_before_repository_permit_claim(tmp_path, monkeypatch):
-    import f1rl.research.wp2_execution_permit as permit_module
+    import src.research.wp2_execution_permit as permit_module
 
     def unexpected_claim(*args, **kwargs):
         raise AssertionError('draft manifest reached permit claim boundary')
@@ -86,8 +86,8 @@ def test_holm_rejects_empty_or_invalid_p_values(values):
 
 
 def test_verifier_rejects_unknown_seed_bundle_even_when_role_is_null(monkeypatch):
-    import f1rl.exploratory.abcd as abcd
-    from f1rl.research.wp7_protocol import digest
+    import src.exploratory.abcd as abcd
+    from src.research.wp7_protocol import digest
     monkeypatch.setattr(abcd, '_source_identity', lambda root: ('a' * 40, 'b' * 64))
     run = build_candidate_run_manifest(ROOT, candidate_id='A', run_id='bad-seed',
         seed_bundle={'ppo': 100, 'sampling': 200, 'training_reset': 1100})

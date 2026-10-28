@@ -4,8 +4,8 @@ import json
 from pathlib import Path
 import pytest
 
-from f1rl.research import wp3_owner_train_dev_eval as od
-from f1rl.research.wp3_eval_only_admission import MODELS, TRACKS, STRATA, digest
+from src.research import wp3_owner_train_dev_eval as od
+from src.research.wp3_eval_only_admission import MODELS, TRACKS, STRATA, digest
 
 
 def make_roster():
@@ -203,7 +203,7 @@ def test_preserve_exact_frozen_roster_cell_order():
 
 
 def test_incomplete_report_is_not_scientific_ranking(monkeypatch,tmp_path):
-    from f1rl.research import wp3_owner_train_dev_reports as reports
+    from src.research import wp3_owner_train_dev_reports as reports
     root,hist=fixture(monkeypatch,tmp_path)
     out=tmp_path/"output"
     manifest=od.new_run(root,hist,out,"WP3-OWNER-TRAINDEV-test-reports",

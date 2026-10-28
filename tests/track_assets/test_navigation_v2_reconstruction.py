@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from f1rl.track_assets import load_track_asset, load_track_manifest
+from src.track_assets import load_track_asset, load_track_manifest
 
 ROOT = Path("assets/tracks")
 MANIFEST = ROOT / "manifest.json"

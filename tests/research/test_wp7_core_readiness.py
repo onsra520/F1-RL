@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import pytest
 
-from f1rl.research.wp7_readiness import load_readiness_matrix, evaluate_readiness, MATRIX_PATH
+from src.research.wp7_readiness import load_readiness_matrix, evaluate_readiness, MATRIX_PATH
 
 ROOT = Path(__file__).resolve().parents[2]
 

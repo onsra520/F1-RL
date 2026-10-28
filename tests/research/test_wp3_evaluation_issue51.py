@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from f1rl.local_demo.evaluation import _write_new_or_match
+from src.local_demo.evaluation import _write_new_or_match
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_run_evaluation_reporter_receives_bound_model_and_cell_records():
     """Static regression: prevent the NameError after persisting the evaluation JSON."""
-    tree = ast.parse((ROOT / "f1rl/local_demo/evaluation.py").read_text(encoding="utf-8"))
+    tree = ast.parse((ROOT / "src/local_demo/evaluation.py").read_text(encoding="utf-8"))
     fn = next(node for node in tree.body
               if isinstance(node, ast.FunctionDef) and node.name == "run_evaluation")
     writes = [node for node in ast.walk(fn)

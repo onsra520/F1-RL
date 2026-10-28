@@ -1,15 +1,15 @@
 """The roll envelope is a witnessed noncollision terminal, not a crash alias."""
 from dataclasses import replace
 import pytest
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.vehicle import VehicleState
-from f1rl.sandbox.center_trajectory import CenterSegment
-from f1rl.sandbox.roll_envelope_terminal import RollEnvelopeStop,VERSION
-from f1rl.learning.roll_envelope_registered import (
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.vehicle import VehicleState
+from src.sandbox.center_trajectory import CenterSegment
+from src.sandbox.roll_envelope_terminal import RollEnvelopeStop,VERSION
+from src.learning.roll_envelope_registered import (
     descriptor,validate_registered_roll_envelope_info)
-from f1rl.learning.crash_terminal_registered import _sha,RACE_V4,PHYSICS_V4
-from f1rl.learning.evaluation.evaluator import _valid_terminal_failure
+from src.learning.crash_terminal_registered import _sha,RACE_V4,PHYSICS_V4
+from src.learning.evaluation.evaluator import _valid_terminal_failure
 
 UPROLL=Vec3(0.,0.,1.)
 POS=Vec3(0.,.5,0.)

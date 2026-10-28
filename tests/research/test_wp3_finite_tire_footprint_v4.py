@@ -3,7 +3,7 @@ from math import isclose
 
 import pytest
 
-from f1rl.sandbox.finite_tire_footprint_v4 import (
+from src.sandbox.finite_tire_footprint_v4 import (
     FOOTPRINT_RADIUS_M,_single_polygon_coverage,
 )
 

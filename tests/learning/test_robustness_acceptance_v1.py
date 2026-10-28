@@ -3,7 +3,7 @@ from math import isclose
 
 import pytest
 
-from f1rl.learning.robustness_acceptance import (
+from src.learning.robustness_acceptance import (
     clopper_pearson_lower_bound,
     evaluate_preregistered_track,
 )

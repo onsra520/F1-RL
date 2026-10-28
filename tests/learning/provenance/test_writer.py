@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from f1rl.learning.provenance import (
+from src.learning.provenance import (
     FileFingerprint,
     GitProvenance,
     PackageVersion,

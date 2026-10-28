@@ -35,7 +35,7 @@ def main() -> int:
         output = project_root / ".evidence" / "F1-RL" / "local-demo" / f"{run_id}-{args.candidate}-tune{args.tuning_seed_index}"
     else:
         output = args.output
-    from f1rl.local_demo.runner import run_local_demo
+    from src.local_demo.runner import run_local_demo
 
     def progress(state):
         print(f"[LOCAL_DEMO] {state['phase']} timesteps={state['learning_timesteps']} "

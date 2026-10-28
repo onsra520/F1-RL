@@ -1,14 +1,14 @@
 """First physically applied obstacle crash, before later checkpoints."""
 from types import SimpleNamespace
 import pytest
-from f1rl.sandbox.physical_crash import first_applied_grounded_crash
-from f1rl.sandbox.center_trajectory import CenterSegment
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.body_collision import VehicleBodyGeometry
-from f1rl.sandbox.rigid_body_impact_response import RigidBodyImpactMass
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleState
+from src.sandbox.physical_crash import first_applied_grounded_crash
+from src.sandbox.center_trajectory import CenterSegment
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.body_collision import VehicleBodyGeometry
+from src.sandbox.rigid_body_impact_response import RigidBodyImpactMass
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleState
 
 Q=Quaternion.identity()
 ZERO=Vec3(0.,0.,0.)

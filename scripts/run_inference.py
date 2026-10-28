@@ -28,9 +28,9 @@ def main(argv=None):
         return alternate_result
     import torch
     torch.set_num_threads(1)
-    from f1rl.learning.algorithms.ppo import PPOModel
-    from f1rl.research.wp7_protocol import load_registration, prepare_scenarios
-    from f1rl.exploratory.pilot import evaluate_episode
+    from src.learning.algorithms.ppo import PPOModel
+    from src.research.wp7_protocol import load_registration, prepare_scenarios
+    from src.exploratory.pilot import evaluate_episode
 
     registration = load_registration(ROOT, profile='spatial_rotating_owner_v3')
     scenarios = prepare_scenarios(ROOT, registration, seed_index=0)

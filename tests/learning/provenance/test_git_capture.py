@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from f1rl.learning.provenance import _capture_git_provenance
+from src.learning.provenance import _capture_git_provenance
 
 
 def _git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:

@@ -93,21 +93,21 @@ def source_bound_acceptance(root:Path,history:Path,replay_file:Path, *,
     # Historic acceptance was authored on the UNCOMMITTED handoff worktree.
     # Keep its original provenance, never substitute the later clean HEAD.
     head=HANDOFF
-    source_hashes={relative:digest_file(root/relative) for relative in FILES}
+    source_hashes={relative:digest_file(root/relative.replace("f1rl/", "src/", 1)) for relative in FILES}
     if len(source_hashes)!=len(FILES) or not all(len(value)==64 for value in source_hashes.values()):
         raise ValueError("physics source bundle cannot be authenticated")
     # Version isolation: historical baseline remains the default; v4 opt-in
     # and explicit development-only crash registration are visible in source.
     contract={
-       "v4_dispatch_explicit":VERSION in (root/"f1rl/sandbox/world.py").read_text("utf-8"),
+       "v4_dispatch_explicit":VERSION in (root/"src/sandbox/world.py").read_text("utf-8"),
        "v3_version_preserved":"spatial_rotating_compliant_lifecycle_v3" in
-           (root/"f1rl/runtime/physics.py").read_text("utf-8"),
+           (root/"src/runtime/physics.py").read_text("utf-8"),
        "v4_integrator_versioned":"spatial_road_edge_partial_lifecycle_rk4_v4" in
-           (root/"f1rl/sandbox/spatial_contact_dynamics.py").read_text("utf-8"),
+           (root/"src/sandbox/spatial_contact_dynamics.py").read_text("utf-8"),
        "legacy_scoring_protected":"physical_crash_terminal" in
-           (root/"f1rl/learning/evaluation/evaluator.py").read_text("utf-8"),
+           (root/"src/learning/evaluation/evaluator.py").read_text("utf-8"),
        "development_only_crash": "wp7_directed_lifecycle_crash_dev_v3" in
-           (root/"f1rl/learning/evaluation/crash_contract.py").read_text("utf-8"),
+           (root/"src/learning/evaluation/crash_contract.py").read_text("utf-8"),
     }
     if not all(contract.values()):raise ValueError("v4 version isolation invariant missing")
     roster_path=history/"evaluation/evaluation-roster.json"

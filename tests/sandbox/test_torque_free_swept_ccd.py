@@ -8,23 +8,23 @@ from dataclasses import replace
 from math import pi
 import pytest
 
-from f1rl.sandbox.ballistic_flight import (
+from src.sandbox.ballistic_flight import (
     BallisticFlightPolicy,FlightPhysicsError,FlightState,advance_ballistic_flight,
 )
-from f1rl.sandbox.body_collision import VehicleBodyGeometry
-from f1rl.sandbox.contact_manifold import ContactManifoldPolicy
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.independent_suspension_dynamics import (
+from src.sandbox.body_collision import VehicleBodyGeometry
+from src.sandbox.contact_manifold import ContactManifoldPolicy
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy,SuspensionDynamicsState,
 )
-from f1rl.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
-from f1rl.sandbox.ramp_support import WheelContactPoints
-from f1rl.sandbox.torque_free_rotation import TorqueFreeRotationPolicy
-from f1rl.sandbox.torque_free_swept_ccd import TorqueFreeSweepPolicy
-from f1rl.sandbox.track.patch import PlanarSurfacePatch
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleState,VehicleControl,VehicleParameters
+from src.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
+from src.sandbox.ramp_support import WheelContactPoints
+from src.sandbox.torque_free_rotation import TorqueFreeRotationPolicy
+from src.sandbox.torque_free_swept_ccd import TorqueFreeSweepPolicy
+from src.sandbox.track.patch import PlanarSurfacePatch
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleState,VehicleControl,VehicleParameters
 
 BODY=VehicleBodyGeometry(1.,.4,2.,Vec3(0.,.1,0.))
 W=WheelContactPoints(
@@ -162,11 +162,11 @@ def test_invalid_ccd_config_rejected(field,value):
 
 
 def test_world_step_continues_angular_flight_without_phantom_events():
-    from f1rl.sandbox.interactions.state import InteractionState
-    from f1rl.sandbox.rules.scoring import ScoreState
-    from f1rl.sandbox.track.model import TrackWorld
-    from f1rl.sandbox.track.state import TrackState
-    from f1rl.sandbox.world import WorldState,step_world
+    from src.sandbox.interactions.state import InteractionState
+    from src.sandbox.rules.scoring import ScoreState
+    from src.sandbox.track.model import TrackWorld
+    from src.sandbox.track.state import TrackState
+    from src.sandbox.world import WorldState,step_world
 
     initial=car()
     current=WorldState(

@@ -10,9 +10,9 @@ from hashlib import sha256
 import json,subprocess,sys,time
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from f1rl.learning.algorithms.ppo import PPOModel
-from f1rl.local_demo.evaluation import _evaluate_episode
-from f1rl.research.wp7_protocol import build_protocol,prepare_evaluation_factory
+from src.learning.algorithms.ppo import PPOModel
+from src.local_demo.evaluation import _evaluate_episode
+from src.research.wp7_protocol import build_protocol,prepare_evaluation_factory
 
 import os
 OLD=Path(os.environ.get("F1RL_WP3_EVIDENCE", r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1"))

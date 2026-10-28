@@ -11,7 +11,7 @@ from dataclasses import asdict
 import json
 from pathlib import Path
 
-from f1rl.learning.owner_acceptance import review_preregistered_contract
+from src.learning.owner_acceptance import review_preregistered_contract
 
 DEFAULT_CONTRACT = Path("configs/recovery/wp7-owner-decisions-preregistered-v1.yml")
 

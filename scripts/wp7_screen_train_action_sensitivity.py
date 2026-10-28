@@ -7,8 +7,8 @@ import json
 from pathlib import Path
 import torch
 
-from f1rl.learning.robustness_screen import screen_saved_train_policy
-from f1rl.learning.geometry_review import load_geometry_review
+from src.learning.robustness_screen import screen_saved_train_policy
+from src.learning.geometry_review import load_geometry_review
 
 
 @contextmanager

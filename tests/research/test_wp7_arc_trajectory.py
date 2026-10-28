@@ -6,11 +6,11 @@ import json
 
 import pytest
 
-from f1rl.research.wp7_arc_trajectory import ArcPath, certify_arc_trajectory, search_right_turn_trajectory
-from f1rl.research.wp7_protocol import digest
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.track_assets import load_track_asset
+from src.research.wp7_arc_trajectory import ArcPath, certify_arc_trajectory, search_right_turn_trajectory
+from src.research.wp7_protocol import digest
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.geometry.rotation import Quaternion
+from src.track_assets import load_track_asset
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -104,8 +104,8 @@ def test_path_starting_with_body_in_gate_is_not_a_full_passage():
 
 
 def test_thin_off_center_obstacle_blocks_the_continuous_body():
-    from f1rl.sandbox.entities.obstacle import Obstacle
-    from f1rl.sandbox.track.volume import OrientedBoxVolume
+    from src.sandbox.entities.obstacle import Obstacle
+    from src.sandbox.track.volume import OrientedBoxVolume
     track = asset('straight-sprint-v1')
     obstacle = Obstacle('thin',OrientedBoxVolume(Vec3(.8,.8,20.123),Vec3(.05,.1,.001),Quaternion.identity()))
     track = replace(track,world=replace(track.world,obstacles=(obstacle,)))
@@ -121,7 +121,7 @@ def test_invalid_paths_rejected(segments):
 
 
 def test_underflowed_derived_curvature_is_an_explicit_numeric_domain_error():
-    from f1rl.research.wp7_track_feasibility import PARAMETERS
+    from src.research.wp7_track_feasibility import PARAMETERS
     with pytest.raises(ValueError,match='numeric'):
         search_right_turn_trajectory(asset(),parameters=replace(PARAMETERS,
             wheelbase=1e308,max_steering_angle=1e-300))
@@ -139,7 +139,7 @@ def test_tangent_touch_is_not_a_directed_passage():
 
 
 def test_real_train_auditor_dispatches_arc_search_and_preserves_default_report():
-    from f1rl.research.wp7_track_feasibility import audit_train_tracks
+    from src.research.wp7_track_feasibility import audit_train_tracks
     legacy = audit_train_tracks(ROOT)
     assert all('alternative_trajectory' not in row for row in legacy['tracks'])
     report = audit_train_tracks(ROOT,search_alternatives=True)

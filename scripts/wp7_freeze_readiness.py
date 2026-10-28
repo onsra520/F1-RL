@@ -9,7 +9,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 
-from f1rl.learning.freeze_readiness import build_freeze_readiness_report
+from src.learning.freeze_readiness import build_freeze_readiness_report
 
 
 def main()->int:

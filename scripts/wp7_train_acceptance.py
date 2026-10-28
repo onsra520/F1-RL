@@ -3,7 +3,7 @@ import argparse
 import json
 from pathlib import Path
 
-from f1rl.research.wp7_train_acceptance import (
+from src.research.wp7_train_acceptance import (
     PROFILE, _write_new, run_acceptance, verify_gym_finish_prefix,
 )
 

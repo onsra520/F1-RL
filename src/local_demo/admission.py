@@ -74,7 +74,7 @@ class _LocalDemoSession:
 def _issue(root: Path, environment, *, commit: str, tree_sha256: str,
            deadline: float, max_timesteps: int) -> _LocalDemoSession:
     caller = inspect.currentframe().f_back
-    if caller is None or caller.f_globals.get("__name__") != "f1rl.local_demo.runner":
+    if caller is None or caller.f_globals.get("__name__") != "src.local_demo.runner":
         raise PermissionError("LOCAL_DEMO admission can only be issued by its runner")
     session = _LocalDemoSession(root, environment, commit=commit, tree_sha256=tree_sha256,
                                 deadline=deadline, max_timesteps=max_timesteps)

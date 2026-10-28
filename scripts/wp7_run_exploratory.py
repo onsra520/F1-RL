@@ -12,11 +12,11 @@ from pathlib import Path
 import platform
 import sys
 
-from f1rl.learning.pilot_milestones import PilotMilestoneRecorder, verify_pilot_evidence_manifest
-from f1rl.learning.pilot_preflight import TRAIN_IDS, build_pilot_preflight
-from f1rl.learning.reconstruction import RecoveryCandidate, build_training_scenarios
-from f1rl.learning.training.config import TrainingRunConfig
-from f1rl.learning.training.runner import TrainingRunner
+from src.learning.pilot_milestones import PilotMilestoneRecorder, verify_pilot_evidence_manifest
+from src.learning.pilot_preflight import TRAIN_IDS, build_pilot_preflight
+from src.learning.reconstruction import RecoveryCandidate, build_training_scenarios
+from src.learning.training.config import TrainingRunConfig
+from src.learning.training.runner import TrainingRunner
 
 
 def main() -> int:

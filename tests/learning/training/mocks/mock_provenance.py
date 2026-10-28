@@ -1,4 +1,4 @@
-from f1rl.learning.provenance import (
+from src.learning.provenance import (
     FileFingerprint,
     GitProvenance,
     PackageVersion,

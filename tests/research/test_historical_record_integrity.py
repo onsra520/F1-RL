@@ -14,7 +14,7 @@ def test_historical_record_verification_is_independent_of_current_source():
     assert 'ORIGINAL_SOURCE_RECONSTRUCTED' not in result.stdout
 import shutil
 import pytest
-from f1rl.research.historical_source_records import verify_historical_records
+from src.research.historical_source_records import verify_historical_records
 
 
 @pytest.mark.parametrize('relative', [
@@ -56,7 +56,7 @@ def test_existing_verify_entrypoints_report_historical_integrity(name):
 def test_forged_historical_source_bundle_is_rejected(tmp_path):
     import json
     import hashlib
-    from f1rl.research.historical_source_records import verify_historical_records
+    from src.research.historical_source_records import verify_historical_records
     name = 'WP3-PHYSICS-V4-TECHNICAL-ACCEPTANCE-20261024.json'
     original = ROOT / 'docs/research' / name
     dest = tmp_path / 'docs/research' / name
@@ -80,13 +80,13 @@ def test_current_attestation_cannot_replace_historical_record(tmp_path):
 
 
 def test_historical_allowlist_does_not_accept_migrated_physics():
-    from f1rl.learning.freeze_readiness import verify_training_source_diff
+    from src.learning.freeze_readiness import verify_training_source_diff
     with pytest.raises(ValueError, match='training/simulator source changed'):
         verify_training_source_diff(('src/sandbox/spatial_contact_dynamics.py',))
 
 
 def test_legacy_receipt_builder_rejects_current_source_identity():
-    from f1rl.research.wp3_v4_technical_acceptance import source_bound_acceptance
+    from src.research.wp3_v4_technical_acceptance import source_bound_acceptance
     import os
     history = Path(os.environ['F1RL_WP3_EVIDENCE'])
     replay = ROOT / 'docs/research/WP3-V4AH-PHYSICS-V4-ACCEPTANCE-REPLAY-20261024.json'
@@ -96,7 +96,7 @@ def test_legacy_receipt_builder_rejects_current_source_identity():
 
 
 def test_legacy_crash_builder_rejects_current_source_identity():
-    from f1rl.research.wp3_crash_contract_registration import assemble_registration
+    from src.research.wp3_crash_contract_registration import assemble_registration
     import os
     history = Path(os.environ['F1RL_WP3_EVIDENCE'])
     replay = ROOT / 'docs/research/WP3-V4AJ-REGISTERED-CRASH-V1-THREE-REPLAY-20261024.json'

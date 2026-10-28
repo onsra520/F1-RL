@@ -2,11 +2,11 @@
 from dataclasses import replace
 import pytest
 
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.spatial_contact_dynamics import integrate_spatial_contact,SpatialContactPolicy
-from f1rl.sandbox.coupled_longitudinal_dynamics import LongitudinalContactPolicy
-from f1rl.sandbox.vehicle import VehicleControl
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.spatial_contact_dynamics import integrate_spatial_contact,SpatialContactPolicy
+from src.sandbox.coupled_longitudinal_dynamics import LongitudinalContactPolicy
+from src.sandbox.vehicle import VehicleControl
 from tests.sandbox.test_road_relative_suspension import ramp_translation
 
 
@@ -53,7 +53,7 @@ def test_zero_damping_and_actuation_preserve_mechanical_energy_with_partial_load
 
 
 def test_unilateral_policy_never_falls_back_to_prescribed_path_integration():
-    from f1rl.sandbox.independent_suspension_dynamics import integrate_independent_suspension,SuspensionResolutionError
+    from src.sandbox.independent_suspension_dynamics import integrate_independent_suspension,SuspensionResolutionError
     f,vehicle,dynamic,s=ramp_translation()
     s=replace(s,force_model='road_relative_unilateral_v3')
     with pytest.raises(SuspensionResolutionError,match='requires spatial'):
@@ -64,7 +64,7 @@ def test_unilateral_policy_never_falls_back_to_prescribed_path_integration():
 
 
 def test_complete_unloading_is_rejected_until_an_airborne_solver_is_selected():
-    from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
+    from src.sandbox.independent_suspension_dynamics import SuspensionResolutionError
     f,_,_,s=ramp_translation()
     s=replace(s,force_model='road_relative_unilateral_v3')
     initial=replace(f.initial_state.vehicle,velocity=Vec3(0.,2.,0.))

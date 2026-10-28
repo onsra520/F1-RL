@@ -5,10 +5,10 @@ import json
 
 import pytest
 
-from f1rl.research.wp7_planar_trajectory import search_planar_trajectory, certify_planar_trajectory
-from f1rl.research.wp7_protocol import digest
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.track_assets import load_track_asset
+from src.research.wp7_planar_trajectory import search_planar_trajectory, certify_planar_trajectory
+from src.research.wp7_protocol import digest
+from src.sandbox.geometry.vector import Vec3
+from src.track_assets import load_track_asset
 
 ROOT = Path(__file__).resolve().parents[2]
 

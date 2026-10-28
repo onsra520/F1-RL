@@ -15,7 +15,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 
-from f1rl.research.wp7_historical_provenance import audit_historical_manifest_file
+from src.research.wp7_historical_provenance import audit_historical_manifest_file
 
 
 def main() -> int:

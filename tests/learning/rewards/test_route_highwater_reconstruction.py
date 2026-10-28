@@ -5,10 +5,10 @@ from math import nan
 import numpy as np
 import pytest
 
-from f1rl.learning.rewards import RewardComposer, RouteProgressReward, RewardTransition
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.vehicle import VehicleState
+from src.learning.rewards import RewardComposer, RouteProgressReward, RewardTransition
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.vehicle import VehicleState
 
 
 def _state(z=0.0):
@@ -50,7 +50,7 @@ def test_route_reward_rejects_invalid_weight(weight) -> None:
 
 
 def test_legacy_transitions_still_support_ordinary_reward_terms() -> None:
-    from f1rl.learning.rewards import TimePenalty
+    from src.learning.rewards import TimePenalty
     assert TimePenalty(0.1).evaluate(_transition()).value == pytest.approx(-0.01)
 
 

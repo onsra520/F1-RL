@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
-from f1rl.sandbox.track.state import ScorePickupCollected
-from f1rl.sandbox.ballistic_flight import FlightTransition
-from f1rl.sandbox.world import WorldEvent
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
+from src.sandbox.track.state import ScorePickupCollected
+from src.sandbox.ballistic_flight import FlightTransition
+from src.sandbox.world import WorldEvent
 
 from .route import RaceRoute, _validate_route_state
 

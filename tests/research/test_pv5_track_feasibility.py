@@ -3,10 +3,10 @@ from pathlib import Path
 
 import pytest
 
-from f1rl.research.wp7_track_feasibility import audit_train_tracks, audit_track
-from f1rl.track_assets import load_track_asset
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.geometry.rotation import Quaternion
+from src.research.wp7_track_feasibility import audit_train_tracks, audit_track
+from src.track_assets import load_track_asset
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.geometry.rotation import Quaternion
 from math import radians
 
 ROOT = Path(__file__).resolve().parents[2]

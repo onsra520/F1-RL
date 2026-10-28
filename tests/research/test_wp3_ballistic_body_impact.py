@@ -1,13 +1,13 @@
 """Fail-closed ballistic CCD geometry tests, not scored simulator evaluation."""
 from dataclasses import replace
 import pytest
-from f1rl.sandbox.ballistic_body_impact import first_ballistic_body_impact
-from f1rl.sandbox.body_impact import first_body_impact_bracket
-from f1rl.sandbox.body_collision import VehicleBodyGeometry
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleState
+from src.sandbox.ballistic_body_impact import first_ballistic_body_impact
+from src.sandbox.body_impact import first_body_impact_bracket
+from src.sandbox.body_collision import VehicleBodyGeometry
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleState
 
 ZERO=Vec3(0.,0.,0.)
 BODY=VehicleBodyGeometry(.2,.2,.2,ZERO)

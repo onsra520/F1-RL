@@ -4,14 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from f1rl.sandbox.entities.obstacle import Obstacle
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.perception.rangefinder import RangefinderReading, RangefinderSpec
-from f1rl.sandbox.perception.sensor_suite import SensorSuite
-from f1rl.sandbox.track.model import TrackWorld
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleState
+from src.sandbox.entities.obstacle import Obstacle
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.perception.rangefinder import RangefinderReading, RangefinderSpec
+from src.sandbox.perception.sensor_suite import SensorSuite
+from src.sandbox.track.model import TrackWorld
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleState
 
 
 def _obstacle(id_: str, center: Vec3) -> Obstacle:
@@ -75,13 +75,13 @@ def test_readings_are_raw_physical_measurements_only() -> None:
 
 
 def test_perception_source_has_no_forbidden_dependencies() -> None:
-    package_dir = Path(__file__).parents[2] / "f1rl" / "sandbox" / "perception"
+    package_dir = Path(__file__).parents[2] / "src" / "sandbox" / "perception"
     source = "\n".join(path.read_text(encoding="utf-8").lower() for path in package_dir.glob("*.py"))
     forbidden = (
-        "f1rl.learning",
-        "f1rl.runtime",
-        "f1rl.api",
-        "f1rl.drivers",
+        "src.learning",
+        "src.runtime",
+        "src.api",
+        "src.drivers",
         "gymnasium",
         "ppo",
         "fastapi",

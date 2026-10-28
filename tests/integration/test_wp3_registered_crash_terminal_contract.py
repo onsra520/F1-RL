@@ -4,13 +4,13 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from f1rl.learning.crash_terminal_registered import (
+from src.learning.crash_terminal_registered import (
     RACE_V4,CRASH_V1,descriptor,_sha,validate_registered_crash_terminal_info
 )
-from f1rl.learning.wp7_race import WP7RaceConfig
-from f1rl.learning.evaluation import evaluate_episode
-from f1rl.learning.evaluation.evaluator import _step_evidence,_valid_terminal_failure
-from f1rl.learning.evaluation.crash_contract import validate_crash_terminal_info
+from src.learning.wp7_race import WP7RaceConfig
+from src.learning.evaluation import evaluate_episode
+from src.learning.evaluation.evaluator import _step_evidence,_valid_terminal_failure
+from src.learning.evaluation.crash_contract import validate_crash_terminal_info
 from tests.integration.test_wp3_applied_crash_end_to_end import crash_factory
 from tests.learning.evaluation.mocks.policies import ConstantPolicy
 
@@ -39,7 +39,7 @@ def test_protocol_is_distinct_scoped_and_unsigned(observed):
     assert descriptor()["independent_physics_reviewer_signature"] is None
     assert descriptor()["scientific_evidence_allowed"] is False
     assert factory.race_config.provenance(factory.track,
-        __import__('f1rl.learning.route_navigation',fromlist=['AuthoredRoute']).AuthoredRoute(factory.navigation))["sha256"]==info["race"]["sha256"]
+        __import__('src.learning.route_navigation',fromlist=['AuthoredRoute']).AuthoredRoute(factory.navigation))["sha256"]==info["race"]["sha256"]
     assert info["physical_crash_terminal"]["version"]==CRASH_V1
     assert info["physical_crash_terminal"]["contract_sha256"]==_sha(descriptor())
     assert info["research_outcome"]["reason"]=="physical_crash"

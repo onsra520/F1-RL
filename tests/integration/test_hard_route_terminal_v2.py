@@ -2,8 +2,8 @@
 from dataclasses import replace
 import numpy as np
 import pytest
-from f1rl.learning.wp7_race import WP7RaceConfig
-from f1rl.learning.rewards import RewardComposer,TimePenalty
+from src.learning.wp7_race import WP7RaceConfig
+from src.learning.rewards import RewardComposer,TimePenalty
 from tests.integration.test_wp7_race_contract import sideways_factory
 
 
@@ -37,8 +37,8 @@ def test_hard_exit_is_valid_terminal_failure_with_only_pre_exit_registered_rewar
 
 def diagonal_factory(finish):
     from math import pi
-    from f1rl.sandbox.geometry.vector import Vec3
-    from f1rl.sandbox.geometry.rotation import Quaternion
+    from src.sandbox.geometry.vector import Vec3
+    from src.sandbox.geometry.rotation import Quaternion
     from tests.integration.test_wp7_race_contract import race_factory
     base=race_factory(checkpoints=(),finish=finish,speed=0.,max_steps=1)
     vehicle=replace(base.initial_state.vehicle,velocity=Vec3(5.,0.,5.),
@@ -84,7 +84,7 @@ def test_owner_contract_is_versioned_and_cannot_grant_training_or_change_reward(
     import json
     from pathlib import Path
     from hashlib import sha256
-    from f1rl.learning.hard_route_outcome import owner_outcome_contract
+    from src.learning.hard_route_outcome import owner_outcome_contract
     root=Path(__file__).resolve().parents[2]
     old=root/'configs/recovery/wp7-owner-decisions-preregistered-v1.yml'
     assert sha256(old.read_bytes()).hexdigest() in {
@@ -101,7 +101,7 @@ def test_owner_contract_is_versioned_and_cannot_grant_training_or_change_reward(
 def test_actual_owner_config_boundary_rejects_changed_default_addendum(monkeypatch):
     import json
     from pathlib import Path
-    from f1rl.learning.hard_route_outcome import owner_outcome_contract
+    from src.learning.hard_route_outcome import owner_outcome_contract
     approved=owner_outcome_contract()['configuration']
     changed=dict(approved,terminal_penalty=1.)
     original=Path.read_bytes
@@ -115,7 +115,7 @@ def test_actual_owner_config_boundary_rejects_changed_default_addendum(monkeypat
 
 
 def test_lifecycle_owner_v2_uses_the_same_failure_and_reward_prefix_rule():
-    from f1rl.sandbox.ballistic_flight import FlightState
+    from src.sandbox.ballistic_flight import FlightState
     from tests.integration.test_spatial_compliant_gym import lifecycle_factory
     base=owner_factory()
     config=lifecycle_factory().physics_config
@@ -135,7 +135,7 @@ def test_lifecycle_owner_v2_uses_the_same_failure_and_reward_prefix_rule():
 
 def test_registered_progress_time_collision_terms_keep_coefficients_and_prefix_position():
     from math import hypot
-    from f1rl.learning.rewards import TargetProgressReward,RouteProgressReward,CollisionPenalty
+    from src.learning.rewards import TargetProgressReward,RouteProgressReward,CollisionPenalty
     composer=RewardComposer((TargetProgressReward(1.3),RouteProgressReward(.7),TimePenalty(2.),CollisionPenalty(19.)))
     env=replace(owner_factory(),reward_composer=composer).create()
     try:
@@ -153,10 +153,10 @@ def test_registered_progress_time_collision_terms_keep_coefficients_and_prefix_p
 
 
 def test_approved_outcome_does_not_admit_training_or_allocate_artifacts(tmp_path):
-    from f1rl.learning.training.runner import TrainingRunner
-    from f1rl.learning.training.config import TrainingRunConfig,VectorEnvConfig
-    from f1rl.learning.algorithms.ppo import PPOConfig
-    from f1rl.research.wp7_admission import ScientificAdmissionError
+    from src.learning.training.runner import TrainingRunner
+    from src.learning.training.config import TrainingRunConfig,VectorEnvConfig
+    from src.learning.algorithms.ppo import PPOConfig
+    from src.research.wp7_admission import ScientificAdmissionError
     config=TrainingRunConfig(PPOConfig(),VectorEnvConfig(n_envs=1),artifacts_root=tmp_path/'forbidden')
     with pytest.raises(ScientificAdmissionError):
         TrainingRunner(config).run_single(owner_factory())
@@ -166,7 +166,7 @@ def test_approved_outcome_does_not_admit_training_or_allocate_artifacts(tmp_path
 def test_owner_contract_cannot_hash_different_bytes_from_the_validated_document(monkeypatch):
     import json
     from pathlib import Path
-    from f1rl.learning.hard_route_outcome import owner_outcome_contract
+    from src.learning.hard_route_outcome import owner_outcome_contract
     approved=owner_outcome_contract()['configuration']
     changed=json.dumps(dict(approved,training_permitted=True)).encode('utf-8')
     original=Path.read_bytes
@@ -180,7 +180,7 @@ def test_owner_contract_cannot_hash_different_bytes_from_the_validated_document(
 @pytest.mark.parametrize("line_ending", [b"\n", b"\r\n"])
 def test_owner_parent_identity_accepts_exact_git_and_windows_checkout_bytes(monkeypatch, line_ending):
     from pathlib import Path
-    from f1rl.learning.hard_route_outcome import owner_outcome_contract
+    from src.learning.hard_route_outcome import owner_outcome_contract
     original=Path.read_bytes
     parent=Path(__file__).resolve().parents[2]/"configs/recovery/wp7-owner-decisions-preregistered-v1.yml"
     checkout=original(parent).replace(b"\r\n", b"\n").replace(b"\n", line_ending)

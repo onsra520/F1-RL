@@ -2,12 +2,12 @@
 from pathlib import Path
 from math import isclose
 import pytest
-from f1rl.learning.geometry_review import load_geometry_review
-from f1rl.learning.robustness_screen import (
+from src.learning.geometry_review import load_geometry_review
+from src.learning.robustness_screen import (
     seed_for,one_sided_clopper_pearson_lower,EPISODES_PER_TRACK,SCREEN_LOWER_BOUND,
     PROTOCOL_ID,
 )
-from f1rl.learning.pilot_preflight import TRAIN_IDS
+from src.learning.pilot_preflight import TRAIN_IDS
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -78,7 +78,7 @@ def test_registered_screen_is_not_automatic_freeze():
 
 
 def fake_screen_document():
-    from f1rl.learning.robustness_screen import seed_for,one_sided_clopper_pearson_lower
+    from src.learning.robustness_screen import seed_for,one_sided_clopper_pearson_lower
     run_ids=("r0","r1")
     screens=[]
     for i,run_id in enumerate(run_ids):
@@ -148,7 +148,7 @@ def fake_archive_records():
 
 
 def test_freeze_gate_links_real_stochastic_protocol_and_keeps_blocked():
-    from f1rl.learning.freeze_readiness import validate_stochastic_train_screen
+    from src.learning.freeze_readiness import validate_stochastic_train_screen
     r=validate_stochastic_train_screen(
         document=fake_screen_document(),records=fake_archive_records(),
         geometry_sha256="geom",
@@ -164,7 +164,7 @@ def test_freeze_gate_links_real_stochastic_protocol_and_keeps_blocked():
     "wrong_pass","wrong_geometry","fake_approval","wrong_count",
 ])
 def test_freeze_gate_rejects_stochastic_evidence_tampering(corruption):
-    from f1rl.learning.freeze_readiness import validate_stochastic_train_screen
+    from src.learning.freeze_readiness import validate_stochastic_train_screen
     d=fake_screen_document()
     s=d["screens"][0]
     t=s["train_tracks"][2]

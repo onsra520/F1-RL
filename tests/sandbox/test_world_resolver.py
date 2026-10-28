@@ -1,15 +1,15 @@
-from f1rl.sandbox.dynamics.modifiers import MotionModifiers
-from f1rl.sandbox.entities.boost_pad import BoostPad
-from f1rl.sandbox.entities.obstacle import Obstacle
-from f1rl.sandbox.entities.slow_zone import SlowZone
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.events import ObstacleHit
-from f1rl.sandbox.interactions.resolver import resolve_motion_modifiers, resolve_obstacle_block
-from f1rl.sandbox.surface import SurfaceContact
-from f1rl.sandbox.track.query import TrackQuery
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleState
+from src.sandbox.dynamics.modifiers import MotionModifiers
+from src.sandbox.entities.boost_pad import BoostPad
+from src.sandbox.entities.obstacle import Obstacle
+from src.sandbox.entities.slow_zone import SlowZone
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.events import ObstacleHit
+from src.sandbox.interactions.resolver import resolve_motion_modifiers, resolve_obstacle_block
+from src.sandbox.surface import SurfaceContact
+from src.sandbox.track.query import TrackQuery
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleState
 
 
 def volume() -> OrientedBoxVolume:

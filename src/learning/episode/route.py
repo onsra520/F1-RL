@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.track.model import TrackWorld
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.track.model import TrackWorld
 
 if TYPE_CHECKING:
     from .progress import RaceProgressState

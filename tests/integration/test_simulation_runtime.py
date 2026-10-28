@@ -1,20 +1,20 @@
 import inspect
 
-import f1rl.runtime.simulation as runtime_simulation
-from f1rl.runtime.simulation import Simulation, SimulationConfig
-from f1rl.sandbox.entities.checkpoint import Checkpoint
-from f1rl.sandbox.entities.finish_line import FinishLine
-from f1rl.sandbox.entities.score_pickup import ScorePickup
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.state import InteractionState
-from f1rl.sandbox.rules.scoring import ScoreState
-from f1rl.sandbox.track.model import TrackWorld
-from f1rl.sandbox.track.patch import PlanarSurfacePatch
-from f1rl.sandbox.track.state import TrackState
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
-from f1rl.sandbox.world import WorldState
+import src.runtime.simulation as runtime_simulation
+from src.runtime.simulation import Simulation, SimulationConfig
+from src.sandbox.entities.checkpoint import Checkpoint
+from src.sandbox.entities.finish_line import FinishLine
+from src.sandbox.entities.score_pickup import ScorePickup
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.state import InteractionState
+from src.sandbox.rules.scoring import ScoreState
+from src.sandbox.track.model import TrackWorld
+from src.sandbox.track.patch import PlanarSurfacePatch
+from src.sandbox.track.state import TrackState
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from src.sandbox.world import WorldState
 
 
 def _road() -> PlanarSurfacePatch:
@@ -141,9 +141,9 @@ def test_runtime_public_surface_has_no_start_stop_or_scheduler_dependencies() ->
 
     source = inspect.getsource(runtime_simulation).lower()
     forbidden = (
-        "f1rl.learning",
-        "f1rl.api",
-        "f1rl.drivers",
+        "src.learning",
+        "src.api",
+        "src.drivers",
         "fastapi",
         "websocket",
         "time.sleep",

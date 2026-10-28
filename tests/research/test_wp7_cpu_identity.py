@@ -1,7 +1,7 @@
 """CPU identity must use actual OS evidence, never an architecture placeholder."""
 from pathlib import Path
 import pytest
-import f1rl.research.wp7_protocol as protocol
+import src.research.wp7_protocol as protocol
 
 
 def test_linux_cpu_model_uses_proc_when_platform_probe_is_empty(monkeypatch):

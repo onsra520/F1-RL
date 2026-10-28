@@ -1,21 +1,21 @@
 import numpy as np
 import pytest
 
-from f1rl.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
-from f1rl.learning.gym_environment import F1RLEnv
-from f1rl.learning.training.env_factory import F1RLEnvFactory
-from f1rl.runtime.simulation import SimulationConfig
-from f1rl.sandbox.entities.finish_line import FinishLine
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.state import InteractionState
-from f1rl.sandbox.perception.sensor_suite import SensorSuite
-from f1rl.sandbox.rules.scoring import ScoreState
-from f1rl.sandbox.track.model import TrackWorld
-from f1rl.sandbox.track.state import TrackState
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleParameters, VehicleState
-from f1rl.sandbox.world import WorldState
+from src.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
+from src.learning.gym_environment import F1RLEnv
+from src.learning.training.env_factory import F1RLEnvFactory
+from src.runtime.simulation import SimulationConfig
+from src.sandbox.entities.finish_line import FinishLine
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.state import InteractionState
+from src.sandbox.perception.sensor_suite import SensorSuite
+from src.sandbox.rules.scoring import ScoreState
+from src.sandbox.track.model import TrackWorld
+from src.sandbox.track.state import TrackState
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleParameters, VehicleState
+from src.sandbox.world import WorldState
 
 
 def _factory() -> F1RLEnvFactory:

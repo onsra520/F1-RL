@@ -20,7 +20,7 @@ def test_diagnostic_controller_corrects_target_direction_without_claiming_ppo():
 
 
 def test_timing_preserves_result_and_exception(monkeypatch):
-    from f1rl.exploratory import pilot
+    from src.exploratory import pilot
     moments = iter([1., 3., 4., 7.])
     monkeypatch.setattr(pilot.time, 'perf_counter', lambda: next(moments))
     totals = {}
@@ -36,7 +36,7 @@ def test_timing_preserves_result_and_exception(monkeypatch):
 @pytest.mark.parametrize('axis', [0, 1, 2])
 @pytest.mark.parametrize('invalid', [float('inf'), -float('inf'), float('nan')])
 def test_vector_finite_validation_preserved(axis, invalid):
-    from f1rl.sandbox.geometry.vector import Vec3
+    from src.sandbox.geometry.vector import Vec3
     values = [0., 1., -1.]
     values[axis] = invalid
     with pytest.raises(ValueError, match='components must be finite'):

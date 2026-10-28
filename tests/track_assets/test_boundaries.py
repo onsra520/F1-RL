@@ -1,10 +1,10 @@
 import ast
 from pathlib import Path
 
-import f1rl.track_assets as track_assets
+import src.track_assets as track_assets
 
 
-PRODUCTION = Path("f1rl")
+PRODUCTION = Path("src")
 EXPECTED_PUBLIC_API = {
     "AuthoredNavigation",
     "SpawnPose",
@@ -16,8 +16,8 @@ EXPECTED_PUBLIC_API = {
     "build_initial_world_state",
 }
 EXPECTED_SB3_OWNERS = {
-    Path("f1rl/learning/algorithms/ppo.py"),
-    Path("f1rl/learning/training/vector_env.py"),
+    Path("src/learning/algorithms/ppo.py"),
+    Path("src/learning/training/vector_env.py"),
 }
 
 
@@ -49,15 +49,15 @@ def test_sandbox_does_not_import_track_assets():
     offenders = [
         path
         for path in (PRODUCTION / "sandbox").rglob("*.py")
-        if _imports_prefix(path, ("f1rl.track_assets",), ("track_assets",))
+        if _imports_prefix(path, ("src.track_assets",), ("track_assets",))
     ]
     assert offenders == []
 
 
 def test_track_assets_depends_only_on_allowed_lower_level_code():
     banned = (
-        "f1rl.learning",
-        "f1rl.runtime",
+        "src.learning",
+        "src.runtime",
         "gymnasium",
         "stable_baselines3",
         "torch",

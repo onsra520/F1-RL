@@ -3,13 +3,13 @@ from math import pi, sqrt
 
 import pytest
 
-from f1rl.learning.swept_volume_audit import (
+from src.learning.swept_volume_audit import (
     BodyProxy, segment_to_oriented_box_distance_3d,
     swept_body_proxy_clearance, PROXY_PROFILES,
 )
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.track.volume import OrientedBoxVolume
 
 
 def box(orientation=None):

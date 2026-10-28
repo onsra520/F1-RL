@@ -5,7 +5,7 @@ import argparse
 import json
 from pathlib import Path
 
-from f1rl.learning.pilot_milestones import verify_pilot_evidence_manifest
+from src.learning.pilot_milestones import verify_pilot_evidence_manifest
 
 
 def main() -> int:

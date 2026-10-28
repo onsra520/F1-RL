@@ -4,8 +4,8 @@ from math import sqrt
 
 import pytest
 
-from f1rl.sandbox.ballistic_flight import advance_ballistic_flight, FlightPhysicsError
-from f1rl.sandbox.geometry.vector import Vec3
+from src.sandbox.ballistic_flight import advance_ballistic_flight, FlightPhysicsError
+from src.sandbox.geometry.vector import Vec3
 from tests.sandbox.test_manifold_flight import BODY, PHYSICS, FLIGHT, MANIFOLD, ROAD, source
 
 

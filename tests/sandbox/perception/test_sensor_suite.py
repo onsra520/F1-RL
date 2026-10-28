@@ -2,14 +2,14 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from f1rl.sandbox.entities.obstacle import Obstacle
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.perception.rangefinder import RangefinderSpec, sense_rangefinder
-from f1rl.sandbox.perception.sensor_suite import SensorSuite
-from f1rl.sandbox.track.model import TrackWorld
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleState
+from src.sandbox.entities.obstacle import Obstacle
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.perception.rangefinder import RangefinderSpec, sense_rangefinder
+from src.sandbox.perception.sensor_suite import SensorSuite
+from src.sandbox.track.model import TrackWorld
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleState
 
 
 def _vehicle() -> VehicleState:

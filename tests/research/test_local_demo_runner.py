@@ -3,9 +3,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from f1rl.local_demo import runner
-from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
-from f1rl.exploratory.reward import apply_training_physics_failure
+from src.local_demo import runner
+from src.sandbox.independent_suspension_dynamics import SuspensionResolutionError
+from src.exploratory.reward import apply_training_physics_failure
 
 
 class _Environment:
@@ -330,7 +330,7 @@ def test_tuning_wrapper_still_aborts_other_physics_failures():
 
 def test_tuning_wrapper_converts_only_verified_obstacle_contact(monkeypatch):
     from types import SimpleNamespace
-    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
+    from src.sandbox.ballistic_flight import FlightPhysicsError
 
     class Scenario:
         _active_env = object()
@@ -352,7 +352,7 @@ def test_tuning_wrapper_converts_only_verified_obstacle_contact(monkeypatch):
 
 def test_tuning_wrapper_still_aborts_unclassified_flight_physics_error():
     from types import SimpleNamespace
-    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
+    from src.sandbox.ballistic_flight import FlightPhysicsError
 
     class Scenario:
         _active_env = object()
@@ -374,7 +374,7 @@ def test_tuning_wrapper_still_aborts_unclassified_flight_physics_error():
     pytest.param(None, id="verified-obstacle-contact"),
 ])
 def test_training_physics_failure_is_terminal_at_last_certified_state(error):
-    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
+    from src.sandbox.ballistic_flight import FlightPhysicsError
     vehicle = SimpleNamespace(position=(1.0, 0.5, 2.0))
     snapshot = SimpleNamespace(tick=12, elapsed_time=0.24,
                                world=SimpleNamespace(vehicle=vehicle, score=SimpleNamespace(points=3)))

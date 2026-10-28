@@ -9,11 +9,11 @@ import pickle
 import sys
 from hashlib import sha256
 from pathlib import Path
-from f1rl.research.wp7_cell_evaluation import (
+from src.research.wp7_cell_evaluation import (
     _execute_cell, _fixture_identity, _registered_cell_admission, _registered_model_snapshot,
 )
-from f1rl.research.wp7_protocol import digest, evaluation_seed, prepare_evaluation_factory, validate_protocol
-from f1rl.learning.training.env_factory import F1RLEnvFactory
+from src.research.wp7_protocol import digest, evaluation_seed, prepare_evaluation_factory, validate_protocol
+from src.learning.training.env_factory import F1RLEnvFactory
 
 
 def run_fixture(payload):
@@ -71,7 +71,7 @@ def _run_cell(payload,*,registered):
         import random
         import numpy as np
         import torch
-        from f1rl.learning.algorithms.ppo import PPO, PPOModel
+        from src.learning.algorithms.ppo import PPO, PPOModel
 
         torch.set_num_threads(1)
         torch.use_deterministic_algorithms(True)
@@ -149,7 +149,7 @@ def _run_cell(payload,*,registered):
             record['worker']['loaded_models']=loaded_models
         valid = [r for r in record["episodes"] if r['valid']]
         successes = sum(r['metrics']['success'] for r in valid)
-        from f1rl.research.wp7_robustness_gate import one_sided_cp_lower
+        from src.research.wp7_robustness_gate import one_sided_cp_lower
         lower = one_sided_cp_lower(successes,len(valid)) if valid else None
         record["numerical_summary"] = {
             "valid_trials":len(valid),"successes":successes,"one_sided_cp95_lower":lower,

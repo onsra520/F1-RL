@@ -1,19 +1,19 @@
 """Physics v4: road contact while the wheels are airborne is NOT grounded."""
 from dataclasses import replace
 import pytest
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.body_collision import VehicleBodyGeometry
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.track.patch import PlanarSurfacePatch
-from f1rl.sandbox.multi_surface_support import _atlas
-from f1rl.sandbox.vehicle import VehicleState
-from f1rl.sandbox.rigid_body_impact_response import RigidBodyImpactMass
-from f1rl.sandbox.center_trajectory import CenterSegment
-from f1rl.sandbox.linear_first_body_contact import certify_first_linear_body_contact
-from f1rl.sandbox.accepted_road_body_contact import apply_first_road_body_contact
-from f1rl.sandbox.physical_crash import PhysicalCrash
-from f1rl.learning.crash_terminal_registered import SOURCES,descriptor
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.body_collision import VehicleBodyGeometry
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.track.patch import PlanarSurfacePatch
+from src.sandbox.multi_surface_support import _atlas
+from src.sandbox.vehicle import VehicleState
+from src.sandbox.rigid_body_impact_response import RigidBodyImpactMass
+from src.sandbox.center_trajectory import CenterSegment
+from src.sandbox.linear_first_body_contact import certify_first_linear_body_contact
+from src.sandbox.accepted_road_body_contact import apply_first_road_body_contact
+from src.sandbox.physical_crash import PhysicalCrash
+from src.learning.crash_terminal_registered import SOURCES,descriptor
 
 Q=Quaternion.identity()
 Z=Vec3(0.,0.,0.)

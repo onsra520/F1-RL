@@ -30,4 +30,4 @@ dev = [
 testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
-include = ["f1rl*"]
+include = ["src*"]

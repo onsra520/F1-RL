@@ -5,13 +5,13 @@ from math import pi, sqrt
 import numpy as np
 import pytest
 
-from f1rl.runtime.physics import PhysicsConfig, PhysicsTransitionError
-from f1rl.sandbox.ballistic_flight import BallisticFlightPolicy, FlightState
-from f1rl.sandbox.contact_manifold import ContactManifoldPolicy
-from f1rl.sandbox.independent_suspension_dynamics import (
+from src.runtime.physics import PhysicsConfig, PhysicsTransitionError
+from src.sandbox.ballistic_flight import BallisticFlightPolicy, FlightState
+from src.sandbox.contact_manifold import ContactManifoldPolicy
+from src.sandbox.independent_suspension_dynamics import (
     SuspensionDynamicsState, angular_velocity_for_suspension,
 )
-from f1rl.sandbox.partial_wheel_release import AutomaticTakeoffPolicy
+from src.sandbox.partial_wheel_release import AutomaticTakeoffPolicy
 from tests.integration.test_wp7_physics_integration import (
     BODY, CONTACT, SUSPENSION, world, factory, simulation, Vec3, Quaternion, VehicleControl,
 )
@@ -100,7 +100,7 @@ def test_lifecycle_cannot_combine_unregistered_kernels(change):
 
 
 def test_missing_landing_event_cannot_publish_a_grounded_state():
-    from f1rl.sandbox.world import step_world
+    from src.sandbox.world import step_world
     from tests.integration.test_wp7_physics_integration import PARAMETERS, ROAD, TrackWorld
     initial = world(height=.85, vertical_speed=-1., grounded=False, flight=FlightState("airborne"))
     config = lifecycle_config()
@@ -113,7 +113,7 @@ def test_missing_landing_event_cannot_publish_a_grounded_state():
 
 
 def test_partial_support_release_has_actual_solver_and_tick_local_time_in_gym():
-    from f1rl.runtime.simulation import SimulationConfig
+    from src.runtime.simulation import SimulationConfig
     from tests.integration.test_wp7_physics_integration import ROAD
     candidate = factory(lifecycle_config(), world(speed=40., flight=FlightState("grounded")))
     env = replace(candidate, track=replace(candidate.track, surfaces=(replace(ROAD, length=4.),)),
@@ -130,7 +130,7 @@ def test_partial_support_release_has_actual_solver_and_tick_local_time_in_gym():
 
 
 def test_coplanar_multi_patch_landing_is_auditable_through_gym():
-    from f1rl.runtime.simulation import SimulationConfig
+    from src.runtime.simulation import SimulationConfig
     from tests.integration.test_wp7_physics_integration import ROAD
     config = lifecycle_config()
     config = replace(config, ballistic_flight_policy=replace(config.ballistic_flight_policy,

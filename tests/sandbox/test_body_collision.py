@@ -4,21 +4,21 @@ from math import pi
 
 import pytest
 
-from f1rl.sandbox.body_collision import (
+from src.sandbox.body_collision import (
     VehicleBodyGeometry, obb_separation_lower_bound, sweep_body_against_obstacle,
 )
-from f1rl.sandbox.entities.obstacle import Obstacle
-from f1rl.sandbox.geometry.rotation import Quaternion
-from f1rl.sandbox.geometry.vector import Vec3
-from f1rl.sandbox.interactions.events import ObstacleHit
-from f1rl.sandbox.interactions.state import InteractionState
-from f1rl.sandbox.rules.scoring import ScoreState
-from f1rl.sandbox.track.model import TrackWorld
-from f1rl.sandbox.track.patch import PlanarSurfacePatch
-from f1rl.sandbox.track.state import TrackState
-from f1rl.sandbox.track.volume import OrientedBoxVolume
-from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
-from f1rl.sandbox.world import WorldState, step_world
+from src.sandbox.entities.obstacle import Obstacle
+from src.sandbox.geometry.rotation import Quaternion
+from src.sandbox.geometry.vector import Vec3
+from src.sandbox.interactions.events import ObstacleHit
+from src.sandbox.interactions.state import InteractionState
+from src.sandbox.rules.scoring import ScoreState
+from src.sandbox.track.model import TrackWorld
+from src.sandbox.track.patch import PlanarSurfacePatch
+from src.sandbox.track.state import TrackState
+from src.sandbox.track.volume import OrientedBoxVolume
+from src.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from src.sandbox.world import WorldState, step_world
 
 
 IDENTITY = Quaternion.identity()
@@ -160,8 +160,8 @@ def test_world_rejects_invalid_optin_type() -> None:
 
 
 def test_unresolved_world_sweep_invalidates_rollout_without_fake_hit(monkeypatch) -> None:
-    import f1rl.sandbox.world as world_module
-    from f1rl.sandbox.body_collision import SweptCollisionResult
+    import src.sandbox.world as world_module
+    from src.sandbox.body_collision import SweptCollisionResult
 
     road=PlanarSurfacePatch(
         "road",Vec3(0.,0.,0.),Vec3(0.,0.,1.),
