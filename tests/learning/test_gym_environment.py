@@ -138,6 +138,7 @@ def test_learning_observer_enables_training_info_only_during_learn(monkeypatch) 
 
     backend = SimpleNamespace(
         num_timesteps=0,
+        n_steps=1,
         get_env=lambda: env,
         policy=SimpleNamespace(optimizer=SimpleNamespace(register_step_post_hook=register_step_post_hook)),
     )
