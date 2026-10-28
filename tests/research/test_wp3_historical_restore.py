@@ -31,6 +31,7 @@ def test_restore_rejects_tampered_bundled_provenance(tmp_path):
     clone = tmp_path / 'checkout'
     (clone / 'scripts').mkdir(parents=True)
     shutil.copy2(SCRIPT, clone / 'scripts' / SCRIPT.name)
+    shutil.copytree(root / 'src', clone / 'src', ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
     docs = clone / 'docs/research'
     shutil.copytree(root / 'docs/research/evidence/wp3-historical-admission-inputs', docs / 'evidence/wp3-historical-admission-inputs')
     shutil.copy2(root / 'docs/research/FINAL-CONSOLIDATION-ASSETS.json', docs)

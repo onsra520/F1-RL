@@ -4,6 +4,13 @@ import argparse
 import json
 from time import perf_counter
 
+from pathlib import Path
+import sys
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 import numpy as np
 
 from src.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
