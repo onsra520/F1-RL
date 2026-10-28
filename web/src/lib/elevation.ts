@@ -35,7 +35,7 @@ export function bridgeElevationAt(t: number, bridges: AutoBridge[], length: numb
     sum + bridge.rise * bumpAt(distance, bridge.overT * length, bridge.plateauMeters, bridge.outerMeters), 0);
 }
 
-/** A later traversal goes above an earlier traversal. 
+/** A later traversal goes above an earlier traversal.
  * Heights are inferred for the VISUAL track editor, not certified road contact physics.
  */
 export function detectAutoBridges(samples: Point2[], totalLength: number, minimumClearance = 6): AutoBridge[] {

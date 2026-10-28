@@ -50,4 +50,3 @@ def test_all_report_chart_writers_complete_and_are_idempotent():
         _write_evaluation_reports(root,result,models,cells,evaluation)
         assert all((root/k).read_bytes()==first[k] for k in expected)
         assert len(expected) == 6
-
