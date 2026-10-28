@@ -3,6 +3,7 @@ import pytest
 
 from f1rl.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
 from f1rl.learning.gym_environment import F1RLEnv
+from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
 from f1rl.runtime.simulation import SimulationConfig
 from f1rl.sandbox.entities.boost_pad import BoostPad
 from f1rl.sandbox.entities.finish_line import FinishLine
@@ -87,6 +88,97 @@ def _env(**overrides: object) -> F1RLEnv:
     }
     kwargs.update(overrides)
     return F1RLEnv(**kwargs)
+
+
+def test_training_telemetry_does_not_change_deterministic_policy_outcomes() -> None:
+    without = _env()
+    with_telemetry = _env()
+    with_telemetry.set_training_telemetry_enabled(True)
+    model = PPOModel.create(
+        without, PPOConfig(n_steps=2, batch_size=2, n_epochs=1, seed=7)
+    )
+    observation_a, _ = without.reset(seed=17)
+    observation_b, _ = with_telemetry.reset(seed=17)
+    np.testing.assert_array_equal(observation_a, observation_b)
+
+    for _ in range(5):
+        action_a = model.predict(observation_a, deterministic=True)
+        action_b = model.predict(observation_b, deterministic=True)
+        np.testing.assert_array_equal(action_a, action_b)
+        transition_a = without.step(action_a)
+        transition_b = with_telemetry.step(action_b)
+        observation_a, reward_a, terminated_a, truncated_a, info_a = transition_a
+        observation_b, reward_b, terminated_b, truncated_b, info_b = transition_b
+        np.testing.assert_array_equal(observation_a, observation_b)
+        assert reward_a == reward_b
+        assert (terminated_a, truncated_a) == (terminated_b, truncated_b)
+        assert "training_telemetry" not in info_a
+        assert {k: v for k, v in info_a.items() if k != "training_telemetry"} == {
+            k: v for k, v in info_b.items() if k != "training_telemetry"
+        }
+        assert set(info_a["telemetry"]) == set(info_b["telemetry"])
+        assert len(info_a["telemetry"]) == 7
+        state = info_b["training_telemetry"]
+        assert state["schema_version"] == "f1rl_training_state_v1"
+        assert state["speed"] == info_b["telemetry"]["vehicle_speed"]
+        assert state["yaw_rate_radps"] == 0.0
+        assert not terminated_a and not truncated_a
+
+
+def test_learning_observer_enables_training_info_only_during_learn(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from stable_baselines3.common.vec_env import DummyVecEnv
+
+    env = DummyVecEnv([_env])
+    optimizer_handle = SimpleNamespace(removed=False)
+    def register_step_post_hook(callback):
+        optimizer_handle.callback = callback
+        return SimpleNamespace(remove=lambda: setattr(optimizer_handle, "removed", True))
+
+    backend = SimpleNamespace(
+        num_timesteps=0,
+        get_env=lambda: env,
+        policy=SimpleNamespace(optimizer=SimpleNamespace(register_step_post_hook=register_step_post_hook)),
+    )
+    observed = []
+    class Observer:
+        def on_training_start(self, model, *, total_timesteps, n_envs):
+            observed.append(("start", total_timesteps, n_envs))
+        def on_step(self, local_values, model):
+            observed.append(("step", local_values["infos"][0]["training_telemetry"]["schema_version"]))
+        def on_optimizer_step(self):
+            observed.append(("optimizer",))
+        def on_update(self, model):
+            observed.append(("update",))
+
+    def fake_learn(**kwargs):
+        assert env.get_attr("_training_telemetry_enabled") == [True]
+        callback = kwargs["callback"]
+        callback.init_callback(backend)
+        callback.on_training_start({}, {})
+        observation = env.reset()
+        backend._last_obs = observation
+        actions = np.array([[0.0, 0.5]], dtype=np.float32)
+        next_obs, rewards, dones, infos = env.step(actions)
+        backend.num_timesteps = 1
+        callback.update_locals({"obs": observation, "actions": actions,
+                                 "clipped_actions": actions, "rewards": rewards,
+                                 "dones": dones, "infos": infos})
+        assert callback.on_step()
+        optimizer_handle.callback(backend.policy.optimizer, (), {})
+        assert "training_telemetry" not in env.envs[0]._reset_info()
+
+    backend.learn = fake_learn
+    model = PPOModel(backend)
+    monkeypatch.setattr(PPOModel, "weights_sha256", lambda self: "a" * 64)
+    model.learn(1, telemetry_observer=Observer(),
+                optimizer_step_hook=lambda: observed.append(("budget",)))
+    assert observed == [("start", 1, 1), ("step", "f1rl_training_state_v1"),
+                       ("optimizer",), ("budget",)]
+    assert env.get_attr("_training_telemetry_enabled") == [False]
+    assert optimizer_handle.removed
+    env.close()
 
 
 def test_environment_declares_v1_metadata_and_spaces() -> None:

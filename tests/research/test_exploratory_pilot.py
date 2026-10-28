@@ -196,10 +196,13 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedu
     from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
     from dataclasses import asdict
     import torch
+    from f1rl.learning.train_reset import derive_train_reset_draw_seed
     permit = dict(sha256='a'*64, output_directory=str(tmp_path/'run'),
-                  limits={'device': 'cpu', 'threads': 32, 'interop_threads': 1, 'learning_timesteps': 32768,
-                          'checkpoint_steps': 8192, 'wall_seconds': 3600},
-                  logging={'progress_every_steps': 256},
+                  source={'commit_sha':'b'*40}, policy='singletrack-straight-sprint-v1-seed0',
+                  track='straight-sprint-v1', seeds={'ppo':0, 'training_reset':1000},
+                  limits={'device': 'cpu', 'threads': 32, 'interop_threads': 1, 'learning_timesteps': 4,
+                          'checkpoint_steps': 1, 'wall_seconds': 3600},
+                  logging={'progress_every_steps': 1},
                   evaluation={'episodes_per_policy': 32, 'replay_episode': 0},
                   execution={'schedule': schedule}, ppo=asdict(PPOConfig()))
     envelope = {'payload':{'expires_at_utc':'2099-01-01T00:00:00+00:00'}}
@@ -210,16 +213,59 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedu
     hook = SimpleNamespace(remove=lambda: None)
     optimizer = SimpleNamespace(register_step_post_hook=lambda callback: setattr(hook, 'callback', callback) or hook)
     backend = SimpleNamespace(policy=SimpleNamespace(optimizer=optimizer), _n_updates=0,
+        num_timesteps=0, logger=SimpleNamespace(name_to_value={'train/value_loss': 0.5}),
         set_logger=lambda logger: None)
     model = SimpleNamespace(num_timesteps=0, _model=backend, learned=False)
+    model.weights_sha256 = lambda: 'a'*64 if not model.learned else 'b'*64
+    model.set_csv_logger = lambda directory: PPOModel.set_csv_logger(model, directory)
+    model.register_optimizer_step_hook = lambda callback: PPOModel.register_optimizer_step_hook(model, callback)
     events = []
-    def learn(steps, progress_hook):
+    def learn(steps, progress_hook, telemetry_observer=None, optimizer_step_hook=None):
         events.append(('learn', 'start'))
-        assert steps == 32768
-        for step in range(8192, steps+1, 8192):
+        assert steps == 4
+        telemetry_observer.on_training_start(model, total_timesteps=steps, n_envs=1)
+        for step in range(1, steps+1):
             model.num_timesteps = step
-            hook.callback()
+            backend.num_timesteps = step
+            telemetry_observer.on_step({
+                'obs': np.array([[0.0, 1.0]], dtype=np.float32),
+                'actions': np.array([[0.1, 0.8]], dtype=np.float32),
+                'clipped_actions': np.array([[0.1, 0.8]], dtype=np.float32),
+                'rewards': np.array([0.5], dtype=np.float32),
+                'dones': np.array([False]),
+                'infos': [{
+                    'track_id': 'straight-sprint-v1',
+                    'train_reset': {'version':'wp7_train_reset_research_v1',
+                                    'seed': 1000, 'rank': 0, 'reset_index': 0,
+                                    'draw_seed': derive_train_reset_draw_seed(
+                                        version='wp7_train_reset_research_v1', seed=1000, rank=0,
+                                        track_id='straight-sprint-v1', reset_index=0),
+                                    'track_id': 'straight-sprint-v1', 'configuration_sha256': 'd'*64,
+                                    'world_sha256': 'e'*64},
+                    'reward_components': {'progress': 0.5},
+                    'training_telemetry': {
+                        'schema_version':'f1rl_training_state_v1',
+                        'track_id':'straight-sprint-v1',
+                        'seed_identity': {'version':'wp7_train_reset_research_v1',
+                                          'seed':1000, 'rank':0, 'reset_index':0,
+                                          'draw_seed': derive_train_reset_draw_seed(
+                                              version='wp7_train_reset_research_v1', seed=1000, rank=0,
+                                              track_id='straight-sprint-v1', reset_index=0),
+                                          'track_id':'straight-sprint-v1', 'configuration_sha256':'d'*64,
+                                          'world_sha256':'e'*64},
+                        'observation_schema': {'version':'f1rl_observation_features_v1',
+                                               'feature_names':['target_x','target_z']},
+                        'position':(0.,0.,float(step)), 'velocity':(0.,0.,1.), 'speed':1.,
+                        'grounded':True, 'heading_rad':0., 'yaw_rate_radps':0.,
+                        'lateral_route_deviation_m':0., 'route_progress_m':float(step),
+                        'route_highwater_m':float(step), 'action_contract_version':'steering-throttle-brake0-v1',
+                    },
+                }],
+            }, backend)
+            telemetry_observer.on_optimizer_step()
+            optimizer_step_hook()
             backend._n_updates += 1
+            telemetry_observer.on_update(model)
             progress_hook(step)
         model.learned = True
     model.learn = learn
@@ -228,13 +274,19 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedu
         events.append(('load', Path(path).stem))
         return SimpleNamespace(snapshot=Path(path).stem)
     monkeypatch.setattr(PPOModel, 'load', load_model)
-    monkeypatch.setattr(p, 'weights_sha256', lambda m: 'after' if m.learned else 'before')
+    monkeypatch.setattr(p, 'weights_sha256', lambda m: 'b'*64 if m.learned else 'a'*64)
     saved = []
     def save(m, directory, name, updates, optimizer_steps):
         saved.append(name)
-        return directory/(name+'.zip')
+        path = directory/(name+'.zip')
+        path.write_bytes(name.encode())
+        return path
     monkeypatch.setattr(p, 'save_checkpoint', save)
     env = SimpleNamespace(close=lambda: None)
+    env.training_reset_contract = {
+        'version': 'wp7_train_reset_research_v1', 'seed': 1000,
+        'configuration_sha256': 'd'*64, 'world_sha256': 'e'*64,
+    }
     monkeypatch.setattr(p, 'Session', lambda *a, **kw: SimpleNamespace(
         create_env=lambda **kw: env, validate=lambda: None, permit=permit))
     def evaluation(session, evaluated_model, name, ep):
@@ -252,7 +304,7 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedu
         return
     assert p.worker(tmp_path, permit, envelope) == 0
     comparison = json.loads((output/'comparison.json').read_text())
-    assert comparison['timesteps'] == 32768 and comparison['optimizer_steps'] == 4
+    assert comparison['timesteps'] == 4 and comparison['optimizer_steps'] == 4
     assert comparison['learning_proven'] is True and comparison['autonomous_completion_observed'] is False
     assert json.loads((output/'learning-summary.json').read_text())['status'] == 'learning_completed'
     observations = [x for x in events if x[0] == 'evaluate']
@@ -264,7 +316,7 @@ def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedu
     else:
         assert observations[0] == ('evaluate', 'random', 'live')
         assert events.index(('evaluate', 'untrained', 'live')) < events.index(('learn', 'start'))
-    assert saved == ['untrained', 'checkpoint-8192', 'checkpoint-16384', 'checkpoint-24576', 'checkpoint-32768', 'trained-final']
+    assert saved == ['untrained', 'checkpoint-1', 'checkpoint-2', 'checkpoint-3', 'checkpoint-4', 'trained-final']
     assert json.loads((output/'state.json').read_text())['status'] == 'completed'
 
 

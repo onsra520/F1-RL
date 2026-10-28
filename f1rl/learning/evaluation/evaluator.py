@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from math import dist, isclose, isfinite
 from numbers import Real
 from typing import Protocol, runtime_checkable
@@ -11,6 +11,9 @@ from ..episode import RaceRoute
 from ..route_navigation import AuthoredRoute
 from ..training.env_factory import F1RLEnvFactory
 from .metrics import EpisodeMetrics, _normalized_route_progress
+from .crash_contract import validate_crash_terminal_info
+from ..crash_terminal_registered import validate_registered_crash_terminal_info
+from ..roll_envelope_registered import validate_registered_roll_envelope_info
 
 
 @runtime_checkable
@@ -50,6 +53,27 @@ def _mapping(value: object, name: str) -> Mapping[str, object]:
     if not isinstance(value, Mapping):
         raise ValueError(f"{name} must be a mapping")
     return value
+
+
+def _valid_terminal_failure(info: object) -> bool:
+    if not isinstance(info, Mapping):
+        return False
+    outcome = info.get("research_outcome")
+    race = info.get("race")
+    if (not isinstance(outcome,Mapping) or not isinstance(race,Mapping)
+        or outcome.get('version')!='wp7_episode_outcome_v1'
+        or outcome.get('kind')!='valid_terminal_failure'
+        or outcome.get('valid_sample') is not True
+        or race.get('terminal_failure') is not True):
+        return False
+    if outcome.get('reason')=='hard_route_violation':
+        return True
+    return ((outcome.get('reason')=='tilt_envelope_exit'
+             and validate_registered_roll_envelope_info(info))
+            or (outcome.get('reason')=='physical_crash_development'
+             and validate_crash_terminal_info(info))
+            or (outcome.get('reason')=='physical_crash'
+                and validate_registered_crash_terminal_info(info)))
 
 
 def _position(
@@ -100,6 +124,15 @@ def _step_evidence(
     tuple[str, ...],
 ]:
     step_info = _mapping(info, "step info")
+    # This original source recognizes only registered hard-route outcomes.
+    # Untrusted crash rows cannot mint valid Eval terminals.
+    if "physical_crash_terminal" in step_info and not (
+            validate_crash_terminal_info(step_info) or
+            validate_registered_crash_terminal_info(step_info)):
+        raise ValueError("unregistered physical crash terminal: approved contact, timing, impulse and energy required")
+    if ("roll_envelope_terminal" in step_info and
+        not validate_registered_roll_envelope_info(step_info)):
+        raise ValueError("unregistered roll-envelope event: approved source/time/energy prefix required")
 
     required = (
         "tick",
@@ -191,6 +224,7 @@ def evaluate_episode(
     policy: EvaluationPolicy,
     reset_seed: int | None = None,
     deterministic: bool = True,
+    step_observer: Callable[[dict[str, object]], None] | None = None,
 ) -> EpisodeMetrics:
     if not isinstance(track_id, str) or not track_id.strip():
         raise ValueError("track_id must be a non-empty string")
@@ -205,6 +239,8 @@ def evaluate_episode(
         raise ValueError("reset_seed must be uint32 or None")
     if type(deterministic) is not bool:
         raise ValueError("deterministic must be bool")
+    if step_observer is not None and not callable(step_observer):
+        raise ValueError("step_observer must be callable or None")
 
     fixed_dt = float(factory.simulation_config.fixed_dt)
     route = RaceRoute.from_track(factory.track)
@@ -258,6 +294,15 @@ def evaluate_episode(
                 executed_steps=executed_steps,
                 fixed_dt=fixed_dt,
             )
+            if step_observer is not None:
+                step_observer({
+                    "step": executed_steps, "action": np.asarray(action).copy(),
+                    "info": info, "reward": reward_value,
+                    "terminated": terminated, "truncated": truncated,
+                    "elapsed_time": elapsed_time,
+                    "next_checkpoint_index": next_checkpoint_index,
+                    "finished": finished,
+                })
             if authored_route is not None:
                 step_info = _mapping(info, "step info")
                 if "route_highwater_meters" not in step_info:
@@ -315,7 +360,12 @@ def evaluate_episode(
                         raise ValueError(
                             "terminal flags are inconsistent with successful episode"
                         )
-                elif terminated or not truncated:
+                elif terminated:
+                    if truncated or not _valid_terminal_failure(info):
+                        raise ValueError(
+                            "terminal flags are inconsistent with unsuccessful episode"
+                        )
+                elif not truncated:
                     raise ValueError(
                         "terminal flags are inconsistent with unsuccessful episode"
                     )

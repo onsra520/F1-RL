@@ -1,0 +1,137 @@
+{
+  "schema_version": "wp3_eval_only_physics_preflight_v1",
+  "evaluated_at_utc": "2026-10-24T07:45:12.121596+00:00",
+  "handoff_source_commit": "ce0e55d7a428826b2d4ed3218641105bd0206f4b",
+  "source_dirty": true,
+  "frozen_train_commit": "fe83f517479f3b990028d6409304fae83b8199a9",
+  "historical_roster_sha256": "f2f9d15954cea48345a8932773ed945f6ed250ad1435b4e675b97e4a6b94f319",
+  "historical_roster_file_sha256": "1530a54a636f80cacc096f2ed86d9e89fd5e7c7a7429873deb2fe366bcd859dc",
+  "historical_eval_provenance_sha256": "3b0b9c2bcdaf7614b7a1164b78a9ca0441bb8986488b8249c8614e1a63085349",
+  "historical_evaluation_root_mutated": false,
+  "frozen_final_checkpoint_count": 12,
+  "checkpoint_validation": "12_MODELS_ALL_SHA256_MATCH",
+  "verified_models": [
+    {
+      "model_id": "A-seed0",
+      "checkpoint_sha256": "8cfcde6d4c88bbcc01dbf9b67dee3829c991474b0a8883a4479370f665c01c79",
+      "telemetry_sha256": "b36b5a5b3720daf11c62fd58d5c557f0671e12e80cd036d398da6919dbbc5697",
+      "validation_sha256": "94d5461de87901cb8d0d8af2729312c02b593a38cd9e5b14dbac53f2ca62d801"
+    },
+    {
+      "model_id": "A-seed1",
+      "checkpoint_sha256": "4334c44b3370c4f0adaa345ca280d190850fda9599736cc561ed6cbb71425831",
+      "telemetry_sha256": "3656b7ee9bab23ebcccad4a53bb46b25bb74e872e7edb8412ac00b90be3f3543",
+      "validation_sha256": "1c1c80c5fe2470678f4cdad2932c7eb68308afebe8904386d31e4fa3a3830ab0"
+    },
+    {
+      "model_id": "A-seed2",
+      "checkpoint_sha256": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc",
+      "telemetry_sha256": "2e9df4d7dda594cb68b0af59a5994f3e35d7cd486dfd240fd3ae3ad31f68a2d6",
+      "validation_sha256": "da5470dbb67af6cd664abad9e9572d74e19c36cf42a3f2e3b8464ce6bd689ec9"
+    },
+    {
+      "model_id": "B-seed0",
+      "checkpoint_sha256": "d76719fb04c5eee1a03e1b0885989f44faad6543d3a1fea9aa24fe6ac55867d6",
+      "telemetry_sha256": "3505ea0aa2c308d58423e5469f7afc9da779cf29b2a08d6804bfe8cdfc3f95b0",
+      "validation_sha256": "ec96441cc2789f4007c6c67b0120cc64fca1be23d906511fbe3057ab171b0b45"
+    },
+    {
+      "model_id": "B-seed1",
+      "checkpoint_sha256": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021",
+      "telemetry_sha256": "dabdbde921c80f2a334c06e6ad10ba5ce9f68badda01eff385a71a08b8d4aa1a",
+      "validation_sha256": "f32c17e398683c5e59b1f161bf777b99bd12ea6bbefc68f3e38318d05bb91c5b"
+    },
+    {
+      "model_id": "B-seed2",
+      "checkpoint_sha256": "18f17c3f07d3e62b43364f3f4c6572b3e08b3307a4ae47137b80342188ad0dae",
+      "telemetry_sha256": "6278e9d095a2c1f220bd6d81d40f2e9e4bd5aeb739923b662f8a98e322d88263",
+      "validation_sha256": "b47df7ab1504d8066e2ac6a40900197976c1e0edb5215f25ae361b7d19b02141"
+    },
+    {
+      "model_id": "C-seed0",
+      "checkpoint_sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+      "telemetry_sha256": "9d80d3262ec2d134a0ebb5c733abf7d0965da97d6027b93638037409928096f5",
+      "validation_sha256": "aa83f8f518e89cd02e1721b55474b28b24de6333ade70079cc40b1b6f5e94b97"
+    },
+    {
+      "model_id": "C-seed1",
+      "checkpoint_sha256": "1089a4ddb826d8a52a3960f2415fc920ee1b87cedda6d062d661e4f3244440e7",
+      "telemetry_sha256": "f912857c10533a3dd8dd97b79e09a9fba93184722cc928ed5593b25f36805898",
+      "validation_sha256": "47bff322771ba371fd14c379e92bc0567ad8323451f8ee39a1b76dbd6eba1496"
+    },
+    {
+      "model_id": "C-seed2",
+      "checkpoint_sha256": "156ee0f2194f3aedb36cce3917cc4121994b53fa0f0c942c2de548b9e2ea32b7",
+      "telemetry_sha256": "4354c9f47c47df1e54e3203a20e2dc027b3c64bb9d25cea6aa55cdda4fd95f63",
+      "validation_sha256": "58490f0734cfd6f7ef5f1fe6a99178db925e1f8aeec882dfbf5ca1bc50d52dbf"
+    },
+    {
+      "model_id": "D-seed0",
+      "checkpoint_sha256": "318f76813b69f8457dc169b6b3a89dd5f3aa2f2f765170075e0e48ab9f0e0109",
+      "telemetry_sha256": "aa9c239207a25d42f1aa5ad2738b7ecc84161e8fb81de68ea00abc91afa1f28b",
+      "validation_sha256": "490c41295bb365516e3fc6586b07c5f3f8c516e1897e840f613e100bb286627f"
+    },
+    {
+      "model_id": "D-seed1",
+      "checkpoint_sha256": "70892fdb0e93ffdc67c36e18e92c1ba70f7ce9f6d6dc41916370781f6f18fc0c",
+      "telemetry_sha256": "9dd918a18cb21524cd7ef9d196e912062c59b16ce0827a0ce37a2a90c9c84ae2",
+      "validation_sha256": "6ff46d9366a7db1a6b69ed905c708586ad259fb43ba1d192f5df9a3380106aad"
+    },
+    {
+      "model_id": "D-seed2",
+      "checkpoint_sha256": "212cca532ed1411246687821002ef55f62329ddcab18af2ff08f8e5b9b154cdc",
+      "telemetry_sha256": "a46aed5fdbf9ff2bb4a24434d67a5486e972152096cff095d42e8c111112781c",
+      "validation_sha256": "784ebe81b957b631d521a3d1d8eb1341427d7189b6caf695df7cced9d698a142"
+    }
+  ],
+  "training_track_sha256": {
+    "straight-sprint-v1": "9efe209780cfa8358f8622d38bb5d56db30425a57dcebebc16e6e447a10b5f00",
+    "slalom-v1": "e9dd588740189f7ed857de8e8b8f5eeb99f3161fdb9b8d3fa05d18978cdefa53",
+    "right-turn-v1": "a302f5d1d7f08d2b51ae963a5e695d8600d52a0ebf2d1f212ca0a4fbf90e303e",
+    "ramp-v1": "6c0da56966962363ed601c8fda2343006c207ee9ea6497deb72e6f6018721bd3"
+  },
+  "expected_cells": 96,
+  "expected_episodes": 5760,
+  "episode_order": "12_models_x_4_train_tracks_x_2_train_strata_x_60_frozen_seed_pairs",
+  "evaluation_inference": "stochastic_deterministic_false_cpu",
+  "original_boundary_m": 4.0,
+  "curriculum_applied": false,
+  "new_run_identity": null,
+  "new_physics_profile": null,
+  "current_physics_profile": "spatial_rotating_owner_v3_UNCHANGED",
+  "mandatory_replay_cases": [
+    {
+      "model_id": "C-seed0",
+      "track": "right-turn-v1",
+      "stratum": "nominal",
+      "episode": 0,
+      "error_type": "SuspensionResolutionError",
+      "status": "INVALID_UNSCORED_PHYSICS_OR_EVAL"
+    },
+    {
+      "model_id": "A-seed1",
+      "track": "ramp-v1",
+      "stratum": "randomized_train",
+      "episode": 17,
+      "error_type": "SuspensionResolutionError",
+      "status": "INVALID_UNSCORED_PHYSICS_OR_EVAL"
+    },
+    {
+      "model_id": "C-seed0",
+      "track": "slalom-v1",
+      "stratum": "nominal",
+      "episode": 2,
+      "error_type": "FlightPhysicsError",
+      "status": "INVALID_UNSCORED_PHYSICS_OR_EVAL"
+    }
+  ],
+  "mandatory_replay_gate": "BLOCKED",
+  "standalone_evaluator_new_run_admitted": false,
+  "full_eval_execution_authorized": false,
+  "new_episodes_executed_by_preflight": 0,
+  "registered_eval_started": false,
+  "heldout_access": false,
+  "scientific_evidence": false,
+  "blocked_reason": "Two SuspensionResolutionError and one FlightPhysicsError remain in exact frozen model/seed scratch replays; separately versioned partial-wheel-release and scored ballistic impact response are not installed/certified.",
+  "sha256": "d58aca2ba8dbde7bc0548c5a21107e4409471feaf73abd36e868fbb75795021d"
+}

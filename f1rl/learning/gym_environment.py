@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 from dataclasses import asdict, replace
+from math import atan2
 
 import gymnasium as gym
 import numpy as np
@@ -32,6 +33,8 @@ from .observation import NavigationTarget, ObservationEncoder
 from .offtrack import OffTrackConfig, OffTrackState
 from .route_navigation import AuthoredRoute
 from .wp7_race import WP7RaceConfig, RaceContractError, advance_directed_race
+from .crash_terminal_registered import RACE_V4, CRASH_V1, descriptor as scoring_contract_descriptor, _sha as scoring_contract_sha
+from .roll_envelope_registered import descriptor as roll_contract_descriptor
 from .train_reset import TrainResetConfig, sample_train_spawn
 from .rewards import (RewardComposer, RewardResult, RewardTransition, RewardContribution,
     RouteProgressReward, OffTrackPenalty, TargetProgressReward, TimePenalty, CollisionPenalty)
@@ -51,6 +54,8 @@ def _applied_modifier_ids(query: TrackQuery) -> tuple[tuple[str, ...], tuple[str
 
 
 def _obstacle_hit_ids(snapshot: SimulationSnapshot) -> tuple[str, ...]:
+    if snapshot.physical_crash is not None:
+        return (snapshot.physical_crash.obstacle_id,)
     return tuple(
         event.obstacle_id
         for event in snapshot.events
@@ -109,7 +114,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             raise ValueError('physics_config must be PhysicsConfig or None')
         research = body_geometry is not None or (physics_config is not None and physics_config.mode!='legacy_v1')
         if (research and self._action_contract.version=='steering-throttle-brake-v2'
-                and (physics_config is None or physics_config.ground_motion_version not in ('arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3'))):
+                and (physics_config is None or physics_config.ground_motion_version not in ('arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4'))):
             raise ValueError('research braking requires distance ground integration')
         values = (
             (track, TrackWorld, "track"),
@@ -201,6 +206,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         )
         self._progress: RaceProgressState | None = None
         self._needs_reset = True
+        self._training_telemetry_enabled = False
 
         self._last_research_outcome: dict[str, object] | None = None
 
@@ -234,6 +240,13 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
     def last_research_outcome(self) -> dict[str, object] | None:
         """Rejected research steps raise; their classification remains inspectable."""
         return None if self._last_research_outcome is None else dict(self._last_research_outcome)
+
+    @property
+    def training_reset_contract(self) -> dict[str, object] | None:
+        """Expected reset identity for this TRAIN environment, if configured."""
+        if self._reset_config is None:
+            return None
+        return self._reset_config.identity_for_track(self._reset_track_id)
 
     def _record_research_outcome(self, kind: str, valid: bool, reason: str) -> None:
         if self.requires_scientific_admission:
@@ -337,6 +350,45 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         from copy import deepcopy
         return {"train_reset": deepcopy(self._reset_metadata)}
 
+    def set_training_telemetry_enabled(self, enabled: bool) -> None:
+        if type(enabled) is not bool:
+            raise ValueError("training telemetry flag must be bool")
+        self._training_telemetry_enabled = enabled
+
+    def _training_state_info(
+        self,
+        snapshot: SimulationSnapshot,
+        progress: RaceProgressState,
+        route_highwater_meters: float,
+    ) -> dict[str, object]:
+        if not self._training_telemetry_enabled:
+            return {}
+        vehicle = snapshot.world.vehicle
+        forward = vehicle.orientation.rotate(Vec3(0.0, 0.0, 1.0))
+        heading = None if forward.x * forward.x + forward.z * forward.z <= 1e-18 else atan2(forward.x, forward.z)
+        projection = None if self._authored_route is None else self._authored_route.project(
+            vehicle.position, next_checkpoint_index=progress.next_checkpoint_index
+        )
+        return {"training_telemetry": {
+            "schema_version": "f1rl_training_state_v1",
+            "track_id": self._reset_track_id,
+            "seed_identity": self._reset_metadata,
+            "observation_schema": {
+                "version": "f1rl_observation_features_v1",
+                "feature_names": list(self._observation_encoder.feature_names),
+            },
+            "position": _vec3_tuple(vehicle.position),
+            "velocity": _vec3_tuple(vehicle.velocity),
+            "speed": float(vehicle.speed),
+            "grounded": bool(vehicle.grounded),
+            "heading_rad": heading,
+            "yaw_rate_radps": float(vehicle.angular_velocity.y),
+            "lateral_route_deviation_m": None if projection is None else projection.off_path_meters,
+            "route_progress_m": None if projection is None else projection.progress_meters,
+            "route_highwater_m": float(route_highwater_meters),
+            "action_contract_version": self._action_contract.version,
+        }}
+
     def _race_info(self) -> dict[str, object]:
         if self._race_config is None:
             return {}
@@ -407,6 +459,13 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                     segment=next(s for s in snapshot_after.center_segments
                                  if s.start_time_s<=reward_duration<=s.end_time_s)
                     reward_vehicle=replace(reward_vehicle,position=segment.position_at(reward_duration))
+                    if race_step.terminal_reason=='physical_crash':
+                        # Rewards and progress use the accepted prefix *before*
+                        # the impulse, never the post-crash outgoing velocity.
+                        crash=snapshot_after.physical_crash
+                        if crash is None or abs(crash.tick_contact_time_s-reward_duration)>1e-9:
+                            raise RaceContractError('missing certified crash prefix contact')
+                        reward_vehicle=crash.contact.preimpact
                 physical=[]
                 for event in snapshot_after.events:
                     if isinstance(event,(CheckpointEntered,FinishLineEntered)):
@@ -474,6 +533,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 progress_result,
                 reward_result,
                 query_before,
+                next_highwater,
             )
             if race_step is not None:
                 info.update(self._race_info())
@@ -487,8 +547,68 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                     info['race'].update(terminal_failure=race_step.terminal_failure,
                         terminal_time_s=race_step.terminal_time_s,reward_valid_prefix_s=reward_duration,
                         reward_prefix_position=_vec3_tuple(reward_vehicle.position),
-                        physical_tick_end_time_s=self._simulation_config.fixed_dt)
-                if self._race_config.version in ('wp7_directed_lifecycle_research_v1','wp7_directed_grounded_owner_v2','wp7_directed_lifecycle_owner_v2'):
+                        physical_tick_end_time_s=self._simulation_config.fixed_dt,
+                        terminal_reason=race_step.terminal_reason)
+                    if race_step.terminal_reason=='tilt_envelope_exit':
+                        stop=snapshot_after.roll_envelope_stop
+                        if stop is None or self._race_config.version!=RACE_V4:
+                            raise RaceContractError('tilt-envelope event lacks verified source')
+                        info['roll_envelope_terminal']={
+                            'version':stop.version,
+                            'descriptor_sha256':scoring_contract_sha(roll_contract_descriptor()),
+                            'first_clear_s':stop.first_clear_s,
+                            'first_outside_s':stop.first_outside_s,
+                            'roll_limit_rad':stop.roll_limit_rad,
+                            'side':stop.side,
+                            'initial_roll_rad':stop.initial_roll_rad,
+                            'clear_roll_rad':stop.clear_roll_rad,
+                            'rejected_roll_rad':stop.rejected_roll_rad,
+                            'accepted_position':_vec3_tuple(stop.accepted.position),
+                            'accepted_velocity_mps':_vec3_tuple(stop.accepted.velocity),
+                            'accepted_orientation_wxyz':(
+                                stop.accepted.orientation.w,stop.accepted.orientation.x,
+                                stop.accepted.orientation.y,stop.accepted.orientation.z),
+                            'impulse_n_s':(0.,0.,0.),
+                            'angular_impulse_nms':(0.,0.,0.),
+                            'collision_energy_lost_j':0.,
+                            'collision':False,'scientific_evidence':False,
+                        }
+                    if race_step.terminal_reason=='physical_crash':
+                        crash=snapshot_after.physical_crash
+                        if crash is None or self._race_config.version not in ('wp7_directed_lifecycle_crash_dev_v3',RACE_V4):
+                            raise RaceContractError('unapproved physical crash scoring path')
+                        info['physical_crash_terminal']={
+                            'version':CRASH_V1 if self._race_config.version==RACE_V4 else crash.version,
+                            'obstacle_id':crash.obstacle_id,
+                            'last_proven_clear_s':crash.last_proven_clear_s,
+                            'impact_time_s':crash.tick_contact_time_s,
+                            'first_overlap_s':crash.first_overlap_s,
+                            'linear_impulse_n_s':_vec3_tuple(crash.contact.impulse_n_s),
+                            'angular_impulse_nms':_vec3_tuple(crash.contact.angular_impulse_nms),
+                            'kinetic_before_j':crash.contact.kinetic_before_j,
+                            'kinetic_after_j':crash.contact.kinetic_after_j,
+                            'energy_lost_j':crash.contact.energy_lost_j,
+                            'accepted_velocity_mps':_vec3_tuple(crash.contact.postimpact.velocity),
+                            'accepted_angular_velocity_radps':_vec3_tuple(crash.contact.postimpact.angular_velocity),
+                            'scientific_evidence':False,
+                        }
+                        if self._race_config.version==RACE_V4:
+                            info['physical_crash_terminal'].update({
+                                'contract_sha256':scoring_contract_sha(scoring_contract_descriptor()),
+                                'source_version':crash.version,
+                                'contact_kind':crash.contact.kind,
+                                'contact_position_world':_vec3_tuple(crash.contact.preimpact.position),
+                                'contact_orientation_wxyz':(
+                                    crash.contact.preimpact.orientation.w,
+                                    crash.contact.preimpact.orientation.x,
+                                    crash.contact.preimpact.orientation.y,
+                                    crash.contact.preimpact.orientation.z),
+                                'preimpact_velocity_mps':_vec3_tuple(crash.contact.preimpact.velocity),
+                                'preimpact_angular_velocity_radps':_vec3_tuple(
+                                    crash.contact.preimpact.angular_velocity),
+                                'science_review_approved':False,
+                            })
+                if self._race_config.version in ('wp7_directed_lifecycle_research_v1','wp7_directed_grounded_owner_v2','wp7_directed_lifecycle_owner_v2','wp7_directed_lifecycle_crash_dev_v3',RACE_V4):
                     info["race"]["tick_local_crossing_times_s"] = race_step.crossing_times_s
                     info["race"]["crossing_time_origin_s"] = snapshot_after.physics_transition.start_time_s
             if self._authored_route is not None:
@@ -515,7 +635,11 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             "valid_terminal_failure" if race_step is not None and race_step.terminal_failure else
             "successful_finish" if progress_result.state.finished else
             "valid_truncation" if status.truncated else "active", True,
-            "hard_route_violation" if race_step is not None and race_step.terminal_failure else
+            ("physical_crash" if (race_step.terminal_reason=="physical_crash" and
+                                   self._race_config.version==RACE_V4)
+             else "physical_crash_development" if race_step.terminal_reason=="physical_crash"
+             else "tilt_envelope_exit" if race_step.terminal_reason=="tilt_envelope_exit"
+             else "hard_route_violation") if race_step is not None and race_step.terminal_failure else
             "finish" if progress_result.state.finished else
             (info.get("truncation_reason") or "step_limit") if status.truncated else "accepted_step",
         )
@@ -549,6 +673,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         progress_result: RaceProgressResult,
         reward_result: RewardResult,
         query_before: TrackQuery,
+        route_highwater_meters: float,
     ) -> dict[str, object]:
         boost_ids, slow_ids = _applied_modifier_ids(query_before)
         return {
@@ -570,5 +695,8 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
                 obstacle_hit_ids=_obstacle_hit_ids(snapshot),
                 applied_boost_pad_ids=boost_ids,
                 applied_slow_zone_ids=slow_ids,
+            ),
+            **self._training_state_info(
+                snapshot, progress_result.state, route_highwater_meters
             ),
         }

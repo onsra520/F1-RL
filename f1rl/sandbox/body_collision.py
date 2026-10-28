@@ -108,14 +108,25 @@ def obb_separation_lower_bound(first: OrientedBoxVolume, second: OrientedBoxVolu
 
 
 def _slerp(first: Quaternion, second: Quaternion, t: float) -> Quaternion:
+    # Endpoints are the ACCEPTED source poses, even for tiny rotations.
+    # Returning the first pose at t=1 silently invalidates witnessed
+    # micro-step road/hard-stop contact brackets.
+    if t == 0.0:
+        return first
+    if t == 1.0:
+        return second
     dot = first.w * second.w + first.x * second.x + first.y * second.y + first.z * second.z
     sign = 1.0 if dot >= 0.0 else -1.0
     aligned = (second.w * sign, second.x * sign, second.y * sign, second.z * sign)
     dot = min(1.0, max(-1.0, dot * sign))
     if dot > 1.0 - 1e-12:
-        # Tiny rotation: fixed pose error is bounded by full recorded angle,
-        # which remains included in the envelope's motion bound.
-        return first
+        # First-order normalized quaternion blend, not a frozen pose;
+        # preserves angular motion throughout arbitrarily short steps.
+        return Quaternion(
+            first.w*(1.0-t)+aligned[0]*t,
+            first.x*(1.0-t)+aligned[1]*t,
+            first.y*(1.0-t)+aligned[2]*t,
+            first.z*(1.0-t)+aligned[3]*t)
     arc = acos(dot)
     denominator = sin(arc)
     left = sin((1.0 - t) * arc) / denominator

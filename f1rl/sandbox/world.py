@@ -9,7 +9,10 @@ from .coupled_longitudinal_dynamics import (
     CoupledGroundAudit, LongitudinalContactPolicy, integrate_coupled_longitudinal,
 )
 from .geometry.vector import Vec3
-from .spatial_contact_dynamics import SpatialGroundAudit, SpatialContactPolicy, integrate_spatial_contact, integrate_spatial_lifecycle
+from .spatial_contact_dynamics import SpatialGroundAudit, SpatialContactPolicy, integrate_spatial_contact, integrate_spatial_lifecycle, integrate_spatial_road_edge_lifecycle, _suspension_state, SpatialRoadCrash, SpatialRoadCrashSource
+from .physical_crash import PhysicalCrash, first_applied_grounded_crash
+from .roll_envelope_terminal import RollEnvelopeStop,CertifiedRollEnvelopeExit
+from .rigid_body_impact_response import RigidBodyImpactMass
 from .grounded_yaw_dynamics import (
     GroundedYawPolicy,GroundedYawAudit,advance_grounded_yaw,
 )
@@ -41,6 +44,11 @@ from .track.query import TrackQuery
 from .track.state import ScorePickupCollected, TrackState, collect_score_pickups
 from .vehicle import VehicleControl, VehicleParameters, VehicleState
 
+class GroundedBodyCollisionUnscored(RuntimeError):
+    """A geometrically witnessed ground obstacle collision without a scored crash contract."""
+    failure_code = 'grounded_body_contact_requires_terminal_contract'
+
+
 WorldEvent: TypeAlias = (
     ObstacleHit | CheckpointEntered | FinishLineEntered |
     ScorePickupCollected | FlightTransition
@@ -70,6 +78,10 @@ class WorldStepResult:
     center_segments: tuple[CenterSegment, ...] = ()
     coupled_ground_telemetry: CoupledGroundAudit | None = None
     spatial_ground_telemetry: SpatialGroundAudit | None = None
+    crash: PhysicalCrash | None = None
+    precrash_result: WorldStepResult | None = None
+    road_crash_source: SpatialRoadCrashSource | None = None
+    roll_envelope_stop: RollEnvelopeStop | None = None
 
 
 def step_world(
@@ -91,11 +103,11 @@ def step_world(
     longitudinal_contact_policy: LongitudinalContactPolicy | None = None,
     spatial_contact_policy: SpatialContactPolicy | None = None,
 ) -> WorldStepResult:
-    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3'):
+    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4'):
         raise ValueError('unregistered ground motion version')
     coupled = ground_motion_version == 'coupled_longitudinal_v1'
-    compliant = ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3')
-    spatial = ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3')
+    compliant = ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4')
+    spatial = ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4')
     if (spatial != (spatial_contact_policy is not None)
             or spatial and (not isinstance(spatial_contact_policy,SpatialContactPolicy)
                 or not isinstance(independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
@@ -192,11 +204,36 @@ def step_world(
     if coupled or spatial:
         modifiers = resolve_motion_modifiers(current_query)
         if spatial:
-            integrate_spatial = integrate_spatial_lifecycle if compliant else integrate_spatial_contact
-            result = integrate_spatial(state.vehicle,independent_suspension_policy,
-                body_geometry,track.surfaces,parameters,control,spatial_contact_policy,dt=dt,modifiers=modifiers,
-                **({'phase_domain':'atlas_rotating_v3'} if ground_motion_version=='spatial_rotating_compliant_lifecycle_v3'
-                   else {'phase_domain':'atlas_gradient_v2'} if ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else {}))
+            integrate_spatial = (integrate_spatial_road_edge_lifecycle if ground_motion_version=='spatial_road_edge_partial_lifecycle_v4' else integrate_spatial_lifecycle if compliant else integrate_spatial_contact)
+            try:
+                result = integrate_spatial(state.vehicle,independent_suspension_policy,
+                    body_geometry,track.surfaces,parameters,control,spatial_contact_policy,dt=dt,modifiers=modifiers,
+                    **({} if ground_motion_version=='spatial_road_edge_partial_lifecycle_v4' else {'phase_domain':'atlas_rotating_v3'} if ground_motion_version=='spatial_rotating_compliant_lifecycle_v3'
+                       else {'phase_domain':'atlas_gradient_v2'} if ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else {}))
+            except CertifiedRollEnvelopeExit as roll_event:
+                if ground_motion_version!='spatial_road_edge_partial_lifecycle_v4':
+                    raise
+                stop=roll_event.stop
+                safe=stop.accepted
+                result_state=replace(state,vehicle=safe,
+                    suspension=_suspension_state(safe),flight=FlightState('grounded'))
+                query=track.query_point(safe.position,max_surface_distance,state.track)
+                return WorldStepResult(result_state,query,modifiers,(),
+                    center_segments=stop.prefix,roll_envelope_stop=stop)
+            except SpatialRoadCrash as road_event:
+                # Only an explicitly witnessed, independently replayable
+                # development road-contact event can absorb the tick.
+                if ground_motion_version!='spatial_road_edge_partial_lifecycle_v4':
+                    raise
+                crash=road_event.crash
+                terminal=crash.contact.postimpact
+                crash_state=replace(state,vehicle=terminal,
+                    suspension=_suspension_state(terminal),
+                    flight=FlightState('grounded' if terminal.grounded else 'airborne'))
+                crash_query=track.query_point(terminal.position,max_surface_distance,state.track)
+                return WorldStepResult(crash_state,crash_query,modifiers,(),
+                    center_segments=crash.prefix,crash=crash,
+                    road_crash_source=road_event.source)
             spatial_ground_telemetry = result.audit
             if compliant:
                 flight_active = True  # Directed lifecycle race owns timed gate events.
@@ -332,6 +369,7 @@ def step_world(
             center_segments = linear_center_segments(suspension_telemetry.poses,0.,dt)
             swept_poses = suspension_telemetry.poses
     candidate_query = track.query_point(candidate.position, max_surface_distance, state.track)
+    applied_crash=None
     if body_geometry is not None:
         if not isinstance(body_geometry, VehicleBodyGeometry):
             raise ValueError("body_geometry must be VehicleBodyGeometry")
@@ -341,7 +379,7 @@ def step_world(
             for segment,pose,last_pose in zip(center_segments,swept_poses,swept_poses[1:]):
                 if segment.initial_velocity is not None:
                     duration=segment.end_time_s-segment.start_time_s
-                    if ground_motion_version=='spatial_rotating_compliant_lifecycle_v3':
+                    if ground_motion_version in ('spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4'):
                         from .body_collision import sweep_ballistic_body_against_obstacle
                         for obstacle in track.obstacles:
                             verdict=sweep_ballistic_body_against_obstacle(pose,last_pose,body_geometry,obstacle.volume,
@@ -367,9 +405,100 @@ def step_world(
                 if verdict.contact:
                     body_hits.append(obstacle)
                     break
+        if body_hits and ground_motion_version=='spatial_road_edge_partial_lifecycle_v4':
+            # Absorbing crash is opt-in v4 only. Only certified grounded
+            # linear+SLERP face contacts qualify; all other contacts fail closed.
+            try:
+                mass=RigidBodyImpactMass(independent_suspension_policy.mass_kg,
+                    Vec3(independent_suspension_policy.pitch_inertia_kg_m2,
+                         spatial_contact_policy.yaw_inertia_kg_m2,
+                         independent_suspension_policy.roll_inertia_kg_m2))
+                applied_crash=first_applied_grounded_crash(
+                    tuple(swept_poses),tuple(center_segments),tuple(body_hits),
+                    body_geometry,mass,fixed_dt_s=dt)
+            except ValueError:
+                applied_crash=None
+            if applied_crash is not None:
+                # No later point-volume obstacle/finish/pickup can be read.
+                body_hits=[]
+                candidate_query=replace(candidate_query,obstacles=())
         if (flight_active or auto_released) and body_hits:
+            if ground_motion_version=='spatial_road_edge_partial_lifecycle_v4':
+                # A scratch-only diagnostic: prove the actual first collision
+                # bracket or retain INVALID. Does not create a terminal score.
+                from .ballistic_body_impact import first_ballistic_body_impact
+                details=[]
+                for obstacle in body_hits:
+                    for index,(p,q) in enumerate(zip(swept_poses,swept_poses[1:])):
+                        if sweep_body_against_obstacle(p,q,body_geometry,obstacle.volume).contact:
+                            segment=center_segments[index]
+                            interval=segment.end_time_s-segment.start_time_s
+                            if segment.initial_velocity is not None:
+                                try:
+                                    contact=first_ballistic_body_impact(
+                                        p,q,body_geometry,obstacle.volume,
+                                        duration_s=interval,
+                                        acceleration_world=Vec3(0.,-parameters.gravity,0.),
+                                        time_tolerance_s=1e-6,max_refinements=20)
+                                    details.append((obstacle.id,index,interval,None if contact is None else
+                                        (contact.last_proven_clear_s,contact.first_witnessed_contact_by_s)))
+                                except ValueError as error:
+                                    details.append((obstacle.id,index,interval,type(error).__name__+': '+str(error)))
+                            else:
+                                from .linear_first_body_contact import certify_first_linear_body_contact
+                                try:
+                                    contact=certify_first_linear_body_contact(p,q,body_geometry,obstacle.volume,
+                                        duration_s=interval,max_refinements=20,resolution_s=1e-6)
+                                    details.append((obstacle.id,index,interval,'nonballistic',
+                                        p.grounded,q.grounded,
+                                        None if contact is None else
+                                        (contact.last_certified_clear_s,contact.first_witnessed_overlap_s)))
+                                except ValueError as error:
+                                    details.append((obstacle.id,index,interval,'uncertain: '+str(error)))
+                            break
+                if details and all(
+                    len(item)==7 and item[3]=='nonballistic'
+                    and item[4] is True and item[5] is True
+                    and isinstance(item[6],tuple) and len(item[6])==2
+                    for item in details
+                ):
+                    # Optional DIAGNOSTIC certificate: an OBB overlap bracket alone
+                    # cannot establish a unique physical face/normal/impulse.
+                    # Uncertified or grazing contacts remain invalid; even a
+                    # successful certificate does NOT authorize an Eval terminal.
+                    from .certified_face_impact import certify_linear_face_impact
+                    certified=[]
+                    for item in details:
+                        obstacle=next(o for o in body_hits if o.id==item[0])
+                        index=item[1]
+                        start,end=swept_poses[index:index+2]
+                        duration=center_segments[index].end_time_s-center_segments[index].start_time_s
+                        try:
+                            mass=RigidBodyImpactMass(
+                                independent_suspension_policy.mass_kg,
+                                Vec3(independent_suspension_policy.pitch_inertia_kg_m2,
+                                     spatial_contact_policy.yaw_inertia_kg_m2,
+                                     independent_suspension_policy.roll_inertia_kg_m2))
+                            contact=certify_linear_face_impact(start,end,body_geometry,
+                                obstacle.volume,mass,duration_s=duration)
+                            certified.append((obstacle.id,contact.first_certified_clear_s,
+                                contact.first_witnessed_overlap_s,
+                                contact.obstacle_face_normal,contact.car_hull_contact_world,
+                                contact.response.impulse_n_s,contact.response.angular_impulse_nms,
+                                contact.response.energy_lost_j,
+                                'DIAGNOSTIC_ONLY_NOT_SCORED'))
+                        except ValueError as error:
+                            certified.append((obstacle.id,'uncertified face geometry',str(error)))
+                    raise GroundedBodyCollisionUnscored(
+                        f'grounded collision with provisional face/impulse audit: {certified}; '
+                        f'original interval witness: {details}; no approved crash terminal')
+                raise FlightPhysicsError(
+                    f"v4 airborne/uncertain collision witness remains unscored: {details}",
+                    failure_code="verified_obstacle_contact",
+                )
             raise FlightPhysicsError(
-                "flight/substep body hit obstacle: no scored impact response registered"
+                "flight/substep body hit obstacle: no scored impact response registered",
+                failure_code="verified_obstacle_contact",
             )
         candidate_query = replace(candidate_query, obstacles=tuple(body_hits))
 
@@ -467,7 +596,7 @@ def step_world(
         *finish_events,
         *pickup_events,
     )
-    return WorldStepResult(
+    base=WorldStepResult(
         next_state, final_query, modifiers, events,
         suspension_telemetry if not obstacle_events else None,
         flight_telemetry,
@@ -477,3 +606,16 @@ def step_world(
         coupled_ground_telemetry if not obstacle_events else None,
         spatial_ground_telemetry if not obstacle_events else None,
     )
+    if applied_crash is None:
+        return base
+    # The source full RK4 tick is retained for independent physics audit.
+    # Apply the true rigid impulse to the accepted vehicle (not merely info).
+    # Discard all later gates/rewards/state; its static tail is an absorbing
+    # terminal bookkeeping interval only, never a simulated rebound.
+    terminal=applied_crash.contact.postimpact
+    crash_state=replace(state,vehicle=terminal,
+        suspension=_suspension_state(terminal),flight=FlightState('grounded'))
+    crash_query=track.query_point(terminal.position,max_surface_distance,state.track)
+    return replace(base,state=crash_state,query=crash_query,events=(),
+        center_segments=applied_crash.prefix,
+        crash=applied_crash,precrash_result=base)

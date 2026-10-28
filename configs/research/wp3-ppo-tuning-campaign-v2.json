@@ -1,0 +1,168 @@
+{
+  "schema_version": "f1rl_wp3_ppo_tuning_campaign_v2",
+  "campaign_id": "wp3-abcd-12-models-v2",
+  "baseline_commit": "0ff42345426f2b3ba5c171fff6cee425b3457b16",
+  "scope": "TRAIN_simulation_only_development_not_scientific_acceptance",
+  "training": {
+    "timesteps_per_model": 65536,
+    "total_timesteps": 786432,
+    "checkpoint_every_timesteps": 4096,
+    "max_wall_seconds_per_model": 7200,
+    "device": "cpu",
+    "n_envs": 1,
+    "torch_threads": 8,
+    "torch_interop_threads": 1,
+    "policy": "MlpPolicy",
+    "rollout_length": 256,
+    "selection": "final_checkpoint_only",
+    "physics_failure_policy": "unsupported_contact_terminal_v1"
+  },
+  "candidate_order": [
+    "A",
+    "B",
+    "C",
+    "D"
+  ],
+  "candidates": [
+    {
+      "candidate_id": "A",
+      "lateral_penalty_per_m2_s": 2.0,
+      "training_corridor_m": 2.0
+    },
+    {
+      "candidate_id": "B",
+      "lateral_penalty_per_m2_s": 4.0,
+      "training_corridor_m": 2.0
+    },
+    {
+      "candidate_id": "C",
+      "lateral_penalty_per_m2_s": 2.0,
+      "training_corridor_m": 3.0
+    },
+    {
+      "candidate_id": "D",
+      "lateral_penalty_per_m2_s": 4.0,
+      "training_corridor_m": 3.0
+    }
+  ],
+  "seed_bundles": [
+    {
+      "seed_index": 0,
+      "ppo": 0,
+      "sampling": 0,
+      "training_reset": 1000
+    },
+    {
+      "seed_index": 1,
+      "ppo": 1,
+      "sampling": 1,
+      "training_reset": 1001
+    },
+    {
+      "seed_index": 2,
+      "ppo": 2,
+      "sampling": 2,
+      "training_reset": 1002
+    }
+  ],
+  "execution_order": [
+    [
+      "C",
+      0
+    ],
+    [
+      "A",
+      0
+    ],
+    [
+      "B",
+      0
+    ],
+    [
+      "D",
+      0
+    ],
+    [
+      "A",
+      1
+    ],
+    [
+      "B",
+      1
+    ],
+    [
+      "C",
+      1
+    ],
+    [
+      "D",
+      1
+    ],
+    [
+      "A",
+      2
+    ],
+    [
+      "B",
+      2
+    ],
+    [
+      "C",
+      2
+    ],
+    [
+      "D",
+      2
+    ]
+  ],
+  "evaluation": {
+    "schema_version": "f1rl_wp3_train_evaluation_v1",
+    "tracks": [
+      "straight-sprint-v1",
+      "slalom-v1",
+      "right-turn-v1",
+      "ramp-v1"
+    ],
+    "strata": [
+      "nominal",
+      "randomized_train"
+    ],
+    "episodes_per_track_stratum_model": 60,
+    "policy_actions": "stochastic_with_paired_candidate_independent_rng_seeds",
+    "seed_protocol": "sha256(evaluation_config_sha256,track_id,stratum,episode)_uint32_v1",
+    "reset_seed_protocol": "registered_train_reset_contract_v1",
+    "task": "registered_original_task_no_training_curriculum",
+    "hard_route_boundary_m": 4.0,
+    "checkpoint_selection": "final_checkpoint_only",
+    "metrics": {
+      "primary": "valid_autonomous_finish_rate_from_registered_finish_crossing",
+      "route_progress": "final_normalized_route_progress_from_registered_evaluator",
+      "completed_checkpoints": "final_next_checkpoint_index_from_registered_evaluator",
+      "collision_rate": "fraction_of_valid_episodes_with_collision_count_greater_than_zero",
+      "hard_route_violation_rate": "fraction_with_registered_hard_route_violation_outcome",
+      "timeout_rate": "fraction_truncated_without_valid_finish",
+      "steering_rate_rms": "RMS_of_consecutive_applied_steering_differences_over_fixed_dt_no_initial_delta",
+      "episode_duration": "registered_evaluator_episode_time_seconds",
+      "failure_reason": "valid_finish_then_registered_truncation_or_research_outcome_reason"
+    },
+    "invalid_episode_rule": "abort_cell_preserve_invalid_evidence_no_redraw",
+    "scientific_evidence": false,
+    "heldout_access": false
+  },
+  "resources": {
+    "max_telemetry_record_bytes": 16384,
+    "telemetry_auxiliary_reserve_bytes": 1048576,
+    "telemetry_per_model_max_bytes": 1074790400,
+    "minimum_free_disk_safety_bytes": 1073741824,
+    "max_concurrent_training_processes": 1,
+    "max_retries_per_model": 0
+  },
+  "campaign_policy": {
+    "resume_completed_runs_only": true,
+    "incomplete_run_action": "stop_preserve_no_automatic_retry",
+    "continue_after_c0_engineering_pass": true,
+    "stop_on_engineering_failure": true,
+    "scientific_training_authorized": false,
+    "wp7_and_gate2": "BLOCKED"
+  }
+}

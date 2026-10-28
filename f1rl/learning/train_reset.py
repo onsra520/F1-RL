@@ -60,6 +60,14 @@ class TrainResetConfig:
         if entry is None or fingerprint_track_world(track) != entry.world_sha256:
             raise ValueError("TRAIN reset track identity is absent or mismatched")
 
+    def identity_for_track(self, track_id: str) -> dict[str, object]:
+        entry = next((entry for entry in self.training_registry if entry.track_id == track_id), None)
+        if entry is None:
+            raise ValueError("TRAIN reset track identity is absent or mismatched")
+        return {"version": self.version, "seed": self.seed,
+                "configuration_sha256": self.sha256,
+                "world_sha256": entry.world_sha256}
+
     def supports_physics_mode(self, mode: str) -> bool:
         expected = ("wp7_lifecycle_v1" if self.version == "wp7_train_reset_lifecycle_research_v1"
                     else "wp7_suspension_v1")
@@ -91,8 +99,10 @@ def sample_train_spawn(
                 suspension.roll_z_rad, suspension.roll_rate_radps,
             ))):
         raise ValueError("TRAIN reset v1 requires an upright stationary nominal chassis")
-    draw_key = f"{config.version}/{config.seed}/{rank}/{track_id}/{reset_index}"
-    draw_seed = int.from_bytes(sha256(draw_key.encode("utf-8")).digest(), "big")
+    draw_seed = derive_train_reset_draw_seed(
+        version=config.version, seed=config.seed, rank=rank,
+        track_id=track_id, reset_index=reset_index,
+    )
     rng = random.Random(draw_seed)
     right = vehicle.orientation.rotate(Vec3(1., 0., 0.))
     rejected = []
@@ -133,3 +143,18 @@ def sample_train_spawn(
             }
         rejected.append({"lateral_offset_m": lateral, "heading_jitter_deg": heading, "reason": reason})
     raise SpawnFeasibilityError(f"no feasible TRAIN spawn in {config.max_attempts} draws: {rejected}")
+
+
+def derive_train_reset_draw_seed(*, version: str, seed: int, rank: int,
+                                track_id: str, reset_index: int) -> int:
+    """Return the authoritative deterministic draw seed used by TRAIN resets."""
+    if version not in ("wp7_train_reset_research_v1", "wp7_train_reset_lifecycle_research_v1"):
+        raise ValueError("unregistered TRAIN reset protocol")
+    if type(seed) is not int or not 0 <= seed <= 2**32 - 1:
+        raise ValueError("TRAIN perturbation seed must be a uint32")
+    if any(type(value) is not int or value < 0 for value in (rank, reset_index)):
+        raise ValueError("rank/reset index must be nonnegative integers")
+    if not isinstance(track_id, str) or not track_id.strip():
+        raise ValueError("TRAIN reset track identity is required")
+    draw_key = f"{version}/{seed}/{rank}/{track_id}/{reset_index}"
+    return int.from_bytes(sha256(draw_key.encode("utf-8")).digest(), "big")

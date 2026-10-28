@@ -66,6 +66,7 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         self._rank = rank
         self._reset_sequence = 0
         self._active_env: F1RLEnv | None = None
+        self._training_telemetry_enabled = False
         self._current_scenario: TrainingScenario | None = None
         self.action_space = scenarios.action_space
         self.observation_space = scenarios.observation_space
@@ -73,6 +74,23 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
     @property
     def requires_scientific_admission(self) -> bool:
         return any(s.factory.requires_scientific_admission for s in self._scenarios.scenarios)
+
+    @property
+    def training_reset_contracts(self) -> dict[str, dict[str, object]]:
+        contracts = {}
+        for scenario in self._scenarios.scenarios:
+            config = scenario.factory.reset_config
+            if config is None:
+                raise ValueError("sampled TRAIN telemetry requires reset contracts for every scenario")
+            contracts[scenario.track_id] = config.identity_for_track(scenario.track_id)
+        return contracts
+
+    def set_training_telemetry_enabled(self, enabled: bool) -> None:
+        if type(enabled) is not bool:
+            raise ValueError("training telemetry flag must be bool")
+        self._training_telemetry_enabled = enabled
+        if self._active_env is not None:
+            self._active_env.set_training_telemetry_enabled(enabled)
 
     def reset(
         self,
@@ -93,6 +111,7 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             if scenario.factory.reset_config is not None else scenario.factory.create()
         )
         try:
+            env.set_training_telemetry_enabled(self._training_telemetry_enabled)
             observation, info = env.reset(seed=seed, options=options)
         except Exception:
             try:

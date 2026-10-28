@@ -410,6 +410,42 @@ def test_learn_progress_hook_reports_actual_cumulative_timesteps() -> None:
         env.close()
 
 
+def test_checkpoint_can_be_saved_while_telemetry_observer_is_active(tmp_path, monkeypatch):
+    from stable_baselines3.common.vec_env import DummyVecEnv
+
+    import f1rl.learning.algorithms.ppo as ppo_module
+
+    class Observer:
+        def __init__(self):
+            self.stream = (tmp_path / "exclusive-telemetry.jsonl").open("x", encoding="utf-8")
+
+        def on_training_start(self, *args, **kwargs):
+            pass
+
+        def on_step(self, *args, **kwargs):
+            pass
+
+        def on_optimizer_step(self):
+            pass
+
+        def on_update(self, *args, **kwargs):
+            pass
+
+    monkeypatch.setattr(ppo_module, "_validate_training_admission", lambda _env: None)
+    monkeypatch.setattr(ppo_module, "_local_demo_admitted", lambda _env: True)
+    vector = DummyVecEnv([_env])
+    model = PPOModel.create(vector, PPOConfig(n_steps=4, batch_size=4, n_epochs=1, device="cpu"))
+    observer = Observer()
+    archive = tmp_path / "checkpoint.zip"
+    try:
+        model.learn(4, telemetry_observer=observer,
+                    progress_hook=lambda _step: model.save(archive) if not archive.exists() else None)
+        assert archive.is_file()
+    finally:
+        observer.stream.close()
+        vector.close()
+
+
 def test_learn_none_progress_hook_preserves_existing_behavior() -> None:
     env = _env()
     model = PPOModel.create(

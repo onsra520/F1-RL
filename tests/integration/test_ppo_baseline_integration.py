@@ -183,7 +183,7 @@ assert not hasattr(f1rl.learning, "PPOModel")
     assert completed.returncode == 0, completed.stderr
 
 
-def test_model_framework_imports_are_limited_to_backends_and_exploratory_guards() -> None:
+def test_model_framework_imports_are_limited_to_backends() -> None:
     sb3_owners: list[str] = []
     torch_owners: list[str] = []
     for path in Path("f1rl").rglob("*.py"):
@@ -193,9 +193,8 @@ def test_model_framework_imports_are_limited_to_backends_and_exploratory_guards(
         if any(module == "torch" or module.startswith("torch.") for module in modules):
             torch_owners.append(path.as_posix())
 
-    assert sorted(sb3_owners) == ["f1rl/exploratory/permit.py", "f1rl/exploratory/pilot.py",
-        "f1rl/learning/algorithms/ppo.py", "f1rl/learning/training/vector_env.py"]
-    assert sorted(torch_owners) == ["f1rl/exploratory/permit.py", "f1rl/exploratory/pilot.py"]
+    assert sorted(sb3_owners) == ["f1rl/learning/algorithms/ppo.py", "f1rl/learning/training/vector_env.py"]
+    assert torch_owners == []
 
 
 def test_lower_layers_remain_free_of_model_framework_dependencies() -> None:

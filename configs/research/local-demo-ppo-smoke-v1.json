@@ -1,0 +1,17 @@
+{
+  "schema_version": "f1rl_local_demo_ppo_smoke_v1",
+  "candidate": "C",
+  "tuning_seed_index": 0,
+  "split": "TRAIN",
+  "timesteps": 256,
+  "rollout_length": 256,
+  "n_envs": 1,
+  "rollout_batches": 1,
+  "device": "cpu",
+  "tracks": ["straight-sprint-v1", "slalom-v1", "right-turn-v1", "ramp-v1"],
+  "checkpoint_interval": 0,
+  "max_wall_seconds": 1800,
+  "final_checkpoint_required": true,
+  "heldout_access": false,
+  "scientific_evaluation": false
+}

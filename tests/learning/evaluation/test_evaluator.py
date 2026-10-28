@@ -161,6 +161,24 @@ def test_real_timeout_rollout_is_deterministic_and_uses_environment_terminal_con
     assert result.slow_zone_applied_steps == 0
 
 
+def test_step_observer_receives_each_transition_without_changing_episode_metrics() -> None:
+    baseline = evaluate_episode(
+        track_id="fixture", factory=_factory(),
+        policy=ConstantPolicy(np.array([0.0, 0.0], dtype=np.float32)),
+    )
+    observed = []
+    with_observer = evaluate_episode(
+        track_id="fixture", factory=_factory(),
+        policy=ConstantPolicy(np.array([0.0, 0.0], dtype=np.float32)),
+        step_observer=observed.append,
+    )
+
+    assert with_observer == baseline
+    assert len(observed) == baseline.steps == 3
+    assert observed[-1]["truncated"] is True
+    assert observed[-1]["step"] == baseline.steps
+
+
 def test_evaluator_creates_one_fresh_env_and_closes_it(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
