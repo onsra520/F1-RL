@@ -97,9 +97,13 @@ def owner_outcome_contract(path=None) -> dict:
         terminal_penalty=0.,new_success_credit=False,new_reward_shaping=False,
         training_permitted=False,heldout_permitted=False,scientific_freeze_permitted=False,wp8_permitted=False)
     from pathlib import Path
+    import os
     import yaml
     from .owner_acceptance import _UniqueMappingLoader
-    root=Path(__file__).resolve().parents[2]
+    configured_root=os.environ.get("F1RL_PROJECT_ROOT")
+    if configured_root is not None and not configured_root.strip():
+        raise ValueError("F1RL_PROJECT_ROOT must not be blank")
+    root=Path(configured_root).resolve(strict=True) if configured_root is not None else Path(__file__).resolve().parents[2]
     path=Path(path) if path is not None else root/'configs/research/wp7-hard-route-outcome-v2.json'
     source=path.read_bytes()
     document=yaml.load(source.decode('utf-8'),Loader=_UniqueMappingLoader)

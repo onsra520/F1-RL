@@ -191,3 +191,14 @@ def test_owner_parent_identity_accepts_exact_git_and_windows_checkout_bytes(monk
     checkout+=b"# changed historical source\n"
     with pytest.raises(ValueError,match="historical parent"):
         owner_outcome_contract()
+
+
+def test_owner_contract_uses_explicit_project_root_when_package_is_installed(monkeypatch, tmp_path):
+    from pathlib import Path
+    from src.rl import hard_route_outcome
+    root = Path(__file__).resolve().parents[2]
+    monkeypatch.setenv("F1RL_PROJECT_ROOT", str(root))
+    monkeypatch.setattr(hard_route_outcome, "__file__", str(tmp_path / "site-packages/src/rl/hard_route_outcome.py"))
+    result = hard_route_outcome.owner_outcome_contract()
+    assert result["configuration"]["training_permitted"] is False
+    assert result["configuration"]["heldout_permitted"] is False
