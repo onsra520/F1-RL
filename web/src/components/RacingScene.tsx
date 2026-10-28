@@ -1,0 +1,239 @@
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
+import { BufferAttribute, BufferGeometry, Camera, DoubleSide, Plane, Raycaster, Vector2, Vector3 } from 'three';
+import type { PropKind, RoadSample, TrackDocument, TrackProp } from '../lib/track';
+import { pointAt, sampleRoad } from '../lib/track';
+import SolidRoad from './SolidRoad';
+import { BoosterSurface, CheckpointGate } from './RoadAttachments';
+
+export type CarPose = { x: number; y: number; z: number; heading: number; speed: number };
+type Mode = 'build' | 'drive';
+
+function ribbon(samples: RoadSample[], left: number, right: number, offsetY: number) {
+  const positions: number[] = [], indices: number[] = [];
+  for (const s of samples) {
+    positions.push(s.x + s.nx * left, s.y + offsetY, s.z + s.nz * left);
+    positions.push(s.x + s.nx * right, s.y + offsetY, s.z + s.nz * right);
+  }
+  for (let i = 0; i < samples.length - 1; i++) {
+    const k = i * 2;
+    indices.push(k, k + 2, k + 1, k + 1, k + 2, k + 3);
+  }
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function Road({ track, samples }: { track: TrackDocument; samples: RoadSample[] }) {
+  const asphalt = useMemo(() => ribbon(samples, -track.width / 2, track.width / 2, 0.08), [samples, track.width]);
+  const shoulder = useMemo(() => ribbon(samples, -track.width / 2 - 0.7, track.width / 2 + 0.7, -0.1), [samples, track.width]);
+  const left = useMemo(() => ribbon(samples, -track.width / 2 + 0.55, -track.width / 2 + 0.75, 0.10), [samples, track.width]);
+  const right = useMemo(() => ribbon(samples, track.width / 2 - 0.75, track.width / 2 - 0.55, 0.10), [samples, track.width]);
+  const center = useMemo(() => ribbon(samples, -0.075, 0.075, 0.11), [samples]);
+  useEffect(() => () => { asphalt.dispose(); shoulder.dispose(); left.dispose(); right.dispose(); center.dispose(); },
+    [asphalt, shoulder, left, right, center]);
+  return <>
+    <mesh geometry={shoulder} receiveShadow><meshStandardMaterial color="#151e21" side={DoubleSide} roughness={0.98} /></mesh>
+    <mesh geometry={asphalt} receiveShadow><meshStandardMaterial color="#354044" side={DoubleSide} roughness={0.91} metalness={0.05} /></mesh>
+    <mesh geometry={left}><meshBasicMaterial color="#e3e9df" side={DoubleSide} /></mesh>
+    <mesh geometry={right}><meshBasicMaterial color="#e3e9df" side={DoubleSide} /></mesh>
+    <mesh geometry={center}><meshBasicMaterial color="#b4a781" transparent opacity={0.35} side={DoubleSide} /></mesh>
+    <SolidRoad track={track} samples={samples} />
+  </>;
+}
+
+function CarModel({ pose }: { pose: CarPose }) {
+  return <group position={[pose.x, pose.y + 0.74, pose.z]} rotation={[0, pose.heading, 0]}>
+    <mesh castShadow position={[0, 0.25, 0]}><boxGeometry args={[1.5, 0.52, 3.5]} /><meshStandardMaterial color="#f27555" roughness={0.35} metalness={0.28}/></mesh>
+    <mesh castShadow position={[0, 0.58, -0.25]}><boxGeometry args={[0.9, 0.47, 1.65]} /><meshStandardMaterial color="#253039" roughness={0.36}/></mesh>
+    <mesh castShadow position={[0, 0.42, 1.52]}><boxGeometry args={[0.42, 0.35, 1.15]} /><meshStandardMaterial color="#ec6046" metalness={0.3}/></mesh>
+    <mesh castShadow position={[0, 0.24, 1.78]}><boxGeometry args={[2.6, 0.15, 0.39]} /><meshStandardMaterial color="#f5c85e" /></mesh>
+    <mesh castShadow position={[0, 0.71, -1.60]}><boxGeometry args={[2.45, 0.13, 0.46]} /><meshStandardMaterial color="#202c32" /></mesh>
+    {[-1.05, 1.05].flatMap((x) => [-1.2, 1.18].map((z) => (
+      <group key={`${x}:${z}`} position={[x, -0.04, z]}>
+        <mesh rotation={[0, 0, Math.PI / 2]} castShadow><cylinderGeometry args={[0.43, 0.43, 0.35, 14]}/><meshStandardMaterial color="#141a1d" roughness={0.9}/></mesh>
+        <mesh rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.20, 0.20, 0.366, 14]}/><meshStandardMaterial color="#858e93" metalness={0.6}/></mesh>
+      </group>
+    )))}
+    <mesh position={[0, 0.91, -0.8]}><sphereGeometry args={[0.36, 14, 10]}/><meshStandardMaterial color="#121c24"/></mesh>
+  </group>;
+}
+
+const labelColors: Record<PropKind, string> = {
+  bridge: '#8396a5', ramp: '#eba65a', barrier: '#ef714f', cone: '#e08d45',
+  booster: '#b7ed6b', checkpoint: '#74c7ec',
+};
+
+function TrackObject({ prop, track, selected, onPick, onRelease }: {
+  prop: TrackProp;
+  track: TrackDocument;
+  selected: boolean;
+  onPick: (event: ThreeEvent<PointerEvent>) => void;
+  onRelease: () => void;
+}) {
+  const p = pointAt(track, prop.t, prop.offset);
+  const angle = p.heading + prop.rotation;
+  const color = labelColors[prop.kind];
+  if (prop.kind === 'checkpoint' || prop.kind === 'booster') {
+    return <group onPointerDown={onPick} onPointerUp={onRelease} onClick={(e) => e.stopPropagation()}
+      onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'grab'; }}
+      onPointerOut={() => { document.body.style.cursor = ''; }}>
+      {prop.kind === 'checkpoint'
+        ? <CheckpointGate track={track} prop={prop} selected={selected} />
+        : <BoosterSurface track={track} prop={prop} selected={selected} />}
+    </group>;
+  }
+  return <group position={[p.x, p.y + 0.13, p.z]} rotation={[0, angle, 0]} onPointerDown={onPick} onPointerUp={onRelease} onClick={(e) => e.stopPropagation()}>
+    {selected && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+      <ringGeometry args={[3.0, 3.18, 48]}/><meshBasicMaterial color="#d5f694" transparent opacity={0.94} side={DoubleSide} />
+    </mesh>}
+    {(prop.kind === 'bridge' || prop.kind === 'ramp') && <group position={[track.width / 2 + 1.9, 0, 0]}>
+      {/* Selection handle lives beside the road: no overhead beam or ramp slab blocks the lane. */}
+      <mesh castShadow position={[0, 0.9, 0]}>
+        <cylinderGeometry args={[0.12, 0.12, 1.8, 8]}/><meshStandardMaterial color="#86999b"/>
+      </mesh>
+      <mesh castShadow position={[0, 2, 0]}>
+        <boxGeometry args={[1.4, 0.9, 0.3]}/><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.12}/>
+      </mesh>
+    </group>}
+    {prop.kind === 'barrier' && <>
+      <mesh castShadow position={[0, 0.8, 0]}><boxGeometry args={[4.0, 1.5, 0.7]}/><meshStandardMaterial color="#ec7353"/></mesh>
+      <mesh position={[0, 0.8, 0.37]}><boxGeometry args={[3.7, 0.24, 0.06]}/><meshBasicMaterial color="#fff0d6"/></mesh>
+    </>}
+    {prop.kind === 'cone' && <>
+      <mesh castShadow position={[0, 0.55, 0]}><coneGeometry args={[0.7, 1.2, 6]}/><meshStandardMaterial color={color}/></mesh>
+      <mesh position={[0, 0.06, 0]}><boxGeometry args={[1.3, 0.12, 1.3]}/><meshStandardMaterial color="#2b3235"/></mesh>
+    </>}
+  </group>;
+}
+
+function ChaseCamera({ pose }: { pose: CarPose }) {
+  const { camera } = useThree();
+  useFrame((_, delta) => {
+    const behind = new Vector3(pose.x - Math.sin(pose.heading) * 19, pose.y + 12.2, pose.z - Math.cos(pose.heading) * 19);
+    camera.position.lerp(behind, 1 - Math.exp(-4 * Math.min(delta, 0.1)));
+    camera.lookAt(pose.x, pose.y + 1.3, pose.z + Math.cos(pose.heading) * 6);
+  });
+  return null;
+}
+
+function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, onCamera, onDragChange }: {
+  track: TrackDocument; mode: Mode; selectedId: string | null; armed: PropKind | null;
+  pose: CarPose; onCamera: (camera: Camera) => void;
+  onSelect: (id: string | null) => void;
+  onPlace: (kind: PropKind | null, x: number, z: number, id?: string) => void;
+  onDragChange: (id: string | null) => void;
+}) {
+  const { camera } = useThree();
+  const samples = useMemo(() => sampleRoad(track), [track]);
+  useEffect(() => { onCamera(camera); }, [camera, onCamera]);
+  const choose = (event: ThreeEvent<PointerEvent>, id: string) => {
+    if (mode !== 'build') return;
+    event.stopPropagation();
+    onSelect(id);
+    document.body.style.cursor = 'grabbing';
+    onDragChange(id);
+  };
+  const stopDrag = () => { document.body.style.cursor = ''; onDragChange(null); };
+  return <>
+    <color attach="background" args={['#111b20']} />
+    <fog attach="fog" args={['#111b20', 140, 330]} />
+    <ambientLight intensity={1.2} />
+    <hemisphereLight args={['#d9f2ee', '#223037', 1.15]} />
+    <directionalLight position={[40, 85, 50]} intensity={2.4} castShadow shadow-mapSize={[2048, 2048]} shadow-camera-left={-130} shadow-camera-right={130} shadow-camera-top={130} shadow-camera-bottom={-130}/>
+    <gridHelper args={[400, 40, '#344147', '#263137']} position={[0, -0.6, 0]} />
+    <Road track={track} samples={samples} />
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.8, 0]}
+      onClick={(e) => { if (mode !== 'build') return; if (armed) onPlace(armed, e.point.x, e.point.z); else onSelect(null); }}
+      onPointerUp={stopDrag}>
+      <planeGeometry args={[2000, 2000]}/><meshBasicMaterial visible={false}/>
+    </mesh>
+    {track.props.map((p) => <TrackObject key={p.id} prop={p} track={track} selected={selectedId === p.id}
+      onPick={(e) => choose(e, p.id)} onRelease={stopDrag}/>)}
+    <CarModel pose={pose}/>
+    {mode === 'drive' ? <ChaseCamera pose={pose}/> : null}
+  </>;
+}
+
+export default function RacingScene({ track, mode, selectedId, armed, pose, onSelect, onPlace }: {
+  track: TrackDocument; mode: Mode; selectedId: string | null; armed: PropKind | null; pose: CarPose;
+  onSelect: (id: string | null) => void;
+  onPlace: (kind: PropKind | null, x: number, z: number, id?: string) => void;
+}) {
+  const cameraRef = useRef<Camera | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const onCamera = (camera: Camera) => { cameraRef.current = camera; };
+  // Listen at the DOM/window level after selection. Unlike a ground-mesh
+  // pointer handler this keeps dragging when the pointer crosses the gate,
+  // elevated road, or exits the canvas. Orbit is disabled while selected.
+  useEffect(() => {
+    if (mode !== 'build' || dragging === null) return;
+    let lastMove = -Infinity;
+    const move = (event: PointerEvent) => {
+      if ((event.buttons & 1) === 0) { setDragging(null); return; }
+      if (event.timeStamp - lastMove < 34) return;
+      lastMove = event.timeStamp;
+      const rect = containerRef.current?.getBoundingClientRect();
+      const camera = cameraRef.current;
+      if (!rect || !camera || rect.width <= 0 || rect.height <= 0) return;
+      if (event.clientX < rect.left || event.clientX > rect.right ||
+          event.clientY < rect.top || event.clientY > rect.bottom) return;
+      const ndc = new Vector2(
+        (event.clientX - rect.left) / rect.width * 2 - 1,
+        -(event.clientY - rect.top) / rect.height * 2 + 1,
+      );
+      const ray = new Raycaster();
+      ray.setFromCamera(ndc, camera);
+      const target = new Vector3();
+      if (ray.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), target)) {
+        onPlace(null, target.x, target.z, dragging);
+      }
+    };
+    const finish = () => { setDragging(null); document.body.style.cursor = ''; };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
+    window.addEventListener('blur', finish);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+      window.removeEventListener('blur', finish);
+    };
+  }, [mode, dragging, onPlace]);
+  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const kind = e.dataTransfer.getData('application/x-f1rl-prop') as PropKind;
+    if (mode !== 'build' || !['bridge', 'ramp', 'barrier', 'cone', 'booster', 'checkpoint'].includes(kind)) return;
+    const rect = containerRef.current!.getBoundingClientRect();
+    const ndc = new Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1,
+                           -((e.clientY - rect.top) / rect.height) * 2 + 1);
+    const ray = new Raycaster();
+    const camera = cameraRef.current;
+    if (!camera) return;
+    ray.setFromCamera(ndc, camera);
+    const target = new Vector3();
+    if (ray.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), target)) onPlace(kind, target.x, target.z);
+  };
+  const center = useMemo(() => {
+    const positions = sampleRoad(track, 20);
+    if (!positions.length) return new Vector3();
+    return new Vector3(positions.reduce((a,p)=>a+p.x,0)/positions.length, 0, positions.reduce((a,p)=>a+p.z,0)/positions.length);
+  }, [track.points]);
+  return <div className="scene-container" ref={containerRef} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+    <Canvas shadows dpr={[1, 1.8]} camera={{ position: [65, 122, 108], fov: 52, near: 0.1, far: 650 }}>
+      <Suspense fallback={null}>
+        <World track={track} mode={mode} selectedId={selectedId} armed={armed} pose={pose}
+          onSelect={onSelect} onPlace={onPlace} onCamera={onCamera} onDragChange={setDragging}/>
+        {mode === 'build' && <OrbitControls makeDefault target={[center.x, center.y, center.z]}
+          enableDamping dampingFactor={0.09} enabled={!dragging}
+          minDistance={12} maxDistance={260} minPolarAngle={0.20} maxPolarAngle={1.34}/>}
+      </Suspense>
+    </Canvas>
+    {mode === 'build' && <div className="view-corner"><span className="status-dot"/> ORBIT VIEW <span className="tiny-separator">·</span> DRAG TO ROTATE <span className="tiny-separator">·</span> SCROLL TO ZOOM</div>}
+  </div>;
+}
