@@ -1,6 +1,7 @@
 """Adversarial tests for owner-UNSIGNED physics v4 technical acceptance."""
 import json
 from pathlib import Path
+import os
 import pytest
 
 from f1rl.research.wp3_v4_technical_acceptance import (
@@ -8,7 +9,7 @@ from f1rl.research.wp3_v4_technical_acceptance import (
 )
 
 ROOT=Path(__file__).resolve().parents[2]
-HISTORY=Path(r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1")
+HISTORY=Path(os.environ.get("F1RL_WP3_EVIDENCE", r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1"))
 REPLAY=ROOT/"docs/research/WP3-V4AH-PHYSICS-V4-ACCEPTANCE-REPLAY-20261024.json"
 RECEIPT=ROOT/"docs/research/WP3-V4-PHYSICS-ENGINEERING-PYTEST-20261024.txt"
 

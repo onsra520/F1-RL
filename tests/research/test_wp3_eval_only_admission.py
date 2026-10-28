@@ -1,6 +1,7 @@
 """Issue #51 Eval-only immutable input admission and negative tests."""
 from copy import deepcopy
 from pathlib import Path
+import os
 import json
 
 import pytest
@@ -11,7 +12,7 @@ from f1rl.research.wp3_eval_only_admission import (
 )
 
 ROOT=Path(__file__).resolve().parents[2]
-HISTORY=Path(r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1")
+HISTORY=Path(os.environ.get("F1RL_WP3_EVIDENCE", r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1"))
 REPLAY=ROOT/"docs/research/WP3-CE0E55D-THREE-REPLAY-PREFLIGHT-20261024.json"
 GATE=ROOT/"docs/research/WP3-EVAL-ONLY-COMPLETION-GATE-20261024.json"
 
