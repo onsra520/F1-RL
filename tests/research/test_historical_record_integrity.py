@@ -68,3 +68,18 @@ def test_forged_historical_source_bundle_is_rejected(tmp_path):
     dest.write_text(json.dumps(record), encoding='utf8')
     with pytest.raises(ValueError, match='historical record SHA-256 mismatch'):
         verify_historical_records(tmp_path, HISTORY)
+
+
+def test_current_attestation_cannot_replace_historical_record(tmp_path):
+    import json
+    path = tmp_path / 'docs/research/WP3-PHYSICS-V4-TECHNICAL-ACCEPTANCE-20261024.json'
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps({'schema_version': 'engineering_source_attestation_v1'}), encoding='utf8')
+    with pytest.raises(ValueError, match='historical record SHA-256 mismatch'):
+        verify_historical_records(tmp_path, HISTORY)
+
+
+def test_historical_allowlist_does_not_accept_migrated_physics():
+    from f1rl.learning.freeze_readiness import verify_training_source_diff
+    with pytest.raises(ValueError, match='training/simulator source changed'):
+        verify_training_source_diff(('src/sandbox/spatial_contact_dynamics.py',))
