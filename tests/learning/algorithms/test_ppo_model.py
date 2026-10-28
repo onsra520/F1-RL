@@ -487,3 +487,57 @@ def test_learn_rejects_non_callable_progress_hook() -> None:
     model = PPOModel.create(_env(), PPOConfig(n_steps=4, batch_size=4, n_epochs=1))
     with pytest.raises(ValueError):
         model.learn(4, progress_hook=object())  # type: ignore[arg-type]
+
+
+def test_telemetry_training_rejects_partial_ppo_rollout_before_learning(monkeypatch):
+    from stable_baselines3.common.vec_env import DummyVecEnv
+
+    class Observer:
+        def on_training_start(self, *args, **kwargs):
+            raise AssertionError('observer must not start for a partial rollout')
+        def on_step(self, *args, **kwargs): pass
+        def on_optimizer_step(self, *args, **kwargs): pass
+        def on_update(self, *args, **kwargs): pass
+
+    env = DummyVecEnv([_env])
+    model = PPOModel.create(env, PPOConfig(n_steps=4, batch_size=4, n_epochs=1, device='cpu'))
+    monkeypatch.setattr(model._model, 'learn', lambda **kwargs: pytest.fail('training started'))
+    try:
+        with pytest.raises(ValueError, match='rollout'):
+            model.learn(5, telemetry_observer=Observer())
+    finally:
+        env.close()
+
+
+def test_telemetry_cleanup_preserves_learning_failure_and_attempts_both(monkeypatch):
+    from stable_baselines3.common.vec_env import DummyVecEnv
+
+    class Observer:
+        def on_training_start(self, *args, **kwargs): pass
+        def on_step(self, *args, **kwargs): pass
+        def on_optimizer_step(self, *args, **kwargs): pass
+        def on_update(self, *args, **kwargs): pass
+
+    env = DummyVecEnv([_env])
+    model = PPOModel.create(env, PPOConfig(n_steps=4, batch_size=4, n_epochs=1, device='cpu'))
+    calls = []
+    def env_method(name, enabled):
+        calls.append(enabled)
+        if not enabled:
+            raise OSError('telemetry disable failed')
+    class Hook:
+        def remove(self):
+            raise OSError('hook removal failed')
+    def learn(**kwargs):
+        raise RuntimeError('primary learning failure')
+    monkeypatch.setattr(env, 'env_method', env_method)
+    monkeypatch.setattr(model._model, 'learn', learn)
+    monkeypatch.setattr(model._model.policy.optimizer, 'register_step_post_hook', lambda f: Hook())
+    try:
+        with pytest.raises(RuntimeError, match='primary learning failure') as error:
+            model.learn(4, telemetry_observer=Observer())
+        assert calls == [True, False]
+        assert 'hook removal failed' in ' '.join(error.value.__notes__)
+        assert 'telemetry disable failed' in ' '.join(error.value.__notes__)
+    finally:
+        env.close()

@@ -83,3 +83,16 @@ def test_draft_manifest_is_rejected_before_repository_permit_claim(tmp_path, mon
 def test_holm_rejects_empty_or_invalid_p_values(values):
     with pytest.raises(ValueError):
         holm_adjust(values)
+
+
+def test_verifier_rejects_unknown_seed_bundle_even_when_role_is_null(monkeypatch):
+    import f1rl.exploratory.abcd as abcd
+    from f1rl.research.wp7_protocol import digest
+    monkeypatch.setattr(abcd, '_source_identity', lambda root: ('a' * 40, 'b' * 64))
+    run = build_candidate_run_manifest(ROOT, candidate_id='A', run_id='bad-seed',
+        seed_bundle={'ppo': 100, 'sampling': 200, 'training_reset': 1100})
+    run['seed_bundle'] = {'ppo': 999999, 'sampling': 999999, 'training_reset': 999999}
+    run['seed_role'] = None
+    run['sha256'] = digest({key: value for key, value in run.items() if key != 'sha256'})
+    with pytest.raises(ValueError, match='seed'):
+        verify_candidate_run_manifest(ROOT, run)

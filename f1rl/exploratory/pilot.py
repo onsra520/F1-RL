@@ -303,9 +303,12 @@ def worker(root, permit, envelope):
         return 0
     except BaseException as exc:
         worker_error = exc
-        state('learning_completed_evaluation_incomplete' if learning_completed else 'failed',
-              error=f'{type(exc).__name__}: {exc}',
-              last_learning_outcome=None if env is None else getattr(env, 'last_research_outcome', None))
+        try:
+            state('learning_completed_evaluation_incomplete' if learning_completed else 'failed',
+                  error=f'{type(exc).__name__}: {exc}',
+                  last_learning_outcome=None if env is None else getattr(env, 'last_research_outcome', None))
+        except BaseException as state_error:
+            exc.add_note(f'state reporting also failed: {type(state_error).__name__}: {state_error}')
         raise
     finally:
         finalization_error = None

@@ -194,7 +194,7 @@ def verify_candidate_run_manifest(repository_root, run_manifest):
     confirmation = {(rule['ppo_start'] + i, rule['sampling_start'] + i,
                      rule['training_reset_start'] + i) for i in range(rule['count'])}
     expected_role = 'tuning' if bundle in tuning else 'confirmation' if bundle in confirmation else None
-    if run_manifest['seed_role'] != expected_role:
+    if expected_role is None or run_manifest['seed_role'] != expected_role:
         raise ValueError('run seed is not in the disjoint preregistered seed roster')
     return {key: run_manifest[key] for key in ('source_commit', 'source_tree_sha256',
         'experiment_manifest_sha256', 'run_id', 'candidate_id', 'split')} | {

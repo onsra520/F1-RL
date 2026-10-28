@@ -151,3 +151,30 @@ def test_repository_claim_rejects_draft_even_with_trusted_signers(tmp_path, monk
         claim_repository_wp2_execution_permit(root, envelope, expected=identity(),
             now=NOW)
     assert not ledger.exists()
+
+
+def test_committed_trust_registry_cannot_authenticate_fixture_signatures():
+    from pathlib import Path
+    from f1rl.research.wp2_execution_permit import load_repository_signers
+    root = Path(__file__).resolve().parents[2]
+    envelope, _ = signed_permit()
+    registry = load_repository_signers(root)
+    assert registry['signers'] == []
+    with pytest.raises(ValueError):
+        verify_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
+
+def test_repository_claim_replay_ledger_is_shared_across_roots(tmp_path, monkeypatch):
+    import f1rl.exploratory.abcd as abcd
+    import f1rl.research.wp2_execution_permit as permits
+    ledger = tmp_path / 'shared-ledger'
+    monkeypatch.setattr(permits, '_replay_ledger_directory', lambda: ledger)
+    monkeypatch.setattr(abcd, 'load_abcd_manifest', lambda root: {'status': 'APPROVED — PREREGISTERED'})
+    envelope, registry = signed_permit()
+    roots = [tmp_path / 'repo-one', tmp_path / 'repo-two']
+    for root in roots:
+        path = root / 'configs/research/wp2-trusted-signers-v1.json'
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps(registry), encoding='utf-8')
+    claim_repository_wp2_execution_permit(roots[0], envelope, expected=identity(), now=NOW)
+    with pytest.raises(FileExistsError):
+        claim_repository_wp2_execution_permit(roots[1], envelope, expected=identity(), now=NOW)

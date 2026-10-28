@@ -189,11 +189,12 @@ def test_pilot_phases_do_not_select_best_checkpoint(tmp_path, monkeypatch):
     assert calls == [('untrained', i) for i in range(7)]
 
 
+@pytest.mark.parametrize('state_write_fails', [False, True])
 @pytest.mark.parametrize('evaluation_fails', [False, True])
 @pytest.mark.parametrize('schedule', ['learning_first', 'baseline_first'])
 @pytest.mark.parametrize('telemetry_failure', [None, 'close', 'manifest'])
 def test_worker_orchestration_with_fake_model_only(
-    tmp_path, monkeypatch, schedule, evaluation_fails, telemetry_failure
+    tmp_path, monkeypatch, schedule, evaluation_fails, telemetry_failure, state_write_fails
 ):
     p = pilot()
     from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
@@ -314,11 +315,20 @@ def test_worker_orchestration_with_fake_model_only(
         events.append(('evaluate', name, getattr(evaluated_model, 'snapshot', 'live')))
         return {'success':False, 'progress':0., 'policy':name, 'episode':ep}
     monkeypatch.setattr(p, 'evaluate_episode', evaluation)
+    if evaluation_fails and state_write_fails:
+        write_json = p.write_json
+        def maybe_fail_state(path, value):
+            if path.name == 'state.json' and value.get('status') == 'learning_completed_evaluation_incomplete':
+                raise OSError('injected state write failure')
+            return write_json(path, value)
+        monkeypatch.setattr(p, 'write_json', maybe_fail_state)
     if telemetry_failure:
         if evaluation_fails:
             with pytest.raises(RuntimeError, match='evaluation interrupted') as failure:
                 p.worker(tmp_path, permit, envelope)
             assert any('injected telemetry' in note for note in failure.value.__notes__)
+            if state_write_fails:
+                assert any('injected state write' in note for note in failure.value.__notes__)
         else:
             with pytest.raises(OSError, match=f'injected telemetry {telemetry_failure} failure'):
                 p.worker(tmp_path, permit, envelope)
@@ -328,11 +338,14 @@ def test_worker_orchestration_with_fake_model_only(
         assert f'injected telemetry {telemetry_failure} failure' in failed_state['error']
         return
     if evaluation_fails:
-        with pytest.raises(RuntimeError, match='evaluation interrupted'):
+        with pytest.raises(RuntimeError, match='evaluation interrupted') as failure:
             p.worker(tmp_path, permit, envelope)
+        if state_write_fails:
+            assert any('injected state write' in note for note in failure.value.__notes__)
         assert saved[-1] == 'trained-final'
         assert json.loads((output/'learning-summary.json').read_text())['status'] == 'learning_completed'
-        assert json.loads((output/'state.json').read_text())['status'] == 'learning_completed_evaluation_incomplete'
+        if not state_write_fails:
+            assert json.loads((output/'state.json').read_text())['status'] == 'learning_completed_evaluation_incomplete'
         return
     assert p.worker(tmp_path, permit, envelope) == 0
     comparison = json.loads((output/'comparison.json').read_text())

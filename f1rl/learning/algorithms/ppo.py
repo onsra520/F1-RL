@@ -9,6 +9,7 @@ from pathlib import Path
 from hashlib import sha256
 from typing import Any
 import time
+import sys
 
 import numpy as np
 import yaml
@@ -416,6 +417,8 @@ class PPOModel:
             if telemetry_observer is not None:
                 if not isinstance(env, VecEnv):
                     raise ValueError("training telemetry requires a vector environment")
+                if total_timesteps % (int(self._model.n_steps) * env.num_envs):
+                    raise ValueError("telemetry training timesteps must align with the PPO rollout")
                 telemetry_observer.on_training_start(
                     self, total_timesteps=total_timesteps, n_envs=env.num_envs
                 )
@@ -430,13 +433,29 @@ class PPOModel:
                 optimizer_hook = self._model.policy.optimizer.register_step_post_hook(optimizer_step)
             self._model.learn(**kwargs)
         finally:
+            primary_error = sys.exception()
+            cleanup_errors = []
             try:
                 if optimizer_hook is not None:
-                    optimizer_hook.remove()
+                    try:
+                        optimizer_hook.remove()
+                    except BaseException as error:
+                        cleanup_errors.append(error)
                 if observer_started:
-                    env.env_method("set_training_telemetry_enabled", False)
+                    try:
+                        env.env_method("set_training_telemetry_enabled", False)
+                    except BaseException as error:
+                        cleanup_errors.append(error)
             finally:
                 _ACTIVE_TELEMETRY_OBSERVER.reset(observer_token)
+            if cleanup_errors:
+                if primary_error is not None:
+                    for error in cleanup_errors:
+                        primary_error.add_note(f"training cleanup also failed: {type(error).__name__}: {error}")
+                else:
+                    for error in cleanup_errors[1:]:
+                        cleanup_errors[0].add_note(f"training cleanup also failed: {type(error).__name__}: {error}")
+                    raise cleanup_errors[0]
         return self
 
     @staticmethod
