@@ -11,3 +11,7 @@ The source specification is [F1-RL-architecture.archify.json](F1-RL-architecture
 The map covers PPO training, vector environments, Gymnasium, simulation and sandbox physics, track assets, reward/observation processing, and evaluation. FastAPI and React/Three.js are *planned adapters* documented by the project, not implemented services in this snapshot.
 
 The diagram is a standalone HTML artifact. Archify source references in the JSON point to paths in this repository.
+
+## Current baseline and refactor status
+
+The current baseline map and dependency evidence are in [DEPENDENCY-MAP.md](DEPENDENCY-MAP.md); migration decisions and the currently blocked source-bound contract are in [MIGRATION-MAP.md](MIGRATION-MAP.md) and [FINAL-REFACTOR-AUDIT.md](FINAL-REFACTOR-AUDIT.md). This repository still uses `f1rl/`; the historical diagram above is not the current architecture.

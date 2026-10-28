@@ -1,0 +1,13 @@
+# Refactor validation
+
+Status: BLOCKED. No production package migration is committed.
+
+- Baseline `a909a251083d937bce23e229111d0c1c1a9947f3`: `python scripts/verify_consolidated_wp3_assets.py` exit 0; 12 models, 7 reports and 96 cells verified. Independent bundle verify exit 0.
+- Baseline gate: `python -m pytest -q tests/research/test_wp3_v4_technical_acceptance.py::test_technical_evidence_can_be_source_bound_without_fake_reviewer` exit 0, 1 passed. After reverting the experiment, the same test plus `tests/learning/test_freeze_readiness_reconstruction.py` passed 35/35; environment `F1RL_WP3_EVIDENCE=D:/Projects/.evidence/F1-RL/final-acceptance-28ca37b-20261028` and Python `D:/Projects/.temp/F1-RL-wp7-scientific-venv/Scripts/python.exe`.
+- Detached prototype: direct `f1rl` → `src` move without path rewrites causes `source_bound_acceptance` to raise `FileNotFoundError` for `f1rl/sandbox/spatial_contact_dynamics.py`; it must not be treated as a functioning migration.
+- Detached prototype after mechanical import/path rewrites: 70 WP3 targeted tests passed; wheel build and isolated `src` import passed; bundled A-seed0 PPO smoke returned `step_limit` at 500 steps. A broad learning/integration/track run reported 1,585 passed, 2 skipped, but it included tests whose source-directory scans still referenced missing `f1rl/sandbox` or `f1rl/runtime`; therefore this run is NOT evidence of equivalent coverage.
+- Once those test paths were corrected, a targeted run reported 59 passed and 6 failed because the WP7 software-readiness configuration referenced old source paths. Changing that software-only configuration in the detached prototype made its six readiness tests pass. Neither this prototype nor the modified configuration is committed.
+- In the active worktree the mechanical batch passed 79 focused WP3/restore/readiness tests and the PPO smoke, but altered historic source-binding paths and the retrospective audit-only allow-list. Restoring the original allow-list while retaining mechanically changed test expectations caused a failure; retaining the historical allow-list and historical test values passed 34/34. These results demonstrate that a green mechanical rewrite can silently alter a scientific guard.
+- Archify specification validated 9/9 checks with zero composition errors/warnings. Automated visual check did not complete: no Chrome was found; the available Edge executable exited before DevTools inspection. No perceptual review is claimed.
+
+No final regression, frontend regression, independent final checkout, 12-model runtime loading or final historical restore was run for a completed refactor because no such source tree was committed. Earlier consolidation results are historical reference only.
