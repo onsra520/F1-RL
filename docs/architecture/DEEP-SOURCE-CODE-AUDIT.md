@@ -1,58 +1,57 @@
 # Deep source code refactor audit
 
-**Status:** Audit in progress; refactor completion and merge readiness are not declared.
-**Audited source:** `6f75b077a9154384a240a67865688211e9cd4a29` on `refactor/architecture-modularization`.
-**Scope:** Python source, script registry and executable adapters, tests, configuration/dependency declarations, architecture and workflow documentation, plus the `web/src` frontend boundary. This audit is static and targeted; no training, HELD-OUT work, GitHub Actions, or physics/PPO behavior changes were performed.
+**Phase status:** Phase 1 and Phase 2 implementation and targeted verification complete. The whole refactor is not complete and merge readiness is not declared.
+**Baseline:** `e82efd8cdc6465af83d40d1eb552b1d82e22d840` on `refactor/architecture-modularization`.
+**Scope:** WP3 campaign/evaluation source, adjacent tests and entrypoints, dependencies/configuration, architecture docs, and the frontend boundary. No training, HELD-OUT, Actions, Physics, PPO algorithm behavior, or frozen evidence changes.
 
 ## Pipeline trace
 
 | Stage | Current implementation and entrypoint | Audit result |
 | --- | --- | --- |
-| Simulation | `src.core.simulation.Simulation`, `src.simulation`; library API | Clear domain entry; `src/core` adapts the detailed `src/simulation` model. |
-| Gymnasium | `src.rl.gym_environment.F1RLEnv`, built by `src.training.env_factory` | Real Gymnasium adapter. It depends on the simulation/domain packages as expected. |
-| PPO training | Generic `src.training.TrainingRunner`; the registered WP3 campaign routes through `scripts.training.local_simulation` → `src.interfaces.local_demo_cli` → `src.interfaces.runner.run_local_demo` | Two execution paths exist. The campaign path remains active because it enforces its own admission, telemetry, integrity and campaign artifact contracts. `LOCAL_DEMO` naming is historical and obscures its current campaign role. |
-| Evaluation | `src.evaluation.evaluator.evaluate_episode`; registered WP3 work is orchestrated in `src.interfaces.evaluation` and exposed through `evaluation coordinate` | WP3 delegates episode measurement to the shared evaluator; its campaign-level roster, resumability, reports and evidence are specialized. |
-| Inference | `scripts.inference.run_policy` → `src.interfaces.inference_cli` → `src.exploratory.pilot.evaluate_episode` | The stable inference route still uses the exploratory/demo evaluator and only selects `straight-sprint-v1`. This is a real legacy boundary to resolve, although the command remains callable. |
+| Simulation | `src.core.simulation.Simulation`, `src.simulation`; library API | Domain implementation with a small core adapter boundary. |
+| Gymnasium | `src.rl.gym_environment.F1RLEnv`, built by `src.training.env_factory` | Expected dependency from Gymnasium adapter into simulation/domain packages. |
+| PPO training | Generic `src.training.TrainingRunner`; registered WP3 worker uses `scripts.training.local_simulation` → `src.interfaces.local_demo_cli` → `src.interfaces.runner.run_local_demo` | Two live paths. The campaign path has its own admission, telemetry and integrity contracts and must remain. |
+| Evaluation | `src.evaluation.evaluator.evaluate_episode`; WP3 orchestration in `src.interfaces.evaluation` via `evaluation coordinate` | WP3 uses the shared episode evaluator and owns roster, resume, report and evidence handling. |
+| Inference | `scripts.inference.run_policy` → `src.interfaces.inference_cli` → `src.exploratory.pilot.evaluate_episode` | Callable but still backed by exploratory demo code and limited to Straight. |
 
-The frontend is explicitly a visual editor/replay sandbox. Its README disclaims authoritative physics/evaluation and a Python bridge; this is an intentional boundary, not a broken connection in the production pipeline.
+The frontend remains a visual editor/replay sandbox. Its documented lack of authoritative physics/evaluation and a Python bridge is an intentional boundary.
 
-## Findings
+## Phase 1 — compatibility foundation
 
-Priority is based on architecture and maintenance risk. No Critical or High runtime failure was confirmed in this audit.
+Regression coverage now pins the frozen campaign config and schedule, the exact evaluation roster hashes, six report byte hashes, strict JSON behavior, exclusive/atomic/immutable writes, completed and incomplete campaign resume, interrupted evaluation recovery, telemetry cleanup, admission guards, and inference output/exit codes. No training was needed to exercise these paths.
+
+## Phase 2 — campaign and evaluation split
+
+The former cross-import is removed. `evaluation.py` no longer imports Campaign helpers. Shared file primitives live in `_artifacts.py`; campaign contract, per-run validation and campaign report/evidence writing live in separate modules; evaluation roster, event records and reports also have separate modules. `campaign.py` is 424 lines and `evaluation.py` is 482 lines. The existing lazy Campaign → Evaluation call remains one-way and loads PPO evaluation only after training; no cycle remains.
+
+Golden hashes and regression tests passed after extraction. Public campaign/evaluation entrypoints, report schemas, resume decisions, atomic writes and error handling remain covered. The existing `_source_identity` algorithm and scientific source-binding lists were not edited. New campaign manifests continue to bind the committed tree as before.
+
+## Remaining findings
+
+No Critical or High finding was confirmed.
 
 ### Medium
 
-1. **Campaign and evaluation modules are oversized and import private helpers across a mutual application boundary.** `src/interfaces/campaign.py` (about 1,237 lines) owns contract preparation, preflight, child process execution, campaign state/locking, validation, artifacts and reporting. `src/interfaces/evaluation.py` (about 781 lines) owns roster creation, resumability, episode orchestration, statistics and SVG reports; it imports private serialization and file helpers from `campaign`, while `campaign` defers imports of evaluation during campaign execution. This makes edits coordinate across large modules and relies on a deferred cross-import. **Impact:** high change coupling and harder isolated tests; no import failure was observed. **Refactor:** extract stable artifact/serialization primitives to an internal package, then split campaign lifecycle, run validation and report generation behind existing public functions. Remove private cross-module imports only after compatibility tests pin manifests, hashes, resume behavior and reports.
+1. **Generic and WP3 training duplicate parts of the PPO lifecycle.** `src/training/runner.py` handles generic training; `src/interfaces/runner.py` (about 803 lines) owns campaign admission, telemetry, integrity, cleanup and checkpoint handling. They are not interchangeable because the WP3 runner enforces a registered simulation profile and campaign evidence contracts. **Impact:** shared lifecycle fixes may drift. **Refactor:** later define the smallest common execution primitive with explicit admission/telemetry policy, and migrate behind the existing campaign tests without changing schemas or gates.
 
-2. **WP3 and generic training have overlapping PPO lifecycle implementations with distinct authorization contracts.** `src/training/runner.py` serves generic training, while `src/interfaces/runner.py` (about 803 lines) implements the campaign worker's PPO lifecycle, telemetry, integrity evidence, cleanup and checkpoint handling. `src/interfaces/campaign.py` launches that worker through `scripts.training.local_simulation`. They are not safely interchangeable: the campaign runner checks a registered LOCAL_DEMO research profile and owns additional evidence contracts. **Impact:** fixes to resource handling, save/load or callback lifecycle can drift between paths; deleting the campaign runner would break the real WP3 pipeline. **Refactor:** first document a shared low-level PPO execution lifecycle with injected admission/telemetry policy; preserve current gates and artifact schemas, and migrate one path only with equivalent regression and evidence-contract coverage.
+2. **WP7 protocol construction and runtime capture share a high-fanout module.** `src/validation/wp7_protocol.py` imports track, physics, simulation, Gymnasium factory, PPO provenance and reward/navigation contracts while handling registration, protocol digests, scenario factories and runtime manifests. `src/validation/wp7_admission.py` composes protocol, feasibility, source checks and owner review. **Impact:** protocol edits can affect many runtime layers. **Refactor:** separate pure registration/digest validation from scenario factories and runtime capture, pinning canonical bytes, hashes, profile names and admission decisions first.
 
-3. **The WP7 protocol module combines protocol identity with runtime construction and manifest capture.** `src/validation/wp7_protocol.py` imports track, physics, simulation, Gymnasium factory, PPO provenance and reward/navigation contracts, while defining registration loading, protocol construction/validation, scenario factories and runtime-manifest validation. `src/validation/wp7_admission.py` then composes protocol, track feasibility, source checks and owner review. **Impact:** a high-fanout validation hub couples schema/provenance checks to construction of many runtime domain objects, increasing the blast radius of protocol edits. **Refactor:** split pure registration/schema/digest validation from scenario factories and runtime capture, retaining the exact canonical serialization, digest inputs, profile names and admission decisions. Add hash/manifest compatibility fixtures before moving code.
-
-4. **The public inference adapter is still backed by exploratory demo code.** `src/interfaces/inference_cli.py` constructs a local session and monkey-patches `env.step` for progress output, then calls `src.exploratory.pilot.evaluate_episode`; it uses a synthetic permit-shaped object and fixes the route to Straight. The shared evaluator already exists at `src/evaluation/evaluator.py`, but has a stricter metrics contract and is not a drop-in replacement without review. **Impact:** the stable `inference run-policy` route depends on an exploratory implementation and its legacy row schema; future inference support is difficult to generalize. **Refactor:** create a supported policy rollout API that accepts an explicit read-only env factory and returns a stable inference result, then adapt the CLI while retaining existing output compatibility or versioning it. Add tests for no-training, deterministic seed selection, invalid model/output and progress reporting before removing exploratory code.
+3. **Inference still uses an exploratory evaluator.** `src/interfaces/inference_cli.py` builds a local session, patches `env.step` for progress output and calls `src.exploratory.pilot.evaluate_episode`; only Straight is selected. `src.evaluation.evaluator.evaluate_episode` has a different result contract. **Impact:** the stable command depends on demo behavior and has a legacy result row. **Refactor:** define a read-only policy rollout API and compatibility output tests before changing the CLI or evaluator.
 
 ### Low
 
-1. **Names retain retired-demo terminology on active pipeline components.** `src/interfaces/local_demo_cli.py`, `src/interfaces/runner.py`, campaign docstrings, telemetry schemas and related tests still say `LOCAL_DEMO`/`local_demo`; the registered campaign worker calls these components today. **Impact:** contributors may mistake required campaign code for removable demo residue. **Refactor:** rename only in a separately planned compatibility migration. Treat telemetry/schema identifiers, frozen provenance and source-hash allow-lists as immutable unless a reviewed migration explicitly covers them; update user-facing module descriptions first.
+4. **Active campaign code keeps retired demo names.** `src/interfaces/local_demo_cli.py`, `src/interfaces/runner.py`, telemetry identifiers and tests retain `LOCAL_DEMO`/`local_demo`, though WP3 calls them in production. **Impact:** contributors may delete active campaign code as demo residue. **Refactor:** rename in a separate compatibility migration; retain frozen identifiers and provenance allow-lists.
 
-2. **The package-level import graph has intentional deferred edges that obscure layering.** Static top-level import scanning found no confirmed runtime import-time cycle; the `src.rl.episode.progress` ↔ `route` relationship is mediated by type-only/lazy imports. Other cross-layer edges include `src.rl.algorithms.ppo` consulting validation/interface/exploratory admission helpers dynamically. **Impact:** boundaries are less clear and local import scans can miss behavior-affecting dependencies; no startup cycle was reproduced. **Refactor:** move authorization decisions to a policy object passed into the PPO adapter or a neutral admission boundary, preserving defaults and all current rejection paths. Add import-boundary checks only after defining allowed package directions.
+5. **Deferred admission imports still obscure some RL layering.** `src.rl.algorithms.ppo` dynamically consults validation, interface and exploratory admission helpers. The `src.interfaces` Campaign ↔ Evaluation cycle is gone; this remaining edge is separate. **Impact:** import scans can miss policy dependencies. **Refactor:** move authorization to a neutral policy boundary only with explicit tests for every current allow/deny path.
 
-## Inventory conclusions
+No dead production module or removable dependency has enough evidence for deletion. The static import pass found no remaining Campaign ↔ Evaluation cycle. Dynamic imports outside that pair still need import tests.
 
-- No confirmed dead production module or removable dependency was identified. Dynamic imports, CLI catalog entries, subprocess module names and pinned source inventories make name-only deletion unsafe.
-- No Critical/High finding or reproducible runtime import cycle was found in this static pass. This is not proof of absence; dynamic imports need runtime/import tests.
-- Existing workflow registry documentation correctly retains `training local-simulation` as an internal campaign worker and describes the supported public pipeline. The historical migration map now describes the current `src.interfaces` role; original `f1rl` names remain provenance.
-- Frozen receipts, evidence, Physics, PPO algorithm behavior and scientific contracts were not edited.
+## Delivery and verification status
 
-## Recommended refactor order
+- Before source edits, targeted baseline: **141 passed**. The external WP3 evidence suite initially lacked its configured path; the files were found at `D:/Projects/.evidence/F1-RL/WP3-EVIDENCE/wp3-eval-issue51-v1`.
+- After extraction: targeted regression **151 passed**. With the evidence path set, external admission/history checks passed **84 tests**. The three clean-source binding tests were rerun after commit and passed (**3 passed, 8 deselected**).
+- `compileall -q src scripts` passed. Frozen asset verification passed (**12 models, 7 reports, 96 cell logs**). Ruff `F` checks passed. Full Ruff reports 25 style findings across the touched modules; the two original modules had 32 before refactoring. Error classes, timestamp formatting and loop semantics were left as-is.
+- The full pytest run before commit reported **2,984 passed, 83 failed, 3 skipped**. Those failures were traced to the missing `F1RL_WP3_EVIDENCE` path and clean-committed-source checks on the intentionally modified worktree. The affected evidence-dependent groups passed when rerun with the path set; the three clean-source checks passed after commit. A single full-suite rerun on the clean committed tree was not performed, so the report does not claim a one-shot full-suite pass.
+- No immutable evidence, Physics, PPO behavior, scientific admission contract, schema, or source-hash algorithm was edited. No scientific training, HELD-OUT, or GitHub Actions ran.
 
-1. Add/confirm compatibility tests for WP3 campaign manifests, resume behavior, telemetry cleanup, admission decisions, evaluation reports and inference output; preserve immutable-source checks.
-2. Extract campaign/evaluation shared file primitives and split those large application modules without changing serialized output.
-3. Define a shared PPO execution lifecycle with separate generic and registered-campaign admission/telemetry policies; converge duplicated runner mechanics gradually.
-4. Replace exploratory-backed inference with a supported read-only policy rollout API and explicit output contract.
-5. Separate WP7 pure protocol validation from runtime factories/capture, then clarify legacy `LOCAL_DEMO` naming only where it does not alter frozen identifiers.
-
-Each stage needs a narrow implementation plan and must be independently regression-tested. This report identifies work; it does not authorize or claim those architecture changes are complete.
-
-## Verification and limits
-
-The audit used source/config/docs inspection and static import/reference scans. No source behavior was changed. Verification passed: targeted pipeline/legacy regression (**20 passed**), registry/documentation regression (**3 passed**), import and workflow registry assertions, help dispatch for campaign/local-simulation/evaluation/inference, `compileall -q src scripts`, YAML parsing (**11 files**), frozen assets (**12 models, 7 reports, 96 cell logs**), and `git diff --check`. Full pytest and frontend checks were not repeated because this update changes documentation only. Scientific training/HELD-OUT, Actions and independent visual frontend review were not run; training/HELD-OUT and Actions are explicitly out of scope.
+This report tracks Phase 1–2 only. Phases 3–5 remain future work; do not treat this report as a refactor completion or merge-readiness claim.
