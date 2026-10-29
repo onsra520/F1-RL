@@ -53,16 +53,14 @@ The earlier report above records the state of the initial extraction. This follo
 
 CLI aliases, argument forwarding, admission checks, frozen assets, and historical evidence remain intact. Three scientific contract filenames retain their required `v1` identifier. Archived research, plans, and generated architecture snapshots keep their original command text as provenance.
 
-Validation for this follow-on: Python compilation and 12 entrypoint/inventory/documentation tests PASS. In the broader script suite, 28 tests PASS and 8 could not run because Windows Application Control blocked `torch\\lib\\c10.dll` (WinError 4551). Full pytest is NOT PASS: collection stopped with 112 errors from the same Torch DLL block. A historical builder subset also requires the external run-model fixture (`F1RL_WP3_EVIDENCE`); the repository's immutable receipts-only fixture does not contain those model ZIPs. Frozen asset verification PASS (12 models, 7 reports, 96 cell logs); historical record verification PASS (2 records); frontend tests PASS (12/12) and build PASS. The active GitHub workflow reference to the removed `scripts/wp7_review_owner_acceptance.py` path remains a blocker because this task prohibits editing GitHub Actions.
+Validation at the follow-on commit: Python compilation and 12 entrypoint/inventory/documentation tests PASS. Earlier, Windows Application Control blocked `torch\\lib\\c10.dll`; on 2026-10-29 the worktree `.venv` imported `torch 2.15.0+cpu`, so the full suite ran. The initial full run reported 80 failed, 2,983 passed, 3 skipped; the failures were concentrated in historical WP3 tests that expect the absent external `F1RL_WP3_EVIDENCE` tree. With a temporary fixture reconstructed from the committed roster, provenance receipts, and frozen model ZIPs, the focused historical subset reached 95 passed, 1 failed: one admission test requires original `training-telemetry.jsonl` bytes matching the retained SHA-256, and those telemetry files are absent from repository evidence. No telemetry was fabricated. Frozen asset verification PASS (12 models, 7 reports, 96 cell logs); historical record verification PASS (2 records). PPO frozen-checkpoint inference smoke PASS (one 500-step TRAIN episode; timed out at the configured step limit without collision). Frontend checks from the prior follow-on remain 12/12 tests and build PASS. The active GitHub workflow reference to removed `scripts/wp7_review_owner_acceptance.py` remains unresolved because this task prohibits editing GitHub Actions.
 
-## Grouped primary command modules (initial extraction)
+## Grouped primary command modules
 
-The 14 extracted active commands are now placed in versionless
-`scripts/{diagnostics,evaluation,evidence,inference,training}/` packages and
-the `scripts.workflows` dispatcher invokes these paths directly. Root-level
-legacy filenames remain as compatibility shims, forwarding the original helper
-interface and exhibiting the same CLI help/exit behavior.
-
-`SCRIPT-STATUS.json` contains the primary and historical path separately.
-Protected historical research and worker entries retain their exact old paths;
-this is a deliberate compatibility boundary, not a falsely completed migration.
+The 48 active commands are placed in versionless
+`scripts/{diagnostics,evaluation,evidence,inference,internal,training}/`
+packages and the `scripts.workflows` dispatcher invokes these paths directly.
+There are zero root-level Python compatibility files under `scripts/` (apart
+from `__init__.py`). `SCRIPT-STATUS.json` keeps former paths as historical
+provenance; archived research records and the protected GitHub workflow retain
+references that cannot be rewritten under the current scope.
