@@ -6,10 +6,14 @@ Baseline: `b11a501`. Reviewed the source text of all **48 original Python entryp
 
 - **0** active `from f1rl...` or `import f1rl...` statements in the 48 legacy scripts. They already use active `src.*` imports where project modules are required.
 - Most scripts inject the repository root into `sys.path` to support invocation by absolute path. This is compatibility bootstrap, not clean reusable-package architecture. The **new** workflow router is a stdlib-only module and does not need this bootstrap.
-- One source-level cross-script import is present: `scripts/run_inference.py` imports `ensure_runtime` from `launch_exploratory_demo`. It is the strongest immediate obstacle to physically moving these files without carefully updating Python import resolution.
+- The original cross-script import from `scripts/run_inference.py` to `launch_exploratory_demo` has been replaced by a shared, versionless `src.interfaces.runtime_selection` adapter. The launcher retains its `_runtime_ready` / `_interpreter_candidates` compatibility hooks; both entrypoints use the same runtime-selection implementation.
 - `scripts/build_demo_handoff.py` bundles named script paths as handoff inputs. Moving them would change packaged artifacts and their references.
 - Several WP3/WP7 files contain explicit Windows defaults (`D:/...`), archived filenames or versioned scientific protocol strings. These must be classified as historical defaults/protocol identifiers before any portable CLI rewrite.
 - Existing scripted workers, scientific receipt builders, source-diff allow-lists and external user commands may refer to original `scripts/wp*` paths. A text-only import scan cannot prove that no external caller exists.
+
+## Runtime selection separation
+
+`src/interfaces/runtime_selection.py` only discovers an interpreter and optionally delegates the caller's original command. It does **not** issue training permits, create experiments, or open scientific gates. The launcher continues to require explicit local `TRAIN` consent, and the inference script uses its existing episode/seed validation. Dedicated tests cover interpreter fallback, argument and cwd preservation, missing-runtime failure and historical monkeypatch contracts.
 
 ## Current decision
 

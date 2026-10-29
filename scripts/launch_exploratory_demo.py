@@ -35,40 +35,28 @@ def state_summary(path):
             data.get("optimizer_steps"))
 
 
+from src.interfaces.runtime_selection import (
+    ensure_runtime as _select_runtime,
+    interpreter_candidates as _registered_interpreters,
+    runtime_ready as _registered_runtime_ready,
+)
+
+
 def _runtime_ready(executable):
-    try:
-        check = subprocess.run(
-            [str(executable), "-B", "-c",
-             "import torch, gymnasium, stable_baselines3, yaml, cryptography"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15, check=False)
-        return check.returncode == 0
-    except (OSError, subprocess.TimeoutExpired):
-        return False
+    return _registered_runtime_ready(executable)
 
 
 def _interpreter_candidates():
-    # Inspect only this F1-RL checkout and sibling worktrees, never arbitrary executables.
-    if os.name != "nt":
-        return []
-    directories = [
-        ROOT / ".venv" / "Scripts" / "python.exe",
-        ROOT.parent / ".venv" / "Scripts" / "python.exe",
-    ]
-    siblings = [ROOT.parent, ROOT.parent / ".worktrees" / "F1-RL"]
-    for base in siblings:
-        if base.is_dir():
-            directories.extend(sorted(base.glob("*/.venv/Scripts/python.exe")))
-    return directories
+    return _registered_interpreters(ROOT)
 
 
 def ensure_runtime(command=None):
-    if _runtime_ready(sys.executable):
-        return None
-    for interpreter in _interpreter_candidates():
-        if str(interpreter).lower() != sys.executable.lower() and _runtime_ready(interpreter):
-            print("[ENV] Using installed F1-RL Python:", interpreter, flush=True)
-            return subprocess.call([str(interpreter), "-B", *(command or [str(Path(__file__).resolve())])], cwd=ROOT)
-    raise ImportError("No Python interpreter with F1-RL RL/science dependencies was found")
+    return _select_runtime(
+        ROOT, Path(__file__).resolve(), command,
+        runtime_check=_runtime_ready,
+        candidate_provider=_interpreter_candidates,
+        subprocess_call=subprocess.call,
+    )
 
 
 def main():

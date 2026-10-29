@@ -22,8 +22,11 @@ def main(argv=None):
         parser.error('episodes must be between 1 and 32')
     if not 0 <= args.seed_start <= 2**32-args.episodes:
         parser.error('seed roster must fit uint32')
-    from launch_exploratory_demo import ensure_runtime
-    alternate_result = ensure_runtime([str(Path(__file__).resolve()), *sys.argv[1:]])
+    from src.interfaces.runtime_selection import ensure_runtime
+    alternate_result = ensure_runtime(
+        ROOT, Path(__file__).resolve(),
+        [str(Path(__file__).resolve()), *sys.argv[1:]],
+    )
     if alternate_result is not None:
         return alternate_result
     import torch

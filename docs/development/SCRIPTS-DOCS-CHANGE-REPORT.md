@@ -28,7 +28,7 @@ New current development, operations, research and historical-design indexes avoi
 
 ## Script import inventory
 
-Static read of all 48 historical entrypoints found **no active \`f1rl\` Python import**. Legacy per-script \`sys.path\` bootstrap, Windows historic defaults, a sibling-script import in \`run_inference.py\` and handoff script path bundling are preserved for compatibility; see [SCRIPT-IMPORT-AUDIT.md](SCRIPT-IMPORT-AUDIT.md).
+Static read of all 48 historical entrypoints found **no active `f1rl` Python import**. Legacy per-script `sys.path` bootstrap, Windows historical defaults and handoff path bundling remain for compatibility. The sibling-script import in `run_inference.py` was removed through the shared `src.interfaces.runtime_selection` adapter; see [SCRIPT-IMPORT-AUDIT.md](SCRIPT-IMPORT-AUDIT.md).
 
 ## Validations and limitations
 
@@ -58,3 +58,11 @@ The historical restore/check and symlink tests require the same external inputs/
 - `scripts/verify_consolidated_wp3_assets.py` is now a compatibility wrapper around `src/validation/frozen_asset_integrity.py`. The engine takes an explicit project root, verifies original model/report/cell bytes without mutating evidence, and returns counts for display.
 - `scripts/restore_wp3_historical_evidence.py` no longer imports `verify_consolidated_wp3_assets` as a sibling executable; it calls the same `src.validation.frozen_asset_integrity.verify_frozen_assets` API. Archive pinning and scientific fail-closed preflight remain unchanged.
 - Focused regression tests were added for actual frozen evidence, both legacy and versionless CLI, benchmark help, invalid arguments, and missing manifests. **No full 3,011-test execution is claimed from GitHub.**
+
+## Runtime selector modularisation (third batch)
+
+- The local-demo launcher and inference script now share `src/interfaces/runtime_selection.py`; no script needs to import another executable for Python environment detection.
+- The launcher preserves the original `ensure_runtime`, `_runtime_ready`, and `_interpreter_candidates` extension points, so the existing `tests/research/test_demo_launcher.py` remains meaningful.
+- The selector uses the original interpreter candidates, dependency checks, original command and cwd; it does not start training unless the entrypoint would have done so after its pre-existing admission process.
+- `tests/scripts/test_runtime_selection.py` covers fallback and argument preservation, fail-closed missing-runtime selection, launcher monkeypatch compatibility and inference's invalid-argument path.
+- The user reported `15 passed in 8.67s` for `e496d44` and frozen assets verification PASS. **New tests in this commit are NOT RUN**, pending independent testing on the new HEAD. The older PASS does not certify this change.
