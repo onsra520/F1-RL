@@ -37,18 +37,6 @@ def digest(document):
     return sha256(json.dumps(document, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 def build_protocol(repository_root,*,profile='pv5_v1'):
     root = Path(repository_root).resolve(strict=True)
     registration = load_registration(root,profile=profile)
