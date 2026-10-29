@@ -30,7 +30,7 @@ class Factory:
 def test_inference_adapter_is_read_only_seeded_and_keeps_output_contract(
     tmp_path, monkeypatch, capsys, valid_samples, expected_exit
 ):
-    from src.exploratory import pilot
+    from src.evaluation import rollout
     from src.interfaces import runtime_selection
     from src.rl.algorithms import ppo
     from src.validation import wp7_protocol
@@ -53,15 +53,12 @@ def test_inference_adapter_is_read_only_seeded_and_keeps_output_contract(
 
     observed = []
 
-    def evaluate_episode(session, model, name, episode):
-        assert name == "trained_final"
-        env = session.create_env(learning=False, episode=episode)
-        observed.append(env.seed)
-        with pytest.raises(ValueError, match="inference only"):
-            session.create_env(learning=True, episode=episode)
+    def evaluate_policy_episode(env, model, *, policy_name, episode, environment_seed, on_step):
+        assert policy_name == "trained_final"
+        observed.append((env.seed, environment_seed))
         return {"episode": episode, "valid_sample": valid_samples[episode]}
 
-    monkeypatch.setattr(pilot, "evaluate_episode", evaluate_episode)
+    monkeypatch.setattr(rollout, "evaluate_policy_episode", evaluate_policy_episode)
     thread_limits = []
     output = tmp_path / "inference.json"
     result = inference_cli.main(
@@ -75,7 +72,7 @@ def test_inference_adapter_is_read_only_seeded_and_keeps_output_contract(
     assert len(runtime_calls) == 1
     assert loaded[0][1] == {"device": "cpu"}
     assert thread_limits == [1]
-    assert observed == list(range(34, 34 + len(valid_samples)))
+    assert observed == [(seed, seed) for seed in range(34, 34 + len(valid_samples))]
     document = json.loads(output.read_text(encoding="utf-8"))
     assert document == {
         "training_started": False,

@@ -31,37 +31,32 @@ def main(repository_root, argv=None, *, torch_factory):
     torch_factory().set_num_threads(1)
     from src.rl.algorithms.ppo import PPOModel
     from src.validation.wp7_protocol import load_registration, prepare_scenarios
-    from src.exploratory.pilot import evaluate_episode
+    from src.evaluation.rollout import evaluate_policy_episode
 
     registration = load_registration(ROOT, profile='spatial_rotating_owner_v3')
     scenarios = prepare_scenarios(ROOT, registration, seed_index=0)
     factory = next(row.factory for row in scenarios.scenarios if row.track_id == 'straight-sprint-v1')
     model = PPOModel.load(args.model, device='cpu')
 
-    class InferenceSession:
-        permit = {'seeds': {'evaluation': list(range(args.seed_start, args.seed_start+args.episodes))}}
+    def report_step(episode, step, transition):
+        if step % 10 == 0 or transition[2] or transition[3]:
+            info = transition[4]
+            print(json.dumps({'episode': episode, 'step': step,
+                'progress_m': info.get('route_highwater_meters'),
+                'elapsed_time': info.get('elapsed_time')}), flush=True)
 
-        def create_env(self, *, learning, episode):
-            if learning:
-                raise ValueError('demonstration is inference only')
-            env = replace(factory, reset_config=replace(factory.reset_config, seed=args.seed_start+episode)).create()
-            original_step = env.step
-            steps = 0
-
-            def step(action):
-                nonlocal steps
-                result = original_step(action)
-                steps += 1
-                if steps % 10 == 0 or result[2] or result[3]:
-                    print(json.dumps({'episode': episode, 'step': steps,
-                        'progress_m': result[4].get('route_highwater_meters'),
-                        'elapsed_time': result[4].get('elapsed_time')}), flush=True)
-                return result
-
-            env.step = step
-            return env
-
-    rows = [evaluate_episode(InferenceSession(), model, 'trained_final', i) for i in range(args.episodes)]
+    rows = []
+    for episode in range(args.episodes):
+        seed = args.seed_start + episode
+        env = replace(factory, reset_config=replace(factory.reset_config, seed=seed)).create()
+        rows.append(evaluate_policy_episode(
+            env,
+            model,
+            policy_name='trained_final',
+            episode=episode,
+            environment_seed=seed,
+            on_step=lambda step, transition, episode=episode: report_step(episode, step, transition),
+        ))
     document = {'training_started': False, 'track': 'straight-sprint-v1', 'episodes': rows}
     content = json.dumps(document, indent=2, allow_nan=False)+'\n'
     print(content, flush=True)

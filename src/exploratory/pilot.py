@@ -9,6 +9,7 @@ import sys
 import time
 
 from src.training.telemetry import TrainingTelemetryRecorder
+from src.evaluation.rollout import evaluate_policy_episode
 from .permit import Budget, PilotStopped, Session, authorize, read_json, _utc
 
 
@@ -88,44 +89,15 @@ def supervise(root, permit, envelope):
 
 
 def evaluate_episode(session, model, name, episode):
-    import numpy as np
     env = session.create_env(learning=False, episode=episode)
     seed = session.permit['seeds']['evaluation'][episode]
-    rng = np.random.default_rng(seed)
-    trace = sha256()
-    total, collisions, off_route, steps = 0., 0, 0, 0
-    completed_checkpoint_ids, directed_crossings = [], []
-    info, error = {}, None
-    try:
-        observation, _ = env.reset(seed=seed)
-        while True:
-            action = (rng.uniform(env.action_space.low, env.action_space.high).astype(np.float32)
-                      if name == 'random' else model.predict(observation, deterministic=True))
-            observation, reward, terminated, truncated, info = env.step(action)
-            steps += 1
-            total += float(reward)
-            race = info.get('race') or {}
-            completed_checkpoint_ids.extend(race.get('completed_checkpoint_ids', ()))
-            directed_crossings.extend(race.get('directed_crossings', ()))
-            collisions += len(info['telemetry']['obstacle_hit_ids'])
-            off_route += int(info.get('race', {}).get('terminal_failure') is True)
-            trace.update(json.dumps(dict(action=action.tolist(), observation=observation.tolist(),
-                reward=float(reward), terminated=terminated, truncated=truncated, info=info),
-                sort_keys=True, allow_nan=False).encode())
-            if terminated or truncated:
-                break
-    except Exception as exc:
-        error = f'{type(exc).__name__}: {exc}'
-    finally:
-        env.close()
-    outcome = (getattr(env, 'last_research_outcome', None) if error else info.get('research_outcome')) or {}
-    valid = error is None and outcome.get('valid_sample') is True
-    return dict(policy=name, episode=episode, environment_seed=seed, valid_sample=valid,
-        success=valid and outcome.get('kind') == 'successful_finish',
-        progress=min(1., info.get('route_highwater_meters', 0.)/env._authored_route.total_meters),
-        completed_checkpoint_ids=completed_checkpoint_ids, directed_crossings=directed_crossings,
-        collisions=collisions, off_route_events=off_route, duration_s=info.get('elapsed_time', 0.),
-        steps=steps, **{'return':total}, outcome=outcome, error=error, trace_sha256=trace.hexdigest())
+    return evaluate_policy_episode(
+        env,
+        model,
+        policy_name=name,
+        episode=episode,
+        environment_seed=seed,
+    )
 
 
 def evaluate_roster(session, model, name, output):
