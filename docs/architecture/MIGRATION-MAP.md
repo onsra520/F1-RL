@@ -51,3 +51,7 @@ See [Deep Source Refactor Final Audit](FINAL-DEEP-SOURCE-REFACTOR-AUDIT.md) for 
 src.training.TrainingRunner and src.interfaces.runner remain separate orchestration owners because generic registered runs and WP3 campaign runs have different artifact, admission, telemetry and failure-state contracts. The identical chunked SHA-256 file helper is shared through src/interfaces/_artifacts.py; runner orchestration is not combined.
 
 src.evaluation.rollout.evaluate_policy_episode is the seeded read-only rollout row API. The inference CLI and exploratory pilot use it; the CLI sends progress through an observer and does not patch env.step. The pilot adapter preserves its existing policy row format and invalid-sample handling.
+
+## Final engineering acceptance
+
+Phases 1–5 are complete for engineering acceptance on validation HEAD `ceea42375d2fa967f989c8b9af281c8e8424f355`. The focused Ruff `F` check across the 11 refactor-touched Python files and all other required regression, frontend, compile, dependency/import, CLI and frozen-evidence gates pass. The repository has no broader Ruff policy or CI invocation; the supplemental isolated all-rule scan reports 1,292 findings versus 1,287 at the `a4aff02` baseline and remains lint debt. WP7 scientific acceptance and HELD-OUT authorization are separate and remain blocked. See [the final audit](FINAL-DEEP-SOURCE-REFACTOR-AUDIT.md) for evidence and merge-readiness detail.
