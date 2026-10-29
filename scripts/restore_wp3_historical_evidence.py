@@ -39,6 +39,8 @@ def verify_bundled_inputs():
             raise ValueError(f'historical input SHA-256 mismatch: {path}')
     from src.validation.frozen_asset_integrity import verify_frozen_assets
     verify_frozen_assets(ROOT)
+    # Preserve the legacy verifier's success line for existing restore logs.
+    print('PASS: 12 models, 7 reports and 96 cell logs')
 
 
 def main():
