@@ -1,7 +1,7 @@
 {
   "schema": "script_migration_status_v1",
   "base": "b11a501b029680f79762388ef6b179eda97141a7",
-  "implementation_commit": "4327d8419b7d7525e98328671892c07c8081998e",
+  "implementation_commit": null,
   "non_deletion_rule": "all 48 legacy executable paths retained; source-bound scientific IDs unchanged",
   "definitions": {
     "implementation-extracted": "Legacy executable is a compatibility wrapper importing domain implementation from src/",
@@ -9,9 +9,9 @@
     "compatibility-unmodified": "Original historical/development entrypoint has not been refactored at source level; its stable alias exists but does not imply implementation migration"
   },
   "counts": {
-    "implementation-extracted": 8,
-    "shared-dependency-migrated": 3,
-    "compatibility-unmodified": 37
+    "implementation-extracted": 14,
+    "shared-dependency-migrated": 2,
+    "compatibility-unmodified": 32
   },
   "workflows": [
     {
@@ -20,15 +20,19 @@
       "legacy_path": "scripts/benchmark_vector_envs.py",
       "scope": "read-only",
       "refactor_state": "implementation-extracted",
-      "module_owner": "src/training/vector_benchmark.py"
+      "module_owner": "src/training/vector_benchmark.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "inference",
       "alias": "package-handoff",
       "legacy_path": "scripts/build_demo_handoff.py",
       "scope": "read-only",
-      "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/interfaces/demo_handoff.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "evaluation",
@@ -36,7 +40,9 @@
       "legacy_path": "scripts/compare_driving.py",
       "scope": "development-execution",
       "refactor_state": "implementation-extracted",
-      "module_owner": "src/evaluation/driving_comparison.py"
+      "module_owner": "src/evaluation/driving_comparison.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "diagnostics",
@@ -44,7 +50,9 @@
       "legacy_path": "scripts/diagnose_driving.py",
       "scope": "development-execution",
       "refactor_state": "implementation-extracted",
-      "module_owner": "src/evaluation/driving_diagnostics.py"
+      "module_owner": "src/evaluation/driving_diagnostics.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "evidence",
@@ -52,7 +60,9 @@
       "legacy_path": "scripts/engineering_attestation.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "training",
@@ -60,7 +70,9 @@
       "legacy_path": "scripts/exploratory_ppo.py",
       "scope": "training-explicit",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "training",
@@ -68,15 +80,19 @@
       "legacy_path": "scripts/launch_exploratory_demo.py",
       "scope": "training-explicit",
       "refactor_state": "shared-dependency-migrated",
-      "module_owner": "src/interfaces/runtime_selection.py"
+      "module_owner": "src/interfaces/runtime_selection.py",
+      "review_disposition": "shared-dependency",
+      "rationale": "Admission/restore logic deliberately remains on original source-bound CLI; common utility moved"
     },
     {
       "group": "training",
       "alias": "local-simulation",
       "legacy_path": "scripts/local_demo.py",
       "scope": "training-explicit",
-      "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/interfaces/local_demo_cli.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "evidence",
@@ -84,15 +100,19 @@
       "legacy_path": "scripts/restore_wp3_historical_evidence.py",
       "scope": "read-only",
       "refactor_state": "shared-dependency-migrated",
-      "module_owner": "src/validation/frozen_asset_integrity.py"
+      "module_owner": "src/validation/frozen_asset_integrity.py",
+      "review_disposition": "shared-dependency",
+      "rationale": "Admission/restore logic deliberately remains on original source-bound CLI; common utility moved"
     },
     {
       "group": "inference",
       "alias": "run-policy",
       "legacy_path": "scripts/run_inference.py",
       "scope": "development-execution",
-      "refactor_state": "shared-dependency-migrated",
-      "module_owner": "src/interfaces/runtime_selection.py"
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/interfaces/inference_cli.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "inference",
@@ -100,7 +120,9 @@
       "legacy_path": "scripts/smoke_consolidated_wp3_model.py",
       "scope": "development-execution",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evidence",
@@ -108,7 +130,9 @@
       "legacy_path": "scripts/verify_consolidated_wp3_assets.py",
       "scope": "read-only",
       "refactor_state": "implementation-extracted",
-      "module_owner": "src/validation/frozen_asset_integrity.py"
+      "module_owner": "src/validation/frozen_asset_integrity.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "evidence",
@@ -116,7 +140,9 @@
       "legacy_path": "scripts/verify_historical_source_records.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "diagnostics",
@@ -124,7 +150,9 @@
       "legacy_path": "scripts/wp3_applied_crash_gym_smoke.py",
       "scope": "development-execution",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "diagnostics",
@@ -132,7 +160,9 @@
       "legacy_path": "scripts/wp3_applied_crash_live_smoke.py",
       "scope": "development-execution",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "training",
@@ -140,7 +170,9 @@
       "legacy_path": "scripts/wp3_campaign.py",
       "scope": "training-explicit",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "evaluation",
@@ -148,7 +180,9 @@
       "legacy_path": "scripts/wp3_current_eval_gate.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "evaluation",
@@ -156,7 +190,9 @@
       "legacy_path": "scripts/wp3_eval_only_coordinator.py",
       "scope": "restricted-execution",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evaluation",
@@ -164,7 +200,9 @@
       "legacy_path": "scripts/wp3_eval_only_preflight.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "evaluation",
@@ -172,7 +210,9 @@
       "legacy_path": "scripts/wp3_owner_train_dev_eval.py",
       "scope": "restricted-execution",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evaluation",
@@ -180,7 +220,9 @@
       "legacy_path": "scripts/wp3_physics_replay_preflight.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evidence",
@@ -188,7 +230,9 @@
       "legacy_path": "scripts/wp3_register_crash_terminal_v1.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "evidence",
@@ -196,7 +240,9 @@
       "legacy_path": "scripts/wp3_v4_technical_acceptance.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "evaluation",
@@ -204,7 +250,9 @@
       "legacy_path": "scripts/wp3_v4_three_replay_dev_crash_contract.py",
       "scope": "development-execution",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evaluation",
@@ -212,7 +260,9 @@
       "legacy_path": "scripts/wp3_v4_three_replay_impulse_audit.py",
       "scope": "development-execution",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evaluation",
@@ -220,7 +270,9 @@
       "legacy_path": "scripts/wp3_v4_three_replay_registered_crash_v1_corrected.py",
       "scope": "development-execution",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evaluation",
@@ -228,7 +280,9 @@
       "legacy_path": "scripts/wp3_v4_three_replay_technical_acceptance.py",
       "scope": "development-execution",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evidence",
@@ -236,7 +290,9 @@
       "legacy_path": "scripts/wp3_v4_verify_technical_acceptance.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "evidence",
@@ -244,23 +300,29 @@
       "legacy_path": "scripts/wp3_verify_crash_terminal_v1.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "evidence",
       "alias": "audit-swept-volume",
       "legacy_path": "scripts/wp7_audit_3d_swept_volume.py",
       "scope": "read-only",
-      "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/validation/swept_volume_audit_cli.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "evidence",
       "alias": "audit-road-corridor",
       "legacy_path": "scripts/wp7_audit_right_turn_corridor.py",
       "scope": "read-only",
-      "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/validation/road_corridor_audit_cli.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "evidence",
@@ -268,15 +330,19 @@
       "legacy_path": "scripts/wp7_audit_train_feasibility.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evidence",
       "alias": "audit-trajectories",
       "legacy_path": "scripts/wp7_audit_train_trajectories.py",
       "scope": "read-only",
-      "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/validation/trajectory_audit_cli.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "diagnostics",
@@ -284,7 +350,9 @@
       "legacy_path": "scripts/wp7_capture_gpu.py",
       "scope": "read-only",
       "refactor_state": "implementation-extracted",
-      "module_owner": "src/interfaces/hardware_probe.py"
+      "module_owner": "src/interfaces/hardware_probe.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "diagnostics",
@@ -292,7 +360,9 @@
       "legacy_path": "scripts/wp7_certify_planar_execution.py",
       "scope": "development-execution",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "diagnostics",
@@ -300,7 +370,9 @@
       "legacy_path": "scripts/wp7_core_readiness.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "evidence",
@@ -308,7 +380,9 @@
       "legacy_path": "scripts/wp7_evidence_manifest.py",
       "scope": "read-only",
       "refactor_state": "implementation-extracted",
-      "module_owner": "src/validation/evidence_manifest_workflow.py"
+      "module_owner": "src/validation/evidence_manifest_workflow.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "evaluation",
@@ -316,7 +390,9 @@
       "legacy_path": "scripts/wp7_freeze_readiness.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evidence",
@@ -324,7 +400,9 @@
       "legacy_path": "scripts/wp7_historical_source_audit.py",
       "scope": "read-only",
       "refactor_state": "implementation-extracted",
-      "module_owner": "src/validation/historical_source_audit_workflow.py"
+      "module_owner": "src/validation/historical_source_audit_workflow.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     },
     {
       "group": "training",
@@ -332,7 +410,9 @@
       "legacy_path": "scripts/wp7_pilot_preflight.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "internal",
@@ -340,7 +420,9 @@
       "legacy_path": "scripts/wp7_ppo_fixture_worker.py",
       "scope": "internal-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evaluation",
@@ -348,7 +430,9 @@
       "legacy_path": "scripts/wp7_review_owner_acceptance.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "training",
@@ -356,7 +440,9 @@
       "legacy_path": "scripts/wp7_run_exploratory.py",
       "scope": "training-explicit",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evaluation",
@@ -364,7 +450,9 @@
       "legacy_path": "scripts/wp7_screen_train_action_sensitivity.py",
       "scope": "restricted-execution",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "training",
@@ -372,7 +460,9 @@
       "legacy_path": "scripts/wp7_train_acceptance.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "training",
@@ -380,7 +470,9 @@
       "legacy_path": "scripts/wp7_training_admission.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "guarded-historical-executable",
+      "rationale": "Source-bound scientific workflow, trusted-pipe worker, or explicit permit/diagnostic script; retain compatibility and research identity"
     },
     {
       "group": "evidence",
@@ -388,7 +480,9 @@
       "legacy_path": "scripts/wp7_verify_pilot_evidence.py",
       "scope": "read-only",
       "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "module_owner": null,
+      "review_disposition": "existing-delegator",
+      "rationale": "Already delegates to src; moving the public path would add risk but no structural value"
     },
     {
       "group": "evidence",
@@ -396,8 +490,17 @@
       "legacy_path": "scripts/wp7_verify_run_evidence.py",
       "scope": "read-only",
       "refactor_state": "implementation-extracted",
-      "module_owner": "src/validation/run_evidence_workflow.py"
+      "module_owner": "src/validation/run_evidence_workflow.py",
+      "review_disposition": "extracted-implementation",
+      "rationale": "Original entrypoint delegates to a versionless src module; old path retained"
     }
   ],
-  "initial_implementation_commit": "3ff89ea46bc6d2eaecd7b35dcd6ba14e48fd2abb"
+  "initial_implementation_commit": "3ff89ea46bc6d2eaecd7b35dcd6ba14e48fd2abb",
+  "review_disposition_counts": {
+    "extracted-implementation": 14,
+    "existing-delegator": 15,
+    "shared-dependency": 2,
+    "guarded-historical-executable": 17
+  },
+  "status_semantics": "Source coverage is not equivalent to scientific admission or a physical rename; see versionless workflow aliases."
 }

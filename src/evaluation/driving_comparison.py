@@ -29,14 +29,13 @@ def improved(old, candidate):
         and candidate['worst_progress'] >= old['worst_progress'])
 
 
-def main():
+def main(*, torch_factory):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--old', required=True, type=Path)
     parser.add_argument('--candidate', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
     args = parser.parse_args()
-    import torch
-    torch.set_num_threads(1)
+    torch_factory().set_num_threads(1)
     from src.rl.algorithms.ppo import PPOModel
     from src.validation.wp7_protocol import load_registration, prepare_scenarios
     from src.exploratory.pilot import evaluate_episode

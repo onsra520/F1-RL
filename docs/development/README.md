@@ -28,3 +28,5 @@ npm run build
 ```
 
 The UI currently does not drive the authoritative Python Physics/PPO runtime. It is not appropriate to claim backend integration from a successful frontend build.
+
+Further reading: [current state](CURRENT-STATE.md), [entrypoint ownership](ENTRYPOINT-ARCHITECTURE.md), and [reference audit](REFERENCE-AUDIT.md).

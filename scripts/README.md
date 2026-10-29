@@ -17,7 +17,7 @@ The registry classifies commands into `diagnostics`, `evidence`, `evaluation`, `
 
 ## Current refactor coverage
 
-At the current change branch, 8 of 48 active CLI implementations are extracted into domain modules under `src/`, 3 more now consume shared modules, and 37 original command implementations are still present. Every historical script path remains valid. The [machine-readable status](../docs/development/SCRIPT-STATUS.json) is authoritative for this count.
+At the current change branch, 14 of 48 active CLI implementations are extracted into domain modules under `src/`, 2 more now consume shared modules, and 32 original command implementations are still present. Every historical script path remains valid. The [machine-readable status](../docs/development/SCRIPT-STATUS.json) is authoritative for this count.
 
 ## Implementation boundaries
 
@@ -28,3 +28,5 @@ At the current change branch, 8 of 48 active CLI implementations are extracted i
 - Do not switch historical receipt or provenance paths to new names mechanically. The old receipt belongs to old source identity.
 
 For allowed scripts and command examples use [development workflows](../docs/development/WORKFLOWS.md). There is currently no `scripts/train.py`, `scripts/evaluate.py` or `scripts/serve.py` implied by this documentation.
+
+See ../docs/development/ENTRYPOINT-ARCHITECTURE.md for reasons historic paths remain and why existing delegated entrypoints are not double-counted.

@@ -58,12 +58,11 @@ def trace_episode(factory, model, seed, controller, output):
         'trace_sha256': trace.hexdigest()}
 
 
-def benchmark(factory, model, threads, output):
+def benchmark(factory, model, threads, output, *, torch_runtime):
     import numpy as np
-    import torch
     rows = []
     for count in threads:
-        torch.set_num_threads(count)
+        torch_runtime.set_num_threads(count)
         env = replace(factory, reset_config=replace(factory.reset_config, seed=10000)).create()
         started = time.perf_counter()
         observation, _ = env.reset(seed=10000)
@@ -101,13 +100,13 @@ def benchmark(factory, model, threads, output):
     return rows
 
 
-def main():
+def main(*, torch_factory):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--model', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--threads', type=int, nargs='+')
     args = parser.parse_args()
-    import torch
+    torch = torch_factory()
     from src.exploratory.config import resolve
     from src.rl.algorithms.ppo import PPOModel
     from src.validation.wp7_protocol import load_registration, prepare_scenarios
@@ -125,7 +124,7 @@ def main():
             row = trace_episode(factory,model,seed,controller,args.output/f'{name}-{seed}.jsonl')
             rows.append(row)
             print(json.dumps(row),flush=True)
-    profiling = benchmark(factory, model, args.threads or [settings['limits']['threads']], args.output)
+    profiling = benchmark(factory, model, args.threads or [settings['limits']['threads']], args.output, torch_runtime=torch)
     summary = {'track':'straight-sprint-v1','diagnostic_seeds':[10000,10001],
         'reserved_evaluation_seeds':list(range(11000,11006)),
         'episodes':rows,'profiling':profiling,'PPO_training_executed':False}

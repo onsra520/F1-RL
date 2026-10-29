@@ -81,8 +81,7 @@ def test_cuda_probe_has_stable_keys_and_legacy_wrapper(monkeypatch):
             @staticmethod
             def is_available():
                 return False
-    monkeypatch.setattr(hardware_probe, "torch", MockTorch)
-    assert hardware_probe.capture_hardware() == {
+    assert hardware_probe.capture_hardware(MockTorch) == {
         "cuda_runtime": None, "cuda_available": False, "gpu_devices": [],
     }
     path = ROOT / "scripts" / "wp7_capture_gpu.py"

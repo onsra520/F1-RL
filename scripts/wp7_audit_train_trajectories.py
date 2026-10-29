@@ -3,54 +3,17 @@
 Use --run for calibration and confirmation. Writes a NEW audit file outside
 source worktree and does not access HELD-OUT tracks.
 """
-from __future__ import annotations
-import argparse
-from hashlib import sha256
-import json
 from pathlib import Path
+import sys
 
-import sys as _entry_sys
-from pathlib import Path as _EntryPath
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-_entry_root = str(_EntryPath(__file__).resolve().parents[1])
-if _entry_root not in _entry_sys.path:
-    _entry_sys.path.insert(0, _entry_root)
-
-from src.rl.trajectory_audit import audit_trajectory_run
-
+from src.validation.trajectory_audit_cli import audit_trajectory_run, main as _main
 
 def main()->int:
-    root=Path(__file__).resolve().parents[1]
-    parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run",action="append",type=Path,required=True)
-    parser.add_argument("--output",type=Path,required=True)
-    args=parser.parse_args()
-    audits=[audit_trajectory_run(repository_root=root,run_directory=path) for path in args.run]
-    output=args.output.resolve()
-    if output.is_relative_to(root):
-        parser.error("audit output must remain outside source Git worktree")
-    if output.exists():
-        parser.error("refuse overwrite of an existing independent audit report")
-    output.parent.mkdir(parents=True,exist_ok=True)
-    body={"schema_version":"wp7-recovery-dual-seed-trajectory-audit-v1",
-          "scientific_evidence":False,"heldout_rollouts":0,"audits":audits}
-    payload=(json.dumps(body,indent=2,sort_keys=True,allow_nan=False)+"\n").encode("utf-8")
-    with output.open("xb") as stream:
-        stream.write(payload)
-    print(json.dumps({
-        "output":str(output),"sha256":sha256(payload).hexdigest(),
-        "scientific_evidence":False,"heldout_rollouts":0,
-        "run_summaries":[{
-            "run_id":row["run_id"],
-            "successes":sum(int(track["success"]) for track in row["results"]),
-            "track_count":len(row["results"]),
-            "min_xz_gap_m":min((x["min_continuous_xz_point_to_obstacle_m"]
-                for x in row["results"] if x["min_continuous_xz_point_to_obstacle_m"] is not None),default=None),
-            "max_route_deviation_m":max(x["max_horizontal_route_deviation_m"] for x in row["results"]),
-        } for row in audits],
-    },indent=2),flush=True)
-    return 0
+    return _main(ROOT)
 
-
-if __name__=="__main__":
+if __name__ == '__main__':
     raise SystemExit(main())

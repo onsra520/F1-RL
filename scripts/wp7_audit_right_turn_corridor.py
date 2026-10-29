@@ -1,59 +1,15 @@
 """Replay only the archived Right Turn TRAIN final PPO models for road-union audit."""
-from __future__ import annotations
-
-import argparse
-from hashlib import sha256
-import json
 from pathlib import Path
+import sys
 
-import sys as _entry_sys
-from pathlib import Path as _EntryPath
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-_entry_root = str(_EntryPath(__file__).resolve().parents[1])
-if _entry_root not in _entry_sys.path:
-    _entry_sys.path.insert(0, _entry_root)
-
-from src.rl.corridor_audit import audit_right_turn_corridor
-
+from src.validation.road_corridor_audit_cli import audit_right_turn_corridor, main as _main
 
 def main()->int:
-    root=Path(__file__).resolve().parents[1]
-    parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run",type=Path,action="append",required=True)
-    parser.add_argument("--output",type=Path,required=True)
-    args=parser.parse_args()
-    output=args.output.resolve()
-    if output.is_relative_to(root):
-        parser.error("report must be written outside Git worktree")
-    resolved=[x.resolve(strict=True) for x in args.run]
-    if len(resolved)!=2 or len(set(resolved))!=2:
-        parser.error("exactly two distinct calibration and confirmation runs are required")
-    if output.exists():
-        parser.error("read-only audit refuses overwrite")
-    rows=[audit_right_turn_corridor(repository_root=root,run_directory=path) for path in resolved]
-    report={
-        "schema_version":"wp7-recovery-dual-seed-right-turn-road-union-audit-v1",
-        "scientific_evidence":False,
-        "heldout_rollouts":0,
-        "audits":rows,
-    }
-    raw=(json.dumps(report,indent=2,sort_keys=True,allow_nan=False)+"\n").encode("utf-8")
-    output.parent.mkdir(parents=True,exist_ok=True)
-    with output.open("xb") as stream:
-        stream.write(raw)
-    print(json.dumps({
-        "output":str(output),"sha256":sha256(raw).hexdigest(),
-        "status":"diagnostic_requires_approval","heldout_rollouts":0,
-        "runs":[{
-            "run_id":x["run_id"],
-            "centerline_uncovered_road_path_xz_m":x["centerline_uncovered_road_path_xz_m"],
-            "max_sampled_route_deviation_m":x["max_sampled_route_deviation_m"],
-            "upper_bound_route_deviation_between_samples_m":x["upper_bound_route_deviation_between_samples_m"],
-            "success":x["success"],
-        } for x in rows],
-    },indent=2),flush=True)
-    return 0
+    return _main(ROOT)
 
-
-if __name__=="__main__":
+if __name__ == '__main__':
     raise SystemExit(main())
