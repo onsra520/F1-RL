@@ -15,6 +15,8 @@ See [Workflows](WORKFLOWS.md) for safety and invocation, [script migration map](
 
 For developer-only comparisons, profiling and hardware probing, see [Development tools](DEVELOPMENT-TOOLS.md). The [script status inventory](SCRIPT-STATUS.json) distinguishes fully extracted implementations from aliases that still point at legacy code.
 
+For frozen/model-evidence and historical source checks, see [Evidence verification](../operations/EVIDENCE-VERIFICATION.md).
+
 Frontend is built in `web/`:
 
 ```powershell

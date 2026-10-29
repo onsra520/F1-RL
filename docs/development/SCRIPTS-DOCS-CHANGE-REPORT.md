@@ -79,4 +79,12 @@ The historical restore/check and symlink tests require the same external inputs/
 
 The [machine-readable script status](SCRIPT-STATUS.json) tracks all **48** original CLI paths: **5** have their substantive implementation extracted into `src/` and are now thin wrappers, **3** retain implementation but use a shared `src/` dependency, and **40** remain legacy compatibility commands with unchanged implementation. The 48 stable aliases and all historical paths are preserved. This prevents calling the alias-only stage a complete refactor.
 
-The owner independently reported `22 passed in 4.71s` and immutable frozen-assets verification at `1724ee5`. **The new development-tool and status inventory tests at later commits remain NOT RUN.**
+The owner independently reported `22 passed in 4.71s` and immutable frozen-assets verification at `1724ee5`. **The owner later reported `31 passed in 12.54s` at `47ac14d`, plus frozen-assets PASS and a clean worktree.**
+
+## Evidence tooling modularisation (fifth batch)
+
+- Historical executable names `wp7_evidence_manifest.py`, `wp7_verify_run_evidence.py` and `wp7_historical_source_audit.py` remain as thin compatibility entrypoints; their CLI logic now lives in `src/validation/{evidence_manifest_workflow,run_evidence_workflow,historical_source_audit_workflow}.py`.
+- Original manifest formats, exact SHA-256 comparisons, no-overwrite behavior, duplicate-key checks, external-output restrictions and fail-closed scientific flags are unchanged.
+- New tests cover synthetic evidence roundtrip, tampering/duplicate JSON rejection, review/trust pair validation, historical no-science flags, protected output and old-vs-versionless `--help` behavior.
+- [Evidence verification guide](../operations/EVIDENCE-VERIFICATION.md) and [historic demo index](../research/DEMO-HISTORY.md) now provide current safe navigation without rewriting dated reports.
+- This batch has **not run local Python tests** yet. The previously reported `31/31 PASS` applies only to `47ac14d`.

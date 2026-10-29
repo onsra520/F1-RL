@@ -21,9 +21,9 @@ def test_migration_status_inventory_covers_every_original_workflow():
         if record["module_owner"]:
             assert (ROOT / record["module_owner"]).is_file()
     assert status["counts"] == {
-        "implementation-extracted": 5,
+        "implementation-extracted": 8,
         "shared-dependency-migrated": 3,
-        "compatibility-unmodified": 40,
+        "compatibility-unmodified": 37,
     }
     assert not any(entry["refactor_state"] == "implementation-extracted" and not entry["module_owner"]
                    for entry in status["workflows"])

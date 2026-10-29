@@ -7,68 +7,17 @@ Never rewrites a training archive, opens HELD-OUT, runs PPO or asserts
 Scientific Acceptance. An exact Git commit source match cannot recover
 unknown training-time Python packages or GPU settings.
 """
-from __future__ import annotations
-
-import argparse
-from dataclasses import asdict
-from hashlib import sha256
-import json
 from pathlib import Path
+import sys
 
-import sys as _entry_sys
-from pathlib import Path as _EntryPath
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-_entry_root = str(_EntryPath(__file__).resolve().parents[1])
-if _entry_root not in _entry_sys.path:
-    _entry_sys.path.insert(0, _entry_root)
-
-from src.validation.wp7_historical_provenance import audit_historical_manifest_file
-
+from src.validation.historical_source_audit_workflow import audit_historical_manifest_file, main as _main
 
 def main() -> int:
-    root = Path(__file__).resolve().parents[1]
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--archive-run", type=Path, action="append", required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args()
-    target = args.output.resolve()
-    if target.is_relative_to(root):
-        parser.error("audit output must be outside the source worktree")
-    if target.exists():
-        parser.error("refuse to overwrite existing audit report")
-    reports = []
-    for run in args.archive_run:
-        manifest = run.resolve(strict=True) / "evaluations" / "manifest.json"
-        result = audit_historical_manifest_file(root, manifest)
-        reports.append({"run_id": run.name, **asdict(result)})
-    payload = {
-        "schema": "wp7-historical-source-audit-v1",
-        "scientific_acceptance_permitted": False,
-        "training_permitted": False,
-        "heldout_permitted": False,
-        "archive_runs": reports,
-    }
-    document = (json.dumps(payload, sort_keys=True, indent=2) + "\n").encode("utf-8")
-    target.parent.mkdir(parents=True, exist_ok=True)
-    with target.open("xb") as handle:
-        handle.write(document)
-    print(json.dumps({
-        "output": str(target),
-        "sha256": sha256(document).hexdigest(),
-        "archived_sources_verified": all(a["archived_source_verified"] for a in reports),
-        "run_status": [
-            {
-                "run_id": r["run_id"],
-                "source_commit": r["archived_git_commit"],
-                "historical_source_verified": r["archived_source_verified"],
-                "worktree_drift": r["current_worktree_drifts"],
-                "failures": r["failures"],
-                "training_runtime_provenance_verified": False,
-            } for r in reports
-        ],
-        "scientific_acceptance_permitted": False,
-    }, indent=2))
-    return 0 if all(a["archived_source_verified"] for a in reports) else 2
+    return _main(ROOT)
 
 
 if __name__ == "__main__":

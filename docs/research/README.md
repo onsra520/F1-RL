@@ -4,6 +4,8 @@ This directory contains historical experiments, scientific safety/authorization 
 
 At source baseline `b11a501`, there were 260 Git-tracked items under `docs/research/`, including 153 under `evidence/`. Their original paths and Git blob identities are recorded in [the snapshot inventory](../BASELINE-DOCUMENT-INVENTORY.json).
 
+For the dated initial demonstration and early PPO improvement, see [demo history](DEMO-HISTORY.md). Its source identities are distinct from the later frozen research suite.
+
 Read these first:
 
 - [Final consolidation audit](FINAL-CONSOLIDATION-AUDIT.md) — frozen assets, archive hashes, historical restoration.

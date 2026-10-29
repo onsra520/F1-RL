@@ -11,6 +11,8 @@
 
 ## Documentation and provenance
 
+For hash manifests, run-record review and scientific fail-closed behavior, use [Evidence verification](EVIDENCE-VERIFICATION.md).
+
 See [independent historical recovery](HISTORICAL-RECOVERY.md), [engineering validation](../architecture/REFACTOR-VALIDATION.md) and [historical/current attestation boundary](../architecture/HISTORICAL-PROVENANCE.md).
 
 For CLI operations use [script workflows](../development/WORKFLOWS.md), not proposed or obsolete `train.py`/`serve.py` commands.

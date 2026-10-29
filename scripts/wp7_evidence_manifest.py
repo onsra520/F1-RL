@@ -7,55 +7,14 @@ Examples (PowerShell):
   python scripts/wp7_evidence_manifest.py create --source "D:\\archive\\run" --manifest "D:\\archive\\run-manifest.json"
   python scripts/wp7_evidence_manifest.py verify --source "D:\\restore\\run" --manifest "D:\\archive\\run-manifest.json"
 """
-from __future__ import annotations
-
-import argparse
-import json
 from pathlib import Path
+import sys
 
-import sys as _entry_sys
-from pathlib import Path as _EntryPath
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-_entry_root = str(_EntryPath(__file__).resolve().parents[1])
-if _entry_root not in _entry_sys.path:
-    _entry_sys.path.insert(0, _entry_root)
+from src.validation.evidence_manifest_workflow import _unique_pairs, main
 
-from src.rl.evidence_backup import (
-    build_evidence_manifest, serialize_manifest, verify_evidence_manifest,
-)
-
-
-def _unique_pairs(pairs):
-    doc={}
-    for key,value in pairs:
-        if key in doc:
-            raise ValueError(f"duplicate evidence JSON key: {key}")
-        doc[key]=value
-    return doc
-
-
-def main() -> int:
-    parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("operation",choices=("create","verify"))
-    parser.add_argument("--source",type=Path,required=True)
-    parser.add_argument("--manifest",type=Path,required=True)
-    args=parser.parse_args()
-    source=args.source.resolve()
-    manifest=args.manifest.resolve()
-    if args.operation=="create":
-        if manifest.is_relative_to(source):
-            raise ValueError("manifest output must be outside the scanned evidence tree")
-        document=build_evidence_manifest(source)
-        # Do not overwrite a previously registered immutable evidence record.
-        with manifest.open("x",encoding="utf-8") as handle:
-            handle.write(serialize_manifest(document))
-        print(f"MANIFEST CREATED: {len(document['entries'])} files")
-    else:
-        document=json.loads(manifest.read_text(encoding="utf-8"),object_pairs_hook=_unique_pairs)
-        count=verify_evidence_manifest(source,document)
-        print(f"RESTORE VERIFIED: {count} files, SHA256 exact")
-    return 0
-
-
-if __name__=="__main__":
+if __name__ == "__main__":
     raise SystemExit(main())

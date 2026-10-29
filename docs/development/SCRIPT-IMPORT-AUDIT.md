@@ -28,3 +28,7 @@ Do not mass-change `sys.path`, `Path(__file__)`, fixed historical run IDs or ver
 5. Validate the complete Python suite, frontend, installed wheel, 12 checkpoints and historical preflight before merging.
 
 This audit is static, not a claim that a test suite has passed.
+
+## Evidence command extraction
+
+The historical evidence CLI wrappers still live at their original `scripts/wp7_*.py` paths. Reusable CLI parser/verification sequencing for `evidence-manifest`, `verify-run` and `historical-source-audit` now live in `src/validation/`, while low-level immutable SHA-256/manifests remain in the existing `src.rl.evidence_backup` and `src.validation.wp7_*` functions. Existing protocol names, source identifiers, trust requirements and fail-closed output behavior remain unchanged. These are active implementation refactors, **not revisions of the archived experiments**.

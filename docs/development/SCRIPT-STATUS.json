@@ -2,16 +2,16 @@
   "schema": "script_migration_status_v1",
   "base": "b11a501b029680f79762388ef6b179eda97141a7",
   "implementation_commit": "3ff89ea46bc6d2eaecd7b35dcd6ba14e48fd2abb",
-  "non_deletion_rule": "all 48 legacy executable paths retained",
+  "non_deletion_rule": "all 48 legacy executable paths retained; source-bound scientific IDs unchanged",
   "definitions": {
     "implementation-extracted": "Legacy executable is a compatibility wrapper importing domain implementation from src/",
     "shared-dependency-migrated": "Legacy command retains its main logic, but uses a shared versionless dependency instead of a sibling script import",
     "compatibility-unmodified": "Original historical/development entrypoint has not been refactored at source level; its stable alias exists but does not imply implementation migration"
   },
   "counts": {
-    "implementation-extracted": 5,
-    "compatibility-unmodified": 40,
-    "shared-dependency-migrated": 3
+    "implementation-extracted": 8,
+    "shared-dependency-migrated": 3,
+    "compatibility-unmodified": 37
   },
   "workflows": [
     {
@@ -307,8 +307,8 @@
       "alias": "evidence-manifest",
       "legacy_path": "scripts/wp7_evidence_manifest.py",
       "scope": "read-only",
-      "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/validation/evidence_manifest_workflow.py"
     },
     {
       "group": "evaluation",
@@ -323,8 +323,8 @@
       "alias": "historical-source-audit",
       "legacy_path": "scripts/wp7_historical_source_audit.py",
       "scope": "read-only",
-      "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/validation/historical_source_audit_workflow.py"
     },
     {
       "group": "training",
@@ -395,8 +395,9 @@
       "alias": "verify-run",
       "legacy_path": "scripts/wp7_verify_run_evidence.py",
       "scope": "read-only",
-      "refactor_state": "compatibility-unmodified",
-      "module_owner": null
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/validation/run_evidence_workflow.py"
     }
-  ]
+  ],
+  "additional_note": "Latest evidence workflow extraction commit is recorded in Git log; initial implementation_commit refers to 3ff89ea baseline."
 }

@@ -6,6 +6,8 @@ This is the **current navigation layer**. The repository also contains historica
 | --- | --- | --- |
 | Current setup and CLI | [Development](development/README.md) | Supported project layout and versionless workflow commands |
 | Current operational status | [Operations](operations/README.md) | Working components, non-implemented UI bridge, historical restore |
+| Evidence verification | [Evidence commands](operations/EVIDENCE-VERIFICATION.md) | SHA-256, historical provenance and no scientific admission |
+| Early demo history | [Dated demo records](research/DEMO-HISTORY.md) | The original demonstration and PPO improvement narrative |
 | Python architecture | [Architecture](architecture/README.md) | Domain map, decisions, migration and validated limitations |
 | Frozen research and provenance | [Research](research/README.md) | Scientific gates, immutable evidence, historical IDs |
 | Historic proposals/specifications | [Design history](superpowers/README.md) | Snapshots, not up-to-date implementation instructions |
