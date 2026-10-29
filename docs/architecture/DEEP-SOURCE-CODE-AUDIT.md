@@ -1,6 +1,6 @@
 # Deep source code refactor audit
 
-**Phase status:** Phases 1–2 remain complete from the prior audit. Phase 3 is complete with only a byte-identical file-hash primitive shared; generic and WP3 lifecycle owners remain separate. Phase 4 read-only rollout extraction and CLI migration are complete. Phase 5 registration/scenario and runtime boundaries are split behind the compatibility facade. Final full-suite/static acceptance is pending; do not declare whole-repository refactor completion yet.
+**Phase status:** Phases 1–5 engineering refactor and final regression are accepted on source commit 92e7e22. The generic/WP3 runner split, remaining WP7 scenario breadth, retired campaign identifiers and deferred PPO admission imports remain documented technical debt. No claim of scientific acceptance, HELD-OUT permission or completion of unrelated repository debt is made.
 **Prior audit baseline:** e82efd8cdc6465af83d40d1eb552b1d82e22d840. Phase 3–5 implementation began from clean commit a4aff02aef39cb8cfaf9a69f50c7544e1079c500 on refactor/architecture-modularization.
 **Scope:** WP3 campaign/evaluation source, adjacent tests and entrypoints, dependencies/configuration, architecture docs, and the frontend boundary. No training, HELD-OUT, Actions, Physics, PPO algorithm behavior, or frozen evidence changes.
 
@@ -70,13 +70,17 @@ No dead production module or removable dependency has enough evidence for deleti
 - `compileall`, Ruff `F`, frozen asset verification (**12 models, 7 reports, 96 cell logs**) and `git diff --check` passed after the extraction. No source file in Physics/PPO algorithms, config contract, model checkpoint or evidence inventory was changed.
 - No immutable evidence, Physics, PPO behavior, scientific admission contract, schema, or source-hash algorithm was edited. No scientific training, HELD-OUT, or GitHub Actions ran.
 
-## Phase 3–5 continuation and acceptance
+## Phase 3–5 continuation and final acceptance
 
-- Phase commits: 878a53e (shared exact artifact hashing primitive), a821a23 (read-only rollout API and inference CLI), and ff2be5d (WP7 registration/scenario split). No physics, PPO algorithm, admission guard, checkpoint, frozen evidence or historical record was edited.
-- Phase 3 targeted runner/checkpoint/admission/cleanup tests: 45 passed. Phase 4 inference/pilot/pipeline tests: 45 passed.
-- Phase 5 WP7 profile, registration, admission, source binding and TRAIN scenario-integration tests: 114 passed before a whitespace-only cleanup of wp7_protocol.py; rerun focused source-bound tests after that cleanup and record the clean full suite below.
-- The prior Phase 5 full-suite baseline remains 3,074 passed, 3 skipped on clean a4aff02 with the external WP3 evidence path set. It is historical baseline only, not verification of these Phase 3–5 commits.
-- Current commits change the generated WP7 source digest because WP7 hashes current src/, scripts/ and tests/ bytes. This is expected prospective provenance; no frozen or historical digest was edited. Future source-bound captures/evaluation seeds must use the new committed protocol identity.
-- Final full pytest, front-end checks, Ruff, YAML validation, compileall, frozen-asset verification, pipeline CLI checks and git diff --check are pending. Do not treat this report as final acceptance until they pass.
+- Phase commits: 878a53e (shared exact artifact hashing primitive), a821a23 (read-only rollout API and inference CLI), ff2be5d (WP7 registration/scenario split), 3f10490 (WP7 facade whitespace cleanup), and 92e7e22 (explicit public facade re-exports). Documentation update is committed separately.
+- Phase 3 runner/checkpoint/admission/cleanup tests: 45 passed. Phase 4 inference/pilot/pipeline tests: 45 passed. Phase 5 WP7 protocol/profile/admission/scenario integration matrix: 114 passed. Clean source-binding tests passed 101 tests with one intentionally deselected simulation-heavy admission case before the final re-export spelling; that case's three spatial policy seeds passed in isolation afterward.
+- One intermediate targeted run, concurrent with the frontend build, reported a source-protocol SHA drift for spatial seed index 2. A clean isolated rerun passed all three seeds, and the final full suite below passed the same cases on an unchanged committed tree.
+- Full pytest on clean source commit 92e7e22, with F1RL_WP3_EVIDENCE set to the provisioned original directory: 3,079 passed, 3 skipped in 1,866.46 seconds. This is the final full regression for the Phase 3–5 source commits.
+- A real frozen A-seed0 checkpoint inference smoke on TRAIN Straight with seed 41877 completed 500 steps as valid_truncation/step_limit, returned exit code 0, and produced the exact same output row and trace SHA-256 as the pre-refactor evaluator from a4aff02. This verifies API/output compatibility, not successful driving or model quality.
+- Static import graph: zero module-level cycles. Changed Python files pass Ruff F checks. The repository-wide isolated Ruff F scan reports 156 findings, all outside files changed by this work; they are existing repository lint debt. No whole-repository lint cleanup was attempted.
+- Compileall passed. YAML validation passed for 11 files; all 46 workflow registry entries resolve. uv pip check reports all 26 installed packages compatible. Frontend tests: 12 passed; typecheck and production build passed (Vite reports the existing large-chunk advisory).
+- Frozen evidence verification passed: 12 models, 7 reports and 96 cell logs. Historical record verification passed for two records and correctly reports original_source_reconstructed=false. git diff --check passed.
+- Current WP7 source digest and future derived evaluation seeds reflect the new committed src/scripts/tests bytes. This is prospective provenance; no historical manifests, immutable evidence, model checkpoints or source-hash algorithm were edited.
+- No training, HELD-OUT, GitHub Actions, Physics changes or PPO algorithm changes were made. The refactor does not grant WP7 scientific acceptance, registered evaluation authority, or HELD-OUT permission.
 
 This report distinguishes engineering refactor acceptance from scientific acceptance. Even if final engineering gates pass, WP7 scientific acceptance, registered evaluation authority and HELD-OUT permission remain blocked.
