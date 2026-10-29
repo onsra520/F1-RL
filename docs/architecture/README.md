@@ -1,5 +1,11 @@
 # Architecture documentation
 
-The current source-backed diagram is [domain-map.html](domain-map.html), with its [specification](domain-map.archify.json) and validation limitations in [DEPENDENCY-MAP.md](DEPENDENCY-MAP.md). The earlier baseline and `F1-RL-architecture.html` diagrams are historical snapshots.
+The active Python package is `src/`. The [source-backed domain map](domain-map.html), [dependency map](DEPENDENCY-MAP.md), [migration map](MIGRATION-MAP.md) and [architecture decisions](ARCHITECTURE-DECISIONS.md) describe migration progress and remaining coupling. Earlier baseline diagrams are historical snapshots.
 
-Read [ARCHITECTURE-DECISIONS.md](ARCHITECTURE-DECISIONS.md), [MIGRATION-MAP.md](MIGRATION-MAP.md), [HISTORICAL-PROVENANCE.md](HISTORICAL-PROVENANCE.md), [REFACTOR-VALIDATION.md](REFACTOR-VALIDATION.md), and [FINAL-REFACTOR-AUDIT.md](FINAL-REFACTOR-AUDIT.md) for current source, provenance boundaries, verification and scientific limitations. The browser editor and Python runtime have no bridge.
+- [Final refactor audit](FINAL-REFACTOR-AUDIT.md): engineering acceptance of package migration, not a declaration that all modularisation or script/docs cleanup is complete.
+- [Refactor validation](REFACTOR-VALIDATION.md): Python, models, wheel, frontend and historical evidence checks.
+- [Historical provenance](HISTORICAL-PROVENANCE.md): immutable source identity vs current engineering attestation.
+- [Current operations](../operations/README.md): UI bridge still not implemented, scientific admission blocked.
+- [Script migration map](../development/SCRIPT-MIGRATION-MAP.md): stable versionless command aliases and retained legacy entrypoints.
+
+Note: this navigation update does not itself re-run the original full Python suite or claim scientific acceptance.
