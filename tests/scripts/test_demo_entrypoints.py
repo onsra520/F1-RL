@@ -46,3 +46,23 @@ def test_handoff_rejects_missing_inputs_without_outputs(tmp_path):
         main(ROOT,["--run",str(tmp_path/"missing"),"--destination",str(dest)],
              torch_factory=lambda: pytest.fail("invalid input must not allocate Torch"))
     assert not dest.exists()
+
+
+def test_demo_handoff_copies_grouped_inference_runtime(tmp_path):
+    import shutil
+    from src.interfaces.demo_handoff import demo_runtime_scripts
+
+    portable = tmp_path / "demo"
+    portable.mkdir()
+    # A packaged handoff includes Python sources and their package init files.
+    shutil.copytree(ROOT / "src", portable / "src", ignore=shutil.ignore_patterns("__pycache__"))
+    members = demo_runtime_scripts(ROOT)
+    assert len(members) == 5 and all(path.is_file() for path in members)
+    for path in members:
+        dest = portable / path.relative_to(ROOT)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, dest)
+    command = [sys.executable, str(portable / "scripts/run_inference.py"), "--help"]
+    check = subprocess.run(command, cwd=portable, capture_output=True, text=True, timeout=30)
+    assert check.returncode == 0, check.stderr
+    assert "--model" in check.stdout

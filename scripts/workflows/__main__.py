@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 
-from .catalog import BY_COMMAND, WORKFLOWS
+from .catalog import BY_COMMAND, WORKFLOWS, PRIMARY_PATHS
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "scripts"
@@ -14,7 +14,9 @@ SCRIPTS = ROOT / "scripts"
 
 def manifest() -> list[dict[str, str]]:
     return [
-        {"group": item.group, "name": item.name, "script": item.script, "scope": item.scope}
+        {"group": item.group, "name": item.name, "script": item.script,
+         "primary": PRIMARY_PATHS.get((item.group, item.name), f"scripts/{item.script}"),
+         "scope": item.scope}
         for item in sorted(WORKFLOWS, key=lambda entry: (entry.group, entry.name))
     ]
 
@@ -43,8 +45,9 @@ def main(argv: list[str] | None = None) -> int:
     if item is None or item.scope == "internal-only":
         print("unknown or internal-only workflow; use 'list'", file=sys.stderr)
         return 2
-    script = (SCRIPTS / item.script).resolve()
-    if script.parent != SCRIPTS.resolve() or not script.is_file():
+    primary = PRIMARY_PATHS.get((item.group, item.name))
+    script = (ROOT / primary).resolve() if primary else (SCRIPTS / item.script).resolve()
+    if not script.is_relative_to(SCRIPTS.resolve()) or not script.is_file():
         print("workflow script unavailable; refusing to execute", file=sys.stderr)
         return 2
     # Do not interpret, coerce, or grant permissions for downstream arguments.

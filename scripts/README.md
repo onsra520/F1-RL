@@ -1,32 +1,38 @@
-# Executable workflows
+# Executable scripts — primary functional modules
 
-The 48 existing Python files in the top-level `scripts/` are compatibility entrypoints, **not** a clean, versionless public API. Their historical names and locations are intentionally preserved pending source-binding and subprocess migration review. They have not been renamed or physically moved in this stage.
+The supported primary executables are organised by responsibility:
 
-A stable, module-based CLI now lives in `scripts/workflows/`:
+~~~text
+scripts/
+  diagnostics/       benchmark, diagnostic traces, hardware probe
+  evaluation/        TRAIN-development driving comparison
+  evidence/          frozen assets, SHA-256 manifests, read-only audits
+  inference/         saved policy and demo handoff
+  training/          scoped local simulation
+  internal/          reserved for non-public workers (no public entrypoint)
+  workflows/         stable CLI registry and explicit dispatcher
+  *.py               historical compatibility paths
+~~~
 
-```powershell
+All 14 extracted implementation commands now have a **versionless primary
+entrypoint** inside those packages. Their actual application/validation logic
+lives in `src/`. The router calls the new grouped path.
+
+~~~powershell
 python -m scripts.workflows list
-python -m scripts.workflows list --json
 python -m scripts.workflows evidence verify-frozen-assets
-python -m scripts.workflows evidence verify-historical-records --history <restored-history>
-python -m scripts.workflows evidence attest-source --root . --output <new-path-outside-repo>
-python -m scripts.workflows inference smoke-frozen-policy
-```
+python -m scripts.workflows inference run-policy --help
+~~~
 
-The registry classifies commands into `diagnostics`, `evidence`, `evaluation`, `inference`, `training`, and `internal`. See the [full mapping](../docs/development/SCRIPT-MIGRATION-MAP.md) and [implementation-completion inventory](../docs/development/SCRIPT-STATUS.json). Names are versionless; historical file paths, registered schemas and recorded IDs are not.
+The **48 root-level filenames remain** for compatibility with recorded research,
+direct legacy commands, external subprocesses, handoffs and tests. Only 14 are
+newly grouped primary modules; the remaining 34 still execute their existing
+source-bound or already-delegating entrypoints. Do not claim 48/48 physically
+migrated, and do not delete historical paths solely to unclutter the root.
 
-## Current refactor coverage
+No grouped package performs training, inference or validation merely from import.
+The internal trusted-pipe PPO worker is not exposed through the public dispatcher.
 
-At the current change branch, 14 of 48 active CLI implementations are extracted into domain modules under `src/`, 2 more now consume shared modules, and 32 original command implementations are still present. Every historical script path remains valid. The [machine-readable status](../docs/development/SCRIPT-STATUS.json) is authoritative for this count.
-
-## Implementation boundaries
-
-- `scripts/workflows/catalog.py` is a declarative inventory; importing it never runs a command.
-- `scripts/workflows/__main__.py` dispatches explicitly requested commands in a new Python subprocess, with the current interpreter and unchanged argument order. It propagates the existing exit status; it does not open scientific gates or change the working directory.
-- `internal/ppo-fixture-worker` is catalogued but **cannot** be invoked through the public CLI: its trusted-pipe pickle protocol is not suitable for manual inputs.
-- Existing scripts continue to import `src.*` and retain their own project root, evidence path, admission and output safety logic. Centralising their aliases is not proof that all legacy import/bootstrap code is already modularised.
-- Do not switch historical receipt or provenance paths to new names mechanically. The old receipt belongs to old source identity.
-
-For allowed scripts and command examples use [development workflows](../docs/development/WORKFLOWS.md). There is currently no `scripts/train.py`, `scripts/evaluate.py` or `scripts/serve.py` implied by this documentation.
-
-See ../docs/development/ENTRYPOINT-ARCHITECTURE.md for reasons historic paths remain and why existing delegated entrypoints are not double-counted.
+See [the migration map](../docs/development/SCRIPT-MIGRATION-MAP.md),
+[implementation ownership](../docs/development/SCRIPT-STATUS.json), and
+[architecture notes](../docs/development/ENTRYPOINT-ARCHITECTURE.md).

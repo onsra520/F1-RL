@@ -61,7 +61,7 @@ def test_dispatch_preserves_interpreter_arguments_and_exit_status(monkeypatch):
     assert cli.main(["evidence", "verify-frozen-assets", "--some-arg", "value"]) == 17
     assert calls == [[
         sys.executable,
-        str((ROOT / "scripts/verify_consolidated_wp3_assets.py").resolve()),
+        str((ROOT / "scripts/evidence/verify_frozen_assets.py").resolve()),
         "--some-arg",
         "value",
     ]]

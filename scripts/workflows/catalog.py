@@ -69,3 +69,23 @@ WORKFLOWS = tuple(Workflow(*row) for row in _WORKFLOWS)
 BY_COMMAND = {(item.group, item.name): item for item in WORKFLOWS}
 if len(BY_COMMAND) != len(WORKFLOWS):
     raise ValueError("duplicate workflow command alias")
+
+
+# Primary module entrypoints for commands whose implementation has been extracted.
+# Historical, source-bound commands are deliberately not rewritten or relocated.
+PRIMARY_PATHS = {
+    ("diagnostics", "benchmark-environments"): "scripts/diagnostics/benchmark_environments.py",
+    ("inference", "package-handoff"): "scripts/inference/package_handoff.py",
+    ("evaluation", "compare-driving"): "scripts/evaluation/compare_driving.py",
+    ("diagnostics", "diagnose-driving"): "scripts/diagnostics/diagnose_driving.py",
+    ("training", "local-simulation"): "scripts/training/local_simulation.py",
+    ("inference", "run-policy"): "scripts/inference/run_policy.py",
+    ("evidence", "verify-frozen-assets"): "scripts/evidence/verify_frozen_assets.py",
+    ("evidence", "audit-swept-volume"): "scripts/evidence/audit_swept_volume.py",
+    ("evidence", "audit-road-corridor"): "scripts/evidence/audit_road_corridor.py",
+    ("evidence", "audit-trajectories"): "scripts/evidence/audit_trajectories.py",
+    ("diagnostics", "probe-gpu"): "scripts/diagnostics/probe_gpu.py",
+    ("evidence", "evidence-manifest"): "scripts/evidence/evidence_manifest.py",
+    ("evidence", "historical-source-audit"): "scripts/evidence/historical_source_audit.py",
+    ("evidence", "verify-run"): "scripts/evidence/verify_run.py",
+}

@@ -10,6 +10,18 @@ def save(path, value):
     path.write_text(json.dumps(value, indent=2, allow_nan=False)+'\n', encoding='utf-8')
 
 
+def demo_runtime_scripts(repository_root):
+    """Minimum script package files required by the standalone demo handoff."""
+    root = Path(repository_root)
+    return tuple(root / relative for relative in (
+        'scripts/__init__.py',
+        'scripts/inference/__init__.py',
+        'scripts/inference/run_policy.py',
+        'scripts/run_inference.py',
+        'scripts/launch_exploratory_demo.py',
+    ))
+
+
 def main(repository_root, argv=None, *, torch_factory):
     ROOT = Path(repository_root)
     parser = argparse.ArgumentParser(description=__doc__)
@@ -51,7 +63,7 @@ def main(repository_root, argv=None, *, torch_factory):
         'action_high': loaded._model.action_space.high.tolist()}
     dest.mkdir(parents=True)
     paths = [*ROOT.joinpath('src').rglob('*.py'),
-        ROOT/'scripts/run_inference.py', ROOT/'scripts/launch_exploratory_demo.py', ROOT/'START-DEMO.cmd',
+        *demo_runtime_scripts(ROOT), ROOT/'START-DEMO.cmd',
         ROOT/'config.yml', ROOT/'assets/tracks/manifest.json',
         *ROOT.joinpath('assets/tracks/training').glob('*.json'),
         ROOT/'configs/research/wp7-rotating-owner-protocol-v3.json',

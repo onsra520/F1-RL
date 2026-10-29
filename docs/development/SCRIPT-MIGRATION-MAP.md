@@ -1,10 +1,20 @@
 # Script compatibility and naming map
 
-This migration map is based on the 48 Python entrypoints present at source baseline `b11a501`. **All old paths are retained unchanged** because external handoffs, subprocesses, audit allow-lists and historic provenance may depend on their spelling. The new workflow interface supplies stable **versionless command aliases**. It does not bypass the existing entrypoint's admission controls or turn historical execution into fresh scientific evidence.
+This migration map is based on the 48 Python entrypoints present at source baseline `b11a501`. **All original paths are retained** because external handoffs, subprocesses, audit allow-lists and historic provenance may depend on their spelling. The new workflow interface supplies stable **versionless command aliases**. It does not bypass the existing entrypoint's admission controls or turn historical execution into fresh scientific evidence.
 
 Usage: `python -m scripts.workflows <group> <action> [original script arguments...]`
 
-Each table row maps one alias to one executable. `internal-only` is intentionally not invokable through this public dispatcher.
+The table lists the **legacy compatibility path** of each alias. For the
+14 grouped primary commands, use the `primary_entrypoint` field in
+[the status inventory](SCRIPT-STATUS.json). Example:
+
+- `scripts/inference/run_policy.py` is primary;
+  `scripts/run_inference.py` is the compatibility shim.
+- `scripts/evidence/verify_frozen_assets.py` is primary;
+  `scripts/verify_consolidated_wp3_assets.py` is the compatibility shim.
+
+The remaining 34 commands still dispatch to their original source-bound path.
+Each table row maps the stable alias to the old executable name. `internal-only` is intentionally not invokable through this public dispatcher.
 
 ## diagnostics
 

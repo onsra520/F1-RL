@@ -46,3 +46,15 @@ the engineering result. No GitHub Actions or training are used for this audit.
 
 Use git log for the exact source commit; no report retroactively replaces the
 source SHA of a historical run.
+
+## Grouped primary command modules
+
+The 14 extracted active commands are now placed in versionless
+`scripts/{diagnostics,evaluation,evidence,inference,training}/` packages and
+the `scripts.workflows` dispatcher invokes these paths directly. Root-level
+legacy filenames remain as compatibility shims, forwarding the original helper
+interface and exhibiting the same CLI help/exit behavior.
+
+`SCRIPT-STATUS.json` contains the primary and historical path separately.
+Protected historical research and worker entries retain their exact old paths;
+this is a deliberate compatibility boundary, not a falsely completed migration.

@@ -1,24 +1,21 @@
 """Legacy CLI for TRAIN-only scripted/PPO driving diagnostics."""
 from pathlib import Path
-from importlib import import_module
 import sys
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+_REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPOSITORY_ROOT))
 
-from src.evaluation.driving_diagnostics import (
-    diagnostic_action, trace_episode, benchmark as _benchmark, main as _main,
-)
-
-
-def benchmark(factory, model, threads, output):
-    return _benchmark(factory, model, threads, output, torch_runtime=import_module('torch'))
+from scripts.diagnostics import diagnose_driving as _implementation
+from scripts.diagnostics.diagnose_driving import main
 
 
-def main():
-    return _main(torch_factory=lambda: import_module('torch'))
+def __getattr__(name):
+    """Forward historical helper imports to the grouped implementation."""
+    return getattr(_implementation, name)
 
 
 if __name__ == "__main__":
-    main()
+    # Display the stable CLI name even when invoked through the old filename.
+    sys.argv[0] = str(_REPOSITORY_ROOT / "scripts/diagnostics/diagnose_driving.py")
+    raise SystemExit(main())

@@ -2,14 +2,20 @@
 from pathlib import Path
 import sys
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+_REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPOSITORY_ROOT))
 
-from src.validation.swept_volume_audit_cli import audit_3d_swept_run, main as _main
+from scripts.evidence import audit_swept_volume as _implementation
+from scripts.evidence.audit_swept_volume import main
 
-def main()->int:
-    return _main(ROOT)
 
-if __name__ == '__main__':
+def __getattr__(name):
+    """Forward historical helper imports to the grouped implementation."""
+    return getattr(_implementation, name)
+
+
+if __name__ == "__main__":
+    # Display the stable CLI name even when invoked through the old filename.
+    sys.argv[0] = str(_REPOSITORY_ROOT / "scripts/evidence/audit_swept_volume.py")
     raise SystemExit(main())

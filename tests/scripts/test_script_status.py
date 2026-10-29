@@ -36,4 +36,9 @@ def test_implementation_wrappers_import_their_moved_modules():
             continue
         expected = row["module_owner"].removesuffix(".py").replace("/", ".")
         source = (ROOT / row["legacy_path"]).read_text(encoding="utf-8")
-        assert f"from {expected} import" in source
+        primary = ROOT / row["primary_entrypoint"]
+        assert primary.is_file()
+        primary_source = primary.read_text(encoding="utf-8")
+        assert f"from {expected} import" in primary_source
+        expected_package = row["primary_entrypoint"].removesuffix(".py").replace("/", ".")
+        assert f"from {expected_package} import main" in source

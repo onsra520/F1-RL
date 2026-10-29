@@ -7,14 +7,17 @@ python -m scripts.workflows evidence verify-frozen-assets
 python -m scripts.workflows inference run-policy --help
 ~~~
 
-Its registry maps 48 stable (domain, action) names to 48 existing executable paths.
-An alias is never proof that the target was physically moved, approved for research, or rewritten.
+The registry maps 48 stable commands to original compatibility filenames.
+**14 commands now execute a primary, versionless module within a functional
+`scripts/` package**; all others retain their historical execution path.
+Versionless names do not grant training/scientific authorization.
 
 ## Layers
 
 | Layer | Location | Responsibility |
 | --- | --- | --- |
 | CLI/router | scripts/workflows/ | Inventory and explicit subprocess dispatch |
+| Primary grouped scripts | scripts/{diagnostics,evaluation,evidence,inference,training}/ | 14 active executable modules under versionless names |
 | Legacy compatibility | scripts/*.py | Preserve handoffs, subprocess callers, historical source paths, exit codes |
 | Domain/application | src/interfaces/, src/evaluation/, src/training/, src/validation/ | Reusable implementation, explicit repository root where needed |
 | Research source records | docs/research/ and docs/research/evidence/ | Historic scientific identity, manifests, immutable receipts |

@@ -10,15 +10,20 @@ unknown training-time Python packages or GPU settings.
 from pathlib import Path
 import sys
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+_REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPOSITORY_ROOT))
 
-from src.validation.historical_source_audit_workflow import audit_historical_manifest_file, main as _main
+from scripts.evidence import historical_source_audit as _implementation
+from scripts.evidence.historical_source_audit import main
 
-def main() -> int:
-    return _main(ROOT)
+
+def __getattr__(name):
+    """Forward historical helper imports to the grouped implementation."""
+    return getattr(_implementation, name)
 
 
 if __name__ == "__main__":
+    # Display the stable CLI name even when invoked through the old filename.
+    sys.argv[0] = str(_REPOSITORY_ROOT / "scripts/evidence/historical_source_audit.py")
     raise SystemExit(main())

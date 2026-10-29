@@ -2,22 +2,20 @@
 from pathlib import Path
 import sys
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-if str(REPOSITORY_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPOSITORY_ROOT))
+_REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPOSITORY_ROOT))
 
-from src.validation.frozen_asset_integrity import digest, require, verify_frozen_assets
-
-# Preserve historical module constants for Python callers of this executable.
-ROOT = REPOSITORY_ROOT / "docs/research/evidence"
-MODEL = ROOT / "wp3-issue51-frozen-final-models-20261028"
-FULL = ROOT / "wp3-issue51-full06-traindev-20261027"
+from scripts.evidence import verify_frozen_assets as _implementation
+from scripts.evidence.verify_frozen_assets import main
 
 
-def main() -> None:
-    result = verify_frozen_assets(REPOSITORY_ROOT)
-    print(f"PASS: {result['models']} models, {result['reports']} reports and {result['cell_logs']} cell logs")
+def __getattr__(name):
+    """Forward historical helper imports to the grouped implementation."""
+    return getattr(_implementation, name)
 
 
 if __name__ == "__main__":
-    main()
+    # Display the stable CLI name even when invoked through the old filename.
+    sys.argv[0] = str(_REPOSITORY_ROOT / "scripts/evidence/verify_frozen_assets.py")
+    raise SystemExit(main())

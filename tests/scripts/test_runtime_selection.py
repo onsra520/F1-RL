@@ -75,4 +75,6 @@ def test_inference_rejects_invalid_arguments_before_loading_model():
 def test_inference_no_longer_imports_a_sibling_executable():
     source = (ROOT / "scripts/run_inference.py").read_text(encoding="utf-8")
     assert "from launch_exploratory_demo import" not in source
-    assert "from src.interfaces.runtime_selection import ensure_runtime" in source
+    grouped = (ROOT / "scripts/inference/run_policy.py").read_text(encoding="utf-8")
+    assert "from src.interfaces.runtime_selection import ensure_runtime" in grouped
+    assert "from scripts.inference import run_policy as _implementation" in source
