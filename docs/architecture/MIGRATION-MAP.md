@@ -42,7 +42,9 @@ The public entrypoints remain `src.interfaces.campaign.run_campaign` and `src.in
 | src/validation/wp7_runtime.py | Current host fingerprint, GPU probe and explicit model/checkpoint ZIP hashes |
 | src/validation/wp7_admission.py | Admission composition; imports the public runtime fingerprint API |
 
-The facade retains its compatibility API, including the historical runtime seam used by restore callers. Runtime capture is descriptive and does not grant training permission. Moving code into current modules changes future source-bound protocol digests; historical manifests and evidence remain immutable.
+`wp7_protocol.py` retains the compatibility API, canonical digest implementation, source binding, seed binding and runtime-manifest entrypoints. Canonical digest has **not** yet been extracted to its own responsibility module: doing so changes source bytes included in WP7 protocol binding and changes future protocol digests and derived evaluation seeds. This is tracked as an open Phase 5 item pending an approved provenance-compatible migration plan. The facade retains the historical runtime seam used by restore callers. Runtime capture is descriptive and does not grant training permission. Historical manifests and evidence remain immutable.
+
+See [Deep Source Refactor Final Audit](FINAL-DEEP-SOURCE-REFACTOR-AUDIT.md) for the current phase status and gate results.
 
 ## PPO lifecycle and inference status
 
