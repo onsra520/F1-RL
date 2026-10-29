@@ -88,6 +88,7 @@ No dead production module or removable dependency has enough evidence for deleti
 ## Final clean-tree rerun
 
 - On clean committed test HEAD `d587377`, using `.venv/Scripts/python.exe -m pytest -q` and the provisioned `F1RL_WP3_EVIDENCE` path, the full suite passed: **3,079 passed, 3 skipped in 1,947.35s**. A preceding `uv run pytest` created an untracked `uv.lock`; three WP2 source-binding tests correctly failed closed on that dirty tree. After removing only the generated untracked lock, the targeted WP2 source-binding file passed **11/11**, and the direct-interpreter full rerun passed. No guard or test was changed.
+- On final test HEAD `27adea6`, the focused WP2/WP7 source-binding, profile, manifest, admission, and seed set passed **157 tests in 706.05s** with the tree clean. No registered artifact was regenerated.
 - On the same committed source state, `compileall -q src scripts` passed; fresh frozen-asset verification passed (**12 models, 7 reports, 96 cell logs**); fresh historical-record verification returned `HISTORICAL_RECORD_INTEGRITY_VERIFIED` for two records and `original_source_reconstructed=false`.
 
 This verification snapshot distinguishes engineering checks from scientific acceptance. Phases 3–4 passed; Phase 5 and final architecture acceptance remain **BLOCKED** on canonical digest ownership/provenance handling. WP7 scientific acceptance, registered evaluation authority and HELD-OUT permission remain independently blocked.

@@ -2,7 +2,7 @@
 
 **Audit date:** 2026-10-30
 **Branch:** `refactor/architecture-modularization`
-**Verified test HEAD:** `d587377` (source code is unchanged from `92e7e22`; later commits are documentation-only)
+**Verified test HEADs:** full suite `d587377`; focused WP2/WP7 protocol suite `27adea6` (source code unchanged from `92e7e22`; subsequent changes are documentation-only)
 **Status:** **NOT COMPLETE — Phase 5 has one open source-boundary item.** Phases 3–4 and their required regressions passed. Full pytest, frontend, static and frozen-evidence gates passed on the verified clean branch state. This is an engineering status only; WP7 scientific acceptance, training authority and HELD-OUT remain blocked.
 
 ## Inherited baseline
@@ -37,6 +37,7 @@ Full pytest ran on clean committed HEAD `d587377`; its source files are unchange
 | Phase 3 lifecycle/checkpoint/admission/cleanup target | PASS — 45 passed |
 | Phase 4 inference/pilot/pipeline target | PASS — 45 passed |
 | Phase 5 WP7 protocol/profile/admission/scenario matrix | PASS for implemented behavior — 114 passed; it does not prove the pending module extraction |
+| Final clean-HEAD WP2/WP7 source binding, profile, manifest, admission and seed target | PASS — 157 passed on `27adea6` in 706.05 s; no registered artifact was rewritten |
 | Inference using frozen A-seed0 checkpoint | PASS — TRAIN Straight, seed 41877, 500 steps, `valid_truncation/step_limit`, exit 0; row and trace SHA matched pre-refactor output |
 | Frozen evidence verification | PASS — fresh run: 12 models, 7 reports, 96 cell logs; historical record checks verified two records and left `original_source_reconstructed=false` |
 | Frontend tests / typecheck / production build | PASS — 12 tests; typecheck and build exited 0 (existing large-chunk advisory) |
