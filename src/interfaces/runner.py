@@ -24,6 +24,7 @@ from ..exploratory.reward import (apply_training_curriculum, apply_training_phys
 from ..simulation.independent_suspension_dynamics import SuspensionResolutionError
 from ..simulation.ballistic_flight import FlightPhysicsError
 from .admission import LocalDemoStopped, _issue, _revoke, _source_identity
+from ._artifacts import _sha256
 
 
 def _write_json(path: Path, value: dict) -> None:
@@ -34,11 +35,7 @@ def _write_json(path: Path, value: dict) -> None:
 
 
 def _hash_file(path: Path) -> str:
-    value = sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            value.update(block)
-    return value.hexdigest()
+    return _sha256(path)
 
 
 def _save_checkpoint(model: PPOModel, pending: Path, final: Path) -> None:
