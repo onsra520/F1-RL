@@ -11,7 +11,7 @@ python -m scripts.workflows evidence verify-frozen-assets
 
 A wheel can be installed in a separate environment. Workflows requiring registered project configuration and track assets may need `F1RL_PROJECT_ROOT` pointing to the source checkout; `F1RL_WP3_EVIDENCE` is a **different** variable for restored historical telemetry.
 
-See [Workflows](WORKFLOWS.md) for safety and invocation, and [script migration map](SCRIPT-MIGRATION-MAP.md) for old entrypoints.
+See [Workflows](WORKFLOWS.md) for safety and invocation, [script migration map](SCRIPT-MIGRATION-MAP.md) for old entrypoints, [static import audit](SCRIPT-IMPORT-AUDIT.md), and [change report](SCRIPTS-DOCS-CHANGE-REPORT.md) for tested/untested scope.
 
 Frontend is built in `web/`:
 

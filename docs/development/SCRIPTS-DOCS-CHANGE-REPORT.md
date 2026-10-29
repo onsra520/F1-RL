@@ -26,6 +26,10 @@ Snapshot of 324 baseline Git-tracked docs with Git blob identities:
 
 New current development, operations, research and historical-design indexes avoid rewriting original records. The root README no longer claims FastAPI or WebSocket integration is working.
 
+## Script import inventory
+
+Static read of all 48 historical entrypoints found **no active \`f1rl\` Python import**. Legacy per-script \`sys.path\` bootstrap, Windows historic defaults, a sibling-script import in \`run_inference.py\` and handoff script path bundling are preserved for compatibility; see [SCRIPT-IMPORT-AUDIT.md](SCRIPT-IMPORT-AUDIT.md).
+
 ## Validations and limitations
 
 GitHub-only static checks: 48 unique aliases map to 48 existing scripts, no duplicate aliases or version suffixes, zero changed/deleted legacy scripts, zero changed/deleted historical evidence, 48 migration-map entries, new relative Markdown references resolve, no baseline files removed.
