@@ -1,6 +1,6 @@
 # Deep source code refactor audit
 
-**Phase status:** Phase 1 and Phase 2 implementation and targeted verification complete. The whole refactor is not complete and merge readiness is not declared.
+**Phase status:** Phases 1–2 are complete. Phase 3 lifecycle review is complete with runner consolidation deliberately deferred; Phase 4 inference migration remains open; Phase 5 runtime capture extraction is implemented and awaits clean-tree full regression. The whole refactor is not complete and merge readiness is not declared.
 **Baseline:** `e82efd8cdc6465af83d40d1eb552b1d82e22d840` on `refactor/architecture-modularization`.
 **Scope:** WP3 campaign/evaluation source, adjacent tests and entrypoints, dependencies/configuration, architecture docs, and the frontend boundary. No training, HELD-OUT, Actions, Physics, PPO algorithm behavior, or frozen evidence changes.
 
@@ -26,6 +26,18 @@ The former cross-import is removed. `evaluation.py` no longer imports Campaign h
 
 Golden hashes and regression tests passed after extraction. Public campaign/evaluation entrypoints, report schemas, resume decisions, atomic writes and error handling remain covered. The existing `_source_identity` algorithm and scientific source-binding lists were not edited. New campaign manifests continue to bind the committed tree as before.
 
+## Phase 3 — PPO lifecycle boundary
+
+The generic `src.training.runner.TrainingRunner` and WP3 campaign supervisor in `src.interfaces.runner` were audited together. They share checkpoint/lifecycle vocabulary but enforce different contracts: the generic runner owns run-state and observers; the WP3 supervisor owns fixed campaign admission, curriculum, telemetry/integrity, and cleanup. A shared orchestration layer would risk moving a guard across the pre-allocation boundary or changing checkpoint and failure-state semantics. No lifecycle consolidation was made; keep the two owners separate until an explicit policy seam is specified and tested.
+
+## Phase 4 — inference API
+
+`src.evaluation.evaluator.evaluate_episode` already provides the shared read-only policy/factory/seed rollout API and terminal validation used by WP3 evaluation. `src.interfaces.inference_cli` still calls the exploratory pilot evaluator to preserve its output row, invalid-sample handling and exit code. Migrating that CLI would change those observable contracts; it remains a separate compatibility task requiring a pinned output and invalid-cell mapping before implementation.
+
+## Phase 5 — WP7 runtime boundary
+
+Host fingerprint and model ZIP hashing now live in `src.validation.wp7_runtime`. Admission consumes its public `capture_runtime_fingerprint` API instead of importing `_runtime` from `wp7_protocol`; the protocol facade keeps its `_runtime` seam for existing restore callers/tests. Manifest field names, hashes, UTC capture validation and denial behavior remain unchanged. `wp7_protocol` still combines registration validation and scenario construction, so that larger split remains open; its source-bound digest must be re-pinned only through the normal source-bound workflow, never by rewriting historical evidence.
+
 ## Remaining findings
 
 No Critical or High finding was confirmed.
@@ -46,12 +58,17 @@ No Critical or High finding was confirmed.
 
 No dead production module or removable dependency has enough evidence for deletion. The static import pass found no remaining Campaign ↔ Evaluation cycle. Dynamic imports outside that pair still need import tests.
 
-## Delivery and verification status
+## Inherited evidence and verification status
+
+- Băng's frozen training source is `fe83f517479f3b990028d6409304fae83b8199a9`. The fetched handoff branch (`97ac293`, `306d428`, `e6a5758`, `2ae51b6`) contains transferred checkpoints/manifests/recovery guidance and audited TRAIN evaluation results; it is not an executable resume HEAD. The handoff SHA manifest verifies **73/73** files. The evaluation manifest verifies **203 raw Git blobs plus one Windows CRLF checkout-equivalent log**; no evidence mismatch remains.
+- The handoff records **12/12 engineering-validated PPO models**, **786,432** total timesteps, and a partial evaluation of **2,153 valid episodes**, **65 invalid cells**, and **3,542 unattempted positions**. It explicitly leaves canonical campaign reconciliation and scientific acceptance blocked. Later FULL-06 reuses the same frozen 12 model hashes and reports **96/96 TRAIN-development cells, 5,760 valid episodes, zero invalid**, without granting scientific acceptance. No training was repeated and no model/evidence file was changed.
+- The separate October 19 demo-policy report is historical and records **0/8 successful finishes**; it is not used as a replacement for Băng's WP3 checkpoints or as a current pipeline baseline.
 
 - Before source edits, targeted baseline: **141 passed**. The external WP3 evidence suite initially lacked its configured path; the files were found at `D:/Projects/.evidence/F1-RL/WP3-EVIDENCE/wp3-eval-issue51-v1`.
 - After extraction: targeted regression **151 passed**. With the evidence path set, external admission/history checks passed **84 tests**. The three clean-source binding tests were rerun after commit and passed (**3 passed, 8 deselected**).
 - `compileall -q src scripts` passed. Frozen asset verification passed (**12 models, 7 reports, 96 cell logs**). Ruff `F` checks passed. Full Ruff reports 25 style findings across the touched modules; the two original modules had 32 before refactoring. Error classes, timestamp formatting and loop semantics were left as-is.
-- The full pytest run before commit reported **2,984 passed, 83 failed, 3 skipped**. Those failures were traced to the missing `F1RL_WP3_EVIDENCE` path and clean-committed-source checks on the intentionally modified worktree. The affected evidence-dependent groups passed when rerun with the path set; the three clean-source checks passed after commit. A single full-suite rerun on the clean committed tree was not performed, so the report does not claim a one-shot full-suite pass.
+- A fresh full suite on clean committed `a27f0c8` with `F1RL_WP3_EVIDENCE` set to the provisioned original evidence directory passed: **3,068 passed, 3 skipped in 1,938.31s**. This resolves the previous **2,984 passed, 83 failed, 3 skipped** report: the evidence-dependent tests lacked the environment path, and three source-binding tests ran against an intentionally dirty tree. The complete suite now passes when both conditions are satisfied.
+- After the Phase 5 runtime extraction, its focused protocol/admission/restore regression passed **45 tests**. `compileall`, Ruff `F`, frozen asset verification (**12 models, 7 reports, 96 cell logs**) and `git diff --check` passed. A clean-commit full suite is still required after this change.
 - No immutable evidence, Physics, PPO behavior, scientific admission contract, schema, or source-hash algorithm was edited. No scientific training, HELD-OUT, or GitHub Actions ran.
 
-This report tracks Phase 1–2 only. Phases 3–5 remain future work; do not treat this report as a refactor completion or merge-readiness claim.
+This report tracks the verified work and open items only. Phase 4 inference migration and the larger Phase 5 registration/scenario split remain future work; do not treat this report as a refactor completion or merge-readiness claim.

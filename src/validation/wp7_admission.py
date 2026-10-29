@@ -12,7 +12,8 @@ import sys
 
 from ..rl.owner_acceptance import review_preregistered_contract
 from ..simulation.tire_calibration_contract import REQUIRED_WP7_MEASUREMENTS
-from .wp7_protocol import build_protocol, digest, _runtime, protocol_profile
+from .wp7_protocol import build_protocol, digest, protocol_profile
+from .wp7_runtime import capture_runtime_fingerprint
 from .wp7_track_feasibility import audit_train_tracks
 
 
@@ -125,7 +126,7 @@ def evaluate_admission(repository_root, *, verify_software=False, capture_runtim
             review = verify_repository_run_reviews(root, review_envelope,
                 protocol_sha256=protocol['sha256'], run_manifest_sha256=run_manifest['sha256'])
     track_audit = audit_train_tracks(root)
-    runtime = _runtime() if capture_runtime else None
+    runtime = capture_runtime_fingerprint() if capture_runtime else None
     software = _verify_software(root, protocol) if verify_software else None
     software_verified = software is not None and software["returncode"] == 0 and software["source_unchanged"]
     executed = _verify_executed_train(root, protocol, execution_output) if verify_execution else None

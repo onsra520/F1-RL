@@ -31,3 +31,17 @@ The public entrypoints remain `src.interfaces.campaign.run_campaign` and `src.in
 | `src/interfaces/_artifacts.py` | Shared canonical JSON, hashing, strict reads and safe writes |
 
 `campaign.py` and `evaluation.py` remain compatibility-facing modules. Evaluation no longer imports Campaign. Campaign creates the roster through the light-weight roster module and lazily calls evaluation after training; the dependency is one-way.
+
+## WP7 protocol and runtime capture
+
+| Module | Responsibility |
+| --- | --- |
+| `src/validation/wp7_protocol.py` | Registration, protocol binding, TRAIN scenario preparation and runtime-manifest schema/facade |
+| `src/validation/wp7_runtime.py` | Current host fingerprint, GPU probe and explicit model/checkpoint ZIP hashes |
+| `src/validation/wp7_admission.py` | Admission composition; imports the public runtime fingerprint API |
+
+Runtime capture is descriptive and does not grant training permission. `wp7_protocol` retains the `_runtime` compatibility seam for restore callers, while admission no longer imports that private helper. Registration and scenario construction are still coupled and remain a later migration candidate; source-bound protocol digests must keep hashing every current source file.
+
+## PPO lifecycle and inference status
+
+`src.training.runner.TrainingRunner` and `src.interfaces.runner` remain separate orchestration owners because generic registered runs and WP3 campaign runs have different artifact, admission, telemetry and failure-state contracts. `src.evaluation.evaluator.evaluate_episode` is the shared read-only policy rollout API. The Straight-only inference CLI still uses the exploratory pilot row schema; migrating it requires a compatibility contract for invalid rows and exit codes.

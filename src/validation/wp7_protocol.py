@@ -9,11 +9,6 @@ from hashlib import sha256
 import json
 from pathlib import Path
 from datetime import datetime, timezone
-from importlib import metadata
-import os
-import platform
-import subprocess
-import sys
 
 from ..rl.provenance import _capture_git_provenance
 from ..rl.pilot_preflight import TRAIN_IDS
@@ -35,7 +30,14 @@ from ..simulation.ramp_support import WheelContactPoints
 from ..simulation.coupled_longitudinal_dynamics import LongitudinalContactPolicy
 from ..simulation.spatial_contact_dynamics import SpatialContactPolicy
 from ..tracks import load_track_manifest
+from . import wp7_runtime
 from .wp7_track_feasibility import BODY
+from .wp7_runtime import hash_model_artifacts
+
+# Kept as a module seam for existing protocol/restore callers and tests.
+platform = wp7_runtime.platform
+_cpu_model = wp7_runtime.cpu_model_name
+_runtime = wp7_runtime.capture_runtime_fingerprint
 
 
 def digest(document):
@@ -340,47 +342,6 @@ def prepare_evaluation_factory(repository_root, protocol, policy_id, track_id, s
                      "deterministic_prediction": False, "training_authorized": False}
 
 
-def _cpu_model():
-    model = platform.processor().strip() or os.environ.get('PROCESSOR_IDENTIFIER', '').strip()
-    if model:
-        return model
-    if platform.system() == 'Linux':
-        try:
-            for line in Path('/proc/cpuinfo').read_text(encoding='utf-8', errors='replace').splitlines():
-                key, separator, value = line.partition(':')
-                if separator and key.strip() == 'model name' and value.strip():
-                    return value.strip()
-        except OSError:
-            pass
-    return 'unavailable'
-
-
-def _runtime():
-    root = Path(__file__).resolve().parents[2]
-    packages = {name: metadata.version(name) for name in
-                ("numpy", "gymnasium", "stable-baselines3", "torch", "PyYAML")}
-    result = subprocess.run([sys.executable, "-B", "-m", "scripts.diagnostics.probe_gpu"],
-                            cwd=root, capture_output=True, text=True, check=True, timeout=30)
-    gpu = json.loads(result.stdout)
-    return {"python_version": platform.python_version(), "implementation": platform.python_implementation(),
-            "os": platform.system(), "os_release": platform.release(), "packages": packages,
-            "cpu": {"architecture": platform.machine(), "model": _cpu_model(),
-                    "logical_processors": os.cpu_count()},
-            **gpu}
-
-
-def _artifacts(artifacts):
-    if not isinstance(artifacts, dict) or any(not isinstance(k, str) or not k.strip() for k in artifacts):
-        raise ValueError("manifest artifact identities required")
-    result = {}
-    for identity, source in artifacts.items():
-        path = Path(source)
-        if path.suffix.lower() != ".zip" or path.is_symlink() or not path.is_file():
-            raise ValueError("manifest requires explicit existing model/checkpoint ZIP files")
-        result[identity] = {"sha256": sha256(path.read_bytes()).hexdigest(), "size_bytes": path.stat().st_size}
-    return result
-
-
 def capture_runtime_manifest(repository_root, protocol, *, artifacts=None):
     """Capture now, before any future run; this function never starts PPO.
 
@@ -396,7 +357,8 @@ def capture_runtime_manifest(repository_root, protocol, *, artifacts=None):
         "requested_device": protocol["requested_device"], "policies": protocol["policies"],
         "physics_sha256": protocol["physics_sha256"], "tracks": protocol["tracks"],
         "resets": protocol["resets"], "split_identity": protocol["split_identity"],
-        "evaluator": protocol["evaluator"], "artifacts": _artifacts({} if artifacts is None else artifacts),
+        "evaluator": protocol["evaluator"],
+        "artifacts": hash_model_artifacts({} if artifacts is None else artifacts),
         "training_executed": False}
     return {**document, "sha256": digest(document)}
 
