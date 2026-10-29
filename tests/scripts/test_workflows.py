@@ -46,3 +46,52 @@ def test_module_entrypoint_reports_help_without_running_workflows():
         cwd=ROOT, capture_output=True, text=True, timeout=20, check=True,
     )
     assert len(json.loads(result.stdout)) == 48
+
+
+def test_dispatch_preserves_interpreter_arguments_and_exit_status(monkeypatch):
+    import importlib
+    cli = importlib.import_module("scripts.workflows.__main__")
+    calls = []
+
+    def fake_call(command):
+        calls.append(command)
+        return 17
+
+    monkeypatch.setattr(cli.subprocess, "call", fake_call)
+    assert cli.main(["evidence", "verify-frozen-assets", "--some-arg", "value"]) == 17
+    assert calls == [[
+        sys.executable,
+        str((ROOT / "scripts/verify_consolidated_wp3_assets.py").resolve()),
+        "--some-arg",
+        "value",
+    ]]
+
+
+def test_document_navigation_links_and_baseline_inventory():
+    import re
+    docs = (
+        "README.md",
+        "scripts/README.md",
+        "docs/README.md",
+        "docs/development/README.md",
+        "docs/development/WORKFLOWS.md",
+        "docs/development/SCRIPT-MIGRATION-MAP.md",
+        "docs/operations/README.md",
+        "docs/operations/HISTORICAL-RECOVERY.md",
+        "docs/research/README.md",
+        "docs/superpowers/README.md",
+        "docs/architecture/README.md",
+    )
+    for relative in docs:
+        path = ROOT / relative
+        text = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"\[[^]]+\]\(([^)]+)\)", text):
+            link = match.group(1).split("#")[0]
+            if not link or "://" in link or link.startswith("mailto:"):
+                continue
+            assert (path.parent / link).exists(), (relative, link)
+    inventory = json.loads((ROOT / "docs/BASELINE-DOCUMENT-INVENTORY.json").read_text("utf-8"))
+    assert inventory["total_docs"] == 324
+    assert len(inventory["files"]) == inventory["total_docs"]
+    assert len({entry["path"] for entry in inventory["files"]}) == 324
+    assert all((ROOT / entry["path"]).is_file() for entry in inventory["files"])
