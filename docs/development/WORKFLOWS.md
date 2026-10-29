@@ -28,6 +28,8 @@ The router delegates to the existing Python interpreter with `subprocess.call`, 
 
 The environment-selection logic lives in `src/interfaces/runtime_selection.py`; `scripts/run_inference.py` no longer imports the separate demo launcher. The launcher still exposes its legacy test hooks. Frozen-evidence verification is in `src/validation/frozen_asset_integrity.py`; vector benchmarking is in `src/training/vector_benchmark.py`. Existing executable file names remain as compatibility entrypoints.
 
+For current diagnostic and comparison module owners see [Development tools](DEVELOPMENT-TOOLS.md).
+
 ## Compatibility
 
 Original `python scripts/<legacy-file>.py` calls remain supported as before. Renaming all physical files is **deferred** until exact internal/external references, immutable source identity and regression tests are checked. Some script names are part of historical records, not current software version numbers.
