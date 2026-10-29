@@ -13,7 +13,7 @@ python -m scripts.workflows evidence attest-source --root . --output <new-path-o
 python -m scripts.workflows inference smoke-frozen-policy
 ```
 
-The registry classifies commands into `diagnostics`, `evidence`, `evaluation`, `inference`, `training`, and `internal`. See the [full mapping](../docs/development/SCRIPT-MIGRATION-MAP.md). Names are versionless; historical file paths, registered schemas and recorded IDs are not.
+The registry classifies commands into `diagnostics`, `evidence`, `evaluation`, `inference`, `training`, and `internal`. See the [full mapping](../docs/development/SCRIPT-MIGRATION-MAP.md) and [implementation-completion inventory](../docs/development/SCRIPT-STATUS.json). Names are versionless; historical file paths, registered schemas and recorded IDs are not.
 
 ## Implementation boundaries
 

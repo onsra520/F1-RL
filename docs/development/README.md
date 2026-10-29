@@ -13,7 +13,7 @@ A wheel can be installed in a separate environment. Workflows requiring register
 
 See [Workflows](WORKFLOWS.md) for safety and invocation, [script migration map](SCRIPT-MIGRATION-MAP.md) for old entrypoints, [script import audit](SCRIPT-IMPORT-AUDIT.md) for the shared runtime-selection module and historical boundaries, and [change report](SCRIPTS-DOCS-CHANGE-REPORT.md) for tested/untested scope.
 
-For developer-only comparisons, profiling and hardware probing, see [Development tools](DEVELOPMENT-TOOLS.md).
+For developer-only comparisons, profiling and hardware probing, see [Development tools](DEVELOPMENT-TOOLS.md). The [script status inventory](SCRIPT-STATUS.json) distinguishes fully extracted implementations from aliases that still point at legacy code.
 
 Frontend is built in `web/`:
 

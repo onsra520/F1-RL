@@ -32,7 +32,7 @@ Static read of all 48 historical entrypoints found **no active `f1rl` Python imp
 
 ## Validations and limitations
 
-GitHub-only static checks: 48 unique aliases map to 48 existing script **paths**, no duplicate aliases/version suffixes, no deleted legacy script, no altered immutable research evidence, 48 migration-map entries, and current navigation links resolve. Five original script *implementations* have changed in subsequent extraction batches; this is intentional and covered by new focused tests.
+GitHub-only static checks: 48 unique aliases map to 48 existing script **paths**, no duplicate aliases/version suffixes, no deleted legacy script, no altered immutable research evidence, 48 migration-map entries, and current navigation links resolve. Eight original script entrypoints have been updated across extraction and shared-dependency batches; this is intentional and covered by new focused tests.
 
 Focused tests exist in `tests/scripts/`. The owner independently ran **15 passed in 8.67s** on commit `e496d44` (workflow, extraction, and historical restore tests) and verified `PASS: 12 models, 7 reports and 96 cell logs`, with a clean worktree. **The owner subsequently reported `22 passed in 4.71s` at `1724ee5`**, with frozen assets verified and a clean worktree. Full Python suite, frontend npm suite, and scientific preflight have not been rerun on this branch; do not represent migration-baseline acceptance as new-branch acceptance.
 
@@ -74,3 +74,9 @@ The historical restore/check and symlink tests require the same external inputs/
 - Added `tests/scripts/test_development_tools.py` covering fixed seed/improvement thresholds, scripted action, `--help` parity for old and versionless CLI, and GPU JSON output parity. Tests do not train or run actual evaluation episodes.
 - Created [development diagnostics reference](DEVELOPMENT-TOOLS.md) with accurate module and CLI ownership.
 - **Tests introduced by this fourth batch are NOT RUN** on the new HEAD. The earlier 22/22 PASS belongs to `1724ee5`.
+
+## Completion inventory after development-tool extraction
+
+The [machine-readable script status](SCRIPT-STATUS.json) tracks all **48** original CLI paths: **5** have their substantive implementation extracted into `src/` and are now thin wrappers, **3** retain implementation but use a shared `src/` dependency, and **40** remain legacy compatibility commands with unchanged implementation. The 48 stable aliases and all historical paths are preserved. This prevents calling the alias-only stage a complete refactor.
+
+The owner independently reported `22 passed in 4.71s` and immutable frozen-assets verification at `1724ee5`. **The new development-tool and status inventory tests at later commits remain NOT RUN.**

@@ -1,0 +1,402 @@
+{
+  "schema": "script_migration_status_v1",
+  "base": "b11a501b029680f79762388ef6b179eda97141a7",
+  "implementation_commit": "3ff89ea46bc6d2eaecd7b35dcd6ba14e48fd2abb",
+  "non_deletion_rule": "all 48 legacy executable paths retained",
+  "definitions": {
+    "implementation-extracted": "Legacy executable is a compatibility wrapper importing domain implementation from src/",
+    "shared-dependency-migrated": "Legacy command retains its main logic, but uses a shared versionless dependency instead of a sibling script import",
+    "compatibility-unmodified": "Original historical/development entrypoint has not been refactored at source level; its stable alias exists but does not imply implementation migration"
+  },
+  "counts": {
+    "implementation-extracted": 5,
+    "compatibility-unmodified": 40,
+    "shared-dependency-migrated": 3
+  },
+  "workflows": [
+    {
+      "group": "diagnostics",
+      "alias": "benchmark-environments",
+      "legacy_path": "scripts/benchmark_vector_envs.py",
+      "scope": "read-only",
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/training/vector_benchmark.py"
+    },
+    {
+      "group": "inference",
+      "alias": "package-handoff",
+      "legacy_path": "scripts/build_demo_handoff.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "compare-driving",
+      "legacy_path": "scripts/compare_driving.py",
+      "scope": "development-execution",
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/evaluation/driving_comparison.py"
+    },
+    {
+      "group": "diagnostics",
+      "alias": "diagnose-driving",
+      "legacy_path": "scripts/diagnose_driving.py",
+      "scope": "development-execution",
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/evaluation/driving_diagnostics.py"
+    },
+    {
+      "group": "evidence",
+      "alias": "attest-source",
+      "legacy_path": "scripts/engineering_attestation.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "training",
+      "alias": "exploratory-policy",
+      "legacy_path": "scripts/exploratory_ppo.py",
+      "scope": "training-explicit",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "training",
+      "alias": "launch-exploration",
+      "legacy_path": "scripts/launch_exploratory_demo.py",
+      "scope": "training-explicit",
+      "refactor_state": "shared-dependency-migrated",
+      "module_owner": "src/interfaces/runtime_selection.py"
+    },
+    {
+      "group": "training",
+      "alias": "local-simulation",
+      "legacy_path": "scripts/local_demo.py",
+      "scope": "training-explicit",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "restore-history",
+      "legacy_path": "scripts/restore_wp3_historical_evidence.py",
+      "scope": "read-only",
+      "refactor_state": "shared-dependency-migrated",
+      "module_owner": "src/validation/frozen_asset_integrity.py"
+    },
+    {
+      "group": "inference",
+      "alias": "run-policy",
+      "legacy_path": "scripts/run_inference.py",
+      "scope": "development-execution",
+      "refactor_state": "shared-dependency-migrated",
+      "module_owner": "src/interfaces/runtime_selection.py"
+    },
+    {
+      "group": "inference",
+      "alias": "smoke-frozen-policy",
+      "legacy_path": "scripts/smoke_consolidated_wp3_model.py",
+      "scope": "development-execution",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "verify-frozen-assets",
+      "legacy_path": "scripts/verify_consolidated_wp3_assets.py",
+      "scope": "read-only",
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/validation/frozen_asset_integrity.py"
+    },
+    {
+      "group": "evidence",
+      "alias": "verify-historical-records",
+      "legacy_path": "scripts/verify_historical_source_records.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "diagnostics",
+      "alias": "smoke-crash-gym",
+      "legacy_path": "scripts/wp3_applied_crash_gym_smoke.py",
+      "scope": "development-execution",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "diagnostics",
+      "alias": "smoke-crash-simulation",
+      "legacy_path": "scripts/wp3_applied_crash_live_smoke.py",
+      "scope": "development-execution",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "training",
+      "alias": "campaign",
+      "legacy_path": "scripts/wp3_campaign.py",
+      "scope": "training-explicit",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "current-admission-gate",
+      "legacy_path": "scripts/wp3_current_eval_gate.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "coordinate",
+      "legacy_path": "scripts/wp3_eval_only_coordinator.py",
+      "scope": "restricted-execution",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "preflight",
+      "legacy_path": "scripts/wp3_eval_only_preflight.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "training-development",
+      "legacy_path": "scripts/wp3_owner_train_dev_eval.py",
+      "scope": "restricted-execution",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "replay-preflight",
+      "legacy_path": "scripts/wp3_physics_replay_preflight.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "register-crash-contract",
+      "legacy_path": "scripts/wp3_register_crash_terminal_v1.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "technical-acceptance",
+      "legacy_path": "scripts/wp3_v4_technical_acceptance.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "replay-crash-development",
+      "legacy_path": "scripts/wp3_v4_three_replay_dev_crash_contract.py",
+      "scope": "development-execution",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "audit-replay-impulses",
+      "legacy_path": "scripts/wp3_v4_three_replay_impulse_audit.py",
+      "scope": "development-execution",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "replay-crash-contract",
+      "legacy_path": "scripts/wp3_v4_three_replay_registered_crash_v1_corrected.py",
+      "scope": "development-execution",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "replay-technical",
+      "legacy_path": "scripts/wp3_v4_three_replay_technical_acceptance.py",
+      "scope": "development-execution",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "verify-technical-acceptance",
+      "legacy_path": "scripts/wp3_v4_verify_technical_acceptance.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "verify-crash-registration",
+      "legacy_path": "scripts/wp3_verify_crash_terminal_v1.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "audit-swept-volume",
+      "legacy_path": "scripts/wp7_audit_3d_swept_volume.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "audit-road-corridor",
+      "legacy_path": "scripts/wp7_audit_right_turn_corridor.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "audit-feasibility",
+      "legacy_path": "scripts/wp7_audit_train_feasibility.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "audit-trajectories",
+      "legacy_path": "scripts/wp7_audit_train_trajectories.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "diagnostics",
+      "alias": "probe-gpu",
+      "legacy_path": "scripts/wp7_capture_gpu.py",
+      "scope": "read-only",
+      "refactor_state": "implementation-extracted",
+      "module_owner": "src/interfaces/hardware_probe.py"
+    },
+    {
+      "group": "diagnostics",
+      "alias": "verify-planar-execution",
+      "legacy_path": "scripts/wp7_certify_planar_execution.py",
+      "scope": "development-execution",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "diagnostics",
+      "alias": "core-readiness",
+      "legacy_path": "scripts/wp7_core_readiness.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "evidence-manifest",
+      "legacy_path": "scripts/wp7_evidence_manifest.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "freeze-readiness",
+      "legacy_path": "scripts/wp7_freeze_readiness.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "historical-source-audit",
+      "legacy_path": "scripts/wp7_historical_source_audit.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "training",
+      "alias": "pilot-preflight",
+      "legacy_path": "scripts/wp7_pilot_preflight.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "internal",
+      "alias": "ppo-fixture-worker",
+      "legacy_path": "scripts/wp7_ppo_fixture_worker.py",
+      "scope": "internal-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "owner-review",
+      "legacy_path": "scripts/wp7_review_owner_acceptance.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "training",
+      "alias": "exploratory-run",
+      "legacy_path": "scripts/wp7_run_exploratory.py",
+      "scope": "training-explicit",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evaluation",
+      "alias": "action-sensitivity",
+      "legacy_path": "scripts/wp7_screen_train_action_sensitivity.py",
+      "scope": "restricted-execution",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "training",
+      "alias": "train-acceptance",
+      "legacy_path": "scripts/wp7_train_acceptance.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "training",
+      "alias": "training-admission",
+      "legacy_path": "scripts/wp7_training_admission.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "verify-pilot",
+      "legacy_path": "scripts/wp7_verify_pilot_evidence.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    },
+    {
+      "group": "evidence",
+      "alias": "verify-run",
+      "legacy_path": "scripts/wp7_verify_run_evidence.py",
+      "scope": "read-only",
+      "refactor_state": "compatibility-unmodified",
+      "module_owner": null
+    }
+  ]
+}
