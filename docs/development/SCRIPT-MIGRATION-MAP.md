@@ -1,8 +1,8 @@
 # Script entrypoint migration map
 
-All 48 command entrypoints now live in functional packages under `scripts/`. The former root-level names are listed as migration origins, not supported paths. Run grouped modules with `python -m`; direct file invocation is intentionally replaced because executables no longer modify `sys.path`.
+The 46 active command entrypoints live in functional packages under `scripts/`. Two lecturer-demo routes were retired; their old paths remain documented below for provenance. Run active grouped modules with `python -m`; direct file invocation is intentionally replaced because executables no longer modify `sys.path`.
 
-The router preserves the existing aliases, forwarded arguments, exit codes, and each command’s own admission and evidence checks:
+The router preserves the active aliases, forwarded arguments, exit codes, and each command’s own admission and evidence checks:
 
 ```powershell
 python -m scripts.workflows list
@@ -13,12 +13,10 @@ python -m scripts.workflows inference run-policy --help
 | Stable command | Former root path | Current entrypoint | Scope |
 | --- | --- | --- | --- |
 | `diagnostics benchmark-environments` | `scripts/benchmark_vector_envs.py` | `scripts/diagnostics/benchmark_environments.py` | read-only |
-| `inference package-handoff` | `scripts/build_demo_handoff.py` | `scripts/inference/package_handoff.py` | read-only |
 | `evaluation compare-driving` | `scripts/compare_driving.py` | `scripts/evaluation/compare_driving.py` | development-execution |
 | `diagnostics diagnose-driving` | `scripts/diagnose_driving.py` | `scripts/diagnostics/diagnose_driving.py` | development-execution |
 | `evidence attest-source` | `scripts/engineering_attestation.py` | `scripts/evidence/engineering_attestation.py` | read-only |
 | `training exploratory-policy` | `scripts/exploratory_ppo.py` | `scripts/training/exploratory_policy.py` | training-explicit |
-| `training launch-exploration` | `scripts/launch_exploratory_demo.py` | `scripts/training/launch_demo.py` | training-explicit |
 | `training local-simulation` | `scripts/local_demo.py` | `scripts/training/local_simulation.py` | training-explicit |
 | `evidence restore-history` | `scripts/restore_wp3_historical_evidence.py` | `scripts/evidence/restore_historical_evidence.py` | read-only |
 | `inference run-policy` | `scripts/run_inference.py` | `scripts/inference/run_policy.py` | development-execution |
@@ -60,6 +58,15 @@ python -m scripts.workflows inference run-policy --help
 | `training training-admission` | `scripts/wp7_training_admission.py` | `scripts/training/training_admission.py` | read-only |
 | `evidence verify-pilot` | `scripts/wp7_verify_pilot_evidence.py` | `scripts/evidence/verify_pilot_evidence.py` | read-only |
 | `evidence verify-run` | `scripts/wp7_verify_run_evidence.py` | `scripts/evidence/verify_run.py` | read-only |
+
+## Retired legacy demo routes
+
+These aliases and their generated handoff/one-click launcher files were removed on 2026-10-29. The old names are retained here only to explain historical run records. Use the live training and inference routes above.
+
+| Retired alias | Former root path | Removed grouped entrypoint | Current replacement |
+| --- | --- | --- | --- |
+| `inference package-handoff` | `scripts/build_demo_handoff.py` | `scripts/inference/package_handoff.py` | `inference run-policy` |
+| `training launch-exploration` | `scripts/launch_exploratory_demo.py` | `scripts/training/launch_demo.py` | `training exploratory-policy` |
 
 ## Provenance handling
 

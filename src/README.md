@@ -9,7 +9,7 @@
 - `training`: training orchestration and configuration.
 - `evaluation`: episode evaluation, metrics and crash contracts.
 - `validation`: research gates, evidence verification and engineering attestation.
-- `interfaces`: local demo and execution interfaces.
+- `interfaces`: campaign execution, admission, evaluation, runtime selection and inference adapters.
 - `exploratory`: restricted exploratory execution.
 
 Simulation must not import the track persistence or RL layers. Track persistence may use simulation domain types, but must not import RL, runtime frameworks or frontend code. Scientific identities and historical source paths remain recorded in immutable evidence.

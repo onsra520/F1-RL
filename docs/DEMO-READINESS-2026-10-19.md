@@ -1,25 +1,24 @@
 # F1-RL demo readiness — October 19, 2026
 
+**Historical record.** The root launchers described in the original run record were retired on 2026-10-29. This document retains the run results and command names as provenance; use the current workflow registry for supported entrypoints.
+
 The genuine exploratory PPO model trains, reloads, and runs inference. It does
 **not** successfully complete the demonstration track: both evaluated episodes
 ended in hard-route failures. Present it as a working RL training/inference
 pipeline with limited policy quality.
 
-## Launch
+## Current pipeline entrypoints
 
-From the repository, double-click `START-DEMO.cmd`, or run:
+The supported training/campaign and saved-policy inference entrypoints are:
 
 ```text
-START-DEMO.cmd --output demo-result.json
+python -m scripts.workflows training campaign --help
+python -m scripts.workflows inference run-policy --help
 ```
 
-The locally generated model is `models/ppo-straight-trained.zip` (ignored by Git).
-The launcher finds the existing RL Python environment when the default Python
-lacks dependencies. In a clean installation, install the handoff requirements
-into `.venv`, or set `F1RL_PYTHON` to a compatible Python executable.
-
-`START-DEMO-TRAIN.cmd` is the separate training launcher. It requires fresh,
-one-use owner consent and never grants scientific training admission.
+The old commands `START-DEMO.cmd` and `START-DEMO-TRAIN.cmd` are retired. The
+historical training results and launcher behavior below remain a record of the
+October 2026 demo; they do not describe supported launch instructions.
 
 ## Actual authorized run
 

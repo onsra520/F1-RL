@@ -1,10 +1,11 @@
 {
   "schema": "scripts_entrypoints_v2",
   "counts": {
-    "catalogued": 48,
-    "grouped_entrypoints": 48,
+    "catalogued": 46,
+    "grouped_entrypoints": 46,
     "root_legacy_entrypoints": 0,
-    "compatibility_wrappers": 0
+    "compatibility_wrappers": 0,
+    "retired_legacy_demo_entrypoints": 2
   },
   "workflows": [
     {
@@ -12,14 +13,6 @@
       "alias": "benchmark-environments",
       "former_root_path": "scripts/benchmark_vector_envs.py",
       "entrypoint": "scripts/diagnostics/benchmark_environments.py",
-      "scope": "read-only",
-      "disposition": "wrapper-removed; grouped implementation retained"
-    },
-    {
-      "group": "inference",
-      "alias": "package-handoff",
-      "former_root_path": "scripts/build_demo_handoff.py",
-      "entrypoint": "scripts/inference/package_handoff.py",
       "scope": "read-only",
       "disposition": "wrapper-removed; grouped implementation retained"
     },
@@ -52,14 +45,6 @@
       "alias": "exploratory-policy",
       "former_root_path": "scripts/exploratory_ppo.py",
       "entrypoint": "scripts/training/exploratory_policy.py",
-      "scope": "training-explicit",
-      "disposition": "relocated"
-    },
-    {
-      "group": "training",
-      "alias": "launch-exploration",
-      "former_root_path": "scripts/launch_exploratory_demo.py",
-      "entrypoint": "scripts/training/launch_demo.py",
       "scope": "training-explicit",
       "disposition": "relocated"
     },
@@ -390,6 +375,22 @@
       "entrypoint": "scripts/evidence/verify_run.py",
       "scope": "read-only",
       "disposition": "wrapper-removed; grouped implementation retained"
+    }
+  ],
+  "retired_legacy_demo_entrypoints": [
+    {
+      "group": "inference",
+      "alias": "package-handoff",
+      "former_root_path": "scripts/build_demo_handoff.py",
+      "removed_entrypoint": "scripts/inference/package_handoff.py",
+      "disposition": "retired legacy demo; replaced by the active pipeline entrypoints"
+    },
+    {
+      "group": "training",
+      "alias": "launch-exploration",
+      "former_root_path": "scripts/launch_exploratory_demo.py",
+      "removed_entrypoint": "scripts/training/launch_demo.py",
+      "disposition": "retired legacy demo; replaced by the active pipeline entrypoints"
     }
   ]
 }

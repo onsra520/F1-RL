@@ -14,7 +14,8 @@ def test_active_doc_links_exist():
         assert page.is_file()
         for link in re.findall(r'(?<!!)\[[^\]]+\]\(([^)]+)\)', page.read_text(encoding='utf-8')):
             relative = link.split('#')[0].strip('<>')
-            if not relative or relative.startswith(('https://', 'http://', 'mailto:')): continue
+            if not relative or relative.startswith(('https://', 'http://', 'mailto:')):
+                continue
             target = (page.parent / relative).resolve()
             assert target.is_relative_to(ROOT.resolve())
             assert target.exists(), (page.relative_to(ROOT), relative)
@@ -22,10 +23,14 @@ def test_active_doc_links_exist():
 def test_entrypoint_inventory_covers_all_commands():
     data = json.loads((ROOT / 'docs/development/SCRIPT-STATUS.json').read_text(encoding='utf-8'))
     assert data['counts'] == {
-        'catalogued': 48, 'grouped_entrypoints': 48,
+        'catalogued': 46, 'grouped_entrypoints': 46,
         'root_legacy_entrypoints': 0, 'compatibility_wrappers': 0,
+        'retired_legacy_demo_entrypoints': 2,
     }
-    assert len(data['workflows']) == 48
+    assert len(data['workflows']) == 46
+    assert {entry['alias'] for entry in data['retired_legacy_demo_entrypoints']} == {
+        'package-handoff', 'launch-exploration'
+    }
     for command in data['workflows']:
         assert command['scope']
         assert (ROOT / command['entrypoint']).is_file()

@@ -16,12 +16,10 @@ class Workflow:
 
 _WORKFLOWS = (
     ('diagnostics', 'benchmark-environments', 'scripts/diagnostics/benchmark_environments.py', 'read-only'),
-    ('inference', 'package-handoff', 'scripts/inference/package_handoff.py', 'read-only'),
     ('evaluation', 'compare-driving', 'scripts/evaluation/compare_driving.py', 'development-execution'),
     ('diagnostics', 'diagnose-driving', 'scripts/diagnostics/diagnose_driving.py', 'development-execution'),
     ('evidence', 'attest-source', 'scripts/evidence/engineering_attestation.py', 'read-only'),
     ('training', 'exploratory-policy', 'scripts/training/exploratory_policy.py', 'training-explicit'),
-    ('training', 'launch-exploration', 'scripts/training/launch_demo.py', 'training-explicit'),
     ('training', 'local-simulation', 'scripts/training/local_simulation.py', 'training-explicit'),
     ('evidence', 'restore-history', 'scripts/evidence/restore_historical_evidence.py', 'read-only'),
     ('inference', 'run-policy', 'scripts/inference/run_policy.py', 'development-execution'),

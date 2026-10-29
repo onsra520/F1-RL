@@ -12,8 +12,8 @@ This is the **current navigation layer**. The repository also contains historica
 | Frozen research and provenance | [Research](research/README.md) | Scientific gates, immutable evidence, historical IDs |
 | Historic proposals/specifications | [Design history](superpowers/README.md) | Snapshots, not up-to-date implementation instructions |
 | Baseline document classification | [Snapshot inventory](BASELINE-DOCUMENT-INVENTORY.json) | 324 Git-tracked docs from `b11a501`; Git blob SHAs (not SHA-256) |
-| Script rename/compatibility | [Script migration map](development/SCRIPT-MIGRATION-MAP.md) | 48 legacy entrypoints → stable versionless command aliases |
-| Script refactor completion | [Script status inventory](development/SCRIPT-STATUS.json) | 14 extracted / 2 shared / 32 not newly extracted |
+| Script rename/compatibility | [Script migration map](development/SCRIPT-MIGRATION-MAP.md) | 46 active versionless command aliases; two legacy demo routes retired |
+| Script refactor completion | [Script status inventory](development/SCRIPT-STATUS.json) | 14 extracted / 2 shared / 32 not newly extracted at the 48-command audit baseline |
 
 - [Current engineering state](development/CURRENT-STATE.md)
 - [Entrypoint architecture and protected exceptions](development/ENTRYPOINT-ARCHITECTURE.md)

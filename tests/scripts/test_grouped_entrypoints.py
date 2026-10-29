@@ -11,8 +11,8 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_all_workflows_use_grouped_modules_without_root_compatibility_files():
     status = json.loads((ROOT / "docs/development/SCRIPT-STATUS.json").read_text("utf-8"))
     rows = {(item.group, item.name): item for item in WORKFLOWS}
-    assert len(rows) == 48
-    assert status["counts"]["grouped_entrypoints"] == 48
+    assert len(rows) == 46
+    assert status["counts"]["grouped_entrypoints"] == 46
     assert status["counts"]["root_legacy_entrypoints"] == 0
     assert not [path for path in (ROOT / "scripts").glob("*.py") if path.name != "__init__.py"]
     for row in status["workflows"]:

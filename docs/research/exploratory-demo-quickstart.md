@@ -1,4 +1,10 @@
-# Demo-ready local exploratory training
+# Archived: demo-ready local exploratory training
+
+**Historical instructions only.** The `START-DEMO-TRAIN.cmd` launcher and its
+one-click wrapper were retired on 2026-10-29. The dated training and evidence
+record remains valid, but do not follow the former launcher steps below.
+Current public workflows are documented in
+[`../development/ENTRYPOINT-ARCHITECTURE.md`](../development/ENTRYPOINT-ARCHITECTURE.md).
 
 **Use the isolated demo branch only.** From the checked-out, clean branch,
 double-click **`START-DEMO-TRAIN.cmd`** in the repository root. It chooses

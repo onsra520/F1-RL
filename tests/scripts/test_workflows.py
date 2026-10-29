@@ -1,6 +1,5 @@
 """Workflow routing is complete and cannot weaken historical entrypoints."""
 import json
-from pathlib import Path
 import subprocess
 import sys
 
@@ -11,7 +10,7 @@ from scripts.workflows.__main__ import BY_COMMAND, ROOT, main, manifest
 def test_all_grouped_entrypoints_are_catalogued():
     root_entries = [path for path in (ROOT / "scripts").glob("*.py") if path.name != "__init__.py"]
     assert root_entries == []
-    assert len(WORKFLOWS) == len(BY_COMMAND) == 48
+    assert len(WORKFLOWS) == len(BY_COMMAND) == 46
     assert {row.script for row in WORKFLOWS} == {
         path.relative_to(ROOT).as_posix() for path in (ROOT / "scripts").rglob("*.py")
         if path.name != "__init__.py" and "workflows" not in path.parts
@@ -30,7 +29,7 @@ def test_workflow_names_are_versionless_and_unambiguous():
 def test_catalogue_is_non_executing_and_machine_readable(capsys):
     assert main(["list", "--json"]) == 0
     result = json.loads(capsys.readouterr().out)
-    assert len(result) == 48
+    assert len(result) == 46
     assert result == manifest()
 
 
@@ -45,7 +44,7 @@ def test_module_entrypoint_reports_help_without_running_workflows():
         [sys.executable, "-m", "scripts.workflows", "list", "--json"],
         cwd=ROOT, capture_output=True, text=True, timeout=20, check=True,
     )
-    assert len(json.loads(result.stdout)) == 48
+    assert len(json.loads(result.stdout)) == 46
 
 
 def test_dispatch_preserves_interpreter_arguments_and_exit_status(monkeypatch):

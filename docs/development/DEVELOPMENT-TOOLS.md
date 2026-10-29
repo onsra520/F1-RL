@@ -32,7 +32,7 @@ The comparison's eight registered **development-only** seeds and prespecified im
 
 - Use `tests/scripts/test_development_tools.py` to check pure metrics, diagnostic actions, help and workflow/module parity without training.
 - The Physics/PPO `src/` implementation and sealed evaluation protocols were not modified by this script refactor.
-- CLI names are stable and versionless; old script filenames remain compatibility entries because handoffs and recorded evidence may refer to them.
+- CLI names are stable and versionless; historical records may retain old script filenames as provenance, while retired demo aliases are absent from the active registry.
 - The authoritative backend↔frontend connection does not yet exist.
 
 For broader scripts and documentation status see [workflow guide](WORKFLOWS.md), [import audit](SCRIPT-IMPORT-AUDIT.md) and [change report](SCRIPTS-DOCS-CHANGE-REPORT.md).

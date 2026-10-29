@@ -3,9 +3,15 @@
 Branch: refactor/scripts-docs-standardization
 Base: refactor/architecture-modularization, b11a501.
 
+## Legacy demo cleanup follow-on (2026-10-29; starting HEAD `d292d10`)
+
+The two root `START-DEMO*.cmd` launchers, the one-click exploratory wrapper, and the lecturer handoff packager were retired. The `launch-exploration` and `package-handoff` workflow aliases are no longer exposed; `SCRIPT-STATUS.json` now records 46 active workflows and two retired aliases. The active `training local-simulation` worker, campaign, runner, evaluation, admission, training profiles and smoke tests remain because the registered WP3 pipeline uses them. The public pipeline is documented as Simulation → Gymnasium → PPO Training → Evaluation → Inference. Dated research material keeps old command text only as historical provenance.
+
+No dependency was removed: the retained campaign, training, inference and permit pipeline still needs the declared RL/science dependencies; the retired code introduced no dependency used only by itself.
+
 ## Scope completed
 
-- Stable versionless router and 48-entry inventory; original paths retained
+- Stable versionless router and 48-entry inventory at the time of that batch; original paths retained
   for historical source binding, handoffs, subprocess and user compatibility.
 - Extraction of selected implemented CLI bodies into reusable src interfaces,
   training, evaluation and validation modules; explicit repository root is
@@ -20,7 +26,9 @@ Base: refactor/architecture-modularization, b11a501.
 ## Protected boundaries
 
 Original science-bound script paths and schemas are not bulk-renamed; the
-trusted fixture worker is internal-only. All 48 script paths remain. See
+trusted fixture worker is internal-only. At that report's source revision, all
+48 script paths remained. The cleanup follow-on above records the current 46
+active paths and two retired demo routes. See
 SCRIPT-STATUS.json for honest extracted/shared/preexisting/guarded counts and
 ENTRYPOINT-ARCHITECTURE.md for what is intentionally not migrated.
 
@@ -69,7 +77,7 @@ No scripts-refactor blocker remains in active repository references. GitHub Acti
 
 ## Grouped primary command modules
 
-The 48 active commands are placed in versionless
+At the migration source revision, all 48 commands were placed in versionless
 `scripts/{diagnostics,evaluation,evidence,inference,internal,training}/`
 packages and the `scripts.workflows` dispatcher invokes these paths directly.
 There are zero root-level Python compatibility files under `scripts/` (apart

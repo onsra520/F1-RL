@@ -1,5 +1,10 @@
 # PPO driving improvement — October 19, 2026
 
+Historical run commands below record the launch paths used at the time. The
+`START-DEMO*.cmd` launchers and lecturer handoff packager were retired on
+2026-10-29; current supported workflows are listed in
+[`docs/development/ENTRYPOINT-ARCHITECTURE.md`](development/ENTRYPOINT-ARCHITECTURE.md).
+
 **VERIFIED: the new genuine PPO drives farther on the original task.**
 **PARTIAL: it still finishes 0/8 evaluation episodes; all end in hard-route failure.**
 
