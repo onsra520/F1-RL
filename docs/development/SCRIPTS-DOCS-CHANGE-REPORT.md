@@ -9,9 +9,9 @@
 
 ## Script and import strategy
 
-The supported active Python imports remain `src.*`. Workflow dispatch runs each original executable as a subprocess with the exact original path and argument order. It never imports historical CLI modules into the dispatcher, renames their Python serialization identity, rewrites scientific paths or interprets grants/admission flags.
+The supported active Python imports remain `src.*`. Workflow dispatch runs each existing compatibility executable as a subprocess with the exact original path and argument order. The dispatcher does not import other executable scripts, change scientific identifiers or interpret admission flags. Individual CLI files can be reduced to wrappers while retaining their original path and arguments.
 
-Because historical scripts are referenced by provenance, external handoffs, worker subprocesses and audit allow-lists, the original 48 paths are retained byte-for-byte. Their physical relocation requires a separate referenced-call-site and scientific compatibility audit, not a mechanical rename. `internal/ppo-fixture-worker` is discoverable but blocked for manual invocation.
+Because historical scripts are referenced by provenance, external handoffs, worker subprocesses and audit allow-lists, **all 48 original paths remain present**, but selected non-frozen implementations have been extracted and their wrappers updated. This is *not* a claim that all 48 script bytes are unchanged. Physical relocation of source-bound entrypoints requires a separate call-site/provenance audit. `internal/ppo-fixture-worker` remains blocked through the public router.
 
 ## Documentation
 
@@ -32,14 +32,14 @@ Static read of all 48 historical entrypoints found **no active `f1rl` Python imp
 
 ## Validations and limitations
 
-GitHub-only static checks: 48 unique aliases map to 48 existing scripts, no duplicate aliases or version suffixes, zero changed/deleted legacy scripts, zero changed/deleted historical evidence, 48 migration-map entries, new relative Markdown references resolve, no baseline files removed.
+GitHub-only static checks: 48 unique aliases map to 48 existing script **paths**, no duplicate aliases/version suffixes, no deleted legacy script, no altered immutable research evidence, 48 migration-map entries, and current navigation links resolve. Five original script *implementations* have changed in subsequent extraction batches; this is intentional and covered by new focused tests.
 
-Focused tests are added at `tests/scripts/test_workflows.py`, including manifest completeness, non-executing listing, internal command denial, subprocess argument preservation and document link checks. **Runtime tests, full Python suite, frontend npm suite and scientific preflight have not been run from this GitHub-only authoring environment**. Do not represent the prior `b11a501` acceptance as a new-branch test pass.
+Focused tests exist in `tests/scripts/`. The owner independently ran **15 passed in 8.67s** on commit `e496d44` (workflow, extraction, and historical restore tests) and verified `PASS: 12 models, 7 reports and 96 cell logs`, with a clean worktree. **The new runtime-selector tests introduced after `e496d44` have NOT RUN**. Full Python suite, frontend npm suite, and scientific preflight have not been rerun on this branch; do not represent migration-baseline acceptance as new-branch acceptance.
 
 Recommended local review before manual merge:
 
 ```powershell
-python -m pytest -q tests/scripts/test_workflows.py
+python -m pytest -q tests/scripts/test_workflows.py tests/scripts/test_extracted_workflows.py tests/scripts/test_runtime_selection.py tests/research/test_demo_launcher.py tests/research/test_wp3_historical_restore.py
 python -m scripts.workflows list --json
 python -m scripts.workflows evidence verify-frozen-assets
 python -m pytest -q

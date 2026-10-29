@@ -4,7 +4,7 @@ Baseline: `b11a501`. Reviewed the source text of all **48 original Python entryp
 
 ## Findings
 
-- **0** active `from f1rl...` or `import f1rl...` statements in the 48 legacy scripts. They already use active `src.*` imports where project modules are required.
+- **0** active `from f1rl...` or `import f1rl...` statements were found in the 48 legacy scripts at baseline. The newly extracted implementations import active `src.*` packages. This is a static code scan, not a guarantee about dynamic imports.
 - Most scripts inject the repository root into `sys.path` to support invocation by absolute path. This is compatibility bootstrap, not clean reusable-package architecture. The **new** workflow router is a stdlib-only module and does not need this bootstrap.
 - The original cross-script import from `scripts/run_inference.py` to `launch_exploratory_demo` has been replaced by a shared, versionless `src.interfaces.runtime_selection` adapter. The launcher retains its `_runtime_ready` / `_interpreter_candidates` compatibility hooks; both entrypoints use the same runtime-selection implementation.
 - `scripts/build_demo_handoff.py` bundles named script paths as handoff inputs. Moving them would change packaged artifacts and their references.
