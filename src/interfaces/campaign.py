@@ -755,7 +755,7 @@ def _state_update(path: Path, state: dict, **updates) -> dict:
 
 def _run_child(root: Path, output: Path, log_path: Path, model: dict,
                training: dict) -> tuple[int, float, dict]:
-    command = [sys.executable, "scripts/local_demo.py", "train",
+    command = [sys.executable, "-m", "scripts.training.local_simulation", "train",
                "--candidate", model["candidate_id"],
                "--tuning-seed-index", str(model["seed_index"]),
                "--output", str(output)]

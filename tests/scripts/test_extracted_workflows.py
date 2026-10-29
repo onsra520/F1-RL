@@ -19,9 +19,9 @@ def test_frozen_verifier_refuses_missing_manifest(tmp_path):
         verify_frozen_assets(tmp_path)
 
 
-def test_legacy_frozen_verifier_matches_public_workflow():
+def test_frozen_verifier_module_matches_public_workflow():
     old = subprocess.run(
-        [sys.executable, str(ROOT / "scripts/verify_consolidated_wp3_assets.py")],
+        [sys.executable, "-m", "scripts.evidence.verify_frozen_assets"],
         cwd=ROOT, capture_output=True, text=True, check=True, timeout=120,
     )
     new = subprocess.run(
@@ -34,7 +34,7 @@ def test_legacy_frozen_verifier_matches_public_workflow():
 
 def test_vector_benchmark_cli_help_is_nonexecuting():
     entrypoints = [
-        [sys.executable, "scripts/benchmark_vector_envs.py", "--help"],
+        [sys.executable, "-m", "scripts.diagnostics.benchmark_environments", "--help"],
         [sys.executable, "-m", "scripts.workflows", "diagnostics", "benchmark-environments", "--help"],
     ]
     for command in entrypoints:

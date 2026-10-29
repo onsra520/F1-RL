@@ -15,7 +15,7 @@ def test_ready_interpreter_returns_without_subprocess(monkeypatch):
     called = []
     monkeypatch.setattr(selection, "runtime_ready", lambda executable: executable == sys.executable)
     monkeypatch.setattr(selection, "interpreter_candidates", lambda root: called.append(root) or [])
-    assert selection.ensure_runtime(ROOT, ROOT / "scripts/launch_exploratory_demo.py") is None
+    assert selection.ensure_runtime(ROOT, ROOT / "scripts/training/launch_demo.py") is None
     assert called == []
 
 
@@ -28,7 +28,7 @@ def test_fallback_preserves_command_arguments_and_working_directory(monkeypatch)
         lambda command, **kwargs: calls.append((command, kwargs)) or 23,
     )
     command = ["run_inference.py", "--model", "weights.zip"]
-    assert selection.ensure_runtime(ROOT, ROOT / "scripts/launch_exploratory_demo.py", command) == 23
+    assert selection.ensure_runtime(ROOT, ROOT / "scripts/training/launch_demo.py", command) == 23
     assert calls == [(["rl-python", "-B", *command], {"cwd": ROOT})]
 
 
@@ -40,11 +40,11 @@ def test_missing_interpreter_fails_without_launch(monkeypatch):
         lambda *args, **kwargs: pytest.fail("fallback must not launch"),
     )
     with pytest.raises(ImportError, match="No Python interpreter"):
-        selection.ensure_runtime(ROOT, ROOT / "scripts/run_inference.py")
+        selection.ensure_runtime(ROOT, ROOT / "scripts/inference/run_policy.py")
 
 
 def test_launcher_keeps_historical_runtime_hook_contract(monkeypatch):
-    launcher_path = ROOT / "scripts/launch_exploratory_demo.py"
+    launcher_path = ROOT / "scripts/training/launch_demo.py"
     spec = importlib.util.spec_from_file_location("launcher_runtime_regression", launcher_path)
     launcher = importlib.util.module_from_spec(spec)
     assert spec is not None and spec.loader is not None
@@ -61,20 +61,20 @@ def test_launcher_keeps_historical_runtime_hook_contract(monkeypatch):
     assert calls == [(["rl-python", "-B", *command], {"cwd": ROOT})]
 
 
-def test_inference_rejects_invalid_arguments_before_loading_model():
-    path = ROOT / "scripts/run_inference.py"
+def test_inference_module_rejects_invalid_arguments_before_loading_model():
+    path = ROOT / "scripts/inference/run_policy.py"
     for invalid in ("0", "33"):
         result = subprocess.run(
-            [sys.executable, str(path), "--episodes", invalid],
+            [sys.executable, "-m", "scripts.inference.run_policy", "--episodes", invalid],
             cwd=ROOT, capture_output=True, text=True, timeout=20,
         )
         assert result.returncode == 2
         assert "episodes must be between 1 and 32" in result.stderr
 
 
-def test_inference_no_longer_imports_a_sibling_executable():
-    source = (ROOT / "scripts/run_inference.py").read_text(encoding="utf-8")
-    assert "from launch_exploratory_demo import" not in source
-    grouped = (ROOT / "scripts/inference/run_policy.py").read_text(encoding="utf-8")
-    assert "from src.interfaces.runtime_selection import ensure_runtime" in grouped
-    assert "from scripts.inference import run_policy as _implementation" in source
+def test_executable_modules_do_not_mutate_sys_path_or_import_siblings():
+    for path in (ROOT / "scripts").rglob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        assert "sys.path.insert" not in source
+        assert "sys.path.append" not in source
+        assert "from scripts." not in source or "from scripts.workflows" in source

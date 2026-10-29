@@ -63,7 +63,7 @@ def supervise(root, permit, envelope):
     env = dict(os.environ, CUDA_VISIBLE_DEVICES='', OMP_NUM_THREADS=thread_limit, MKL_NUM_THREADS=blas_limit,
         OPENBLAS_NUM_THREADS=blas_limit, NUMEXPR_NUM_THREADS=blas_limit, VECLIB_MAXIMUM_THREADS=blas_limit,
         PYTHONPATH=str(Path(root).resolve()), PYTHONDONTWRITEBYTECODE='1')
-    command = [sys.executable, '-B', str(Path(root)/'scripts/exploratory_ppo.py'),
+    command = [sys.executable, '-B', '-m', 'scripts.training.exploratory_policy',
         '_worker', '--permit', str(output/'permit.json'), '--authorization', str(output/'authorization.json')]
     try:
         with (output/'worker.stdout.log').open('w', encoding='utf-8') as stdout, (output/'worker.stderr.log').open('w', encoding='utf-8') as stderr:

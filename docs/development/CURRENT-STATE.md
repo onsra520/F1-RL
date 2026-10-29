@@ -30,7 +30,7 @@ Do not use historical demonstration success metrics as proof of race completion.
 - src/training/: vector environment and throughput benchmark
 - src/evaluation/: driving comparison and non-scientific diagnostics
 - src/validation/: evidence, original scientific gates and read-only audits
-- scripts/: historical executable compatibility, versionless router
+- scripts/: grouped functional entrypoints and versionless router
 - docs/research/: historical contracts, frozen evidence and provenance records
 
 For per-command ownership use SCRIPT-STATUS.json and ENTRYPOINT-ARCHITECTURE.md.

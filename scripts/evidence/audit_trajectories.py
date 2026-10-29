@@ -7,8 +7,6 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 from src.validation.trajectory_audit_cli import audit_trajectory_run, main as _main
 

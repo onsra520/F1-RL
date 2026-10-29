@@ -33,10 +33,10 @@ AUDIT_ONLY_PATHS = frozenset({
     "f1rl/learning/swept_volume_audit.py",
     "f1rl/learning/freeze_readiness.py",
     "f1rl/learning/corridor_audit.py",
-    "scripts/wp7_audit_train_trajectories.py",
-    "scripts/wp7_audit_3d_swept_volume.py",
-    "scripts/wp7_freeze_readiness.py",
-    "scripts/wp7_audit_right_turn_corridor.py",
+    "scripts/evidence/audit_trajectories.py",
+    "scripts/evidence/audit_swept_volume.py",
+    "scripts/evaluation/freeze_readiness.py",
+    "scripts/evidence/audit_road_corridor.py",
     "tests/learning/test_trajectory_audit_reconstruction.py",
     "tests/learning/test_swept_volume_audit_reconstruction.py",
     "tests/learning/test_freeze_readiness_reconstruction.py",
@@ -47,7 +47,7 @@ AUDIT_ONLY_PATHS = frozenset({
     "configs/recovery/wp7-vehicle-geometry-review.yml",
     "f1rl/learning/geometry_review.py",
     "f1rl/learning/robustness_screen.py",
-    "scripts/wp7_screen_train_action_sensitivity.py",
+    "scripts/evaluation/screen_train_action_sensitivity.py",
     "tests/learning/test_wp7_robustness_screen_reconstruction.py",
 })
 

@@ -1,4 +1,4 @@
-"""Keep migration status aligned with actual workflow catalogue and module ownership."""
+"""Keep the grouped entrypoint inventory aligned with the workflow registry."""
 import json
 from pathlib import Path
 
@@ -7,38 +7,20 @@ from scripts.workflows.catalog import WORKFLOWS
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_migration_status_inventory_covers_every_original_workflow():
+def test_entrypoint_inventory_covers_every_grouped_workflow():
     status = json.loads((ROOT / "docs/development/SCRIPT-STATUS.json").read_text(encoding="utf-8"))
-    mapping = {entry["legacy_path"]: entry for entry in status["workflows"]}
-    assert len(mapping) == len(status["workflows"]) == len(WORKFLOWS) == 48
+    records = {entry["entrypoint"]: entry for entry in status["workflows"]}
+    assert len(records) == len(status["workflows"]) == len(WORKFLOWS) == 48
     for entry in WORKFLOWS:
-        old = "scripts/" + entry.script
-        record = mapping[old]
+        record = records[entry.script]
         assert (record["group"], record["alias"], record["scope"]) == (
             entry.group, entry.name, entry.scope
         )
-        assert (ROOT / old).is_file()
-        if record["module_owner"]:
-            assert (ROOT / record["module_owner"]).is_file()
+        assert (ROOT / entry.script).is_file()
+        assert (ROOT / record["former_root_path"]).is_file() is False
     assert status["counts"] == {
-        "implementation-extracted": 14,
-        "shared-dependency-migrated": 2,
-        "compatibility-unmodified": 32,
+        "catalogued": 48,
+        "grouped_entrypoints": 48,
+        "root_legacy_entrypoints": 0,
+        "compatibility_wrappers": 0,
     }
-    assert not any(entry["refactor_state"] == "implementation-extracted" and not entry["module_owner"]
-                   for entry in status["workflows"])
-
-
-def test_implementation_wrappers_import_their_moved_modules():
-    status = json.loads((ROOT / "docs/development/SCRIPT-STATUS.json").read_text(encoding="utf-8"))
-    for row in status["workflows"]:
-        if row["refactor_state"] != "implementation-extracted":
-            continue
-        expected = row["module_owner"].removesuffix(".py").replace("/", ".")
-        source = (ROOT / row["legacy_path"]).read_text(encoding="utf-8")
-        primary = ROOT / row["primary_entrypoint"]
-        assert primary.is_file()
-        primary_source = primary.read_text(encoding="utf-8")
-        assert f"from {expected} import" in primary_source
-        expected_package = row["primary_entrypoint"].removesuffix(".py").replace("/", ".")
-        assert f"from {expected_package} import main" in source

@@ -4,8 +4,6 @@ from importlib import import_module
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 from src.interfaces.demo_handoff import save, main as _main
 

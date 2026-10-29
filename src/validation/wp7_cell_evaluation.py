@@ -176,12 +176,11 @@ def execute_saved_ppo_fixture_cell(
 
 def _spawn_ppo_cell(repository_root,payload,*,timeout_s,evidence_path):
     root=Path(repository_root).resolve(strict=True)
-    worker=root/'scripts/wp7_ppo_fixture_worker.py'
-    bootstrap='import sys,runpy;sys.path.insert(0,sys.argv[1]);runpy.run_path(sys.argv[2],run_name="__main__")'
+    worker='scripts.internal.ppo_fixture_worker'
     try:
         with tempfile.TemporaryDirectory(prefix='wp7-ppo-worker-') as cache:
-            completed=subprocess.run([sys.executable,'-I','-B','-X',f'pycache_prefix={cache}',
-                '-c',bootstrap,str(root),str(worker)],input=pickle.dumps(payload),capture_output=True,
+            completed=subprocess.run([sys.executable,'-s','-E','-B','-X',f'pycache_prefix={cache}',
+                '-m',worker],input=pickle.dumps(payload),capture_output=True,
                 timeout=timeout_s,cwd=root,env={**os.environ,'PYTHONDONTWRITEBYTECODE':'1'})
     except subprocess.TimeoutExpired as exc:
         raise TimeoutError('isolated PPO worker timed out') from exc

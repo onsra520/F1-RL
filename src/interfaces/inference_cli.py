@@ -21,10 +21,10 @@ def main(repository_root, argv=None, *, torch_factory):
     if not 0 <= args.seed_start <= 2**32-args.episodes:
         parser.error('seed roster must fit uint32')
     from src.interfaces.runtime_selection import ensure_runtime
-    legacy_command = ROOT / 'scripts/run_inference.py'
+    launcher = ROOT / 'scripts/inference/run_policy.py'
     alternate_result = ensure_runtime(
-        ROOT, legacy_command,
-        [str(legacy_command), *(sys.argv[1:] if argv is None else argv)],
+        ROOT, launcher,
+        ['-m', 'scripts.inference.run_policy', *(sys.argv[1:] if argv is None else argv)],
     )
     if alternate_result is not None:
         return alternate_result

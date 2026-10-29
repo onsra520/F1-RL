@@ -4,12 +4,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / 'scripts/verify_historical_source_records.py'
+MODULE = 'scripts.evidence.verify_historical_records'
 HISTORY = ROOT / 'docs/research/evidence/wp3-historical-admission-inputs'
 
 
 def test_historical_record_verification_is_independent_of_current_source():
-    result = subprocess.run([sys.executable, str(SCRIPT), '--history', str(HISTORY)], cwd=ROOT, text=True, capture_output=True)
+    result = subprocess.run([sys.executable, '-m', MODULE, '--history', str(HISTORY)], cwd=ROOT, text=True, capture_output=True)
     assert result.returncode == 0, result.stderr
     assert 'HISTORICAL_RECORD_INTEGRITY_VERIFIED' in result.stdout
     assert 'ORIGINAL_SOURCE_RECONSTRUCTED' not in result.stdout
@@ -46,11 +46,14 @@ def test_tampered_historical_input_is_rejected(tmp_path, relative):
     with pytest.raises(ValueError, match='mismatch'):
         verify_historical_records(tmp_path, tmp_path / HISTORY.relative_to(ROOT))
 
-@pytest.mark.parametrize('name', ['wp3_v4_verify_technical_acceptance.py', 'wp3_verify_crash_terminal_v1.py'])
-def test_existing_verify_entrypoints_report_historical_integrity(name):
+@pytest.mark.parametrize('module', [
+    'scripts.evidence.verify_technical_acceptance',
+    'scripts.evidence.verify_crash_terminal_v1',
+])
+def test_grouped_verify_entrypoints_report_historical_integrity(module):
     import os
     env = dict(os.environ, F1RL_WP3_EVIDENCE=str(HISTORY))
-    result = subprocess.run([sys.executable, str(ROOT / 'scripts' / name)], cwd=ROOT, text=True, capture_output=True, env=env)
+    result = subprocess.run([sys.executable, '-m', module], cwd=ROOT, text=True, capture_output=True, env=env)
     assert result.returncode == 0, result.stderr
     assert 'HISTORICAL_RECORD_INTEGRITY_VERIFIED' in result.stdout
 

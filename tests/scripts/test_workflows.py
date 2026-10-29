@@ -8,14 +8,14 @@ from scripts.workflows.catalog import WORKFLOWS
 from scripts.workflows.__main__ import BY_COMMAND, ROOT, main, manifest
 
 
-def test_all_original_script_entrypoints_are_catalogued():
-    original = {
-        path.name for path in (ROOT / "scripts").glob("*.py")
-        if path.name != "__init__.py"
+def test_all_grouped_entrypoints_are_catalogued():
+    root_entries = [path for path in (ROOT / "scripts").glob("*.py") if path.name != "__init__.py"]
+    assert root_entries == []
+    assert len(WORKFLOWS) == len(BY_COMMAND) == 48
+    assert {row.script for row in WORKFLOWS} == {
+        path.relative_to(ROOT).as_posix() for path in (ROOT / "scripts").rglob("*.py")
+        if path.name != "__init__.py" and "workflows" not in path.parts
     }
-    assert len(original) == 48
-    assert {row.script for row in WORKFLOWS} == original
-    assert len(BY_COMMAND) == len(WORKFLOWS)
 
 
 def test_workflow_names_are_versionless_and_unambiguous():
@@ -53,18 +53,16 @@ def test_dispatch_preserves_interpreter_arguments_and_exit_status(monkeypatch):
     cli = importlib.import_module("scripts.workflows.__main__")
     calls = []
 
-    def fake_call(command):
-        calls.append(command)
+    def fake_call(command, **kwargs):
+        calls.append((command, kwargs))
         return 17
 
     monkeypatch.setattr(cli.subprocess, "call", fake_call)
     assert cli.main(["evidence", "verify-frozen-assets", "--some-arg", "value"]) == 17
-    assert calls == [[
-        sys.executable,
-        str((ROOT / "scripts/evidence/verify_frozen_assets.py").resolve()),
-        "--some-arg",
-        "value",
-    ]]
+    assert calls == [([
+        sys.executable, "-m", "scripts.evidence.verify_frozen_assets",
+        "--some-arg", "value",
+    ], {"cwd": ROOT})]
 
 
 def test_document_navigation_links_and_baseline_inventory():

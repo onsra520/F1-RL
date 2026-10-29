@@ -1,7 +1,7 @@
 """Read-only source provenance report for *historical* WP7 PPO archives.
 
 Usage:
-    python scripts/wp7_historical_source_audit.py --archive-run RUN --output OUT.json
+    python -m scripts.evidence.historical_source_audit --archive-run RUN --output OUT.json
 
 Never rewrites a training archive, opens HELD-OUT, runs PPO or asserts
 Scientific Acceptance. An exact Git commit source match cannot recover

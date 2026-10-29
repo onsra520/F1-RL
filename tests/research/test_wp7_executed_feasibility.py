@@ -112,20 +112,18 @@ def test_loaded_wrapper_is_rejected_after_its_source_changes(tmp_path):
     copied = tmp_path/'checkout'
     shutil.copytree(ROOT/'src',copied/'src',ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
     program = '''
-import sys
 from pathlib import Path
-sys.path.insert(0,sys.argv[1])
 import src.validation.wp7_executed_feasibility as executor
 source = Path(executor.__file__)
 source.write_bytes(source.read_bytes()+b'\\n# changed after import\\n')
 try:
-    executor.certify_planar_execution(Path(sys.argv[1]),'straight-sprint-v1',controls=[[0.,0.,0.]])
+    executor.certify_planar_execution(Path.cwd(),'straight-sprint-v1',controls=[[0.,0.,0.]])
 except ValueError as error:
     assert 'source origin' in str(error)
     print('stale wrapper rejected')
 else:
     raise AssertionError('modified loaded wrapper was accepted')
 '''
-    completed = subprocess.run([sys.executable,'-I','-B','-c',program,str(copied)],
+    completed = subprocess.run([sys.executable,'-s','-E','-B','-c',program], cwd=copied,
                                text=True,capture_output=True,check=True,timeout=45)
     assert completed.stdout.strip()=='stale wrapper rejected'

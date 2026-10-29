@@ -19,12 +19,14 @@ def test_active_doc_links_exist():
             assert target.is_relative_to(ROOT.resolve())
             assert target.exists(), (page.relative_to(ROOT), relative)
 
-def test_dispositions_cover_all_commands():
+def test_entrypoint_inventory_covers_all_commands():
     data = json.loads((ROOT / 'docs/development/SCRIPT-STATUS.json').read_text(encoding='utf-8'))
-    expected = {'extracted-implementation': 14, 'existing-delegator': 15,
-                'shared-dependency': 2, 'guarded-historical-executable': 17}
-    assert data['review_disposition_counts'] == expected
-    assert sum(expected.values()) == len(data['workflows']) == 48
+    assert data['counts'] == {
+        'catalogued': 48, 'grouped_entrypoints': 48,
+        'root_legacy_entrypoints': 0, 'compatibility_wrappers': 0,
+    }
+    assert len(data['workflows']) == 48
     for command in data['workflows']:
-        assert command['review_disposition'] in expected
-        assert command['rationale'] and (ROOT / command['legacy_path']).is_file()
+        assert command['scope']
+        assert (ROOT / command['entrypoint']).is_file()
+        assert not (ROOT / command['former_root_path']).exists()

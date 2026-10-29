@@ -134,12 +134,10 @@ def _certify_execution(repository_root,track_id,*,controls,ramp_profile,coupled_
     source = _execution_sources(root)
     payload = json.dumps(dict(track_id=track_id,controls=controls,source=source,ramp_profile=ramp_profile,
                               coupled_profile=coupled_profile,center_gates=center_gates,spatial_profile=spatial_profile,selection=selection),allow_nan=False)
-    bootstrap = ('import sys;sys.path.insert(0,sys.argv[1]);'
-                 'from src.validation.wp7_executed_feasibility import _worker;_worker()')
     # A fresh cache prefix prevents stale checkout pyc files from supplying code.
     with tempfile.TemporaryDirectory(prefix='wp7-execution-') as cache:
-        completed = subprocess.run([sys.executable,'-I','-B','-X',f'pycache_prefix={cache}',
-            '-c',bootstrap,str(root)],cwd=root,input=payload,text=True,capture_output=True,timeout=240)
+        completed = subprocess.run([sys.executable,'-s','-E','-B','-X',f'pycache_prefix={cache}',
+            '-m','src.validation.wp7_executed_feasibility'],cwd=root,input=payload,text=True,capture_output=True,timeout=240)
     if completed.returncode!=0:
         raise RuntimeError(f'isolated feasibility worker failed: {completed.stderr[-1600:]}')
     result = json.loads(completed.stdout)
@@ -519,3 +517,7 @@ def replay_planar_execution(repository_root,document,*,expected_sha256):
     if restored!=document:
         raise ValueError('executed source, controls or physical evidence identity differs')
     return restored
+
+
+if __name__ == "__main__":
+    _worker()

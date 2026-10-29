@@ -1,41 +1,37 @@
-"""Functional script package invariants and stable legacy compatibility."""
+"""Functional script package invariants and stable workflow routing."""
 from pathlib import Path
 import json
 import re
-from scripts.workflows.catalog import WORKFLOWS, PRIMARY_PATHS
+
+from scripts.workflows.catalog import WORKFLOWS
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_grouped_implementation_paths_are_complete():
-    registry = json.loads((ROOT / "docs/development/SCRIPT-STATUS.json").read_text("utf-8"))
+def test_all_workflows_use_grouped_modules_without_root_compatibility_files():
+    status = json.loads((ROOT / "docs/development/SCRIPT-STATUS.json").read_text("utf-8"))
     rows = {(item.group, item.name): item for item in WORKFLOWS}
     assert len(rows) == 48
-    grouped = registry["workflows"]
-    extracted = [item for item in grouped if item["refactor_state"] == "implementation-extracted"]
-    assert len(extracted) == len(PRIMARY_PATHS) == 14
-    for row in grouped:
+    assert status["counts"]["grouped_entrypoints"] == 48
+    assert status["counts"]["root_legacy_entrypoints"] == 0
+    assert not [path for path in (ROOT / "scripts").glob("*.py") if path.name != "__init__.py"]
+    for row in status["workflows"]:
         key = (row["group"], row["alias"])
         assert key in rows
-        assert (ROOT / row["legacy_path"]).exists()
-        primary = ROOT / row["primary_entrypoint"]
-        assert primary.is_file()
-        if row in extracted:
-            assert row["primary_entrypoint"] == PRIMARY_PATHS[key]
-            assert primary.parent.name == row["group"]
-            assert re.fullmatch(r"[a-z][a-z0-9_]*", primary.stem)
-            assert (primary.parent / "__init__.py").is_file()
-            assert "from src." in primary.read_text("utf-8")
-            legacy = (ROOT / row["legacy_path"]).read_text("utf-8")
-            assert f"from scripts.{row['group']}" in legacy
-            assert "def __getattr__" in legacy
-        else:
-            assert key not in PRIMARY_PATHS
-            assert row["primary_entrypoint"] == row["legacy_path"]
+        entrypoint = ROOT / row["entrypoint"]
+        assert entrypoint.is_file()
+        assert entrypoint.parent.name == row["group"]
+        assert re.fullmatch(r"[a-z][a-z0-9_]*", entrypoint.stem)
+        assert (entrypoint.parent / "__init__.py").is_file()
+        source = entrypoint.read_text("utf-8")
+        assert "sys.path.insert" not in source
+        assert "sys.path.append" not in source
+        assert "from scripts." not in source or row["group"] == "workflows"
+        assert not (ROOT / row["former_root_path"]).exists()
 
 
 def test_primary_groups_are_import_safe():
     import importlib
-    for group in ("diagnostics", "evaluation", "evidence", "inference", "training"):
+    for group in ("diagnostics", "evaluation", "evidence", "inference", "training", "internal"):
         module = importlib.import_module("scripts." + group)
         assert not hasattr(module, "main")

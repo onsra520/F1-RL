@@ -17,8 +17,9 @@ def demo_runtime_scripts(repository_root):
         'scripts/__init__.py',
         'scripts/inference/__init__.py',
         'scripts/inference/run_policy.py',
-        'scripts/run_inference.py',
-        'scripts/launch_exploratory_demo.py',
+        'scripts/training/__init__.py',
+        'scripts/training/launch_demo.py',
+        'scripts/training/exploratory_policy.py',
     ))
 
 
@@ -122,7 +123,7 @@ Use Python {permit['runtime']['python']} (Windows CPU tested). From this extract
 ```text
 python -m venv .venv
 .venv\\Scripts\\python -m pip install -r requirements.txt
-.venv\\Scripts\\python -B scripts/run_inference.py --output inference-result.json
+.venv\\Scripts\\python -B -m scripts.inference.run_policy --output inference-result.json
 ```
 
 Or launch START-DEMO.cmd after installation. This loads the saved model without training.

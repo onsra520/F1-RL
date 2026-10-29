@@ -50,7 +50,7 @@ Any executable entrypoint that constructs the `subproc` backend must use a `__ma
 
 ## Diagnostics and future scope
 
-`scripts/benchmark_vector_envs.py` is a manual diagnostic throughput benchmark. Its output is host-dependent evidence only; it has no CI threshold and does not choose a backend automatically.
+`python -m scripts.diagnostics.benchmark_environments` is a manual diagnostic throughput benchmark. Its output is host-dependent evidence only; it has no CI threshold and does not choose a backend automatically.
 
 `SubprocVecEnv` uses Windows-safe `spawn`; executable entrypoints must use a `__main__` guard. Captured scenarios and factories must remain serializable under spawn.
 

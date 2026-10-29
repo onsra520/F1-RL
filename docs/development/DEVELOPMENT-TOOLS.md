@@ -4,13 +4,13 @@ This is the current guide for **TRAIN-only** performance and driving troubleshoo
 
 ## Script-to-module boundaries
 
-| Versionless workflow | Compatibility path | Implementation module | Effect |
+| Versionless workflow | Package entrypoint | Implementation module | Effect |
 | --- | --- | --- | --- |
-| `evaluation compare-driving` | `scripts/compare_driving.py` | `src/evaluation/driving_comparison.py` | Paired development evaluation on fixed tuning/reserved seed roster |
-| `diagnostics diagnose-driving` | `scripts/diagnose_driving.py` | `src/evaluation/driving_diagnostics.py` | Scripted-vs-model traces and runtime profiling |
-| `diagnostics probe-gpu` | `scripts/wp7_capture_gpu.py` | `src/interfaces/hardware_probe.py` | Read-only local hardware capabilities |
-| `diagnostics benchmark-environments` | `scripts/benchmark_vector_envs.py` | `src/training/vector_benchmark.py` | Development throughput benchmark |
-| `evidence verify-frozen-assets` | `scripts/verify_consolidated_wp3_assets.py` | `src/validation/frozen_asset_integrity.py` | Read-only frozen asset hash validation |
+| `evaluation compare-driving` | `scripts/evaluation/compare_driving.py` | `src/evaluation/driving_comparison.py` | Paired development evaluation on fixed tuning/reserved seed roster |
+| `diagnostics diagnose-driving` | `scripts/diagnostics/diagnose_driving.py` | `src/evaluation/driving_diagnostics.py` | Scripted-vs-model traces and runtime profiling |
+| `diagnostics probe-gpu` | `scripts/diagnostics/probe_gpu.py` | `src/interfaces/hardware_probe.py` | Read-only local hardware capabilities |
+| `diagnostics benchmark-environments` | `scripts/diagnostics/benchmark_environments.py` | `src/training/vector_benchmark.py` | Development throughput benchmark |
+| `evidence verify-frozen-assets` | `scripts/evidence/verify_frozen_assets.py` | `src/validation/frozen_asset_integrity.py` | Read-only frozen asset hash validation |
 
 ## Safe commands
 
@@ -30,7 +30,7 @@ The comparison's eight registered **development-only** seeds and prespecified im
 
 ## Acceptance and limits
 
-- Use `tests/scripts/test_development_tools.py` to check pure metrics, diagnostic actions, help and versionless/legacy parity without training.
+- Use `tests/scripts/test_development_tools.py` to check pure metrics, diagnostic actions, help and workflow/module parity without training.
 - The Physics/PPO `src/` implementation and sealed evaluation protocols were not modified by this script refactor.
 - CLI names are stable and versionless; old script filenames remain compatibility entries because handoffs and recorded evidence may refer to them.
 - The authoritative backend↔frontend connection does not yet exist.

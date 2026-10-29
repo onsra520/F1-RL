@@ -14,21 +14,21 @@ if not errorlevel 1 goto pylauncher
 goto pathpython
 
 :custompython
-"%F1RL_PYTHON%" -B scripts\launch_exploratory_demo.py
+"%F1RL_PYTHON%" -B -m scripts.training.launch_demo
 goto result
 
 :localpython
-".venv\Scripts\python.exe" -B scripts\launch_exploratory_demo.py
+".venv\Scripts\python.exe" -B -m scripts.training.launch_demo
 goto result
 
 :pylauncher
 py -3.12 --version >nul 2>&1
 if errorlevel 1 goto pathpython
-py -3.12 -B scripts\launch_exploratory_demo.py
+py -3.12 -B -m scripts.training.launch_demo
 goto result
 
 :pathpython
-python -B scripts\launch_exploratory_demo.py
+python -B -m scripts.training.launch_demo
 goto result
 
 :result

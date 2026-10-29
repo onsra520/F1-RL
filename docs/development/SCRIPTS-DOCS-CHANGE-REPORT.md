@@ -47,7 +47,15 @@ the engineering result. No GitHub Actions or training are used for this audit.
 Use git log for the exact source commit; no report retroactively replaces the
 source SHA of a historical run.
 
-## Grouped primary command modules
+## Follow-on root cleanup (2026-10-29; starting HEAD `8071957`)
+
+The earlier report above records the state of the initial extraction. This follow-on moved all 48 workflow commands into functional packages, removed the 14 redundant root shims, and moved the remaining 34 executable implementations. `scripts/` now has zero root-level Python compatibility files. The registry and callers use module execution; reusable behavior is in `src/`, with no executable-to-executable imports or `sys.path` mutation.
+
+CLI aliases, argument forwarding, admission checks, frozen assets, and historical evidence remain intact. Three scientific contract filenames retain their required `v1` identifier. Archived research, plans, and generated architecture snapshots keep their original command text as provenance.
+
+Validation for this follow-on: Python compilation and 12 entrypoint/inventory/documentation tests PASS. In the broader script suite, 28 tests PASS and 8 could not run because Windows Application Control blocked `torch\\lib\\c10.dll` (WinError 4551). Full pytest is NOT PASS: collection stopped with 112 errors from the same Torch DLL block. A historical builder subset also requires the external run-model fixture (`F1RL_WP3_EVIDENCE`); the repository's immutable receipts-only fixture does not contain those model ZIPs. Frozen asset verification PASS (12 models, 7 reports, 96 cell logs); historical record verification PASS (2 records); frontend tests PASS (12/12) and build PASS. The active GitHub workflow reference to the removed `scripts/wp7_review_owner_acceptance.py` path remains a blocker because this task prohibits editing GitHub Actions.
+
+## Grouped primary command modules (initial extraction)
 
 The 14 extracted active commands are now placed in versionless
 `scripts/{diagnostics,evaluation,evidence,inference,training}/` packages and

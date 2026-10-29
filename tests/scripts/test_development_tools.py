@@ -53,13 +53,13 @@ def test_scripted_diagnostic_action_is_stable():
     assert action.dtype == np.float32
 
 
-@pytest.mark.parametrize("legacy,group,alias", [
-    ("compare_driving.py", "evaluation", "compare-driving"),
-    ("diagnose_driving.py", "diagnostics", "diagnose-driving"),
+@pytest.mark.parametrize("module,group,alias", [
+    ("scripts.evaluation.compare_driving", "evaluation", "compare-driving"),
+    ("scripts.diagnostics.diagnose_driving", "diagnostics", "diagnose-driving"),
 ])
-def test_legacy_and_versionless_development_help_are_identical(legacy, group, alias):
+def test_grouped_and_versionless_development_help_are_identical(module, group, alias):
     old = subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / legacy), "--help"],
+        [sys.executable, "-m", module, "--help"],
         cwd=ROOT, capture_output=True, text=True, timeout=30,
     )
     modern = subprocess.run(
@@ -71,7 +71,7 @@ def test_legacy_and_versionless_development_help_are_identical(legacy, group, al
     assert "--output" in old.stdout
 
 
-def test_cuda_probe_has_stable_keys_and_legacy_wrapper(monkeypatch):
+def test_cuda_probe_has_stable_keys_and_grouped_entrypoint(monkeypatch):
     from src.interfaces import hardware_probe
     class MockVersion:
         cuda = None
@@ -84,8 +84,8 @@ def test_cuda_probe_has_stable_keys_and_legacy_wrapper(monkeypatch):
     assert hardware_probe.capture_hardware(MockTorch) == {
         "cuda_runtime": None, "cuda_available": False, "gpu_devices": [],
     }
-    path = ROOT / "scripts" / "wp7_capture_gpu.py"
-    spec = importlib.util.spec_from_file_location("legacy_gpu_probe", path)
+    path = ROOT / "scripts" / "diagnostics" / "probe_gpu.py"
+    spec = importlib.util.spec_from_file_location("grouped_gpu_probe", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert callable(module.main)
@@ -93,7 +93,7 @@ def test_cuda_probe_has_stable_keys_and_legacy_wrapper(monkeypatch):
 
 def test_gpu_probe_subprocess_output_matches_versionless_alias():
     old = subprocess.run(
-        [sys.executable, str(ROOT / "scripts/wp7_capture_gpu.py")],
+        [sys.executable, "-m", "scripts.diagnostics.probe_gpu"],
         cwd=ROOT, capture_output=True, text=True, timeout=30,
     )
     new = subprocess.run(

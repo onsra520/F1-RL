@@ -57,7 +57,7 @@ def _execute(root):
     summary = re.search(r'(?m)^(\d+) passed in [\d.]+s', tests.stdout)
     if tests.returncode or not summary or int(summary.group(1)) != len(nodes):
         raise ValueError('current regression did not run every collected test successfully')
-    smoke = subprocess.run([sys.executable, str(root / 'scripts/smoke_consolidated_wp3_model.py')], cwd=root, capture_output=True, text=True, env=env)
+    smoke = subprocess.run([sys.executable, '-m', 'scripts.inference.smoke_frozen_policy'], cwd=root, capture_output=True, text=True, env=env)
     if smoke.returncode or 'checkpoint timesteps: 65536' not in smoke.stdout or "'failure_reason': 'step_limit'" not in smoke.stdout:
         raise ValueError('current model smoke did not complete as expected')
     return {'test_nodes': nodes, 'pytest_stdout': tests.stdout, 'pytest_stdout_sha256': sha256(tests.stdout.encode()).hexdigest(), 'pytest_summary': tests.stdout.splitlines()[-1], 'smoke_stdout': smoke.stdout, 'smoke_stdout_sha256': sha256(smoke.stdout.encode()).hexdigest(), 'smoke_terminal': 'step_limit'}

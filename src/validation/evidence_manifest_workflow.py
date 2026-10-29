@@ -4,8 +4,8 @@ No Google Drive credentials or network operations are included. Creating a
 manifest is not proof of an off-device backup or independent restore.
 
 Examples (PowerShell):
-  python scripts/wp7_evidence_manifest.py create --source "D:\\archive\\run" --manifest "D:\\archive\\run-manifest.json"
-  python scripts/wp7_evidence_manifest.py verify --source "D:\\restore\\run" --manifest "D:\\archive\\run-manifest.json"
+  python -m scripts.evidence.evidence_manifest create --source "D:\\archive\\run" --manifest "D:\\archive\\run-manifest.json"
+  python -m scripts.evidence.evidence_manifest verify --source "D:\\restore\\run" --manifest "D:\\archive\\run-manifest.json"
 """
 from __future__ import annotations
 

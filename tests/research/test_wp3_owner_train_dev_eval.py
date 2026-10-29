@@ -188,7 +188,7 @@ def test_workers_bounded():
 
 
 def test_cli_compiles():
-    path=Path(__file__).resolve().parents[2]/"scripts/wp3_owner_train_dev_eval.py"
+    path=Path(__file__).resolve().parents[2]/"scripts/evaluation/owner_train_dev_eval.py"
     compile(path.read_text("utf8"),str(path),"exec")
 
 

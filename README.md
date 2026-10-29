@@ -17,7 +17,7 @@ F1-RL is a Python-first autonomous racing and reinforcement-learning project. It
 | --- | --- |
 | `src/` | Python core, simulation, tracks, RL, training, evaluation, validation, interfaces |
 | `web/` | React/TypeScript/Three.js racing sandbox |
-| `scripts/` | Compatibility entrypoints and [versionless workflow router](scripts/README.md) |
+| `scripts/` | Grouped command entrypoints and [versionless workflow router](scripts/README.md) |
 | `configs/` | Versioned runtime/research configuration and registered profiles |
 | `assets/` | Tracks and source assets |
 | `tests/` | Python regression tests |

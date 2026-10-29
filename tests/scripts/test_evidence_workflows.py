@@ -100,14 +100,14 @@ def test_historical_audit_never_approves_scientific_work(tmp_path, monkeypatch):
     assert exc.value.code == 2
 
 
-@pytest.mark.parametrize("legacy,group,action", [
-    ("wp7_evidence_manifest.py", "evidence", "evidence-manifest"),
-    ("wp7_verify_run_evidence.py", "evidence", "verify-run"),
-    ("wp7_historical_source_audit.py", "evidence", "historical-source-audit"),
+@pytest.mark.parametrize("module,group,action", [
+    ("scripts.evidence.evidence_manifest", "evidence", "evidence-manifest"),
+    ("scripts.evidence.verify_run", "evidence", "verify-run"),
+    ("scripts.evidence.historical_source_audit", "evidence", "historical-source-audit"),
 ])
-def test_legacy_and_stable_evidence_help_match_without_executing(legacy, group, action):
+def test_grouped_and_stable_evidence_help_match_without_executing(module, group, action):
     old = subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / legacy), "--help"],
+        [sys.executable, "-m", module, "--help"],
         cwd=ROOT, capture_output=True, text=True, timeout=30,
     )
     modern = subprocess.run(

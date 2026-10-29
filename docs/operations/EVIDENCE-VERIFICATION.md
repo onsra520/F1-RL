@@ -6,11 +6,11 @@ The commands below verify recorded file bytes or report historical source proven
 
 | Versionless command | Compatibility script | Source implementation |
 | --- | --- | --- |
-| `evidence evidence-manifest` | `scripts/wp7_evidence_manifest.py` | `src/validation/evidence_manifest_workflow.py` |
-| `evidence verify-run` | `scripts/wp7_verify_run_evidence.py` | `src/validation/run_evidence_workflow.py` |
-| `evidence historical-source-audit` | `scripts/wp7_historical_source_audit.py` | `src/validation/historical_source_audit_workflow.py` |
-| `evidence verify-frozen-assets` | `scripts/verify_consolidated_wp3_assets.py` | `src/validation/frozen_asset_integrity.py` |
-| `evidence verify-historical-records` | `scripts/verify_historical_source_records.py` | Existing validation API and historical wrapper |
+| `evidence evidence-manifest` | `scripts/evidence/evidence_manifest.py` | `src/validation/evidence_manifest_workflow.py` |
+| `evidence verify-run` | `scripts/evidence/verify_run.py` | `src/validation/run_evidence_workflow.py` |
+| `evidence historical-source-audit` | `scripts/evidence/historical_source_audit.py` | `src/validation/historical_source_audit_workflow.py` |
+| `evidence verify-frozen-assets` | `scripts/evidence/verify_frozen_assets.py` | `src/validation/frozen_asset_integrity.py` |
+| `evidence verify-historical-records` | `scripts/evidence/verify_historical_records.py` | `src/validation/historical_source_records.py` |
 
 ## Suggested read-only workflow
 

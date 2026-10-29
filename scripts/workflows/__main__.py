@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 
-from .catalog import BY_COMMAND, WORKFLOWS, PRIMARY_PATHS
+from .catalog import BY_COMMAND, WORKFLOWS
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "scripts"
@@ -15,8 +15,7 @@ SCRIPTS = ROOT / "scripts"
 def manifest() -> list[dict[str, str]]:
     return [
         {"group": item.group, "name": item.name, "script": item.script,
-         "primary": PRIMARY_PATHS.get((item.group, item.name), f"scripts/{item.script}"),
-         "scope": item.scope}
+         "primary": item.script, "scope": item.scope}
         for item in sorted(WORKFLOWS, key=lambda entry: (entry.group, entry.name))
     ]
 
@@ -36,7 +35,7 @@ def main(argv: list[str] | None = None) -> int:
         for item in manifest():
             if item["scope"] != "internal-only":
                 print(f'  {item["group"]} {item["name"]} [{item["scope"]}]')
-        print("Historical script paths are retained; commands preserve their original scientific gates.")
+        print("Grouped modules preserve their existing scientific admission checks.")
         return 0
     if len(args) < 2:
         print("expected <group> <action>; use 'list' for supported commands", file=sys.stderr)
@@ -45,14 +44,12 @@ def main(argv: list[str] | None = None) -> int:
     if item is None or item.scope == "internal-only":
         print("unknown or internal-only workflow; use 'list'", file=sys.stderr)
         return 2
-    primary = PRIMARY_PATHS.get((item.group, item.name))
-    script = (ROOT / primary).resolve() if primary else (SCRIPTS / item.script).resolve()
+    script = (ROOT / item.script).resolve()
     if not script.is_relative_to(SCRIPTS.resolve()) or not script.is_file():
         print("workflow script unavailable; refusing to execute", file=sys.stderr)
         return 2
-    # Do not interpret, coerce, or grant permissions for downstream arguments.
-    # The existing entrypoint owns admission, output paths, and fail-closed behavior.
-    return subprocess.call([sys.executable, str(script), *args[2:]])
+    module = ".".join(Path(item.script).with_suffix("").parts)
+    return subprocess.call([sys.executable, "-m", module, *args[2:]], cwd=ROOT)
 
 
 if __name__ == "__main__":

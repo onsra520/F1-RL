@@ -1,38 +1,26 @@
-# Executable scripts — primary functional modules
+# Executable scripts
 
-The supported primary executables are organised by responsibility:
+All 48 command entrypoints are grouped by responsibility:
 
-~~~text
+```text
 scripts/
-  diagnostics/       benchmark, diagnostic traces, hardware probe
-  evaluation/        TRAIN-development driving comparison
-  evidence/          frozen assets, SHA-256 manifests, read-only audits
-  inference/         saved policy and demo handoff
-  training/          scoped local simulation
-  internal/          reserved for non-public workers (no public entrypoint)
-  workflows/         stable CLI registry and explicit dispatcher
-  *.py               historical compatibility paths
-~~~
+  diagnostics/   environment and runtime diagnostics
+  evaluation/    development evaluation and replay tools
+  evidence/      frozen assets, manifests, and read-only audits
+  inference/     saved-policy execution and demo handoff
+  training/      explicit local training and preflight tools
+  internal/      trusted internal workers; not public workflows
+  workflows/     stable CLI registry and dispatcher
+```
 
-All 14 extracted implementation commands now have a **versionless primary
-entrypoint** inside those packages. Their actual application/validation logic
-lives in `src/`. The router calls the new grouped path.
+Run commands as modules so imports resolve from the checkout without `sys.path` changes:
 
-~~~powershell
+```powershell
 python -m scripts.workflows list
 python -m scripts.workflows evidence verify-frozen-assets
 python -m scripts.workflows inference run-policy --help
-~~~
+```
 
-The **48 root-level filenames remain** for compatibility with recorded research,
-direct legacy commands, external subprocesses, handoffs and tests. Only 14 are
-newly grouped primary modules; the remaining 34 still execute their existing
-source-bound or already-delegating entrypoints. Do not claim 48/48 physically
-migrated, and do not delete historical paths solely to unclutter the root.
+Every command keeps its existing scientific, training, and evidence checks. The internal trusted-pipe worker is not exposed by the public dispatcher.
 
-No grouped package performs training, inference or validation merely from import.
-The internal trusted-pipe PPO worker is not exposed through the public dispatcher.
-
-See [the migration map](../docs/development/SCRIPT-MIGRATION-MAP.md),
-[implementation ownership](../docs/development/SCRIPT-STATUS.json), and
-[architecture notes](../docs/development/ENTRYPOINT-ARCHITECTURE.md).
+See the [migration map](../docs/development/SCRIPT-MIGRATION-MAP.md), [entrypoint inventory](../docs/development/SCRIPT-STATUS.json), and [architecture notes](../docs/development/ENTRYPOINT-ARCHITECTURE.md).

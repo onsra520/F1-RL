@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / 'scripts/engineering_attestation.py'
+MODULE = 'scripts.evidence.engineering_attestation'
 
 
 def test_refuses_to_attest_a_dirty_source_tree(tmp_path):
@@ -14,7 +14,7 @@ def test_refuses_to_attest_a_dirty_source_tree(tmp_path):
     subprocess.run(['git', '-C', str(repo), 'add', 'source.py'], check=True)
     subprocess.run(['git', '-C', str(repo), '-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'initial'], check=True)
     (repo / 'source.py').write_text('x = 2\n')
-    result = subprocess.run([sys.executable, str(SCRIPT), '--root', str(repo), '--output', str(tmp_path / 'attestation.json')], cwd=ROOT, capture_output=True, text=True)
+    result = subprocess.run([sys.executable, '-m', MODULE, '--root', str(repo), '--output', str(tmp_path / 'attestation.json')], cwd=ROOT, capture_output=True, text=True)
     assert result.returncode != 0
     assert 'dirty' in result.stderr.lower()
     assert not (tmp_path / 'attestation.json').exists()
@@ -108,7 +108,7 @@ def test_rejects_incorrect_hash_for_current_source(tmp_path):
 
 def test_attester_rejects_a_different_clean_checkout(tmp_path):
     repo, _ = make_clean_repo(tmp_path)
-    result = subprocess.run([sys.executable, str(SCRIPT), '--root', str(repo), '--output', str(tmp_path / 'attestation.json')], cwd=ROOT, capture_output=True, text=True)
+    result = subprocess.run([sys.executable, '-m', MODULE, '--root', str(repo), '--output', str(tmp_path / 'attestation.json')], cwd=ROOT, capture_output=True, text=True)
     assert result.returncode != 0
     assert 'target checkout' in result.stderr
     assert not (tmp_path / 'attestation.json').exists()

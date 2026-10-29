@@ -356,10 +356,11 @@ def _cpu_model():
 
 
 def _runtime():
+    root = Path(__file__).resolve().parents[2]
     packages = {name: metadata.version(name) for name in
                 ("numpy", "gymnasium", "stable-baselines3", "torch", "PyYAML")}
-    probe = Path(__file__).resolve().parents[2] / "scripts/wp7_capture_gpu.py"
-    result = subprocess.run([sys.executable, "-B", str(probe)], capture_output=True, text=True, check=True, timeout=30)
+    result = subprocess.run([sys.executable, "-B", "-m", "scripts.diagnostics.probe_gpu"],
+                            cwd=root, capture_output=True, text=True, check=True, timeout=30)
     gpu = json.loads(result.stdout)
     return {"python_version": platform.python_version(), "implementation": platform.python_implementation(),
             "os": platform.system(), "os_release": platform.release(), "packages": packages,

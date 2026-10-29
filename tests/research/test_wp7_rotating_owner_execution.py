@@ -17,7 +17,7 @@ def test_declared_owner_selection_executes_ordered_finish_stop_and_actual_gym(tr
     assert not r['training_authorized'] and not r['scientific_evidence']
     if reset is None:
         assert replay_planar_execution(ROOT,r,expected_sha256=r['sha256'])==r
-    from scripts.wp7_train_acceptance import verify_gym_finish_prefix
+    from scripts.training.train_acceptance import verify_gym_finish_prefix
     prefix=verify_gym_finish_prefix(ROOT,r)
     assert prefix['status']=='successful_finish' and prefix['directed_crossings']==r['expected_gate_ids']
     if track=='ramp-v1':
