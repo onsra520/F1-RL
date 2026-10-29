@@ -1,7 +1,7 @@
 {
   "schema": "script_migration_status_v1",
   "base": "b11a501b029680f79762388ef6b179eda97141a7",
-  "implementation_commit": "3ff89ea46bc6d2eaecd7b35dcd6ba14e48fd2abb",
+  "implementation_commit": "4327d8419b7d7525e98328671892c07c8081998e",
   "non_deletion_rule": "all 48 legacy executable paths retained; source-bound scientific IDs unchanged",
   "definitions": {
     "implementation-extracted": "Legacy executable is a compatibility wrapper importing domain implementation from src/",
@@ -399,5 +399,5 @@
       "module_owner": "src/validation/run_evidence_workflow.py"
     }
   ],
-  "additional_note": "Latest evidence workflow extraction commit is recorded in Git log; initial implementation_commit refers to 3ff89ea baseline."
+  "initial_implementation_commit": "3ff89ea46bc6d2eaecd7b35dcd6ba14e48fd2abb"
 }

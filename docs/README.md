@@ -13,7 +13,7 @@ This is the **current navigation layer**. The repository also contains historica
 | Historic proposals/specifications | [Design history](superpowers/README.md) | Snapshots, not up-to-date implementation instructions |
 | Baseline document classification | [Snapshot inventory](BASELINE-DOCUMENT-INVENTORY.json) | 324 Git-tracked docs from `b11a501`; Git blob SHAs (not SHA-256) |
 | Script rename/compatibility | [Script migration map](development/SCRIPT-MIGRATION-MAP.md) | 48 legacy entrypoints → stable versionless command aliases |
-| Script refactor completion | [Script status inventory](development/SCRIPT-STATUS.json) | 5 extracted / 3 shared dependencies / 40 legacy commands |
+| Script refactor completion | [Script status inventory](development/SCRIPT-STATUS.json) | 8 extracted / 3 shared dependencies / 37 legacy commands |
 
 ## Document classification
 

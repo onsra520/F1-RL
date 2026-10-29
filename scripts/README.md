@@ -15,6 +15,10 @@ python -m scripts.workflows inference smoke-frozen-policy
 
 The registry classifies commands into `diagnostics`, `evidence`, `evaluation`, `inference`, `training`, and `internal`. See the [full mapping](../docs/development/SCRIPT-MIGRATION-MAP.md) and [implementation-completion inventory](../docs/development/SCRIPT-STATUS.json). Names are versionless; historical file paths, registered schemas and recorded IDs are not.
 
+## Current refactor coverage
+
+At the current change branch, 8 of 48 active CLI implementations are extracted into domain modules under `src/`, 3 more now consume shared modules, and 37 original command implementations are still present. Every historical script path remains valid. The [machine-readable status](../docs/development/SCRIPT-STATUS.json) is authoritative for this count.
+
 ## Implementation boundaries
 
 - `scripts/workflows/catalog.py` is a declarative inventory; importing it never runs a command.

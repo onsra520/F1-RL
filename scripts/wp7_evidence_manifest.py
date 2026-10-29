@@ -15,6 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.validation.evidence_manifest_workflow import _unique_pairs, main
+from src.rl.evidence_backup import build_evidence_manifest, serialize_manifest, verify_evidence_manifest
 
 if __name__ == "__main__":
     raise SystemExit(main())
