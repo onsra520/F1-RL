@@ -1,7 +1,7 @@
 # Deep source code refactor audit
 
-**Phase status:** Phases 1–2 are complete. Phase 3 lifecycle review is complete with runner consolidation deliberately deferred; Phase 4 inference CLI migration remains open; Phase 5 runtime capture extraction and clean-tree full regression are complete. The whole refactor is not complete and merge readiness is not declared.
-**Baseline:** `e82efd8cdc6465af83d40d1eb552b1d82e22d840` on `refactor/architecture-modularization`.
+**Phase status:** Phases 1–2 remain complete from the prior audit. Phase 3 is complete with only a byte-identical file-hash primitive shared; generic and WP3 lifecycle owners remain separate. Phase 4 read-only rollout extraction and CLI migration are complete. Phase 5 registration/scenario and runtime boundaries are split behind the compatibility facade. Final full-suite/static acceptance is pending; do not declare whole-repository refactor completion yet.
+**Prior audit baseline:** e82efd8cdc6465af83d40d1eb552b1d82e22d840. Phase 3–5 implementation began from clean commit a4aff02aef39cb8cfaf9a69f50c7544e1079c500 on refactor/architecture-modularization.
 **Scope:** WP3 campaign/evaluation source, adjacent tests and entrypoints, dependencies/configuration, architecture docs, and the frontend boundary. No training, HELD-OUT, Actions, Physics, PPO algorithm behavior, or frozen evidence changes.
 
 ## Pipeline trace
@@ -12,7 +12,7 @@
 | Gymnasium | `src.rl.gym_environment.F1RLEnv`, built by `src.training.env_factory` | Expected dependency from Gymnasium adapter into simulation/domain packages. |
 | PPO training | Generic `src.training.TrainingRunner`; registered WP3 worker uses `scripts.training.local_simulation` → `src.interfaces.local_demo_cli` → `src.interfaces.runner.run_local_demo` | Two live paths. The campaign path has its own admission, telemetry and integrity contracts and must remain. |
 | Evaluation | `src.evaluation.evaluator.evaluate_episode`; WP3 orchestration in `src.interfaces.evaluation` via `evaluation coordinate` | WP3 uses the shared episode evaluator and owns roster, resume, report and evidence handling. |
-| Inference | `scripts.inference.run_policy` → `src.interfaces.inference_cli` → `src.exploratory.pilot.evaluate_episode` | Callable but still backed by exploratory demo code and limited to Straight. |
+| Inference | scripts.inference.run_policy → src.interfaces.inference_cli → src.evaluation.rollout.evaluate_policy_episode | Read-only seeded rollout; keeps the established row schema, invalid-sample mapping, progress events and exit codes. Straight remains the CLI registered track. |
 
 The frontend remains a visual editor/replay sandbox. Its documented lack of authoritative physics/evaluation and a Python bridge is an intentional boundary.
 
@@ -28,15 +28,15 @@ Golden hashes and regression tests passed after extraction. Public campaign/eval
 
 ## Phase 3 — PPO lifecycle boundary
 
-The generic `src.training.runner.TrainingRunner` and WP3 campaign supervisor in `src.interfaces.runner` were audited together. They share checkpoint/lifecycle vocabulary but enforce different contracts: the generic runner owns run-state and observers; the WP3 supervisor owns fixed campaign admission, curriculum, telemetry/integrity, and cleanup. A shared orchestration layer would risk moving a guard across the pre-allocation boundary or changing checkpoint and failure-state semantics. No lifecycle consolidation was made; keep the two owners separate until an explicit policy seam is specified and tested.
+The generic src.training.TrainingRunner and WP3 campaign supervisor in src.interfaces.runner were audited together. They share checkpoint/lifecycle vocabulary but enforce different contracts: the generic runner owns run-state and observers; the WP3 supervisor owns fixed campaign admission, curriculum, telemetry/integrity, and cleanup. A shared orchestration layer would risk moving a guard across the pre-allocation boundary or changing checkpoint and failure-state semantics, so those owners remain separate. The exactly equivalent chunked SHA-256 file helper in the campaign runner now delegates to the existing internal artifact hash primitive; 45 runner lifecycle/hash regressions passed. Existing tests cover checkpoint scheduling, actual-timestep names, state, cleanup/failure, admission denial before allocation, and evidence/source identity.
 
 ## Phase 4 — inference API
 
-`src.evaluation.evaluator.evaluate_episode` already provides the shared read-only policy/factory/seed rollout API and terminal validation used by WP3 evaluation. `src.interfaces.inference_cli` still calls the exploratory pilot evaluator to preserve its output row, invalid-sample handling and exit code. Migrating that CLI would change those observable contracts; it remains a separate compatibility task requiring a pinned output and invalid-cell mapping before implementation.
+src.evaluation.rollout.evaluate_policy_episode now owns the stable seeded read-only rollout row and accepts an explicit step observer. The exploratory pilot evaluate_episode is a compatibility wrapper over it. src.interfaces.inference_cli creates one seeded environment at a time and uses the same API; progress reporting no longer patches env.step. Tests pin terminal and invalid-transition rows, environment cleanup, progress callbacks and CLI exit mapping. A real frozen A-seed0 inference smoke on TRAIN Straight (seed 41877) returned the same 500-step valid_truncation/step_limit row and trace SHA-256 as the pre-refactor evaluator from a4aff02; CLI exit code was 0. This verifies rollout compatibility, not model performance or scientific acceptance.
 
-## Phase 5 — WP7 runtime boundary
+## Phase 5 — WP7 protocol boundaries
 
-Host fingerprint and model ZIP hashing now live in `src.validation.wp7_runtime`. Admission consumes its public `capture_runtime_fingerprint` API instead of importing `_runtime` from `wp7_protocol`; the protocol facade keeps its `_runtime` seam for existing restore callers/tests. Manifest field names, hashes, UTC capture validation and denial behavior remain unchanged. `wp7_protocol` still combines registration validation and scenario construction, so that larger split remains open; its source-bound digest must be re-pinned only through the normal source-bound workflow, never by rewriting historical evidence.
+Host fingerprint and model ZIP hashing live in src/validation/wp7_runtime. Registration loading/exact schema validation now live in src/validation/wp7_registration; registered scenario construction lives in src/validation/wp7_scenarios; wp7_protocol re-exports the established API and retains protocol digest, seed binding, runtime-manifest and validation entrypoints. Admission consumes the public runtime fingerprint API instead of importing _runtime from wp7_protocol; compatibility seams remain for restore callers. Registration/profile identities, scenario factories, manifests and denial decisions passed the WP7 target matrix (114 tests). The protocol source_files and digest naturally describe the current committed tree; historical manifests/evidence were not rewritten.
 
 ## Remaining findings
 
@@ -44,19 +44,17 @@ No Critical or High finding was confirmed.
 
 ### Medium
 
-1. **Generic and WP3 training duplicate parts of the PPO lifecycle.** `src/training/runner.py` handles generic training; `src/interfaces/runner.py` (about 803 lines) owns campaign admission, telemetry, integrity, cleanup and checkpoint handling. They are not interchangeable because the WP3 runner enforces a registered simulation profile and campaign evidence contracts. **Impact:** shared lifecycle fixes may drift. **Refactor:** keep orchestration separate; extract only a proven pure helper after its inputs, artifact effects and failure behavior match in both runners.
+1. **Generic and WP3 lifecycle owners remain separate.** src/training/runner.py owns generic run-state and observers; src/interfaces/runner.py owns WP3 admission, telemetry, integrity, cleanup and checkpoint contracts. They are not interchangeable. The exact file hashing duplicate is removed; no shared orchestration helper has matching side effects and failure semantics. **Impact:** future lifecycle fixes may drift. **Next step:** extract a helper only if a future comparison proves equivalent inputs, artifact effects and failure handling.
 
-2. **WP7 registration and scenario construction remain in a high-fanout module.** `src/validation/wp7_protocol.py` imports track, physics, simulation, Gymnasium factory, PPO provenance and reward/navigation contracts while handling registration, protocol digests and scenario factories. Runtime capture is now in `src/validation/wp7_runtime.py`; `src/validation/wp7_admission.py` uses its public fingerprint function. **Impact:** changing registration or scenario assembly can still change source-bound protocol digests and affect many runtime layers. **Refactor:** separate pure registration/digest validation from scenario factories only after canonical bytes, hashes, profile names and admission decisions are pinned.
-
-3. **Inference still uses an exploratory evaluator.** `src/interfaces/inference_cli.py` builds a local session, patches `env.step` for progress output and calls `src.exploratory.pilot.evaluate_episode`; only Straight is selected. `src.evaluation.evaluator.evaluate_episode` has a different result contract. **Impact:** the stable command depends on demo behavior and has a legacy result row. **Refactor:** define a read-only policy rollout API and compatibility output tests before changing the CLI or evaluator.
+2. **WP7 scenario construction remains a broad integration boundary.** src/validation/wp7_scenarios.py intentionally joins registered recovery, tracks, physics policies, Gymnasium factories and reward/navigation contracts. Registration validation and runtime capture are separate; wp7_protocol remains the compatibility/protocol-binding facade. **Impact:** scenario edits can change the newly generated source-bound protocol digest and derived evaluation seeds. **Next step:** leave it cohesive until a smaller factory boundary can be extracted with pinned per-profile physics/reset identity; never rewrite historical protocol records.
 
 ### Low
 
-4. **Active campaign code keeps retired demo names.** `src/interfaces/local_demo_cli.py`, `src/interfaces/runner.py`, telemetry identifiers and tests retain `LOCAL_DEMO`/`local_demo`, though WP3 calls them in production. **Impact:** contributors may delete active campaign code as demo residue. **Refactor:** rename in a separate compatibility migration; retain frozen identifiers and provenance allow-lists.
+1. **Active campaign code keeps retired demo names.** src/interfaces/local_demo_cli.py, src/interfaces/runner.py, telemetry identifiers and tests retain LOCAL_DEMO/local_demo, though WP3 calls them in production. **Impact:** contributors may delete active campaign code as demo residue. **Next step:** rename only as a separate compatibility migration that retains frozen identifiers and provenance allow-lists.
 
-5. **Deferred admission imports still obscure some RL layering.** `src.rl.algorithms.ppo` dynamically consults validation, interface and exploratory admission helpers. The `src.interfaces` Campaign ↔ Evaluation cycle is gone; this remaining edge is separate. **Impact:** import scans can miss policy dependencies. **Refactor:** move authorization to a neutral policy boundary only with explicit tests for every current allow/deny path.
+2. **PPO admission imports remain deferred.** src.rl.algorithms.ppo dynamically consults validation, interface and exploratory admission helpers. **Impact:** static import scans can miss the policy dependency. **Next step:** do not move authorization until every allow/deny path has an explicit neutral policy interface and regression tests.
 
-No dead production module or removable dependency has enough evidence for deletion. The static import pass found no remaining Campaign ↔ Evaluation cycle. Dynamic imports outside that pair still need import tests.
+No dead production module or removable dependency has enough evidence for deletion. The Campaign ↔ Evaluation cycle remains removed. WP7 compatibility facade imports point one-way to registration/scenario modules; no new module-level cycle was introduced. The deferred PPO admission imports remain a deliberate trust-boundary seam.
 
 ## Inherited evidence and verification status
 
@@ -72,4 +70,13 @@ No dead production module or removable dependency has enough evidence for deleti
 - `compileall`, Ruff `F`, frozen asset verification (**12 models, 7 reports, 96 cell logs**) and `git diff --check` passed after the extraction. No source file in Physics/PPO algorithms, config contract, model checkpoint or evidence inventory was changed.
 - No immutable evidence, Physics, PPO behavior, scientific admission contract, schema, or source-hash algorithm was edited. No scientific training, HELD-OUT, or GitHub Actions ran.
 
-This report tracks the verified work and open items only. Phase 4 inference CLI migration and the larger Phase 5 registration/scenario split remain future work; do not treat this report as a refactor completion or merge-readiness claim.
+## Phase 3–5 continuation and acceptance
+
+- Phase commits: 878a53e (shared exact artifact hashing primitive), a821a23 (read-only rollout API and inference CLI), and ff2be5d (WP7 registration/scenario split). No physics, PPO algorithm, admission guard, checkpoint, frozen evidence or historical record was edited.
+- Phase 3 targeted runner/checkpoint/admission/cleanup tests: 45 passed. Phase 4 inference/pilot/pipeline tests: 45 passed.
+- Phase 5 WP7 profile, registration, admission, source binding and TRAIN scenario-integration tests: 114 passed before a whitespace-only cleanup of wp7_protocol.py; rerun focused source-bound tests after that cleanup and record the clean full suite below.
+- The prior Phase 5 full-suite baseline remains 3,074 passed, 3 skipped on clean a4aff02 with the external WP3 evidence path set. It is historical baseline only, not verification of these Phase 3–5 commits.
+- Current commits change the generated WP7 source digest because WP7 hashes current src/, scripts/ and tests/ bytes. This is expected prospective provenance; no frozen or historical digest was edited. Future source-bound captures/evaluation seeds must use the new committed protocol identity.
+- Final full pytest, front-end checks, Ruff, YAML validation, compileall, frozen-asset verification, pipeline CLI checks and git diff --check are pending. Do not treat this report as final acceptance until they pass.
+
+This report distinguishes engineering refactor acceptance from scientific acceptance. Even if final engineering gates pass, WP7 scientific acceptance, registered evaluation authority and HELD-OUT permission remain blocked.

@@ -36,12 +36,16 @@ The public entrypoints remain `src.interfaces.campaign.run_campaign` and `src.in
 
 | Module | Responsibility |
 | --- | --- |
-| `src/validation/wp7_protocol.py` | Registration, protocol binding, TRAIN scenario preparation and runtime-manifest schema/facade |
-| `src/validation/wp7_runtime.py` | Current host fingerprint, GPU probe and explicit model/checkpoint ZIP hashes |
-| `src/validation/wp7_admission.py` | Admission composition; imports the public runtime fingerprint API |
+| src/validation/wp7_protocol.py | Compatibility facade, canonical protocol digest, current source binding, seed binding, runtime-manifest validation |
+| src/validation/wp7_registration.py | Registration path/profile lookup, exact schema and registration validation |
+| src/validation/wp7_scenarios.py | Registered TRAIN scenario construction; preparation only, no admission |
+| src/validation/wp7_runtime.py | Current host fingerprint, GPU probe and explicit model/checkpoint ZIP hashes |
+| src/validation/wp7_admission.py | Admission composition; imports the public runtime fingerprint API |
 
-Runtime capture is descriptive and does not grant training permission. `wp7_protocol` retains the `_runtime` compatibility seam for restore callers, while admission no longer imports that private helper. Registration and scenario construction are still coupled and remain a later migration candidate; source-bound protocol digests must keep hashing every current source file.
+The facade retains its compatibility API, including the historical runtime seam used by restore callers. Runtime capture is descriptive and does not grant training permission. Moving code into current modules changes future source-bound protocol digests; historical manifests and evidence remain immutable.
 
 ## PPO lifecycle and inference status
 
-`src.training.runner.TrainingRunner` and `src.interfaces.runner` remain separate orchestration owners because generic registered runs and WP3 campaign runs have different artifact, admission, telemetry and failure-state contracts. `src.evaluation.evaluator.evaluate_episode` is the shared read-only policy rollout API. The Straight-only inference CLI still uses the exploratory pilot row schema; migrating it requires a compatibility contract for invalid rows and exit codes.
+src.training.TrainingRunner and src.interfaces.runner remain separate orchestration owners because generic registered runs and WP3 campaign runs have different artifact, admission, telemetry and failure-state contracts. The identical chunked SHA-256 file helper is shared through src/interfaces/_artifacts.py; runner orchestration is not combined.
+
+src.evaluation.rollout.evaluate_policy_episode is the seeded read-only rollout row API. The inference CLI and exploratory pilot use it; the CLI sends progress through an observer and does not patch env.step. The pilot adapter preserves its existing policy row format and invalid-sample handling.

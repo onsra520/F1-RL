@@ -4,6 +4,7 @@ The active Python package is `src/`. The [source-backed domain map](domain-map.h
 
 - [Final refactor audit](FINAL-REFACTOR-AUDIT.md): engineering acceptance of package migration at its recorded source revision; current script cleanup status is in the [change report](../development/SCRIPTS-DOCS-CHANGE-REPORT.md).
 - [Refactor validation](REFACTOR-VALIDATION.md): Python, models, wheel, frontend and historical evidence checks.
+- [Deep source-code audit](DEEP-SOURCE-CODE-AUDIT.md): current Phase 1–5 findings, verification state and remaining debt.
 - [Historical provenance](HISTORICAL-PROVENANCE.md): immutable source identity vs current engineering attestation.
 - [Current operations](../operations/README.md): UI bridge still not implemented, scientific admission blocked.
 - [Script migration map](../development/SCRIPT-MIGRATION-MAP.md): stable versionless command aliases and historical path mappings.
