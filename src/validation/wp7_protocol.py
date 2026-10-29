@@ -19,9 +19,9 @@ from ..rl.action import ActionContract
 from . import wp7_runtime
 from .wp7_runtime import hash_model_artifacts
 from .wp7_registration import (
-    PROFILES,
+    PROFILES as PROFILES,
     _registration_path,
-    _unique,
+    _unique as _unique,
     load_registration,
     protocol_profile,
 )
