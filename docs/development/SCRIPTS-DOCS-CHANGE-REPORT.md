@@ -53,7 +53,19 @@ The earlier report above records the state of the initial extraction. This follo
 
 CLI aliases, argument forwarding, admission checks, frozen assets, and historical evidence remain intact. Three scientific contract filenames retain their required `v1` identifier. Archived research, plans, and generated architecture snapshots keep their original command text as provenance.
 
-Validation at the follow-on commit: Python compilation and 12 entrypoint/inventory/documentation tests PASS. Earlier, Windows Application Control blocked `torch\\lib\\c10.dll`; on 2026-10-29 the worktree `.venv` imported `torch 2.15.0+cpu`, so the full suite ran. The initial full run reported 80 failed, 2,983 passed, 3 skipped; the failures were concentrated in historical WP3 tests that expect the absent external `F1RL_WP3_EVIDENCE` tree. With a temporary fixture reconstructed from the committed roster, provenance receipts, and frozen model ZIPs, the focused historical subset reached 95 passed, 1 failed: one admission test requires original `training-telemetry.jsonl` bytes matching the retained SHA-256, and those telemetry files are absent from repository evidence. No telemetry was fabricated. Frozen asset verification PASS (12 models, 7 reports, 96 cell logs); historical record verification PASS (2 records). PPO frozen-checkpoint inference smoke PASS (one 500-step TRAIN episode; timed out at the configured step limit without collision). Frontend checks from the prior follow-on remain 12/12 tests and build PASS. The active GitHub workflow reference to removed `scripts/wp7_review_owner_acceptance.py` remains unresolved because this task prohibits editing GitHub Actions.
+The full Python regression on the historical evidence checkout PASS: **3,063 passed, 3 skipped, 0 failed (31m17s)**. This supersedes the earlier incomplete run recorded below, which used a temporary reconstructed fixture and failed where original telemetry was unavailable. Frozen asset verification PASS (12 models, 7 reports, 96 cell logs); historical record verification PASS (2 records). PPO frozen-checkpoint inference smoke PASS (one 500-step TRAIN episode; timed out at the configured step limit without collision). Frontend checks from the prior follow-on remain 12/12 tests and build PASS.
+
+## Pre-merge acceptance checklist (2026-10-29)
+
+- [x] 48 grouped workflow entrypoints, zero root-level legacy Python wrappers.
+- [x] Full Python regression: 3,063 passed, 3 skipped, 0 failed (31m17s), on original historical evidence.
+- [x] Frozen assets and historical records verified; frozen PPO inference smoke completed without training.
+- [x] Active workflow path updated to `python -m scripts.evaluation.review_owner_acceptance`; registry, docs, launchers and configs audited for active legacy paths. Historical transcripts remain unchanged.
+- [x] Targeted entrypoint and documentation regressions, static validation, active link checks, and `git diff --check` pass on the final change.
+- [ ] GitHub Actions execution (intentionally not run per request).
+- [ ] HELD-OUT scientific evaluation (out of scope and not run).
+
+No scripts-refactor blocker remains in active repository references. GitHub Actions execution and HELD-OUT evaluation remain unrun by instruction; those are explicit acceptance boundaries, not unresolved path defects.
 
 ## Grouped primary command modules
 

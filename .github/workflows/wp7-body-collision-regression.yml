@@ -30,7 +30,7 @@ jobs:
       - name: Physics-to-Gym and race/reset integration
         run: python -m pytest tests/integration/test_wp7_physics_integration.py tests/integration/test_wp7_race_contract.py tests/integration/test_wp7_train_reset.py tests/runtime -q
       - name: Validate preregistered owner decisions
-        run: python scripts/wp7_review_owner_acceptance.py
+        run: python -m scripts.evaluation.review_owner_acceptance
       - name: Unified lifecycle, feasibility, protocol and admission
         run: python -m pytest tests/integration/test_pv5_lifecycle.py tests/sandbox/test_pv5_coplanar_contact.py tests/sandbox/test_pv5_rotating_contact.py tests/integration/test_pv5_outcomes.py tests/research/test_pv5_track_feasibility.py tests/research/test_pv5_protocol.py tests/research/test_wp7_policy_seed_binding.py tests/research/test_pv5_admission.py tests/learning/training/test_pv5_backend_admission.py -q
       - name: Core execution binding and readiness

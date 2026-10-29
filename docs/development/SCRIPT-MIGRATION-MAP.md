@@ -67,6 +67,6 @@ Former script names in archived research notes and immutable evidence records do
 
 Reusable implementation belongs in `src/`; package entrypoints call those modules and do not import another executable. Internal workers remain outside the public workflow dispatcher.
 
-## Constrained broken reference
+## Active caller status
 
-`.github/workflows/wp7-body-collision-regression.yml` still invokes the removed `scripts/wp7_review_owner_acceptance.py` path. This workflow was left untouched because the task explicitly excludes GitHub Actions. Update that command to `python -m scripts.evaluation.review_owner_acceptance` in a separately authorized change; no root compatibility file was retained.
+The active GitHub workflow invokes `python -m scripts.evaluation.review_owner_acceptance`, matching the grouped module and registry. Former paths above are migration origins only. Dated research records and baseline inventories retain their original command text as provenance.

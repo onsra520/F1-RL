@@ -13,6 +13,6 @@ The 48 workflow commands now live in functional packages under `scripts/`. Reusa
 
 ## Historical provenance
 
-Archived research notes, dated plans, generated architecture snapshots, and immutable evidence may quote commands such as `scripts/wp3_...py` or `scripts/wp7_...py`. These are historical command transcripts, not active path dependencies. Their contents were not rewritten. The [migration map](SCRIPT-MIGRATION-MAP.md) records each former path and its current module, plus the GitHub Actions reference that remains blocked by the task's explicit no-Actions constraint.
+Archived research notes, dated plans, generated architecture snapshots, and immutable evidence may quote commands such as `scripts/wp3_...py` or `scripts/wp7_...py`. These are historical command transcripts, not active path dependencies. Their contents were not rewritten. The [migration map](SCRIPT-MIGRATION-MAP.md) records each former path and its current module; active callers, including the GitHub workflow, use grouped module paths.
 
 The repository does not include external handoff consumers; the supported replacement is the stable `python -m scripts.workflows <group> <action>` interface. The trusted internal worker remains inaccessible through that public registry.
