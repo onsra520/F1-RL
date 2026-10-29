@@ -51,3 +51,10 @@ npm run build
 ```
 
 The historical restore/check and symlink tests require the same external inputs/platform capability as the previously accepted baseline. No GitHub Actions, model training, scientific evaluation or HELD-OUT access was executed.
+
+## Extracted implementation modules (second batch)
+
+- `scripts/benchmark_vector_envs.py` is now a compatibility wrapper around `src/training/vector_benchmark.py`. This removes the benchmark's heavy training/simulation implementation from the executable script while keeping the same command-line options.
+- `scripts/verify_consolidated_wp3_assets.py` is now a compatibility wrapper around `src/validation/frozen_asset_integrity.py`. The engine takes an explicit project root, verifies original model/report/cell bytes without mutating evidence, and returns counts for display.
+- `scripts/restore_wp3_historical_evidence.py` no longer imports `verify_consolidated_wp3_assets` as a sibling executable; it calls the same `src.validation.frozen_asset_integrity.verify_frozen_assets` API. Archive pinning and scientific fail-closed preflight remain unchanged.
+- Focused regression tests were added for actual frozen evidence, both legacy and versionless CLI, benchmark help, invalid arguments, and missing manifests. **No full 3,011-test execution is claimed from GitHub.**

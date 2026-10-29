@@ -37,8 +37,8 @@ def verify_bundled_inputs():
         path = ROOT / row['destination']
         if path.stat().st_size != row['bytes'] or hash_file(path) != row['sha256']:
             raise ValueError(f'historical input SHA-256 mismatch: {path}')
-    from verify_consolidated_wp3_assets import main as verify_frozen
-    verify_frozen()
+    from src.validation.frozen_asset_integrity import verify_frozen_assets
+    verify_frozen_assets(ROOT)
 
 
 def main():
