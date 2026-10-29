@@ -1,4 +1,9 @@
-# PPO driving improvement — October 19, 2026
+# Historical / Retired Legacy — PPO driving improvement (October 19, 2026)
+
+**Historical / Retired Legacy.** This report preserves results and launch-path
+provenance from the October 2026 demo work. `START-DEMO.cmd` is no longer
+supported and the file has been removed; use the current workflow registry for
+supported inference and campaign entrypoints.
 
 Historical run commands below record the launch paths used at the time. The
 `START-DEMO*.cmd` launchers and lecturer handoff packager were retired on

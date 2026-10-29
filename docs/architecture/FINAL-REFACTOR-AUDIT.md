@@ -1,4 +1,6 @@
-# Final refactor audit
+# Historical refactor audit — superseded status
+
+This audit records the source state at `ef555656e257bc8553ecd1594949d8bcceb4a5fb`; its PASS verdict is historical and is not a current completion claim. The deep source-code audit at [`DEEP-SOURCE-CODE-AUDIT.md`](DEEP-SOURCE-CODE-AUDIT.md) is the current assessment and lists unresolved architecture work. Refactor completion and merge readiness have not been declared.
 
 **Engineering verdict for source commit `ef555656e257bc8553ecd1594949d8bcceb4a5fb`: REFACTOR PASS.** Scientific approval, registered scientific evaluation and HELD-OUT remain **BLOCKED**. No scientific signoff is asserted. The documentation-only commit following this source commit must be checked on its own HEAD before delivery; it does not change source, tests, configuration or evidence.
 
