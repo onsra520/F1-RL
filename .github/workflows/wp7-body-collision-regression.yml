@@ -38,6 +38,6 @@ jobs:
       - name: Full regression
         run: python -m pytest -q
       - name: Compile
-        run: python -m compileall -q f1rl scripts
+        run: python -m compileall -q src scripts
       - name: Dependency check
         run: python -m pip check

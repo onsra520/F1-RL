@@ -31,6 +31,6 @@ jobs:
       - name: Full regression
         run: python -m pytest -q
       - name: Compile production and scripts
-        run: python -m compileall -q f1rl scripts
+        run: python -m compileall -q src scripts
       - name: Installed dependency integrity
         run: python -m pip check
