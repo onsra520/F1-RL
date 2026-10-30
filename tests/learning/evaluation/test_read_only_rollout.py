@@ -52,12 +52,19 @@ def test_read_only_rollout_preserves_trace_and_reports_progress_without_step_pat
 
     env = Env()
     observed = []
+    frames = []
+    order = []
     row = evaluate_policy_episode(
         env,
         Policy(),
         policy_name="trained_final",
         episode=0,
         environment_seed=45,
+        on_reset=lambda observation, info: order.append(("reset", observation.tolist(), info)),
+        before_step=lambda step: order.append(("before", step)),
+        on_frame=lambda step, action, transition: frames.append(
+            (step, action.tolist(), transition[4]["elapsed_time"])
+        ),
         on_step=lambda step, transition: observed.append(
             (step, transition[2], transition[3])
         ),
@@ -66,6 +73,8 @@ def test_read_only_rollout_preserves_trace_and_reports_progress_without_step_pat
     assert env.closed is True
     assert env.seed == 45
     assert observed == [(1, True, False)]
+    assert order == [("reset", [0.0], {}), ("before", 1)]
+    assert frames == [(1, [0.25, 0.5, 0.0], 0.02)]
     assert row["policy"] == "trained_final"
     assert row["episode"] == 0
     assert row["environment_seed"] == 45

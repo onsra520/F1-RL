@@ -19,8 +19,15 @@ rl = [
     "stable-baselines3>=2.9,<2.10",
     "PyYAML>=6,<7",
 ]
+runtime = [
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.30,<1",
+    "stable-baselines3>=2.9,<2.10",
+    "PyYAML>=6,<7",
+]
 dev = [
     "cryptography>=50.0.2,<51",
+    "httpx2>=2,<3",
     "pytest>=8,<10",
     "stable-baselines3>=2.9,<2.10",
     "PyYAML>=6,<7",

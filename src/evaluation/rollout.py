@@ -15,6 +15,9 @@ def evaluate_policy_episode(
     episode: int,
     environment_seed: int,
     on_step: Callable[[int, tuple], None] | None = None,
+    on_reset: Callable[[np.ndarray, dict], None] | None = None,
+    before_step: Callable[[int], None] | None = None,
+    on_frame: Callable[[int, np.ndarray, tuple], None] | None = None,
 ) -> dict[str, object]:
     """Evaluate one already-created environment and return the stable rollout row.
 
@@ -29,8 +32,12 @@ def evaluate_policy_episode(
     info: dict[str, object] = {}
     error = None
     try:
-        observation, _ = env.reset(seed=environment_seed)
+        observation, reset_info = env.reset(seed=environment_seed)
+        if on_reset is not None:
+            on_reset(observation, reset_info)
         while True:
+            if before_step is not None:
+                before_step(steps + 1)
             action = (
                 rng.uniform(env.action_space.low, env.action_space.high).astype(
                     np.float32
@@ -43,6 +50,8 @@ def evaluate_policy_episode(
             steps += 1
             if on_step is not None:
                 on_step(steps, transition)
+            if on_frame is not None:
+                on_frame(steps, action, transition)
             total += float(reward)
             race = info.get("race") or {}
             completed_checkpoint_ids.extend(race.get("completed_checkpoint_ids", ()))

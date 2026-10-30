@@ -248,6 +248,49 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             return None
         return self._reset_config.identity_for_track(self._reset_track_id)
 
+    def runtime_snapshot(self) -> dict[str, object]:
+        """Return read-only live state for the local development runtime."""
+        snapshot = self._simulation.snapshot
+        vehicle = snapshot.world.vehicle
+        forward = vehicle.orientation.rotate(Vec3(0.0, 0.0, 1.0))
+        heading = atan2(forward.x, forward.z)
+        projection = None
+        if self._authored_route is not None and self._progress is not None:
+            projection = self._authored_route.project(
+                vehicle.position,
+                next_checkpoint_index=self._progress.next_checkpoint_index,
+            )
+        route_meters = None if self._authored_route is None else self._authored_route.total_meters
+        progress_meters = None if projection is None else float(projection.progress_meters)
+        return {
+            "schema_version": "f1rl_runtime_snapshot_v1",
+            "tick": snapshot.tick,
+            "time_s": float(snapshot.elapsed_time),
+            "dt_s": float(self._simulation_config.fixed_dt),
+            "position": _vec3_tuple(vehicle.position),
+            "velocity": _vec3_tuple(vehicle.velocity),
+            "orientation_wxyz": (
+                float(vehicle.orientation.w),
+                float(vehicle.orientation.x),
+                float(vehicle.orientation.y),
+                float(vehicle.orientation.z),
+            ),
+            "heading_rad": float(heading),
+            "speed_mps": float(vehicle.speed),
+            "grounded": bool(vehicle.grounded),
+            "route_progress_m": progress_meters,
+            "route_progress_fraction": (
+                None if progress_meters is None or route_meters is None
+                else min(1.0, max(0.0, progress_meters / route_meters))
+            ),
+            "route_highwater_m": float(self._route_highwater),
+            "next_checkpoint_index": (
+                None if self._progress is None else self._progress.next_checkpoint_index
+            ),
+            "checkpoint_count": len(self._route.checkpoints),
+            "physical_event_types": tuple(type(event).__name__ for event in snapshot.events),
+        }
+
     def _record_research_outcome(self, kind: str, valid: bool, reason: str) -> None:
         if self.requires_scientific_admission:
             self._last_research_outcome = {
