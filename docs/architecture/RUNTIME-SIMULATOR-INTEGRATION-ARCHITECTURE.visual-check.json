@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "visual-check",
+  "evidenceKind": "automated-browser",
+  "status": "skipped",
+  "visualReview": "pending",
+  "artifact": {
+    "path": "D:\\Projects\\.worktrees\\F1-RL\\runtime-simulator-bridge\\docs\\architecture\\RUNTIME-SIMULATOR-INTEGRATION-ARCHITECTURE.html",
+    "sha256": "4d51b76e75adc70b17ee0626e986268df4709197b6fa16fa1145e25c4e776137",
+    "bytes": 806517
+  },
+  "state": {
+    "detail": "read",
+    "motion": "still"
+  },
+  "chrome": {
+    "status": "unavailable",
+    "executable": null
+  },
+  "diagnostics": [
+    {
+      "code": "viewer/chrome-unavailable",
+      "severity": "warning",
+      "message": "Chrome or Chromium is unavailable. Set ARCHIFY_CHROME to its executable path.",
+      "subject": {
+        "artifact": "D:\\Projects\\.worktrees\\F1-RL\\runtime-simulator-bridge\\docs\\architecture\\RUNTIME-SIMULATOR-INTEGRATION-ARCHITECTURE.html"
+      },
+      "evidence": {
+        "executable": null
+      },
+      "supportedFixes": [
+        "set ARCHIFY_CHROME to a Chrome or Chromium executable and rerun visual-check"
+      ]
+    }
+  ],
+  "containment": {
+    "status": "skipped",
+    "viewports": []
+  },
+  "readability": {
+    "status": "skipped",
+    "minimumProjectedNodeTextPx": 6,
+    "viewports": []
+  },
+  "viewerChrome": {
+    "status": "skipped",
+    "viewports": []
+  },
+  "captures": {
+    "status": "skipped",
+    "screenshots": [],
+    "contactSheet": null
+  },
+  "sidecars": {
+    "receipt": "RUNTIME-SIMULATOR-INTEGRATION-ARCHITECTURE.visual-check.json",
+    "contactSheet": "RUNTIME-SIMULATOR-INTEGRATION-ARCHITECTURE.visual-check.html"
+  },
+  "error": "Chrome or Chromium is unavailable. Set ARCHIFY_CHROME to its executable path."
+}
