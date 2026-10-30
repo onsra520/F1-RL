@@ -241,12 +241,14 @@ export default function App() {
     if (customTrackSelected && (!validatedCustomTrack || (driveMode === 'ppo' && !validatedCustomTrack.ppo_compatible))) return;
     setRuntimeBusy(true);
     setRuntimeError(''); setReplay(null); setRuntimeReplay(null); setPlaying(false); setRuntimeStatus(null);
+    let createdSessionId: string | null = null;
     try {
       const created = customTrackSelected && validatedCustomTrack
         ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : undefined)
         : driveMode === 'manual'
           ? await runtimeClient.createManualSession(runtimeTrackId, runtimeSeed)
           : await runtimeClient.createPpoSession(modelId, runtimeTrackId, runtimeSeed);
+      createdSessionId = created.session_id;
       sessionRef.current = created.session_id;
       setRuntimeStatus(created);
       const socket = await runtimeClient.connect(created.session_id, (event) => {
@@ -291,9 +293,13 @@ export default function App() {
         }
         if (event.type === 'error') setRuntimeError(String(event.data.message ?? event.data.code ?? 'Runtime protocol error'));
       }, (error) => {
+        if (sessionRef.current !== created.session_id) return;
         setRuntimeError(error.message);
         setRuntimeBusy(false);
         sessionRef.current = null;
+        runtimeSocketRef.current?.disconnect();
+        runtimeSocketRef.current = null;
+        void runtimeClient.close(created.session_id).catch(() => undefined);
       });
       runtimeSocketRef.current = socket;
       socket.start();
@@ -304,6 +310,7 @@ export default function App() {
       runtimeSocketRef.current?.disconnect();
       runtimeSocketRef.current = null;
       setRuntimeBusy(false);
+      if (createdSessionId) void runtimeClient.close(createdSessionId).catch(() => undefined);
     }
   };
 
@@ -469,12 +476,16 @@ export default function App() {
                   </button>
                 </>}
                 <label>SEED<input aria-label="Episode seed" type="number" min="0" max="4294967295" step="1" value={runtimeSeed} onChange={(event) => setRuntimeSeed(Number(event.target.value))} disabled={runtimeBusy}/></label>
-                {catalogError ? <p className="runtime-error"><TriangleAlert size={15}/>{catalogError}. Start the Python runtime to run episodes.</p> : !runtimeCatalog ?
+                {catalogError ? <p className="runtime-error"><TriangleAlert size={15}/><span>{catalogError}. Start the Python runtime to run episodes.</span><button onClick={() => setCatalogError('')}>Retry connection</button></p> : !runtimeCatalog ?
                   <p className="runtime-loading"><LoaderCircle size={15}/> Connecting to local Python runtime…</p> : null}
                 {runtimeError && <p className="runtime-error"><TriangleAlert size={15}/>{runtimeError}</p>}
                 {runtimeStatus && <>
                   <div className="runtime-progress"><span>{runtimeStatus.status.toUpperCase()} · {runtimeStatus.steps}/{runtimeStatus.max_steps} STEPS</span><progress max="1" value={runtimeStatus.step_progress}/></div>
                   {runtimeStatus.latest_frame && <div className="runtime-telemetry">
+                    <span>POSITION M <b>{runtimeStatus.latest_frame.position.map((value) => value.toFixed(1)).join(', ')}</b></span>
+                    <span>HEADING <b>{(runtimeStatus.latest_frame.heading_rad * 180 / Math.PI).toFixed(1)}°</b></span>
+                    <span>VELOCITY M/S <b>{runtimeStatus.latest_frame.velocity.map((value) => value.toFixed(1)).join(', ')}</b></span>
+                    <span>ACCEL M/S² <b>{runtimeStatus.latest_frame.acceleration_mps2.map((value) => value.toFixed(1)).join(', ')}</b></span>
                     <span>STEER <b>{runtimeStatus.latest_frame.action.steering.toFixed(2)}</b></span>
                     <span>THROTTLE <b>{runtimeStatus.latest_frame.action.throttle.toFixed(2)}</b></span>
                     <span>BRAKE <b>{runtimeStatus.latest_frame.action.brake.toFixed(2)}</b></span>
