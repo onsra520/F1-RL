@@ -120,15 +120,15 @@ function ChaseCamera({ pose }: { pose: CarPose }) {
   return null;
 }
 
-function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, onCamera, onDragChange }: {
+function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, roadSamples, onCamera, onDragChange }: {
   track: TrackDocument; mode: Mode; selectedId: string | null; armed: PropKind | null;
-  pose: CarPose; onCamera: (camera: Camera) => void;
+  pose: CarPose; roadSamples?: RoadSample[]; onCamera: (camera: Camera) => void;
   onSelect: (id: string | null) => void;
   onPlace: (kind: PropKind | null, x: number, z: number, id?: string) => void;
   onDragChange: (id: string | null) => void;
 }) {
   const { camera } = useThree();
-  const samples = useMemo(() => sampleRoad(track), [track]);
+  const samples = useMemo(() => roadSamples ?? sampleRoad(track), [track, roadSamples]);
   useEffect(() => { onCamera(camera); }, [camera, onCamera]);
   const choose = (event: ThreeEvent<PointerEvent>, id: string) => {
     if (mode !== 'build') return;
@@ -158,8 +158,8 @@ function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, onCame
   </>;
 }
 
-export default function RacingScene({ track, mode, selectedId, armed, pose, onSelect, onPlace }: {
-  track: TrackDocument; mode: Mode; selectedId: string | null; armed: PropKind | null; pose: CarPose;
+export default function RacingScene({ track, mode, selectedId, armed, pose, roadSamples, onSelect, onPlace }: {
+  track: TrackDocument; mode: Mode; selectedId: string | null; armed: PropKind | null; pose: CarPose; roadSamples?: RoadSample[];
   onSelect: (id: string | null) => void;
   onPlace: (kind: PropKind | null, x: number, z: number, id?: string) => void;
 }) {
@@ -227,7 +227,7 @@ export default function RacingScene({ track, mode, selectedId, armed, pose, onSe
   return <div className="scene-container" ref={containerRef} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
     <Canvas shadows dpr={[1, 1.8]} camera={{ position: [65, 122, 108], fov: 52, near: 0.1, far: 650 }}>
       <Suspense fallback={null}>
-        <World track={track} mode={mode} selectedId={selectedId} armed={armed} pose={pose}
+        <World track={track} mode={mode} selectedId={selectedId} armed={armed} pose={pose} roadSamples={roadSamples}
           onSelect={onSelect} onPlace={onPlace} onCamera={onCamera} onDragChange={setDragging}/>
         {mode === 'build' && <OrbitControls makeDefault target={[center.x, center.y, center.z]}
           enableDamping dampingFactor={0.09} enabled={!dragging}

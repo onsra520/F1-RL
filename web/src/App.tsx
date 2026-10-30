@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import {
   ArrowLeft, Box, Check, CircleHelp, Compass, Download,
   Flag, Gauge, Keyboard, Layers3, MousePointer2,
-  Mountain, Pause, Pencil, Play, Plus, RotateCcw, RotateCw, Save,
+  LoaderCircle, Mountain, Pause, Pencil, Play, Plus, RotateCcw, RotateCw, Save,
   Trash2, TriangleAlert, Upload, Waves, X
 } from 'lucide-react';
 import SketchEditor from './components/SketchEditor';
@@ -10,10 +10,12 @@ import type { CarPose } from './components/RacingScene';
 const RacingScene = lazy(() => import('./components/RacingScene'));
 import { createTrack, getAutoBridges, nearestRoad, parseTrack, pointAt, PROP_KINDS, roadLength, sampleRoad,
          type Point2, type PropKind, type TrackDocument, type TrackProp } from './lib/track';
-import { parseReplay, replayAt, type Replay } from './lib/replay';
+import { parseReplay, replayAt, replayModelId, type Replay } from './lib/replay';
+import { manualActionFromKeys } from './lib/manual';
+import { RuntimeApiError, RuntimeClient, type RuntimeCatalog, type RuntimeCustomTrack, type RuntimeSessionStatus, type RuntimeSocketClient } from './lib/runtime';
 
 type Mode = 'sketch' | 'build' | 'drive';
-type DriveMode = 'manual' | 'replay';
+type DriveMode = 'manual' | 'ppo' | 'replay';
 const STORAGE_KEY = 'f1rl.racing-sandbox.draft.v1';
 const assets: { kind: PropKind; title: string; description: string; icon: typeof Box; color: string }[] = [
   { kind: 'bridge', title: 'Bridge', description: 'Raised road section', icon: Layers3, color: 'steel' },
@@ -54,16 +56,32 @@ export default function App() {
   const [mode, setMode] = useState<Mode>('sketch');
   const [selected, setSelected] = useState<string | null>(null);
   const [armed, setArmed] = useState<PropKind | null>(null);
-  const [driveMode, setDriveMode] = useState<DriveMode>('manual');
+  const [driveMode, setDriveMode] = useState<DriveMode>('ppo');
   const [pose, setPose] = useState<CarPose>(() => spawnPose(initialTrack()));
   const [replay, setReplay] = useState<Replay | null>(null);
   const [replayTime, setReplayTime] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [runtimeCatalog, setRuntimeCatalog] = useState<RuntimeCatalog | null>(null);
+  const [catalogError, setCatalogError] = useState('');
+  const [modelId, setModelId] = useState('A-seed0');
+  const [runtimeTrackId, setRuntimeTrackId] = useState('straight-sprint-v1');
+  const [runtimeSeed, setRuntimeSeed] = useState(412);
+  const [runtimeStatus, setRuntimeStatus] = useState<RuntimeSessionStatus | null>(null);
+  const [runtimeError, setRuntimeError] = useState('');
+  const [runtimeReplay, setRuntimeReplay] = useState<Replay | null>(null);
+  const [runtimeBusy, setRuntimeBusy] = useState(false);
+  const [validatedCustomTrack, setValidatedCustomTrack] = useState<RuntimeCustomTrack | null>(null);
+  const [customTrackSelected, setCustomTrackSelected] = useState(false);
+  const [trackValidationBusy, setTrackValidationBusy] = useState(false);
   const [toast, setToast] = useState('');
   const [help, setHelp] = useState(false);
   const [saved, setSaved] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const replayInput = useRef<HTMLInputElement>(null);
+  const sessionRef = useRef<string | null>(null);
+  const runtimeSocketRef = useRef<RuntimeSocketClient | null>(null);
+  const runtimeClient = useMemo(() => new RuntimeClient(), []);
   const trackRef = useRef(track);
   const history = useRef<TrackDocument[]>([]);
   const redoStack = useRef<TrackDocument[]>([]);
@@ -71,10 +89,23 @@ export default function App() {
   const trackMeters = useMemo(() => roadLength(sampleRoad(track, 300)), [track]);
   const autoBridges = useMemo(() => getAutoBridges(track).length, [track]);
   const canDrive = track.points.length >= 2;
-  const activePose = driveMode === 'replay' && replay ? (() => {
-    const p = replayAt(replay, replayTime);
+  const activeReplay = replay ?? runtimeReplay;
+  const replayTrackId = activeReplay?.schema === 'f1rl_racing_sandbox_replay_v2' ? activeReplay.provenance.track_id : runtimeTrackId;
+  const activeRuntimeTrack = customTrackSelected && validatedCustomTrack
+    ? validatedCustomTrack
+    : runtimeCatalog?.tracks.find((item) => item.track_id === (driveMode === 'replay' ? replayTrackId : runtimeTrackId));
+  const sceneTrack = mode === 'drive' && activeRuntimeTrack ? activeRuntimeTrack.preview : track;
+  const sceneRoadSamples = mode === 'drive' ? activeRuntimeTrack?.road_samples : undefined;
+  const activePose = driveMode === 'replay' && activeReplay ? (() => {
+    const p = replayAt(activeReplay, replayTime);
     return { x: p.position[0], y: p.position[1], z: p.position[2], heading: p.heading_rad, speed: p.speed_mps };
-  })() : pose;
+  })() : runtimeStatus?.latest_frame ? {
+    x: runtimeStatus.latest_frame.position[0], y: runtimeStatus.latest_frame.position[1], z: runtimeStatus.latest_frame.position[2],
+    heading: runtimeStatus.latest_frame.heading_rad, speed: runtimeStatus.latest_frame.speed_mps,
+  } : activeRuntimeTrack ? {
+    x: activeRuntimeTrack.road_samples[0]?.x ?? 0, y: activeRuntimeTrack.road_samples[0]?.y ?? 0,
+    z: activeRuntimeTrack.road_samples[0]?.z ?? 0, heading: activeRuntimeTrack.road_samples[0]?.heading ?? 0, speed: 0,
+  } : pose;
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(track)); setSaved(false); }
@@ -86,6 +117,19 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [toast]);
 
+  useEffect(() => {
+    if (mode !== 'drive' || runtimeCatalog || catalogError) return;
+    let active = true;
+    void runtimeClient.catalog().then((catalog) => {
+      if (!active) return;
+      setRuntimeCatalog(catalog);
+      if (!catalog.tracks.some((item) => item.track_id === runtimeTrackId)) setRuntimeTrackId(catalog.tracks[0]?.track_id ?? '');
+    }).catch((error: unknown) => {
+      if (active) setCatalogError(error instanceof Error ? error.message : 'Python runtime is unavailable');
+    });
+    return () => { active = false; };
+  }, [mode, runtimeCatalog, catalogError, runtimeClient, runtimeTrackId]);
+
   const changeTrack = useCallback((update: (prev: TrackDocument) => TrackDocument) => {
     const prev = trackRef.current;
     const next = update(prev);
@@ -94,6 +138,8 @@ export default function App() {
     redoStack.current = [];
     trackRef.current = next;
     setTrack(next);
+    setValidatedCustomTrack(null);
+    setCustomTrackSelected(false);
   }, []);
   const undo = () => {
     const last = history.current.pop();
@@ -149,7 +195,8 @@ export default function App() {
   const startDrive = () => {
     if (!canDrive) return;
     setPose(spawnPose(track));
-    setPlaying(false); setReplayTime(replay?.frames[0]?.time_s ?? 0);
+    setPlaying(false); setReplayTime(activeReplay?.frames[0]?.time_s ?? 0);
+    setDriveMode(replay ? 'replay' : 'ppo');
     setMode('drive');
     setArmed(null); setSelected(null);
   };
@@ -170,6 +217,8 @@ export default function App() {
       redoStack.current = [];
       trackRef.current = next;
       setTrack(next);
+      setValidatedCustomTrack(null);
+      setCustomTrackSelected(false);
       setPose(spawnPose(next));
       setMode('build'); setSelected(null); setArmed(null);
       setToast('Map imported');
@@ -180,68 +229,171 @@ export default function App() {
     try {
       const next = parseReplay(JSON.parse(await file.text()));
       setReplay(next);
+      setRuntimeReplay(null);
       setReplayTime(next.frames[0].time_s);
       setPlaying(false); setDriveMode('replay');
       setToast('Replay loaded · development evidence only');
     } catch (error) { setToast(error instanceof Error ? error.message : 'Unable to open replay'); }
   };
 
-  useEffect(() => {
-    if (mode !== 'drive' || driveMode !== 'manual') return;
-    const down = new Set<string>();
-    const keyDown = (e: KeyboardEvent) => {
-      if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight','Space'].includes(e.code)) {
-        down.add(e.code); e.preventDefault();
-      }
-      if (e.code === 'Escape') setMode('build');
-    };
-    const keyUp = (e: KeyboardEvent) => { down.delete(e.code); };
-    const blur = () => down.clear();
-    window.addEventListener('keydown', keyDown);
-    window.addEventListener('keyup', keyUp);
-    window.addEventListener('blur', blur);
-    let frame = 0, previous = performance.now();
-    const tick = (now: number) => {
-      const dt = Math.min((now - previous) / 1000, 0.04);
-      previous = now;
-      const accelerate = down.has('KeyW') || down.has('ArrowUp');
-      const brake = down.has('KeyS') || down.has('ArrowDown') || down.has('Space');
-      const steer = Number(down.has('KeyD') || down.has('ArrowRight')) - Number(down.has('KeyA') || down.has('ArrowLeft'));
-      setPose((p) => {
-        const speed = Math.max(0, Math.min(40, p.speed + (accelerate ? 10.5 : 0) * dt - (brake ? 21 : 0) * dt - p.speed * 0.48 * dt));
-        const heading = p.heading + steer * speed * 0.012 * dt;
-        const x = p.x + Math.sin(heading) * speed * dt;
-        const z = p.z + Math.cos(heading) * speed * dt;
-        const near = nearestRoad(track, x, z);
-        const y = near.distance <= track.width / 2 ? pointAt(track, near.t).y : p.y;
-        return { x, z, y, heading, speed };
+  const runRuntimeSession = async () => {
+    if (!runtimeCatalog || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff) return;
+    if (customTrackSelected && (!validatedCustomTrack || (driveMode === 'ppo' && !validatedCustomTrack.ppo_compatible))) return;
+    setRuntimeBusy(true);
+    setRuntimeError(''); setReplay(null); setRuntimeReplay(null); setPlaying(false); setRuntimeStatus(null);
+    try {
+      const created = customTrackSelected && validatedCustomTrack
+        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : undefined)
+        : driveMode === 'manual'
+          ? await runtimeClient.createManualSession(runtimeTrackId, runtimeSeed)
+          : await runtimeClient.createPpoSession(modelId, runtimeTrackId, runtimeSeed);
+      sessionRef.current = created.session_id;
+      setRuntimeStatus(created);
+      const socket = await runtimeClient.connect(created.session_id, (event) => {
+        if (event.type === 'ready') setRuntimeStatus(event.data as unknown as RuntimeSessionStatus);
+        if (event.type === 'frame') {
+          const frame = event.data as unknown as NonNullable<RuntimeSessionStatus['latest_frame']>;
+          setRuntimeStatus((current) => current ? { ...current, status: current.status === 'ready' ? 'running' : current.status, latest_frame: frame, steps: frame.tick } : current);
+        }
+        if (event.type === 'progress') {
+          const progress = event.data as { steps?: number; max_steps?: number; step_progress?: number };
+          setRuntimeStatus((current) => current ? { ...current,
+            steps: progress.steps ?? current.steps, max_steps: progress.max_steps ?? current.max_steps,
+            step_progress: progress.step_progress ?? current.step_progress,
+            status: current.status === 'ready' ? 'running' : current.status,
+          } : current);
+        }
+        if (event.type === 'status') {
+          const status = event.data.status;
+          setRuntimeStatus((current) => current ? { ...current, status: status === 'paused' ? 'paused' : 'running' } : current);
+        }
+        if (event.type === 'terminal') {
+          const result = event.data as unknown as NonNullable<RuntimeSessionStatus['episode_result']>;
+          const state = String(result.status) as RuntimeSessionStatus['status'];
+          setRuntimeStatus((current) => current ? { ...current, status: state, episode_result: result } : current);
+          void runtimeClient.replay(created.session_id).then((completedReplay) => {
+            if (sessionRef.current !== created.session_id) return;
+            setRuntimeReplay(completedReplay);
+            setReplayTime(completedReplay.frames[0].time_s);
+            setPlaying(true);
+            setDriveMode('replay');
+            sessionRef.current = null;
+            runtimeSocketRef.current?.disconnect();
+            runtimeSocketRef.current = null;
+            setRuntimeBusy(false);
+          }).catch((error: unknown) => {
+            if (error instanceof Error) setRuntimeError(error.message);
+            sessionRef.current = null;
+            runtimeSocketRef.current?.disconnect();
+            runtimeSocketRef.current = null;
+            setRuntimeBusy(false);
+          });
+        }
+        if (event.type === 'error') setRuntimeError(String(event.data.message ?? event.data.code ?? 'Runtime protocol error'));
+      }, (error) => {
+        setRuntimeError(error.message);
+        setRuntimeBusy(false);
+        sessionRef.current = null;
       });
-      frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('keydown', keyDown); window.removeEventListener('keyup', keyUp);
-      window.removeEventListener('blur', blur);
-    };
-  }, [mode, driveMode]);
+      runtimeSocketRef.current = socket;
+      socket.start();
+    } catch (error) {
+      if (error instanceof RuntimeApiError) setRuntimeError(`${error.code}: ${error.message}`);
+      else setRuntimeError(error instanceof Error ? error.message : 'Episode failed to run');
+      sessionRef.current = null;
+      runtimeSocketRef.current?.disconnect();
+      runtimeSocketRef.current = null;
+      setRuntimeBusy(false);
+    }
+  };
+
+  const validateCurrentTrack = async () => {
+    setTrackValidationBusy(true); setRuntimeError('');
+    try {
+      const converted = await runtimeClient.validateCustomTrack(track);
+      setValidatedCustomTrack(converted);
+      setCustomTrackSelected(true);
+      setToast(`Python validated ${converted.surface_count} road surfaces · development track`);
+    } catch (error) {
+      setValidatedCustomTrack(null); setCustomTrackSelected(false);
+      setRuntimeError(error instanceof RuntimeApiError ? `${error.code}: ${error.message}` : error instanceof Error ? error.message : 'Track validation failed');
+    } finally { setTrackValidationBusy(false); }
+  };
+
+  const stopRuntimeSession = async () => {
+    setPlaying(false);
+    try {
+      if (driveMode === 'manual') runtimeSocketRef.current?.action(0, 0, 0);
+      runtimeSocketRef.current?.stop();
+    }
+    catch (error) { setRuntimeError(error instanceof Error ? error.message : 'Unable to stop runtime session'); }
+  };
+
+  const controlRuntime = (command: 'pause' | 'resume' | 'reset') => {
+    try {
+      runtimeSocketRef.current?.[command]();
+      if (command === 'reset') {
+        pressedKeys.current.clear();
+        if (driveMode === 'manual') runtimeSocketRef.current?.action(0, 0, 0);
+        setRuntimeReplay(null); setPlaying(false); setRuntimeStatus((current) => current ? {
+          ...current, status: 'running', steps: 0, step_progress: 0, latest_frame: null, episode_result: null,
+        } : current);
+      }
+    } catch (error) { setRuntimeError(error instanceof Error ? error.message : 'Runtime control failed'); }
+  };
+
+  const pressedKeys = useRef(new Set<string>());
 
   useEffect(() => {
-    if (!playing || !replay || driveMode !== 'replay' || mode !== 'drive') return;
+    if (mode !== 'drive' || driveMode !== 'manual' || !runtimeBusy) return;
+    const keys = pressedKeys.current;
+    const action = () => {
+      const command = manualActionFromKeys(keys);
+      try { runtimeSocketRef.current?.action(command.steering, command.throttle, command.brake); }
+      catch (error) { setRuntimeError(error instanceof Error ? error.message : 'Unable to send manual action'); }
+    };
+    const controlled = new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight','Space']);
+    const keyDown = (event: KeyboardEvent) => {
+      if (!controlled.has(event.code) || event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement || event.target instanceof HTMLTextAreaElement) return;
+      event.preventDefault();
+      const before = keys.size;
+      keys.add(event.code);
+      if (keys.size !== before) action();
+    };
+    const keyUp = (event: KeyboardEvent) => {
+      if (keys.delete(event.code)) action();
+    };
+    const release = () => { if (keys.size) { keys.clear(); action(); } };
+    const visibility = () => { if (document.visibilityState !== 'visible') release(); };
+    window.addEventListener('keydown', keyDown);
+    window.addEventListener('keyup', keyUp);
+    window.addEventListener('blur', release);
+    document.addEventListener('visibilitychange', visibility);
+    return () => {
+      release();
+      window.removeEventListener('keydown', keyDown);
+      window.removeEventListener('keyup', keyUp);
+      window.removeEventListener('blur', release);
+      document.removeEventListener('visibilitychange', visibility);
+    };
+  }, [mode, driveMode, runtimeBusy]);
+
+  useEffect(() => {
+    if (!playing || !activeReplay || driveMode !== 'replay' || mode !== 'drive') return;
     let frame = 0, last = performance.now();
     const advance = (now: number) => {
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       setReplayTime((t) => {
-        const end = replay.frames[replay.frames.length - 1].time_s;
+        const end = activeReplay.frames[activeReplay.frames.length - 1].time_s;
         if (t + dt >= end) { setPlaying(false); return end; }
-        return t + dt;
+        return t + dt * playbackSpeed;
       });
       frame = requestAnimationFrame(advance);
     };
     frame = requestAnimationFrame(advance);
     return () => cancelAnimationFrame(frame);
-  }, [playing, replay, driveMode, mode]);
+  }, [playing, activeReplay, playbackSpeed, driveMode, mode]);
 
   return <div className="app">
     <header className="topbar">
@@ -268,7 +420,9 @@ export default function App() {
       {mode === 'sketch' ? <SketchEditor points={track.points} onChange={onSketch} onConvert={() => changeMode('build')}/> :
         <div className="world-stage">
           <Suspense fallback={<div className="scene-loading">Loading 3D world…</div>}>
-            <RacingScene track={track} mode={mode} selectedId={selected} armed={armed} pose={mode === 'build' ? spawnPose(track) : activePose} onSelect={setSelected} onPlace={onPlace}/>
+            <RacingScene track={mode === 'build' ? track : sceneTrack} mode={mode} selectedId={selected} armed={armed}
+              pose={mode === 'build' ? spawnPose(track) : activePose} roadSamples={mode === 'drive' ? sceneRoadSamples : undefined}
+              onSelect={setSelected} onPlace={onPlace}/>
           </Suspense>
           {mode === 'build' && <>
             <div className="world-label"><span className="live-glow"/> 3D EDITOR <span>·</span> {Math.round(trackMeters)}M ROAD {autoBridges > 0 && <span>· {autoBridges} AUTO BRIDGE{autoBridges > 1 ? 'S' : ''}</span>}</div>
@@ -290,18 +444,76 @@ export default function App() {
           </>}
           {mode === 'drive' && <div className="drive-overlay">
             <div className="drive-mode-switch">
-              <button className={driveMode === 'manual' ? 'selected' : ''} onClick={() => {setDriveMode('manual'); setPlaying(false);}}>Manual</button>
-              <button className={driveMode === 'replay' ? 'selected' : ''} onClick={() => {setDriveMode('replay'); setPlaying(false);}}>PPO Replay</button>
+              <button className={driveMode === 'manual' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'manual'} onClick={() => {setDriveMode('manual'); setPlaying(false);}}>Manual</button>
+              <button className={driveMode === 'ppo' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'ppo'} onClick={() => {setDriveMode('ppo'); setPlaying(false);}}>PPO</button>
+              <button className={driveMode === 'replay' ? 'selected' : ''} disabled={!activeReplay || runtimeBusy} onClick={() => {setDriveMode('replay'); setPlaying(false);}}>Replay</button>
             </div>
             <div className="speed-readout"><span>SPEED</span><strong>{Math.round(activePose.speed * 3.6)}</strong><small>KM/H</small></div>
-            <div className="drive-warning"><TriangleAlert size={14}/>{driveMode === 'manual' ? 'Arcade visual preview · not Python physics' : 'Imported replay · not independently verified'}</div>
-            {driveMode === 'manual' ? <div className="driving-keys"><span className="keycap">W</span><span className="keycap">A</span><span className="keycap">S</span><span className="keycap">D</span> <span>Steer / accelerate · Space to brake</span></div> :
-              replay ? <div className="replay-controls">
-                <button aria-label={playing ? 'Pause replay' : 'Play replay'} onClick={() => {if (replayTime >= replay.frames[replay.frames.length - 1].time_s) setReplayTime(replay.frames[0].time_s); setPlaying(!playing);}}>{playing ? <Pause size={19}/> : <Play size={19}/>}</button>
-                <input aria-label="Replay timeline" type="range" min={replay.frames[0].time_s} max={replay.frames[replay.frames.length - 1].time_s} step="0.01" value={replayTime} onChange={(e) => {setPlaying(false);setReplayTime(Number(e.target.value));}}/>
-                <span>{replayTime.toFixed(1)}s</span><span className="replay-name">{replay.source.model_id}</span>
-              </div> : <div className="replay-empty"><span>Have a PPO run?</span><button onClick={() => replayInput.current?.click()}><Upload size={16}/> Import TRAIN replay</button></div>}
-            <div className="drive-bottom"><button onClick={() => {setPose(spawnPose(track));setPlaying(false);setReplayTime(replay?.frames[0]?.time_s ?? 0);}}><RotateCcw size={17}/> Restart</button><button className="leave-drive" onClick={() => changeMode('build')}><ArrowLeft size={17}/> Back to build</button></div>
+            <div className="drive-warning"><TriangleAlert size={14}/>{driveMode === 'manual' ? 'Manual Python physics · development only' : driveMode === 'ppo' ? 'Frozen PPO · TRAIN development · scientific admission disabled' : 'Recorded frames · imported data is not independently verified'}</div>
+            {driveMode !== 'replay' ? <>
+              <div className="runtime-panel">
+                {driveMode === 'ppo' && <label>FROZEN MODEL<select aria-label="Frozen PPO model" value={modelId} onChange={(event) => setModelId(event.target.value)} disabled={!runtimeCatalog || runtimeBusy}>
+                    {(runtimeCatalog?.models ?? []).map((model) => <option key={model.model_id} value={model.model_id}>{model.model_id}</option>)}
+                  </select></label>}
+                {customTrackSelected && validatedCustomTrack ? <div className="custom-track-selection">
+                  <span>PYTHON VALIDATED CUSTOM TRACK</span><strong>{validatedCustomTrack.preview.name}</strong>
+                  <small>{validatedCustomTrack.surface_count} road surfaces · {validatedCustomTrack.checkpoint_count} checkpoints · {validatedCustomTrack.auto_bridge_count} auto overpasses</small>
+                  {driveMode === 'ppo' && !validatedCustomTrack.ppo_compatible && <small className="runtime-error">Frozen PPO observation/action contract is incompatible.</small>}
+                  <button disabled={runtimeBusy} onClick={() => setCustomTrackSelected(false)}>Use registered TRAIN track</button>
+                </div> : <>
+                  <label>TRAIN TRACK<select aria-label="TRAIN track" value={runtimeTrackId} onChange={(event) => setRuntimeTrackId(event.target.value)} disabled={!runtimeCatalog || runtimeBusy}>
+                    {(runtimeCatalog?.tracks ?? []).map((item) => <option key={item.track_id} value={item.track_id}>{item.track_id}</option>)}
+                  </select></label>
+                  <button className="runtime-validate-track" disabled={!runtimeCatalog || trackValidationBusy || runtimeBusy} onClick={() => void validateCurrentTrack()}>
+                    {trackValidationBusy ? <><LoaderCircle size={14}/> VALIDATING IN PYTHON…</> : <><Check size={14}/> VALIDATE & USE CURRENT MAP</>}
+                  </button>
+                </>}
+                <label>SEED<input aria-label="Episode seed" type="number" min="0" max="4294967295" step="1" value={runtimeSeed} onChange={(event) => setRuntimeSeed(Number(event.target.value))} disabled={runtimeBusy}/></label>
+                {catalogError ? <p className="runtime-error"><TriangleAlert size={15}/>{catalogError}. Start the Python runtime to run episodes.</p> : !runtimeCatalog ?
+                  <p className="runtime-loading"><LoaderCircle size={15}/> Connecting to local Python runtime…</p> : null}
+                {runtimeError && <p className="runtime-error"><TriangleAlert size={15}/>{runtimeError}</p>}
+                {runtimeStatus && <>
+                  <div className="runtime-progress"><span>{runtimeStatus.status.toUpperCase()} · {runtimeStatus.steps}/{runtimeStatus.max_steps} STEPS</span><progress max="1" value={runtimeStatus.step_progress}/></div>
+                  {runtimeStatus.latest_frame && <div className="runtime-telemetry">
+                    <span>STEER <b>{runtimeStatus.latest_frame.action.steering.toFixed(2)}</b></span>
+                    <span>THROTTLE <b>{runtimeStatus.latest_frame.action.throttle.toFixed(2)}</b></span>
+                    <span>BRAKE <b>{runtimeStatus.latest_frame.action.brake.toFixed(2)}</b></span>
+                    <span>CHECKPOINTS <b>{runtimeStatus.latest_frame.completed_checkpoint_ids.length}/{runtimeStatus.latest_frame.checkpoint_count}</b></span>
+                    <span>COLLISIONS <b>{runtimeStatus.latest_frame.collision_count}</b></span>
+                    <span>{runtimeStatus.latest_frame.grounded ? 'GROUNDED' : 'AIRBORNE'}</span>
+                  </div>}
+                  {runtimeStatus.episode_result && <p className="runtime-result">{runtimeStatus.episode_result.successful_finish ? 'FINISHED' : 'INVALID / FAILED'} · {String(runtimeStatus.episode_result.reason ?? 'episode ended')}</p>}
+                </>}
+                <div className="runtime-actions">
+                  <button className="runtime-run" onClick={() => void runRuntimeSession()} disabled={!runtimeCatalog || runtimeBusy || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff}>
+                    {runtimeBusy ? <><LoaderCircle size={16}/> {runtimeStatus?.status === 'paused' ? 'PAUSED' : driveMode === 'manual' ? 'MANUAL PYTHON SIMULATION' : 'RUNNING PPO INFERENCE'}</> : <><Play size={16}/> {driveMode === 'manual' ? 'START MANUAL DRIVE' : 'RUN EPISODE'}</>}
+                  </button>
+                  {runtimeBusy && <button className="runtime-stop" onClick={() => void stopRuntimeSession()}>Stop</button>}
+                  <button className="runtime-import" onClick={() => replayInput.current?.click()}><Upload size={15}/> Import replay</button>
+                </div>
+                {runtimeBusy && <div className="runtime-live-controls">
+                  <button onClick={() => controlRuntime(runtimeStatus?.status === 'paused' ? 'resume' : 'pause')}>{runtimeStatus?.status === 'paused' ? <Play size={14}/> : <Pause size={14}/>} {runtimeStatus?.status === 'paused' ? 'Resume' : 'Pause'}</button>
+                  <button onClick={() => controlRuntime('reset')}><RotateCcw size={14}/> Reset</button>
+                  <label>SIM SPEED<select aria-label="Simulation speed" value={runtimeStatus?.speed_multiplier ?? 1} onChange={(event) => {
+                    const multiplier = Number(event.target.value);
+                    try { runtimeSocketRef.current?.speed(multiplier); setRuntimeStatus((current) => current ? { ...current, speed_multiplier: multiplier } : current); }
+                    catch (error) { setRuntimeError(error instanceof Error ? error.message : 'Unable to set simulation speed'); }
+                  }}><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option><option value="16">16×</option></select></label>
+                </div>}
+              </div>
+            </> : activeReplay ? <div className="replay-controls">
+              <button aria-label={playing ? 'Pause replay' : 'Play replay'} onClick={() => {if (replayTime >= activeReplay.frames[activeReplay.frames.length - 1].time_s) setReplayTime(activeReplay.frames[0].time_s); setPlaying(!playing);}}>{playing ? <Pause size={19}/> : <Play size={19}/>}</button>
+              <input aria-label="Replay timeline" type="range" min={activeReplay.frames[0].time_s} max={activeReplay.frames[activeReplay.frames.length - 1].time_s} step="0.01" value={replayTime} onChange={(event) => {setPlaying(false);setReplayTime(Number(event.target.value));}}/>
+              <span>{replayTime.toFixed(1)}s</span><span className="replay-name">{replayModelId(activeReplay)}</span>
+              <select aria-label="Replay speed" value={playbackSpeed} onChange={(event) => setPlaybackSpeed(Number(event.target.value))}><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
+              <button aria-label="Restart replay" onClick={() => {setPlaying(false);setReplayTime(activeReplay.frames[0].time_s);}}><RotateCcw size={16}/></button>
+              <button aria-label="Export replay JSON" onClick={() => downloadJSON('f1rl-runtime-replay.json', activeReplay)}><Download size={16}/></button>
+            </div> : <div className="replay-empty"><span>No replay loaded</span><button onClick={() => replayInput.current?.click()}><Upload size={16}/> Import replay</button></div>}
+            <div className="drive-bottom"><button onClick={() => {
+              if (runtimeBusy) controlRuntime('reset');
+              else if (driveMode === 'replay') {setPlaying(false);setReplayTime(activeReplay?.frames[0]?.time_s ?? 0);}
+              else void runRuntimeSession();
+            }}><RotateCcw size={17}/> {runtimeBusy ? 'Reset session' : 'Restart'}</button><button className="leave-drive" onClick={() => {if (runtimeBusy) void stopRuntimeSession(); changeMode('build');}}><ArrowLeft size={17}/> Back to build</button></div>
           </div>}
         </div>}
       {mode === 'build' && <div className="build-hotbar" role="toolbar" aria-label="Build hotbar">
