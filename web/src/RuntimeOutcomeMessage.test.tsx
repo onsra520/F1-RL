@@ -29,6 +29,21 @@ describe('Backend-authoritative runtime result rendering', () => {
     expect(html).toContain('Invalid · Physics/Simulator Error');
     expect(html).toContain('SuspensionResolutionError');
   });
+  it('renders unsupported road departure as a driving failure', () => {
+    const status: RuntimeSessionStatus = {
+      ...base,
+      status: 'failed',
+      episode_result: {
+        status: 'failed', valid_sample: false, successful_finish: false,
+        reason: 'SuspensionResolutionError: track_boundary_exit: front_right wheel center left road support',
+      },
+    };
+    const html = view(status);
+    expect(html).toContain('Driving Failure · Track Boundary');
+    expect(html).toContain('A wheel left the road. Start a new run to try again.');
+    expect(html).not.toContain('Physics/Simulator Error');
+    expect(runtimeOutcome(status)?.kind).toBe('driving_failure');
+  });
   it.each(['cancelled', 'stopped'] as const)('renders %s without implying invalidity', (status) => {
     expect(view({ status, episode_result: null })).toContain('Cancelled / Stopped');
     expect(runtimeOutcome({ ...base, status, episode_result: null })?.kind).toBe('stopped');

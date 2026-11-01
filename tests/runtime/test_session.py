@@ -58,6 +58,13 @@ def test_frozen_model_runs_real_train_environment_and_returns_replay(model_id, t
         assert replay["frames"][0]["time_s"] == 0.0
         assert replay["frames"][-1]["tick"] == replay["result"]["steps"]
         assert replay["frames"][-1]["position"] != replay["frames"][0]["position"]
+        if model_id == "B-seed1":
+            assert status["steps"] == 85
+            assert status["error"] == (
+                "SuspensionResolutionError: track_boundary_exit: "
+                "front_right wheel center left road support"
+            )
+            assert replay["result"]["valid_sample"] is False
     finally:
         manager.shutdown()
 

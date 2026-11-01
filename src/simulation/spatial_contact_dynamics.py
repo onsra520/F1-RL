@@ -19,7 +19,10 @@ from .independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy, SuspensionDynamicsResult,
     SuspensionDynamicsState, SuspensionResolutionError, WheelForceSample,
 )
-from .multi_surface_support import _atlas, _contacts, _intersection, _square, certify_multisurface_support
+from .multi_surface_support import (
+    _WHEEL_NAMES, _atlas, _contacts, _intersection, _square, _within_shape,
+    certify_multisurface_support,
+)
 from .spatial_partial_wheel_contact import sample_spatial_partial_wheels
 from .finite_tire_footprint_v4 import sample_finite_wheel_coverage
 from .wheel_edge_release_energy import certify_wheel_edge_release_energy
@@ -265,6 +268,18 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             footprints=None
             contacts=_contacts(state,physics.contact,atlas,free_extension=lifecycle)
         if contacts is None:
+            if lifecycle:
+                outside_wheel = None
+                for name, local in zip(_WHEEL_NAMES, physics.contact.wheels.positions, strict=True):
+                    point = state.position + state.orientation.rotate(local)
+                    if not any(_within_shape(point.x, point.z, polygon) for polygon in atlas[1]):
+                        outside_wheel = name
+                        break
+                if outside_wheel is not None:
+                    raise SuspensionResolutionError(
+                        f'track_boundary_exit: {outside_wheel} wheel center left road support',
+                        failure_code='track_boundary_exit',
+                    )
             raise SuspensionResolutionError('spatial wheel support/travel missing')
         compressed=any(c is not None and preload+physics.spring_stiffness_npm*c.deflection_m>0.
                        for c in contacts)
@@ -888,7 +903,10 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             ballistic_sag_m=gravity*h*h/8. if ballistic else 0.,
             maximum_deflection_m=-preload/physics.spring_stiffness_npm if ballistic else None,
             minimum_support_deflection_m=-preload/physics.spring_stiffness_npm
-                if lifecycle and not ballistic and not phase_change else None)
+                if lifecycle and not ballistic and not phase_change else None,
+            body_coverage_domain=(
+                'wheel_supported_overhang_v1' if lifecycle else 'full_footprint_v1'
+            ))
         if phase_domain!='atlas_rotating_edge_v4' and not verdict.valid:
             if lifecycle and not phase_change and h>1e-8 and phase_depth<24:
                 middle=advance(y,start,h/2.,depth,phase_depth+1)

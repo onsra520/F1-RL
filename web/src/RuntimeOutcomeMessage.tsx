@@ -1,6 +1,6 @@
 import type { RuntimeSessionStatus } from './lib/runtime';
 
-type OutcomeView = { kind: 'success' | 'valid_nonfinish' | 'invalid' | 'stopped' | 'uncertified'; label: string; detail: string };
+type OutcomeView = { kind: 'success' | 'valid_nonfinish' | 'invalid' | 'driving_failure' | 'stopped' | 'uncertified'; label: string; detail: string };
 
 /** Interpret only backend-declared terminal states; transport errors are displayed separately. */
 export function runtimeOutcome(status: RuntimeSessionStatus): OutcomeView | null {
@@ -11,6 +11,13 @@ export function runtimeOutcome(status: RuntimeSessionStatus): OutcomeView | null
     return { kind: 'stopped', label: 'Cancelled / Stopped', detail: reason ?? status.status };
   }
   if (status.status === 'failed') {
+    if (reason?.includes('track_boundary_exit:')) {
+      return {
+        kind: 'driving_failure',
+        label: 'Driving Failure · Track Boundary',
+        detail: 'A wheel left the road. Start a new run to try again.',
+      };
+    }
     return { kind: 'invalid', label: 'Invalid · Physics/Simulator Error', detail: reason ?? status.error ?? 'simulation failed' };
   }
   if (status.status !== 'finished' || !terminal) return null;
