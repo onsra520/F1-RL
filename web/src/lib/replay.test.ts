@@ -41,15 +41,39 @@ describe('read-only replay', () => {
         model_id: 'A-seed0', model_sha256: hash, track_id: 'straight-sprint-v1', track_sha256: hash, seed: 7 },
       result: { status: 'finished', valid_sample: true, successful_finish: true, reason: null,
         steps: 1, duration_s: 0.1, trace_sha256: hash },
+      track_preview: {
+        track_id: 'straight-sprint-v1', track_sha256: hash,
+        preview: { schema: 'f1rl_racing_sandbox_draft_v1', id: 'straight-sprint-v1', name: 'Episode track', width: 12,
+          future_preview_field: { retained: true },
+          points: [{ x: 0, z: 0, future_point_field: 'retained' }, { x: 0, z: 20 }],
+          props: [
+            { id: 'ramp', kind: 'ramp', t: 0.25, offset: 0, rotation: 0, future_prop_field: 'retained' },
+            { id: 'finish-gate', kind: 'checkpoint', t: 0.5, offset: 0, rotation: 0 },
+          ] },
+        future_preview_metadata: { retained: true },
+        road_samples: [
+          { x: 0, y: 0, z: 0, t: 0, heading: 0, nx: 1, nz: 0 },
+          { x: 0, y: 0, z: 20, t: 1, heading: 0, nx: 1, nz: 0 },
+        ],
+      },
       frames: [runtimeFrame(0, 0), runtimeFrame(1, 0.1)],
     });
     expect(replay.schema).toBe('f1rl_racing_sandbox_replay_v2');
     expect(replayModelId(replay)).toBe('A-seed0');
     expect(replay.frames[1].action?.throttle).toBe(1);
-    expect(replayAt(replay, 0.05).position[2]).toBeCloseTo(0.5);
     if (replay.schema !== 'f1rl_racing_sandbox_replay_v2') throw new Error('expected runtime replay v2');
+    expect(replay.track_preview?.preview.props.map((prop) => prop.kind)).toEqual(['ramp', 'checkpoint']);
+    expect(replay.track_preview?.road_samples[1]?.z).toBe(20);
+    expect(replay.track_preview?.preview).toMatchObject({ future_preview_field: { retained: true } });
+    expect(replay.track_preview?.preview.points[0]).toMatchObject({ future_point_field: 'retained' });
+    expect(replay.track_preview?.preview.props[0]).toMatchObject({ future_prop_field: 'retained' });
+    expect(replay.track_preview).toMatchObject({ future_preview_metadata: { retained: true } });
+    expect(replayAt(replay, 0.05).position[2]).toBeCloseTo(0.5);
     const heldout = JSON.parse(JSON.stringify(replay)) as { provenance: Record<string, unknown> };
     heldout.provenance.dataset_split = 'HELD-OUT';
     expect(() => parseReplay(heldout)).toThrow();
+    const wrongTrack = JSON.parse(JSON.stringify(replay)) as { track_preview: { track_sha256: string } };
+    wrongTrack.track_preview.track_sha256 = 'b'.repeat(64);
+    expect(() => parseReplay(wrongTrack)).toThrow(/does not match replay provenance/);
   });
 });

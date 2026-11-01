@@ -2,9 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   invalidateRuntimeTrackSelection,
   isCurrentCustomTrackValidation,
+  matchesValidatedCustomTrack,
   parseRuntimeSocketEvent,
   resolveRuntimeTrackRequest,
   RuntimeClient,
+  RuntimeApiError,
+  shouldValidateCustomTrackOnDrive,
   type RuntimeCustomTrack,
 } from './runtime';
 
@@ -48,15 +51,34 @@ describe('runtime track selection', () => {
       .toBeNull();
   });
 
+  it('validates the edited map on entry from Sketch or Build but keeps Replay attached', () => {
+    expect(shouldValidateCustomTrackOnDrive('sketch', false)).toBe(true);
+    expect(shouldValidateCustomTrackOnDrive('build', false)).toBe(true);
+    expect(shouldValidateCustomTrackOnDrive('drive', false)).toBe(false);
+    expect(shouldValidateCustomTrackOnDrive('build', true)).toBe(false);
+  });
+
   it('never falls back to a TRAIN track for an incompatible Custom PPO selection', () => {
     expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: { ...customTrack, ppo_compatible: false } }, 'slalom-v1', 'ppo'))
       .toBeNull();
     expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: { ...customTrack, ppo_compatible: false } }, 'slalom-v1', 'manual'))
       .toEqual({ kind: 'custom' });
   });
+
+  it('accepts a custom runtime session only when Python used the validated map hash', () => {
+    expect(matchesValidatedCustomTrack(customTrack, customTrack)).toBe(true);
+    expect(matchesValidatedCustomTrack(customTrack, { ...customTrack, track_id: 'sandbox-other' })).toBe(false);
+    expect(matchesValidatedCustomTrack(customTrack, { ...customTrack, track_sha256: 'd'.repeat(64) })).toBe(false);
+    expect(matchesValidatedCustomTrack(customTrack, undefined)).toBe(false);
+  });
 });
 
 describe('Python runtime HTTP client', () => {
+  it('retains trace identity on runtime invariant errors', () => {
+    const error = new RuntimeApiError('track mismatch', 'track_mismatch', 409, 'trace-412');
+    expect(error).toMatchObject({ code: 'track_mismatch', status: 409, traceId: 'trace-412' });
+  });
+
   it('loads the read-only frozen catalog and rejects a non-TRAIN track', async () => {
     const models = ['A', 'B', 'C', 'D'].flatMap((candidate) => [0, 1, 2].map((seed) => ({
       model_id: `${candidate}-seed${seed}`, sha256: 'b'.repeat(64), bytes: 100,
@@ -94,10 +116,11 @@ describe('Python runtime HTTP client', () => {
     const client = new RuntimeClient();
     const doc = { schema: 'f1rl_racing_sandbox_draft_v1', id: 'draft', name: 'Draft', width: 12, points: track.preview.points, props: [] };
     expect((await client.validateCustomTrack(doc)).development_only).toBe(true);
-    await client.createCustomSession(doc, 'manual', 5);
+    await client.createCustomSession(doc, 'manual', 5, undefined, 'trace-412');
     expect(JSON.parse(String((fetchMock.mock.calls[1][1] as RequestInit).body))).toEqual({
       mode: 'manual', seed: 5, custom_track: doc,
     });
+    expect((fetchMock.mock.calls[1][1] as RequestInit).headers).toMatchObject({ 'x-trace-id': 'trace-412' });
   });
 
   it('turns structured backend failures into typed client errors', async () => {

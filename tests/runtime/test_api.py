@@ -300,3 +300,10 @@ def test_runtime_cors_allows_only_local_editor_ports():
         external = client.get("/api/v1/health", headers={"origin": "https://other.example"})
         assert external.status_code == 200
         assert "access-control-allow-origin" not in external.headers
+        preflight = client.options("/api/v1/sessions", headers={
+            "origin": "http://127.0.0.1:5173",
+            "access-control-request-method": "POST",
+            "access-control-request-headers": "content-type,x-trace-id",
+        })
+        assert preflight.status_code == 200
+        assert "x-trace-id" in preflight.headers["access-control-allow-headers"].lower()

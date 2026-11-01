@@ -1,4 +1,5 @@
 import { parseReplay, type Replay } from './replay';
+import type { TrackDocument } from './track';
 
 export type RuntimeModel = { model_id: string; sha256: string; bytes: number };
 export type RuntimeTrack = {
@@ -6,14 +7,7 @@ export type RuntimeTrack = {
   split: 'TRAIN';
   purpose: 'development';
   world_sha256: string;
-  preview: {
-    schema: 'f1rl_racing_sandbox_draft_v1';
-    id: string;
-    name: string;
-    width: number;
-    points: { x: number; z: number }[];
-    props: { id: string; kind: 'checkpoint'; t: number; offset: number; rotation: number }[];
-  };
+  preview: TrackDocument;
   road_samples: { x: number; y: number; z: number; t: number; heading: number; nx: number; nz: number }[];
 };
 export type RuntimeCatalog = { models: RuntimeModel[]; tracks: RuntimeTrack[] };
@@ -53,6 +47,21 @@ export function resolveRuntimeTrackRequest(
   if (!selection.validated || (mode === 'ppo' && !selection.validated.ppo_compatible)) return null;
   return { kind: 'custom' };
 }
+
+export function matchesValidatedCustomTrack(
+  validated: RuntimeCustomTrack,
+  sessionTrack: Pick<RuntimeCustomTrack, 'track_id' | 'track_sha256'> | null | undefined,
+): boolean {
+  return sessionTrack?.track_id === validated.track_id && sessionTrack.track_sha256 === validated.track_sha256;
+}
+
+export function shouldValidateCustomTrackOnDrive(
+  previousMode: 'sketch' | 'build' | 'drive',
+  keepReplay: boolean,
+): boolean {
+  return previousMode !== 'drive' && !keepReplay;
+}
+
 export type RuntimeSessionStatus = {
   protocol_version: 'f1rl_runtime_v1';
   session_id: string;
@@ -110,7 +119,7 @@ export const DEFAULT_RUNTIME_URL = /^http:\/\/(?:127\.0\.0\.1|localhost):\d+$/.t
 const EXPECTED_MODEL_IDS = ['A', 'B', 'C', 'D'].flatMap((candidate) => [0, 1, 2].map((seed) => `${candidate}-seed${seed}`));
 
 export class RuntimeApiError extends Error {
-  constructor(message: string, readonly code: string, readonly status: number) {
+  constructor(message: string, readonly code: string, readonly status: number, readonly traceId?: string) {
     super(message);
     this.name = 'RuntimeApiError';
   }
@@ -165,11 +174,11 @@ export class RuntimeClient {
       body: JSON.stringify({ mode: 'manual', track_id: trackId, seed }),
     });
   }
-  createCustomSession(track: unknown, mode: 'manual' | 'ppo', seed: number, modelId?: string): Promise<RuntimeSessionStatus> {
+  createCustomSession(track: unknown, mode: 'manual' | 'ppo', seed: number, modelId?: string, traceId?: string): Promise<RuntimeSessionStatus> {
     const body: Record<string, unknown> = { mode, seed, custom_track: track };
     if (modelId) body.model_id = modelId;
     return request(this.baseUrl, '/api/v1/sessions', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+      method: 'POST', headers: { 'content-type': 'application/json', ...(traceId ? { 'x-trace-id': traceId } : {}) }, body: JSON.stringify(body),
     });
   }
   validateCustomTrack(track: unknown): Promise<RuntimeCustomTrack> {

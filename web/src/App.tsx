@@ -16,13 +16,17 @@ import { isLivePoseFrameInOrder } from './lib/livePose';
 import RuntimeOutcomeMessage from './RuntimeOutcomeMessage';
 import {
   invalidateRuntimeTrackSelection, isCurrentCustomTrackValidation, resolveRuntimeTrackRequest,
-  RuntimeApiError, RuntimeClient, type RuntimeCatalog,
+  matchesValidatedCustomTrack, shouldValidateCustomTrackOnDrive, RuntimeApiError, RuntimeClient, type RuntimeCatalog,
   type RuntimeSessionStatus, type RuntimeSocketClient, type RuntimeTrackSelection,
 } from './lib/runtime';
 
 type Mode = 'sketch' | 'build' | 'drive';
 type DriveMode = 'manual' | 'ppo' | 'replay';
 const STORAGE_KEY = 'f1rl.racing-sandbox.draft.v1';
+const REPLAY_TRACK_UNAVAILABLE: TrackDocument = {
+  schema: 'f1rl_racing_sandbox_draft_v1', id: 'replay-track-unavailable', name: 'Track unavailable',
+  width: 4, points: [], props: [],
+};
 const assets: { kind: PropKind; title: string; description: string; icon: typeof Box; color: string }[] = [
   { kind: 'bridge', title: 'Bridge', description: 'Raised road section', icon: Layers3, color: 'steel' },
   { kind: 'ramp', title: 'Ramp', description: 'Launch / incline', icon: Mountain, color: 'orange' },
@@ -98,12 +102,18 @@ export default function App() {
   const autoBridges = useMemo(() => getAutoBridges(track).length, [track]);
   const canDrive = track.points.length >= 2;
   const activeReplay = replay ?? runtimeReplay;
-  const replayTrackId = activeReplay?.schema === 'f1rl_racing_sandbox_replay_v2' ? activeReplay.provenance.track_id : runtimeTrackId;
-  const activeRuntimeTrack = runtimeTrackSelection.kind === 'custom'
-    ? runtimeTrackSelection.validated ?? undefined
-    : runtimeCatalog?.tracks.find((item) => item.track_id === (driveMode === 'replay' ? replayTrackId : runtimeTrackId));
+  const activeRuntimeTrack = driveMode === 'replay'
+    ? activeReplay?.schema === 'f1rl_racing_sandbox_replay_v2'
+      ? activeReplay.track_preview ?? runtimeCatalog?.tracks.find((item) => item.track_id === activeReplay.provenance.track_id)
+      : undefined
+    : runtimeTrackSelection.kind === 'custom'
+      ? runtimeTrackSelection.validated ?? undefined
+      : runtimeCatalog?.tracks.find((item) => item.track_id === runtimeTrackId);
   const runtimeTrackRequest = resolveRuntimeTrackRequest(runtimeTrackSelection, runtimeTrackId, driveMode);
-  const sceneTrack = mode === 'drive' && activeRuntimeTrack ? activeRuntimeTrack.preview : track;
+  const replayTrackUnavailable = driveMode === 'replay' && activeReplay !== null && !activeRuntimeTrack;
+  const sceneTrack = mode === 'drive'
+    ? activeRuntimeTrack?.preview ?? (replayTrackUnavailable ? REPLAY_TRACK_UNAVAILABLE : track)
+    : track;
   const sceneRoadSamples = mode === 'drive' ? activeRuntimeTrack?.road_samples : undefined;
   const activePose = driveMode === 'replay' && activeReplay ? (() => {
     const p = replayAt(activeReplay, replayTime);
@@ -141,6 +151,7 @@ export default function App() {
 
   const invalidateCustomTrackValidation = useCallback(() => {
     trackValidationRevision.current += 1;
+    setTrackValidationBusy(false);
     setRuntimeTrackSelection(invalidateRuntimeTrackSelection);
     setRuntimeError('');
   }, []);
@@ -207,18 +218,6 @@ export default function App() {
     window.addEventListener('keydown', shortcuts);
     return () => window.removeEventListener('keydown', shortcuts);
   }, [mode]);
-  const startDrive = () => {
-    if (!canDrive) return;
-    setPose(spawnPose(track));
-    setPlaying(false); setReplayTime(activeReplay?.frames[0]?.time_s ?? 0);
-    setDriveMode(replay ? 'replay' : 'ppo');
-    setMode('drive');
-    setArmed(null); setSelected(null);
-  };
-  const changeMode = (target: Mode) => {
-    if (target === 'drive') { startDrive(); return; }
-    setMode(target); setArmed(null); setSelected(null); setPlaying(false);
-  };
   const save = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(track));
     setSaved(true);
@@ -252,7 +251,9 @@ export default function App() {
 
   const runRuntimeSession = async () => {
     const trackRequest = runtimeTrackRequest;
+    const validatedCustomTrack = runtimeTrackSelection.kind === 'custom' ? runtimeTrackSelection.validated : null;
     if (!runtimeCatalog || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !trackRequest) return;
+    const traceId = crypto.randomUUID();
     setRuntimeBusy(true);
     setRuntimeError(''); setReplay(null); setRuntimeReplay(null); setPlaying(false); setRuntimeStatus(null);
     latestRuntimeFrame.current = null;
@@ -260,11 +261,15 @@ export default function App() {
     let createdSessionId: string | null = null;
     try {
       const created = trackRequest.kind === 'custom'
-        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : undefined)
+        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : undefined, traceId)
         : driveMode === 'manual'
           ? await runtimeClient.createManualSession(trackRequest.trackId, runtimeSeed)
           : await runtimeClient.createPpoSession(modelId, trackRequest.trackId, runtimeSeed);
       createdSessionId = created.session_id;
+      if (trackRequest.kind === 'custom' &&
+          (!validatedCustomTrack || !matchesValidatedCustomTrack(validatedCustomTrack, created.track_preview))) {
+        throw new RuntimeApiError('Python session track does not match the validated map', 'track_mismatch', 409, traceId);
+      }
       sessionRef.current = created.session_id;
       latestRuntimeFrame.current = created.latest_frame;
       setRuntimeStatus(created);
@@ -309,7 +314,15 @@ export default function App() {
           setRuntimeStatus((current) => current ? { ...current, status: state, episode_result: result } : current);
           void runtimeClient.replay(created.session_id).then((completedReplay) => {
             if (sessionRef.current !== created.session_id) return;
-            setRuntimeReplay(completedReplay);
+            const replayWithTrack = completedReplay.schema === 'f1rl_racing_sandbox_replay_v2' && created.track_preview
+              ? { ...completedReplay, track_preview: {
+                  track_id: created.track_preview.track_id,
+                  track_sha256: created.track_preview.track_sha256,
+                  preview: created.track_preview.preview,
+                  road_samples: created.track_preview.road_samples,
+                } }
+              : completedReplay;
+            setRuntimeReplay(replayWithTrack);
             setReplayTime(completedReplay.frames[0].time_s);
             // Keep the authoritative terminal result visible; Replay is available on demand.
             setPlaying(false);
@@ -339,7 +352,13 @@ export default function App() {
       runtimeSocketRef.current = socket;
       socket.start();
     } catch (error) {
-      if (error instanceof RuntimeApiError) setRuntimeError(`${error.code}: ${error.message}`);
+      if (error instanceof RuntimeApiError && error.code === 'track_mismatch' && error.traceId) {
+        console.error('runtime session invariant failed', {
+          trace_id: error.traceId, module: 'runtime', operation: 'run_session',
+          class: 'App.runRuntimeSession', outcome: 'error', error_code: error.code, cause: error.message,
+        });
+        setRuntimeError(`${error.code}: Python track did not match validation · ${error.traceId}`);
+      } else if (error instanceof RuntimeApiError) setRuntimeError(`${error.code}: ${error.message}`);
       else setRuntimeError(error instanceof Error ? error.message : 'Episode failed to run');
       sessionRef.current = null;
       runtimeSocketRef.current?.disconnect();
@@ -363,13 +382,34 @@ export default function App() {
         setRuntimeTrackSelection({ kind: 'custom', validated: null });
         setRuntimeError(error instanceof RuntimeApiError ? `${error.code}: ${error.message}` : error instanceof Error ? error.message : 'Track validation failed');
       }
-    } finally { setTrackValidationBusy(false); }
+    } finally {
+      if (isCurrentCustomTrackValidation(requestRevision, trackValidationRevision.current)) setTrackValidationBusy(false);
+    }
   };
 
   const useRegisteredTrack = () => {
     trackValidationRevision.current += 1;
+    setTrackValidationBusy(false);
     setRuntimeTrackSelection({ kind: 'train' });
     setRuntimeError('');
+  };
+
+  const startDrive = () => {
+    if (!canDrive) return;
+    setPose(spawnPose(track));
+    setPlaying(false); setReplayTime(activeReplay?.frames[0]?.time_s ?? 0);
+    setDriveMode(activeReplay && (replay !== null || driveMode === 'replay') ? 'replay' : 'ppo');
+    setMode('drive');
+    setArmed(null); setSelected(null);
+  };
+  const changeMode = (target: Mode) => {
+    if (target === 'drive') {
+      const keepReplay = Boolean(activeReplay && (replay !== null || driveMode === 'replay'));
+      startDrive();
+      if (shouldValidateCustomTrackOnDrive(mode, keepReplay)) void validateCurrentTrack();
+      return;
+    }
+    setMode(target); setArmed(null); setSelected(null); setPlaying(false);
   };
 
   const stopRuntimeSession = async () => {
@@ -573,14 +613,17 @@ export default function App() {
                   }}><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option><option value="16">16×</option></select></label>
                 </div>}
               </div>
-            </> : activeReplay ? <div className="replay-controls">
+            </> : activeReplay ? <>
+              {replayTrackUnavailable && <p className="runtime-error" role="alert">This replay has no matching track geometry; the current map will not be shown as a substitute.</p>}
+              <div className="replay-controls">
               <button aria-label={playing ? 'Pause replay' : 'Play replay'} onClick={() => {if (replayTime >= activeReplay.frames[activeReplay.frames.length - 1].time_s) setReplayTime(activeReplay.frames[0].time_s); setPlaying(!playing);}}>{playing ? <Pause size={19}/> : <Play size={19}/>}</button>
               <input aria-label="Replay timeline" type="range" min={activeReplay.frames[0].time_s} max={activeReplay.frames[activeReplay.frames.length - 1].time_s} step="0.01" value={replayTime} onChange={(event) => {setPlaying(false);setReplayTime(Number(event.target.value));}}/>
               <span>{replayTime.toFixed(1)}s</span><span className="replay-name">{replayModelId(activeReplay)}</span>
               <select aria-label="Replay speed" value={playbackSpeed} onChange={(event) => setPlaybackSpeed(Number(event.target.value))}><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
               <button aria-label="Restart replay" onClick={() => {setPlaying(false);setReplayTime(activeReplay.frames[0].time_s);}}><RotateCcw size={16}/></button>
               <button aria-label="Export replay JSON" onClick={() => downloadJSON('f1rl-runtime-replay.json', activeReplay)}><Download size={16}/></button>
-            </div> : <div className="replay-empty"><span>No replay loaded</span><button onClick={() => replayInput.current?.click()}><Upload size={16}/> Import replay</button></div>}
+              </div>
+            </> : <div className="replay-empty"><span>No replay loaded</span><button onClick={() => replayInput.current?.click()}><Upload size={16}/> Import replay</button></div>}
             <div className="drive-bottom"><button onClick={() => {
               if (runtimeBusy) controlRuntime('reset');
               else if (driveMode === 'replay') {setPlaying(false);setReplayTime(activeReplay?.frames[0]?.time_s ?? 0);}

@@ -120,7 +120,7 @@ def create_app(
         CORSMiddleware,
         allow_origins=list(ALLOWED_ORIGINS),
         allow_methods=["GET", "POST", "DELETE"],
-        allow_headers=["content-type"],
+        allow_headers=["content-type", "x-trace-id"],
         allow_credentials=False,
     )
 

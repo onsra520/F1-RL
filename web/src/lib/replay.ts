@@ -1,3 +1,5 @@
+import { parseTrack, type RoadSample, type TrackDocument } from './track';
+
 export type ReplayFrame = {
   time_s: number;
   position: [number, number, number];
@@ -41,6 +43,7 @@ export type ReplayV2 = {
     track_sha256: string;
     seed: number;
   };
+  track_preview?: ReplayTrackPreview;
   result: {
     status: 'finished' | 'failed' | 'cancelled' | 'stopped';
     valid_sample: boolean;
@@ -51,6 +54,12 @@ export type ReplayV2 = {
     trace_sha256: string;
   };
   frames: ReplayFrame[];
+};
+export type ReplayTrackPreview = {
+  track_id: string;
+  track_sha256: string;
+  preview: TrackDocument;
+  road_samples: RoadSample[];
 };
 export type Replay = ReplayV1 | ReplayV2;
 
@@ -84,6 +93,43 @@ function validateFrame(frame: unknown): ReplayFrame {
 
 function stringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string' && item.length <= 200);
+}
+
+function preserveUnknownTrackFields(raw: unknown, validated: unknown): unknown {
+  if (Array.isArray(validated)) {
+    return validated.map((value, index) => preserveUnknownTrackFields(Array.isArray(raw) ? raw[index] : undefined, value));
+  }
+  if (validated && typeof validated === 'object') {
+    const original = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+    const parsed = validated as Record<string, unknown>;
+    return Object.fromEntries(Object.entries({ ...original, ...parsed }).map(([key, value]) => [
+      key, key in original && key in parsed ? preserveUnknownTrackFields(original[key], parsed[key]) : value,
+    ]));
+  }
+  return validated;
+}
+
+function validateTrackPreview(raw: unknown, trackId: string, trackSha256: string): ReplayTrackPreview | undefined {
+  if (raw === undefined) return undefined;
+  if (!raw || typeof raw !== 'object') throw new Error('Invalid replay track preview');
+  const value = raw as Record<string, unknown>;
+  if (value.track_id !== trackId || value.track_sha256 !== trackSha256 || !Array.isArray(value.road_samples)) {
+    throw new Error('Replay track preview does not match replay provenance');
+  }
+  const preview = preserveUnknownTrackFields(value.preview, parseTrack(value.preview)) as TrackDocument;
+  const roadSamples = value.road_samples as RoadSample[];
+  if (preview.id !== trackId || roadSamples.length < 2 || roadSamples.some((sample, index) =>
+    !sample || ![sample.x, sample.y, sample.z, sample.t, sample.heading, sample.nx, sample.nz].every(finite) ||
+    sample.t < 0 || sample.t > 1 || (index > 0 && sample.t <= roadSamples[index - 1].t))) {
+    throw new Error('Invalid replay track geometry');
+  }
+  return {
+    ...value,
+    track_id: trackId,
+    track_sha256: trackSha256,
+    preview,
+    road_samples: roadSamples.map((sample) => ({ ...sample })),
+  };
 }
 
 export function parseReplay(raw: unknown): Replay {
@@ -121,7 +167,11 @@ export function parseReplay(raw: unknown): Replay {
         !finite(result.duration_s) || result.duration_s < 0 || !digest(result.trace_sha256)) {
       throw new Error('Unsupported replay schema or provenance (HELD-OUT is not allowed)');
     }
-    return { schema: d.schema, label: d.label, provenance: { ...provenance }, result: { ...result }, frames };
+    const trackPreview = validateTrackPreview(d.track_preview, provenance.track_id, provenance.track_sha256);
+    return {
+      schema: d.schema, label: d.label, provenance: { ...provenance }, result: { ...result }, frames,
+      ...(trackPreview ? { track_preview: trackPreview } : {}),
+    };
   }
   throw new Error('Unsupported replay schema or provenance (HELD-OUT is not allowed)');
 }
