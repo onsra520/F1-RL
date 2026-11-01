@@ -1,4 +1,5 @@
 import re
+import time
 from pathlib import Path
 
 import pytest
@@ -93,7 +94,14 @@ def test_runtime_websocket_v1_rejects_manual_action_on_ppo_and_disconnect_cleans
             rejected = socket.receive_json()
             assert rejected["type"] == "error"
             assert rejected["data"]["code"] == "invalid_controller"
-        missing = client.get(f"/api/v1/sessions/{session_id}")
+        # The ASGI disconnect handler runs concurrently with TestClient's close.
+        # Require the actual cleanup within a strict bound rather than racing it.
+        deadline = time.monotonic() + 2.0
+        while True:
+            missing = client.get(f"/api/v1/sessions/{session_id}")
+            if missing.status_code == 404 or time.monotonic() >= deadline:
+                break
+            time.sleep(0.01)
     assert missing.status_code == 404
 
 
@@ -281,3 +289,14 @@ def test_ppo_runs_on_custom_track_with_development_provenance():
             assert replay["provenance"]["dataset_split"] == "DEVELOPMENT"
             assert replay["provenance"]["model_id"] == "A-seed0"
             assert replay["provenance"]["track_sha256"] == created.json()["track_preview"]["track_sha256"]
+
+
+def test_runtime_cors_allows_only_local_editor_ports():
+    with TestClient(create_app(repository_root=ROOT)) as client:
+        for origin in ("http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://localhost:5174"):
+            response = client.get("/api/v1/health", headers={"origin": origin})
+            assert response.status_code == 200
+            assert response.headers.get("access-control-allow-origin") == origin
+        external = client.get("/api/v1/health", headers={"origin": "https://other.example"})
+        assert external.status_code == 200
+        assert "access-control-allow-origin" not in external.headers

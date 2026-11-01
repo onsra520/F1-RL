@@ -82,7 +82,10 @@ export type RuntimeSocketEvent = {
   data: Record<string, unknown>;
 };
 
-export const DEFAULT_RUNTIME_URL = 'http://127.0.0.1:8000';
+// A local E2E backend may use another port; never accept a non-loopback endpoint.
+const configuredRuntimeUrl: string = import.meta.env.VITE_RUNTIME_URL || '';
+export const DEFAULT_RUNTIME_URL = /^http:\/\/(?:127\.0\.0\.1|localhost):\d+$/.test(configuredRuntimeUrl)
+  ? configuredRuntimeUrl : 'http://127.0.0.1:8000';
 const EXPECTED_MODEL_IDS = ['A', 'B', 'C', 'D'].flatMap((candidate) => [0, 1, 2].map((seed) => `${candidate}-seed${seed}`));
 
 export class RuntimeApiError extends Error {

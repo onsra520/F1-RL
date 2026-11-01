@@ -278,8 +278,8 @@ export default function App() {
             if (sessionRef.current !== created.session_id) return;
             setRuntimeReplay(completedReplay);
             setReplayTime(completedReplay.frames[0].time_s);
-            setPlaying(true);
-            setDriveMode('replay');
+            // Keep the authoritative terminal result visible; Replay is available on demand.
+            setPlaying(false);
             sessionRef.current = null;
             runtimeSocketRef.current?.disconnect();
             runtimeSocketRef.current = null;
