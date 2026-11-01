@@ -139,3 +139,13 @@ Update docs/architecture/RUNTIME-SIMULATOR-INTEGRATION-REPORT.md and this handof
 - On any blocker requiring protected behavior changes: preserve completed branch work, document blocker, and request explicit technical approval before touching it.
 
 **Handoff expected from Băng:** branch, commit SHA, Stage 1–4 status (complete/partial), browser E2E result, full pytest counts, exact B-seed1 diagnosis, custom overpass decision, evidence verifier, documented blockers, and recommendation for the next merge review.
+
+## Continuation receipt — 2026-11-01 (full regression)
+
+- Separate clone: `D:\F1-RL-RUNTIME-SIMULATOR-BANG-CONTINUE-20261101`; branch `feature/runtime-simulator-bridge`. Validated clean source SHA `a4b66f714d70bd85264c35213d3ff10e3cab061e`.
+- The actually available local WP3 evidence path was `D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1`. Earlier instructions using `D:\Projects\.evidence\F1-RL\WP3-EVIDENCE\wp3-eval-issue51-v1` do not reflect this clone machine.
+- Initial full regression: **3105 passed / 2 failed / 9 errors / 3 skipped**. All 11 non-passing cases were 240-second isolated WP7 execution or 30-second GPU subprocess timeouts, not Physics assertions. No scientific tests or guards were disabled.
+- Corrective measure: run tests with `OMP_NUM_THREADS=1`, `MKL_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1`, `NUMEXPR_NUM_THREADS=1`, preserving original timeout limits. Targeted GPU test passed (11.25s), rotating-owner straight sprint passed (84.18s), four source-bound spatial fixture cases passed (125.64s).
+- **Full regression rerun PASS: 3116 passed, 3 skipped, 0 failed, 0 errors, 1601.82s; completed 2026-11-01 15:19:42 ICT.** Skips were unchanged Windows symlink permission limitations. Exact external logs and environment receipt: `D:\F1-RL-RUNTIME-SIMULATOR-RECEIPTS\`; full log `full-pytest-recheck-20261101.log`.
+- Reusable Windows regression command lives in `scripts/diagnostics/run_full_regression_windows.ps1`, using explicit Python/evidence paths and a clean HEAD. This is execution-environment hardening, **not** a change to registered Physics, PPO model, source-hash rules, reward, evaluation/admission contracts, or historical evidence.
+- Python full-regression gate now PASS on this host. Other final-integration gates (broader Edge browser E2E, precise Slalom B-seed1 diagnosis and unsupported stacked deck) are still separate. WP7 scientific admission/HELD-OUT BLOCKED. No merge into `main` authorized.
