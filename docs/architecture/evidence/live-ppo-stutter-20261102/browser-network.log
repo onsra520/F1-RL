@@ -1,0 +1,13 @@
+[67536.49] GET http://127.0.0.1:8000/api/v1/models (Fetch) 200
+[67536.50] GET http://127.0.0.1:8000/api/v1/tracks (Fetch) 200
+[4E8BB3083F9F81D484D93C0F57614058] OPTIONS http://127.0.0.1:8000/api/v1/sessions (Other) 200
+[67536.58] POST http://127.0.0.1:8000/api/v1/sessions (Fetch) 201
+[67536.60] GET http://127.0.0.1:8000/api/v1/sessions/<session-id-redacted>/replay (Fetch) 200
+[67536.70] GET http://127.0.0.1:8000/api/v1/models (Fetch) 200
+[67536.71] GET http://127.0.0.1:8000/api/v1/tracks (Fetch) 200
+[67536.72] POST http://127.0.0.1:8000/api/v1/sessions (Fetch) 201
+[67536.74] GET http://127.0.0.1:8000/api/v1/sessions/<session-id-redacted>/replay (Fetch) 200
+[67536.75] POST http://127.0.0.1:8000/api/v1/sessions (Fetch) 201
+[67536.77] GET http://127.0.0.1:8000/api/v1/sessions/<session-id-redacted>/replay (Fetch) 200
+[67536.78] POST http://127.0.0.1:8000/api/v1/sessions (Fetch) 201
+[67536.80] GET http://127.0.0.1:8000/api/v1/sessions/<session-id-redacted>/replay (Fetch) 200

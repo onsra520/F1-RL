@@ -1,0 +1,27 @@
+{
+  "scenario": {
+    "model": "A-seed2",
+    "track": "straight-sprint-v1",
+    "seed": 412,
+    "runtime_frame_dt_s": 0.1
+  },
+  "baseline": {
+    "frames": 114,
+    "tick_range": [0, 113],
+    "browser_arrival_gap_ms": { "min": 65.1, "median": 110.7, "max": 136.3 },
+    "pose_step_m": { "median": 1.035879, "max": 1.248788 },
+    "max_shortest_heading_step_rad": 0.058297
+  },
+  "after": {
+    "frames": 114,
+    "tick_range": [0, 113],
+    "browser_arrival_gap_ms": { "median": 109.0, "max": 209.0 },
+    "pose_step_median": 1.035879,
+    "terminal": "successful_finish",
+    "terminal_steps": 113
+  },
+  "notes": [
+    "All runtime frames kept dt_s=0.1 and identical median physics pose step before and after.",
+    "The browser screenshot recorder could not keep up; the post-change maximum arrival gap includes browser capture overhead."
+  ]
+}

@@ -12,6 +12,7 @@ import { createTrack, getAutoBridges, nearestRoad, parseTrack, pointAt, PROP_KIN
          type Point2, type PropKind, type TrackDocument, type TrackProp } from './lib/track';
 import { parseReplay, replayAt, replayModelId, type Replay } from './lib/replay';
 import { manualActionFromKeys } from './lib/manual';
+import { isLivePoseFrameInOrder } from './lib/livePose';
 import RuntimeOutcomeMessage from './RuntimeOutcomeMessage';
 import {
   invalidateRuntimeTrackSelection, isCurrentCustomTrackValidation, resolveRuntimeTrackRequest,
@@ -86,6 +87,8 @@ export default function App() {
   const replayInput = useRef<HTMLInputElement>(null);
   const sessionRef = useRef<string | null>(null);
   const runtimeSocketRef = useRef<RuntimeSocketClient | null>(null);
+  const latestRuntimeFrame = useRef<RuntimeSessionStatus['latest_frame']>(null);
+  const runtimeResetPending = useRef(false);
   const runtimeClient = useMemo(() => new RuntimeClient(), []);
   const trackRef = useRef(track);
   const history = useRef<TrackDocument[]>([]);
@@ -252,6 +255,8 @@ export default function App() {
     if (!runtimeCatalog || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !trackRequest) return;
     setRuntimeBusy(true);
     setRuntimeError(''); setReplay(null); setRuntimeReplay(null); setPlaying(false); setRuntimeStatus(null);
+    latestRuntimeFrame.current = null;
+    runtimeResetPending.current = false;
     let createdSessionId: string | null = null;
     try {
       const created = trackRequest.kind === 'custom'
@@ -261,11 +266,20 @@ export default function App() {
           : await runtimeClient.createPpoSession(modelId, trackRequest.trackId, runtimeSeed);
       createdSessionId = created.session_id;
       sessionRef.current = created.session_id;
+      latestRuntimeFrame.current = created.latest_frame;
       setRuntimeStatus(created);
       const socket = await runtimeClient.connect(created.session_id, (event) => {
-        if (event.type === 'ready') setRuntimeStatus(event.data as unknown as RuntimeSessionStatus);
+        if (event.type === 'ready') {
+          const status = event.data as unknown as RuntimeSessionStatus;
+          latestRuntimeFrame.current = status.latest_frame;
+          setRuntimeStatus(status);
+        }
         if (event.type === 'frame') {
           const frame = event.data as unknown as NonNullable<RuntimeSessionStatus['latest_frame']>;
+          const previous = latestRuntimeFrame.current;
+          if (!isLivePoseFrameInOrder(previous, frame, runtimeResetPending.current)) return;
+          if (runtimeResetPending.current && frame.tick === 0) runtimeResetPending.current = false;
+          latestRuntimeFrame.current = frame;
           setRuntimeStatus((current) => current ? { ...current, status: current.status === 'ready' ? 'running' : current.status, latest_frame: frame, steps: frame.tick } : current);
         }
         if (event.type === 'progress') {
@@ -277,10 +291,19 @@ export default function App() {
           } : current);
         }
         if (event.type === 'status') {
-          const status = event.data.status;
-          setRuntimeStatus((current) => current ? { ...current, status: status === 'paused' ? 'paused' : 'running' } : current);
+          const status = event.data.status as RuntimeSessionStatus['status'];
+          const reset = status === 'running' && event.data.reset === true;
+          if (reset) {
+            runtimeResetPending.current = true;
+            latestRuntimeFrame.current = null;
+          }
+          setRuntimeStatus((current) => current ? {
+            ...current, status,
+            ...(reset ? { steps: 0, step_progress: 0, latest_frame: null, episode_result: null } : {}),
+          } : current);
         }
         if (event.type === 'terminal') {
+          runtimeResetPending.current = false;
           const result = event.data as unknown as NonNullable<RuntimeSessionStatus['episode_result']>;
           const state = String(result.status) as RuntimeSessionStatus['status'];
           setRuntimeStatus((current) => current ? { ...current, status: state, episode_result: result } : current);
@@ -305,6 +328,7 @@ export default function App() {
         if (event.type === 'error') setRuntimeError(String(event.data.message ?? event.data.code ?? 'Runtime protocol error'));
       }, (error) => {
         if (sessionRef.current !== created.session_id) return;
+        runtimeResetPending.current = false;
         setRuntimeError(error.message);
         setRuntimeBusy(false);
         sessionRef.current = null;
@@ -361,6 +385,8 @@ export default function App() {
     try {
       runtimeSocketRef.current?.[command]();
       if (command === 'reset') {
+        runtimeResetPending.current = true;
+        latestRuntimeFrame.current = null;
         pressedKeys.current.clear();
         if (driveMode === 'manual') runtimeSocketRef.current?.action(0, 0, 0);
         setRuntimeReplay(null); setPlaying(false); setRuntimeStatus((current) => current ? {
@@ -450,6 +476,8 @@ export default function App() {
           <Suspense fallback={<div className="scene-loading">Loading 3D world…</div>}>
             <RacingScene track={mode === 'build' ? track : sceneTrack} mode={mode} selectedId={selected} armed={armed}
               pose={mode === 'build' ? spawnPose(track) : activePose} roadSamples={mode === 'drive' ? sceneRoadSamples : undefined}
+              liveFrame={mode === 'drive' && driveMode !== 'replay' ? runtimeStatus?.latest_frame ?? null : null}
+              liveStatus={mode === 'drive' && driveMode !== 'replay' ? runtimeStatus?.status ?? null : null}
               onSelect={setSelected} onPlace={onPlace}/>
           </Suspense>
           {mode === 'build' && <>

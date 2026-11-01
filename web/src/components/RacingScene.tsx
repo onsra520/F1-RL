@@ -1,13 +1,15 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { BufferAttribute, BufferGeometry, Camera, DoubleSide, Plane, Raycaster, Vector2, Vector3 } from 'three';
+import { BufferAttribute, BufferGeometry, Camera, DoubleSide, Plane, Raycaster, Vector2, Vector3, type Group } from 'three';
 import type { PropKind, RoadSample, TrackDocument, TrackProp } from '../lib/track';
 import { pointAt, sampleRoad } from '../lib/track';
+import { isRuntimePoseTerminal, LivePoseInterpolator, type LivePose, type LivePoseFrame } from '../lib/livePose';
+import type { RuntimeSessionStatus } from '../lib/runtime';
 import SolidRoad from './SolidRoad';
 import { BoosterSurface, CheckpointGate } from './RoadAttachments';
 
-export type CarPose = { x: number; y: number; z: number; heading: number; speed: number };
+export type CarPose = LivePose;
 type Mode = 'build' | 'drive';
 
 function ribbon(samples: RoadSample[], left: number, right: number, offsetY: number) {
@@ -45,8 +47,16 @@ function Road({ track, samples }: { track: TrackDocument; samples: RoadSample[] 
   </>;
 }
 
-function CarModel({ pose }: { pose: CarPose }) {
-  return <group position={[pose.x, pose.y + 0.74, pose.z]} rotation={[0, pose.heading, 0]}>
+function CarModel({ pose, livePose }: { pose: CarPose; livePose: LivePoseInterpolator | null }) {
+  const car = useRef<Group>(null);
+  useFrame(() => {
+    if (!livePose) return;
+    const current = livePose.sample(performance.now()) ?? pose;
+    car.current?.position.set(current.x, current.y + 0.74, current.z);
+    if (car.current) car.current.rotation.y = current.heading;
+  });
+  return <group ref={car} position={livePose ? undefined : [pose.x, pose.y + 0.74, pose.z]}
+    rotation={livePose ? undefined : [0, pose.heading, 0]}>
     <mesh castShadow position={[0, 0.25, 0]}><boxGeometry args={[1.5, 0.52, 3.5]} /><meshStandardMaterial color="#f27555" roughness={0.35} metalness={0.28}/></mesh>
     <mesh castShadow position={[0, 0.58, -0.25]}><boxGeometry args={[0.9, 0.47, 1.65]} /><meshStandardMaterial color="#253039" roughness={0.36}/></mesh>
     <mesh castShadow position={[0, 0.42, 1.52]}><boxGeometry args={[0.42, 0.35, 1.15]} /><meshStandardMaterial color="#ec6046" metalness={0.3}/></mesh>
@@ -110,19 +120,21 @@ function TrackObject({ prop, track, selected, onPick, onRelease }: {
   </group>;
 }
 
-function ChaseCamera({ pose }: { pose: CarPose }) {
+function ChaseCamera({ pose, livePose }: { pose: CarPose; livePose: LivePoseInterpolator | null }) {
   const { camera } = useThree();
+  const behind = useMemo(() => new Vector3(), []);
   useFrame((_, delta) => {
-    const behind = new Vector3(pose.x - Math.sin(pose.heading) * 19, pose.y + 12.2, pose.z - Math.cos(pose.heading) * 19);
+    const current = livePose?.sample(performance.now()) ?? pose;
+    behind.set(current.x - Math.sin(current.heading) * 19, current.y + 12.2, current.z - Math.cos(current.heading) * 19);
     camera.position.lerp(behind, 1 - Math.exp(-4 * Math.min(delta, 0.1)));
-    camera.lookAt(pose.x, pose.y + 1.3, pose.z + Math.cos(pose.heading) * 6);
+    camera.lookAt(current.x, current.y + 1.3, current.z + Math.cos(current.heading) * 6);
   });
   return null;
 }
 
-function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, roadSamples, onCamera, onDragChange }: {
+function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, livePose, roadSamples, onCamera, onDragChange }: {
   track: TrackDocument; mode: Mode; selectedId: string | null; armed: PropKind | null;
-  pose: CarPose; roadSamples?: RoadSample[]; onCamera: (camera: Camera) => void;
+  pose: CarPose; livePose: LivePoseInterpolator | null; roadSamples?: RoadSample[]; onCamera: (camera: Camera) => void;
   onSelect: (id: string | null) => void;
   onPlace: (kind: PropKind | null, x: number, z: number, id?: string) => void;
   onDragChange: (id: string | null) => void;
@@ -153,20 +165,31 @@ function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, roadSa
     </mesh>
     {track.props.map((p) => <TrackObject key={p.id} prop={p} track={track} selected={selectedId === p.id}
       onPick={(e) => choose(e, p.id)} onRelease={stopDrag}/>)}
-    <CarModel pose={pose}/>
-    {mode === 'drive' ? <ChaseCamera pose={pose}/> : null}
+    <CarModel pose={pose} livePose={livePose}/>
+    {mode === 'drive' ? <ChaseCamera pose={pose} livePose={livePose}/> : null}
   </>;
 }
 
-export default function RacingScene({ track, mode, selectedId, armed, pose, roadSamples, onSelect, onPlace }: {
+export default function RacingScene({ track, mode, selectedId, armed, pose, roadSamples, liveFrame, liveStatus, onSelect, onPlace }: {
   track: TrackDocument; mode: Mode; selectedId: string | null; armed: PropKind | null; pose: CarPose; roadSamples?: RoadSample[];
+  liveFrame: LivePoseFrame | null; liveStatus: RuntimeSessionStatus['status'] | null;
   onSelect: (id: string | null) => void;
   onPlace: (kind: PropKind | null, x: number, z: number, id?: string) => void;
 }) {
   const cameraRef = useRef<Camera | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const livePose = useRef(new LivePoseInterpolator()).current;
   const [dragging, setDragging] = useState<string | null>(null);
   const onCamera = (camera: Camera) => { cameraRef.current = camera; };
+  useEffect(() => {
+    if (liveFrame) livePose.push(liveFrame, performance.now());
+    else livePose.reset();
+  }, [liveFrame, livePose]);
+  useEffect(() => {
+    if (liveStatus === 'paused') livePose.pause(performance.now());
+    else if (liveStatus === 'running') livePose.resume();
+    else if (isRuntimePoseTerminal(liveStatus)) livePose.finish(performance.now());
+  }, [livePose, liveStatus]);
   // Listen at the DOM/window level after selection. Unlike a ground-mesh
   // pointer handler this keeps dragging when the pointer crosses the gate,
   // elevated road, or exits the canvas. Orbit is disabled while selected.
@@ -227,7 +250,8 @@ export default function RacingScene({ track, mode, selectedId, armed, pose, road
   return <div className="scene-container" ref={containerRef} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
     <Canvas shadows dpr={[1, 1.8]} camera={{ position: [65, 122, 108], fov: 52, near: 0.1, far: 650 }}>
       <Suspense fallback={null}>
-        <World track={track} mode={mode} selectedId={selectedId} armed={armed} pose={pose} roadSamples={roadSamples}
+        <World track={track} mode={mode} selectedId={selectedId} armed={armed} pose={pose}
+          livePose={mode === 'drive' ? livePose : null} roadSamples={roadSamples}
           onSelect={onSelect} onPlace={onPlace} onCamera={onCamera} onDragChange={setDragging}/>
         {mode === 'build' && <OrbitControls makeDefault target={[center.x, center.y, center.z]}
           enableDamping dampingFactor={0.09} enabled={!dragging}
