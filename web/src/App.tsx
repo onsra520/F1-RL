@@ -12,6 +12,7 @@ import { createTrack, getAutoBridges, nearestRoad, parseTrack, pointAt, PROP_KIN
          type Point2, type PropKind, type TrackDocument, type TrackProp } from './lib/track';
 import { parseReplay, replayAt, replayModelId, type Replay } from './lib/replay';
 import { manualActionFromKeys } from './lib/manual';
+import RuntimeOutcomeMessage from './RuntimeOutcomeMessage';
 import { RuntimeApiError, RuntimeClient, type RuntimeCatalog, type RuntimeCustomTrack, type RuntimeSessionStatus, type RuntimeSocketClient } from './lib/runtime';
 
 type Mode = 'sketch' | 'build' | 'drive';
@@ -493,7 +494,7 @@ export default function App() {
                     <span>COLLISIONS <b>{runtimeStatus.latest_frame.collision_count}</b></span>
                     <span>{runtimeStatus.latest_frame.grounded ? 'GROUNDED' : 'AIRBORNE'}</span>
                   </div>}
-                  {runtimeStatus.episode_result && <p className="runtime-result">{runtimeStatus.episode_result.successful_finish ? 'FINISHED' : 'INVALID / FAILED'} · {String(runtimeStatus.episode_result.reason ?? 'episode ended')}</p>}
+                  <RuntimeOutcomeMessage status={runtimeStatus} />
                 </>}
                 <div className="runtime-actions">
                   <button className="runtime-run" onClick={() => void runRuntimeSession()} disabled={!runtimeCatalog || runtimeBusy || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff}>
