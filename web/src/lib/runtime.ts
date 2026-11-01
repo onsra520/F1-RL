@@ -32,6 +32,27 @@ export type RuntimeCustomTrack = {
   boost_pad_count: number;
   warnings: string[];
 };
+export type RuntimeTrackSelection = { kind: 'train' } | { kind: 'custom'; validated: RuntimeCustomTrack | null };
+export type RuntimeTrackRequest = { kind: 'train'; trackId: string } | { kind: 'custom' };
+
+export function invalidateRuntimeTrackSelection(selection: RuntimeTrackSelection): RuntimeTrackSelection {
+  return selection.kind === 'custom' ? { kind: 'custom', validated: null } : selection;
+}
+
+export function isCurrentCustomTrackValidation(requestRevision: number, currentRevision: number): boolean {
+  return requestRevision === currentRevision;
+}
+
+export function resolveRuntimeTrackRequest(
+  selection: RuntimeTrackSelection,
+  trackId: string,
+  mode: 'ppo' | 'manual' | 'replay',
+): RuntimeTrackRequest | null {
+  if (mode === 'replay') return null;
+  if (selection.kind === 'train') return { kind: 'train', trackId };
+  if (!selection.validated || (mode === 'ppo' && !selection.validated.ppo_compatible)) return null;
+  return { kind: 'custom' };
+}
 export type RuntimeSessionStatus = {
   protocol_version: 'f1rl_runtime_v1';
   session_id: string;

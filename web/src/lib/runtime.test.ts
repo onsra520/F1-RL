@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { parseRuntimeSocketEvent, RuntimeClient } from './runtime';
+import {
+  invalidateRuntimeTrackSelection,
+  isCurrentCustomTrackValidation,
+  parseRuntimeSocketEvent,
+  resolveRuntimeTrackRequest,
+  RuntimeClient,
+  type RuntimeCustomTrack,
+} from './runtime';
 
 const track = {
   track_id: 'straight-sprint-v1', split: 'TRAIN' as const, purpose: 'development' as const,
@@ -9,7 +16,45 @@ const track = {
   road_samples: [{ x: 0, y: 0, z: 0, t: 0, heading: 0, nx: 1, nz: 0 }, { x: 0, y: 0, z: 20, t: 1, heading: 0, nx: 1, nz: 0 }],
 };
 
+const customTrack: RuntimeCustomTrack = {
+  schema_version: 'f1rl_custom_track_conversion_v1', development_only: true,
+  track_id: 'sandbox-custom', track_sha256: 'c'.repeat(64), preview: track.preview,
+  road_samples: track.road_samples, auto_bridge_count: 0, ppo_compatible: true,
+  surface_count: 10, checkpoint_count: 1, obstacle_count: 0, boost_pad_count: 0, warnings: [],
+};
+
 afterEach(() => vi.unstubAllGlobals());
+
+describe('runtime track selection', () => {
+  it('keeps an invalid Custom selection selected and blocks Run', () => {
+    const selection = { kind: 'custom', validated: null } as const;
+    expect(resolveRuntimeTrackRequest(selection, 'straight-sprint-v1', 'manual')).toBeNull();
+    expect(selection.kind).toBe('custom');
+  });
+
+  it('invalidates a stale validation after a map edit without switching to TRAIN', () => {
+    const selection = invalidateRuntimeTrackSelection({ kind: 'custom', validated: customTrack });
+    expect(isCurrentCustomTrackValidation(4, 5)).toBe(false);
+    expect(selection).toEqual({ kind: 'custom', validated: null });
+    expect(resolveRuntimeTrackRequest(selection, 'straight-sprint-v1', 'ppo')).toBeNull();
+  });
+
+  it('uses Custom or the deliberately selected TRAIN track', () => {
+    expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: customTrack }, 'straight-sprint-v1', 'ppo'))
+      .toEqual({ kind: 'custom' });
+    expect(resolveRuntimeTrackRequest({ kind: 'train' }, 'ramp-v1', 'ppo'))
+      .toEqual({ kind: 'train', trackId: 'ramp-v1' });
+    expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: customTrack }, 'ramp-v1', 'replay'))
+      .toBeNull();
+  });
+
+  it('never falls back to a TRAIN track for an incompatible Custom PPO selection', () => {
+    expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: { ...customTrack, ppo_compatible: false } }, 'slalom-v1', 'ppo'))
+      .toBeNull();
+    expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: { ...customTrack, ppo_compatible: false } }, 'slalom-v1', 'manual'))
+      .toEqual({ kind: 'custom' });
+  });
+});
 
 describe('Python runtime HTTP client', () => {
   it('loads the read-only frozen catalog and rejects a non-TRAIN track', async () => {

@@ -13,7 +13,11 @@ import { createTrack, getAutoBridges, nearestRoad, parseTrack, pointAt, PROP_KIN
 import { parseReplay, replayAt, replayModelId, type Replay } from './lib/replay';
 import { manualActionFromKeys } from './lib/manual';
 import RuntimeOutcomeMessage from './RuntimeOutcomeMessage';
-import { RuntimeApiError, RuntimeClient, type RuntimeCatalog, type RuntimeCustomTrack, type RuntimeSessionStatus, type RuntimeSocketClient } from './lib/runtime';
+import {
+  invalidateRuntimeTrackSelection, isCurrentCustomTrackValidation, resolveRuntimeTrackRequest,
+  RuntimeApiError, RuntimeClient, type RuntimeCatalog,
+  type RuntimeSessionStatus, type RuntimeSocketClient, type RuntimeTrackSelection,
+} from './lib/runtime';
 
 type Mode = 'sketch' | 'build' | 'drive';
 type DriveMode = 'manual' | 'ppo' | 'replay';
@@ -72,8 +76,8 @@ export default function App() {
   const [runtimeError, setRuntimeError] = useState('');
   const [runtimeReplay, setRuntimeReplay] = useState<Replay | null>(null);
   const [runtimeBusy, setRuntimeBusy] = useState(false);
-  const [validatedCustomTrack, setValidatedCustomTrack] = useState<RuntimeCustomTrack | null>(null);
-  const [customTrackSelected, setCustomTrackSelected] = useState(false);
+  const [runtimeTrackSelection, setRuntimeTrackSelection] = useState<RuntimeTrackSelection>({ kind: 'train' });
+  const trackValidationRevision = useRef(0);
   const [trackValidationBusy, setTrackValidationBusy] = useState(false);
   const [toast, setToast] = useState('');
   const [help, setHelp] = useState(false);
@@ -92,9 +96,10 @@ export default function App() {
   const canDrive = track.points.length >= 2;
   const activeReplay = replay ?? runtimeReplay;
   const replayTrackId = activeReplay?.schema === 'f1rl_racing_sandbox_replay_v2' ? activeReplay.provenance.track_id : runtimeTrackId;
-  const activeRuntimeTrack = customTrackSelected && validatedCustomTrack
-    ? validatedCustomTrack
+  const activeRuntimeTrack = runtimeTrackSelection.kind === 'custom'
+    ? runtimeTrackSelection.validated ?? undefined
     : runtimeCatalog?.tracks.find((item) => item.track_id === (driveMode === 'replay' ? replayTrackId : runtimeTrackId));
+  const runtimeTrackRequest = resolveRuntimeTrackRequest(runtimeTrackSelection, runtimeTrackId, driveMode);
   const sceneTrack = mode === 'drive' && activeRuntimeTrack ? activeRuntimeTrack.preview : track;
   const sceneRoadSamples = mode === 'drive' ? activeRuntimeTrack?.road_samples : undefined;
   const activePose = driveMode === 'replay' && activeReplay ? (() => {
@@ -131,6 +136,11 @@ export default function App() {
     return () => { active = false; };
   }, [mode, runtimeCatalog, catalogError, runtimeClient, runtimeTrackId]);
 
+  const invalidateCustomTrackValidation = useCallback(() => {
+    trackValidationRevision.current += 1;
+    setRuntimeTrackSelection(invalidateRuntimeTrackSelection);
+    setRuntimeError('');
+  }, []);
   const changeTrack = useCallback((update: (prev: TrackDocument) => TrackDocument) => {
     const prev = trackRef.current;
     const next = update(prev);
@@ -139,15 +149,15 @@ export default function App() {
     redoStack.current = [];
     trackRef.current = next;
     setTrack(next);
-    setValidatedCustomTrack(null);
-    setCustomTrackSelected(false);
-  }, []);
+    invalidateCustomTrackValidation();
+  }, [invalidateCustomTrackValidation]);
   const undo = () => {
     const last = history.current.pop();
     if (!last) return;
     redoStack.current.push(trackRef.current);
     trackRef.current = last;
     setTrack(last);
+    invalidateCustomTrackValidation();
   };
   const redo = () => {
     const next = redoStack.current.pop();
@@ -155,6 +165,7 @@ export default function App() {
     history.current.push(trackRef.current);
     trackRef.current = next;
     setTrack(next);
+    invalidateCustomTrackValidation();
   };
   const onSketch = (points: Point2[]) => changeTrack((prev) => ({ ...prev, points, props: points.length ? prev.props : [] }));
   const updateProp = (id: string, patch: Partial<TrackProp>) => changeTrack((prev) => ({
@@ -218,8 +229,7 @@ export default function App() {
       redoStack.current = [];
       trackRef.current = next;
       setTrack(next);
-      setValidatedCustomTrack(null);
-      setCustomTrackSelected(false);
+      invalidateCustomTrackValidation();
       setPose(spawnPose(next));
       setMode('build'); setSelected(null); setArmed(null);
       setToast('Map imported');
@@ -238,17 +248,17 @@ export default function App() {
   };
 
   const runRuntimeSession = async () => {
-    if (!runtimeCatalog || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff) return;
-    if (customTrackSelected && (!validatedCustomTrack || (driveMode === 'ppo' && !validatedCustomTrack.ppo_compatible))) return;
+    const trackRequest = runtimeTrackRequest;
+    if (!runtimeCatalog || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !trackRequest) return;
     setRuntimeBusy(true);
     setRuntimeError(''); setReplay(null); setRuntimeReplay(null); setPlaying(false); setRuntimeStatus(null);
     let createdSessionId: string | null = null;
     try {
-      const created = customTrackSelected && validatedCustomTrack
+      const created = trackRequest.kind === 'custom'
         ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : undefined)
         : driveMode === 'manual'
-          ? await runtimeClient.createManualSession(runtimeTrackId, runtimeSeed)
-          : await runtimeClient.createPpoSession(modelId, runtimeTrackId, runtimeSeed);
+          ? await runtimeClient.createManualSession(trackRequest.trackId, runtimeSeed)
+          : await runtimeClient.createPpoSession(modelId, trackRequest.trackId, runtimeSeed);
       createdSessionId = created.session_id;
       sessionRef.current = created.session_id;
       setRuntimeStatus(created);
@@ -316,16 +326,26 @@ export default function App() {
   };
 
   const validateCurrentTrack = async () => {
+    const requestRevision = ++trackValidationRevision.current;
+    setRuntimeTrackSelection({ kind: 'custom', validated: null });
     setTrackValidationBusy(true); setRuntimeError('');
     try {
       const converted = await runtimeClient.validateCustomTrack(track);
-      setValidatedCustomTrack(converted);
-      setCustomTrackSelected(true);
+      if (!isCurrentCustomTrackValidation(requestRevision, trackValidationRevision.current)) return;
+      setRuntimeTrackSelection({ kind: 'custom', validated: converted });
       setToast(`Python validated ${converted.surface_count} road surfaces · development track`);
     } catch (error) {
-      setValidatedCustomTrack(null); setCustomTrackSelected(false);
-      setRuntimeError(error instanceof RuntimeApiError ? `${error.code}: ${error.message}` : error instanceof Error ? error.message : 'Track validation failed');
+      if (isCurrentCustomTrackValidation(requestRevision, trackValidationRevision.current)) {
+        setRuntimeTrackSelection({ kind: 'custom', validated: null });
+        setRuntimeError(error instanceof RuntimeApiError ? `${error.code}: ${error.message}` : error instanceof Error ? error.message : 'Track validation failed');
+      }
     } finally { setTrackValidationBusy(false); }
+  };
+
+  const useRegisteredTrack = () => {
+    trackValidationRevision.current += 1;
+    setRuntimeTrackSelection({ kind: 'train' });
+    setRuntimeError('');
   };
 
   const stopRuntimeSession = async () => {
@@ -457,17 +477,29 @@ export default function App() {
               <button className={driveMode === 'replay' ? 'selected' : ''} disabled={!activeReplay || runtimeBusy} onClick={() => {setDriveMode('replay'); setPlaying(false);}}>Replay</button>
             </div>
             <div className="speed-readout"><span>SPEED</span><strong>{Math.round(activePose.speed * 3.6)}</strong><small>KM/H</small></div>
-            <div className="drive-warning"><TriangleAlert size={14}/>{driveMode === 'manual' ? 'Manual Python physics · development only' : driveMode === 'ppo' ? 'Frozen PPO · TRAIN development · scientific admission disabled' : 'Recorded frames · imported data is not independently verified'}</div>
+            <div className="drive-warning"><TriangleAlert size={14}/>{driveMode === 'manual'
+              ? `Manual Python physics · ${runtimeTrackSelection.kind === 'custom' ? 'custom' : 'TRAIN'} development only`
+              : driveMode === 'ppo'
+                ? `Frozen PPO · ${runtimeTrackSelection.kind === 'custom' ? 'custom' : 'TRAIN'} development · scientific admission disabled`
+                : 'Recorded frames · imported data is not independently verified'}</div>
             {driveMode !== 'replay' ? <>
               <div className="runtime-panel">
                 {driveMode === 'ppo' && <label>FROZEN MODEL<select aria-label="Frozen PPO model" value={modelId} onChange={(event) => setModelId(event.target.value)} disabled={!runtimeCatalog || runtimeBusy}>
                     {(runtimeCatalog?.models ?? []).map((model) => <option key={model.model_id} value={model.model_id}>{model.model_id}</option>)}
                   </select></label>}
-                {customTrackSelected && validatedCustomTrack ? <div className="custom-track-selection">
-                  <span>PYTHON VALIDATED CUSTOM TRACK</span><strong>{validatedCustomTrack.preview.name}</strong>
-                  <small>{validatedCustomTrack.surface_count} road surfaces · {validatedCustomTrack.checkpoint_count} checkpoints · {validatedCustomTrack.auto_bridge_count} auto overpasses</small>
-                  {driveMode === 'ppo' && !validatedCustomTrack.ppo_compatible && <small className="runtime-error">Frozen PPO observation/action contract is incompatible.</small>}
-                  <button disabled={runtimeBusy} onClick={() => setCustomTrackSelected(false)}>Use registered TRAIN track</button>
+                {runtimeTrackSelection.kind === 'custom' ? <div className="custom-track-selection">
+                  {runtimeTrackSelection.validated ? <>
+                    <span>PYTHON VALIDATED CUSTOM TRACK</span><strong>{runtimeTrackSelection.validated.preview.name}</strong>
+                    <small>{runtimeTrackSelection.validated.surface_count} road surfaces · {runtimeTrackSelection.validated.checkpoint_count} checkpoints · {runtimeTrackSelection.validated.auto_bridge_count} auto overpasses</small>
+                    {driveMode === 'ppo' && !runtimeTrackSelection.validated.ppo_compatible && <small className="runtime-error">Frozen PPO observation/action contract is incompatible.</small>}
+                  </> : <>
+                    <span>CUSTOM TRACK SELECTED</span>
+                    <small className="runtime-error">{trackValidationBusy ? 'Validating current map…' : 'Validate the current map before running.'}</small>
+                    <button className="runtime-validate-track" disabled={!runtimeCatalog || trackValidationBusy || runtimeBusy} onClick={() => void validateCurrentTrack()}>
+                      {trackValidationBusy ? <><LoaderCircle size={14}/> VALIDATING IN PYTHON…</> : <><Check size={14}/> VALIDATE & USE CURRENT MAP</>}
+                    </button>
+                  </>}
+                  <button disabled={runtimeBusy} onClick={useRegisteredTrack}>Use registered TRAIN track</button>
                 </div> : <>
                   <label>TRAIN TRACK<select aria-label="TRAIN track" value={runtimeTrackId} onChange={(event) => setRuntimeTrackId(event.target.value)} disabled={!runtimeCatalog || runtimeBusy}>
                     {(runtimeCatalog?.tracks ?? []).map((item) => <option key={item.track_id} value={item.track_id}>{item.track_id}</option>)}
@@ -497,7 +529,7 @@ export default function App() {
                   <RuntimeOutcomeMessage status={runtimeStatus} />
                 </>}
                 <div className="runtime-actions">
-                  <button className="runtime-run" onClick={() => void runRuntimeSession()} disabled={!runtimeCatalog || runtimeBusy || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff}>
+                  <button className="runtime-run" onClick={() => void runRuntimeSession()} disabled={!runtimeCatalog || runtimeBusy || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !runtimeTrackRequest}>
                     {runtimeBusy ? <><LoaderCircle size={16}/> {runtimeStatus?.status === 'paused' ? 'PAUSED' : driveMode === 'manual' ? 'MANUAL PYTHON SIMULATION' : 'RUNNING PPO INFERENCE'}</> : <><Play size={16}/> {driveMode === 'manual' ? 'START MANUAL DRIVE' : 'RUN EPISODE'}</>}
                   </button>
                   {runtimeBusy && <button className="runtime-stop" onClick={() => void stopRuntimeSession()}>Stop</button>}
