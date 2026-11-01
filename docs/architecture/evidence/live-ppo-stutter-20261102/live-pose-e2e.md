@@ -36,13 +36,24 @@ The managed browser's video encoder fell behind and did not produce a video file
 
 ## Verification
 
-- `npm test`: 8 files passed, 42 tests passed, including reset-frame ordering and stopped/failed terminal status coverage.
+- `npm test`: 8 files passed, 47 tests passed, including reset-frame ordering and terminal status coverage.
 - `npm run typecheck`: PASS.
 - `npm run build`: PASS. Vite emitted its existing large JavaScript chunk advisory (>500 kB).
 - Python tests were not rerun; no Python source or backend contract changed.
 - `agent-browser errors`: empty after the final clean PPO run and the targeted Pause/Resume/Reset/Stop run.
 
+## Final acceptance retest — 2026-11-02
+
+- Browser: headed Microsoft Edge 156 (`Edg/156`) launched from the installed Edge executable by `agent-browser`; backend `http://127.0.0.1:8000`.
+- Final code regression: `isRuntimePoseTerminal('resetting')` is false. The live backend emits a transient `resetting` status before `running`; treating it as terminal would close the pose interpolator during reset. `npm test` now passes 8 files / 47 tests; `npm run typecheck` and `npm run build` pass, with the existing large-chunk advisory.
+- PPO A-seed2 / straight-sprint-v1 / seed 412: PASS. Edge received 114 frames (ticks 0–113), both checkpoints (`checkpoint-0`, `checkpoint-1`) completed, and the backend reported `successful_finish` / `finished` at tick 113. The final backend pose was `[0.2481682089, 0.5016385523, 112.2257833312]`, heading `-0.1581212521 rad`; the finished UI displayed the matching rounded position `0.2, 0.5, 112.2` and heading `-9.1°`. The terminal interpolator regression asserts the exact authoritative endpoint. See `edge-final-midrun.png` and `edge-final-terminal.png`.
+- Pause / Resume / Reset / Stop: PASS. Pause held tick 43 and the same displayed pose over a one-second wait; Resume advanced to tick 51. Reset produced `resetting` then `running`, restarted near the initial pose (tick 6–7), and continued receiving new frames; Stop cancelled the run and returned the UI to idle.
+- Manual Drive: PASS. Python physics advanced the car from about `[0.2, 0.5, 4.0]` to `[0.6, 0.5, 8.8]` under throttle. Stop cancelled and cleaned up the session.
+- Replay playback / seek: PASS. Playback advanced from 0 to 6.64 seconds; timeline seeking selected 7.56 seconds. The exported file was imported back through the Replay input and the UI showed `Replay loaded`.
+- Edge replay download: PASS. `Downloads/f1rl-runtime-replay.json` was inspected as an actual file: 159,673 bytes, schema `f1rl_racing_sandbox_replay_v2`, 114 frames (ticks 0–113), A-seed2 / straight-sprint-v1 / seed 412, SHA-256 `8bff2d4ae7b4a83aebf3b4fb7a36267bf3097e641a9564dccd13d804aec42dee`.
+- Console / WebSocket / cleanup: PASS. No browser page errors or WebSocket errors. All six observed sockets closed with code 1000; subsequent session GETs returned 404 for all six IDs.
+
 ## Remaining limits
 
-- Browser evidence uses managed Chromium through agent-browser; Edge and Brave were not separately exercised.
+- Managed Chromium and Microsoft Edge 156 were exercised; Brave was not separately exercised.
 - The video recorder failed, so motion evidence is a sequence of real-browser screenshots plus captured WebSocket timing and deterministic interpolation regression tests.

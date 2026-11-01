@@ -117,5 +117,6 @@ describe('LivePoseInterpolator', () => {
     expect(isRuntimePoseTerminal('ready')).toBe(false);
     expect(isRuntimePoseTerminal('running')).toBe(false);
     expect(isRuntimePoseTerminal('paused')).toBe(false);
+    expect(isRuntimePoseTerminal('resetting')).toBe(false);
   });
 });

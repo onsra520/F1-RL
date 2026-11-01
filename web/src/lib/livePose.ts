@@ -3,6 +3,7 @@ import type { RuntimeFrame, RuntimeSessionStatus } from './runtime';
 export type LivePose = { x: number; y: number; z: number; heading: number; speed: number };
 export type LivePoseFrame = Pick<RuntimeFrame, 'tick' | 'time_s' | 'dt_s' | 'position' | 'heading_rad' | 'speed_mps'>;
 type OrderedFrame = Pick<LivePoseFrame, 'tick' | 'time_s'>;
+type RuntimePoseStatus = RuntimeSessionStatus['status'] | 'resetting';
 
 type BufferedPose = { tick: number; time_s: number; receivedAt: number; pose: LivePose };
 type TerminalInterpolation = { from: LivePose; startedAt: number; durationMs: number };
@@ -14,8 +15,8 @@ export function isLivePoseFrameInOrder(previous: OrderedFrame | null, next: Orde
   return !previous || next.tick > previous.tick && next.time_s > previous.time_s;
 }
 
-export function isRuntimePoseTerminal(status: RuntimeSessionStatus['status'] | null): boolean {
-  return status !== null && status !== 'ready' && status !== 'running' && status !== 'paused';
+export function isRuntimePoseTerminal(status: RuntimePoseStatus | null): boolean {
+  return status === 'finished' || status === 'failed' || status === 'cancelled' || status === 'stopped';
 }
 
 function toPose(frame: LivePoseFrame): LivePose {
