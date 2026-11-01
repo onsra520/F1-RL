@@ -70,14 +70,40 @@ describe('LivePoseInterpolator', () => {
     expect(poses.sample(5050)).toEqual({ x: 10, y: 0, z: 0, heading: 0, speed: 10 });
   });
 
-  it('freezes terminal state and clears old samples on reset', () => {
+  it.each(['finished', 'failed', 'stopped', 'cancelled'] as const)(
+    'completes interpolation to the final authoritative pose on %s', (status) => {
+      const poses = new LivePoseInterpolator();
+      poses.push(frame(1, 0, 0), 1000);
+      poses.push(frame(2, 0.1, 10, 1), 1100);
+      expect(isRuntimePoseTerminal(status)).toBe(true);
+
+      poses.finish(1125);
+
+      expect(poses.sample(1125)).toEqual({ x: 2.5, y: 0, z: 0, heading: 0.25, speed: 2.5 });
+      expect(poses.sample(1175)).toEqual({ x: 7.5, y: 0, z: 0, heading: 0.75, speed: 7.5 });
+      expect(poses.sample(1200)).toEqual({ x: 10, y: 0, z: 0, heading: 1, speed: 10 });
+      expect(poses.sample(10000)).toEqual({ x: 10, y: 0, z: 0, heading: 1, speed: 10 });
+      expect(poses.push(frame(3, 0.2, 20), 1210)).toBe(false);
+    },
+  );
+
+  it('uses the final pose immediately when its interpolation interval already elapsed', () => {
     const poses = new LivePoseInterpolator();
     poses.push(frame(1, 0, 0), 1000);
     poses.push(frame(2, 0.1, 10), 1100);
-    poses.finish(1150);
+    poses.finish(1250);
 
-    expect(poses.sample(5000)).toEqual({ x: 5, y: 0, z: 0, heading: 0, speed: 5 });
-    expect(poses.push(frame(3, 0.2, 20), 1200)).toBe(false);
+    expect(poses.sample(1250)).toEqual({ x: 10, y: 0, z: 0, heading: 0, speed: 10 });
+    expect(poses.push(frame(3, 0.2, 20), 1300)).toBe(false);
+  });
+
+  it('clears a terminal transition on reset', () => {
+    const poses = new LivePoseInterpolator();
+    poses.push(frame(1, 0, 0), 1000);
+    poses.push(frame(2, 0.1, 10), 1100);
+    poses.finish(1125);
+    expect(poses.sample(1125)?.x).toBe(2.5);
+
     poses.reset();
     expect(poses.sample(5000)).toBeNull();
     poses.push(frame(0, 0, -4), 6000);

@@ -5,6 +5,7 @@ export type LivePoseFrame = Pick<RuntimeFrame, 'tick' | 'time_s' | 'dt_s' | 'pos
 type OrderedFrame = Pick<LivePoseFrame, 'tick' | 'time_s'>;
 
 type BufferedPose = { tick: number; time_s: number; receivedAt: number; pose: LivePose };
+type TerminalInterpolation = { from: LivePose; startedAt: number; durationMs: number };
 
 const MAX_FRAME_GAP_MS = 250;
 
@@ -42,6 +43,7 @@ export class LivePoseInterpolator {
   private interpolationMs = 0;
   private resumeFromHeldPose = false;
   private terminal = false;
+  private terminalInterpolation: TerminalInterpolation | null = null;
 
   push(frame: LivePoseFrame, receivedAt: number): boolean {
     if (this.terminal || !Number.isFinite(receivedAt) || this.heldPose && !this.resumeFromHeldPose) return false;
@@ -53,6 +55,7 @@ export class LivePoseInterpolator {
     if (!originPose) {
       this.latest = next;
       this.previous = null;
+      this.interpolationMs = 0;
       return true;
     }
 
@@ -61,6 +64,7 @@ export class LivePoseInterpolator {
     if (!Number.isFinite(duration) || duration <= 0 || duration > MAX_FRAME_GAP_MS) {
       this.previous = null;
       this.latest = next;
+      this.interpolationMs = 0;
       this.heldPose = null;
       this.resumeFromHeldPose = false;
       return true;
@@ -75,6 +79,15 @@ export class LivePoseInterpolator {
   }
 
   sample(now: number): LivePose | null {
+    if (this.terminal) {
+      if (!this.latest) return null;
+      const transition = this.terminalInterpolation;
+      if (!transition || transition.durationMs <= 0) return this.latest.pose;
+      const amount = Math.min(1, Math.max(0, (now - transition.startedAt) / transition.durationMs));
+      if (amount === 0) return transition.from;
+      if (amount === 1) return this.latest.pose;
+      return interpolatePose(transition.from, this.latest.pose, amount);
+    }
     if (this.heldPose) return this.heldPose;
     if (!this.latest) return null;
     if (!this.previous || this.interpolationMs <= 0) return this.latest.pose;
@@ -96,8 +109,17 @@ export class LivePoseInterpolator {
   }
 
   finish(now: number): void {
+    if (this.terminal) return;
     if (!this.latest) { this.terminal = true; return; }
-    this.heldPose = this.sample(now) ?? this.latest.pose;
+    const finalPose = this.latest.pose;
+    const from = this.heldPose ?? this.sample(now) ?? finalPose;
+    const remainingMs = this.interpolationMs > 0
+      ? Math.max(0, this.latest.receivedAt + this.interpolationMs - now)
+      : 0;
+    this.terminalInterpolation = remainingMs > 0
+      ? { from, startedAt: now, durationMs: Math.min(remainingMs, MAX_FRAME_GAP_MS) }
+      : null;
+    this.heldPose = null;
     this.previous = null;
     this.resumeFromHeldPose = false;
     this.terminal = true;
@@ -110,5 +132,6 @@ export class LivePoseInterpolator {
     this.interpolationMs = 0;
     this.resumeFromHeldPose = false;
     this.terminal = false;
+    this.terminalInterpolation = null;
   }
 }
