@@ -15,6 +15,7 @@ Python runtime: `http://127.0.0.1:8000/`
 - **Direct Sketch → Drive:** selected the Sample route from Sketch and entered Drive directly. Python returned HTTP 422 `unsupported_surface_intersection`; the UI selected Custom, showed the backend error, and disabled Run. See `sketch-drive-handoff.har` and `sketch-drive-unsupported-blocked.png`.
 - **TRAIN selection:** explicitly selected `Use registered TRAIN track`, then started PPO. HAR shows `POST /api/v1/sessions` returned 201 with `track_id: straight-sprint-v1`, followed by replay retrieval. The stopped session returned 404 `session_not_found` on a subsequent status request. See `ppo-explicit-train.har`.
 - **Final trace-header smoke:** after adding `X-Trace-ID` to custom session creation, imported the valid custom map into an isolated frontend on port 5174 using the updated Python backend on port 8001. Drive automatically validated 80 road surfaces and 1 checkpoint; PPO created a `custom-development` session with the same custom track ID/hash and an `x-trace-id` request header. The session replay request returned 200, and the stopped session returned 404 `session_not_found`. See `custom-session-trace-handoff.har`.
+- **Default-port final check:** restarted the Python backend on port 8000 so it loaded the CORS change, then uploaded the same custom draft through the frontend on port 5173. Drive revalidated it and PPO advanced 19 backend ticks. HAR shows session creation 201 on `sandbox-30f5dd51fcdca87d` with its matching SHA-256 and `x-trace-id`, replay retrieval 200, and session cleanup 404. See `custom-session-trace-default-ports.har`.
 - **Replay:** exported the Manual episode from the browser UI and inspected the downloaded JSON. It is replay v2 with the Manual episode's matching custom track ID/hash, ramp and checkpoint props, 309 road samples (maximum sampled height 2.7969 m), and 44 frames. The replay track is preserved in `manual-edited-map-replay.json`.
 - **Visual evidence:** `custom-ramp-validated.png` shows the validated custom route with ramp; `custom-ramp-checkpoint-validated.png` shows the edited and revalidated map; `custom-replay-track.png` shows replay using the episode track.
 
@@ -34,6 +35,7 @@ Python runtime: `http://127.0.0.1:8000/`
 - `ppo-explicit-train.har`: explicitly selected registered TRAIN PPO session.
 - `sketch-drive-handoff.har`: direct Sketch → Drive validation request and explicit unsupported-map response.
 - `custom-session-trace-handoff.har`: final custom validation/session/replay flow with trace header against the updated local Python backend.
+- `custom-session-trace-default-ports.har`: final run against the default frontend/backend ports after backend restart.
 - `manual-edited-map-replay.json`: browser-exported replay with episode track geometry.
 
 ## Automated verification
