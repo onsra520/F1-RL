@@ -37,13 +37,15 @@ describe('LivePoseInterpolator', () => {
     expect(poses.sample(1200)?.heading).toBe(-Math.PI + 0.1);
   });
 
-  it('snaps to the authoritative pose after a long frame gap and never extrapolates', () => {
+  it('bridges a long frame gap without teleportation and never extrapolates', () => {
     const poses = new LivePoseInterpolator();
     poses.push(frame(1, 0, 0), 1000);
     poses.push(frame(2, 0.1, 1), 1100);
     poses.push(frame(3, 0.2, 9), 1500);
 
-    expect(poses.sample(1500)).toEqual({ x: 9, y: 0, z: 0, heading: 0, speed: 9 });
+    expect(poses.sample(1500)).toEqual({ x: 1, y: 0, z: 0, heading: 0, speed: 1 });
+    expect(poses.sample(1550)?.x).toBeGreaterThan(1);
+    expect(poses.sample(1550)?.x).toBeLessThan(9);
     expect(poses.sample(10000)).toEqual({ x: 9, y: 0, z: 0, heading: 0, speed: 9 });
   });
 
@@ -138,5 +140,105 @@ describe('3D quaternion and bounded WebSocket jitter interpolation', () => {
     expect(poses.sample(1055)?.x).toBeGreaterThan(0);
     expect(poses.sample(1055)?.x).toBeLessThan(10);
     expect(poses.sample(2000)?.x).toBe(10);
+  });
+});
+
+
+describe('live WebSocket position continuity', () => {
+  it('preserves the exact visible pose at each incoming frame when the previous blend is incomplete', () => {
+    const pose = new LivePoseInterpolator();
+    pose.push(frame(0, 0, 0), 1000);
+    pose.push(frame(1, .1, 1), 1100);
+    const visible = pose.sample(1150)!;
+    expect(visible.x).toBeCloseTo(.5, 6);
+    pose.push(frame(2, .2, 2), 1150);
+    expect(pose.sample(1150)?.x).toBeCloseTo(visible.x, 9);
+    expect(pose.sample(1200)?.x).toBeGreaterThan(visible.x);
+    expect(pose.sample(1250)?.x).toBeLessThanOrEqual(2);
+    expect(pose.sample(1600)?.x).toBe(2);
+  });
+
+  it('preserves continuity through fast burst arrivals, including quaternion pitch', () => {
+    const pose = new LivePoseInterpolator();
+    const p = (tick: number, x: number): LivePoseFrame => ({
+      ...frame(tick, tick * .1, x), orientation_wxyz: [Math.cos(tick / 12), Math.sin(tick / 12), 0, 0],
+    });
+    pose.push(p(0, 0), 1000);
+    pose.push(p(1, 1), 1030);
+    for (let i = 2; i <= 12; i++) {
+      const now = 1030 + i * 15;
+      const before = pose.sample(now)!;
+      expect(pose.push(p(i, i), now)).toBe(true);
+      const after = pose.sample(now)!;
+      expect(after.x).toBeCloseTo(before.x, 9);
+      expect(after.orientation_wxyz?.[0]).toBeCloseTo(before.orientation_wxyz![0], 8);
+    }
+    expect(pose.sample(10000)?.x).toBe(12);
+  });
+
+  it('does not snap backward upon a delayed packet, pause, resume, or terminal transition', () => {
+    const pose = new LivePoseInterpolator();
+    pose.push(frame(0, 0, 0), 1000);
+    pose.push(frame(1, .1, 1), 1100);
+    const before = pose.sample(1160)!;
+    pose.push(frame(2, .2, 2), 1800);
+    expect(pose.sample(1800)?.x).toBeCloseTo(1, 9);
+    pose.pause(1830);
+    const held = pose.sample(5000)!.x;
+    pose.resume();
+    pose.push(frame(3, .3, 3), 5000);
+    expect(pose.sample(5000)?.x).toBeCloseTo(held, 9);
+    pose.finish(5020);
+    const atFinish = pose.sample(5020)!.x;
+    expect(atFinish).toBeGreaterThanOrEqual(held);
+    expect(pose.sample(10000)?.x).toBe(3);
+    expect(before.x).toBeGreaterThan(0);
+  });
+
+  it('keeps the newest physics pose authoritative without extrapolating through packet stalls', () => {
+    const pose = new LivePoseInterpolator();
+    pose.push(frame(0, 0, 0), 1000);
+    pose.push(frame(1, .1, 2), 1100);
+    expect(pose.sample(1400)?.x).toBe(2);
+    const old = pose.sample(2000)!.x;
+    pose.push(frame(2, .2, 4), 2000);
+    expect(pose.sample(2000)?.x).toBe(old);
+    expect(pose.sample(10000)?.x).toBe(4);
+  });
+});
+
+describe('configured speed limit for displayed pose', () => {
+  it('does not exceed 15 m/s even under bursty valid authoritative frames', () => {
+    const poses = new LivePoseInterpolator(15);
+    poses.push(frame(0, 0, 0), 1000);
+    for (let k = 1; k <= 30; k++) {
+      const at = 1000 + k * 60;
+      const before = poses.sample(at)!;
+      expect(poses.push(frame(k, k * .1, k * .8), at)).toBe(true);
+      expect(poses.sample(at)!.x).toBeCloseTo(before.x, 9);
+      let last = poses.sample(at)!.x;
+      for (let t = 5; t <= 55; t += 5) {
+        const next = poses.sample(at + t)!.x;
+        expect(Math.abs(next - last)).toBeLessThanOrEqual(15 * .005 + 1e-7);
+        last = next;
+      }
+    }
+    expect(poses.sample(10000)?.x).toBeCloseTo(24);
+  });
+});
+
+describe('simulation playback multiplier visual cap', () => {
+  it('allows realtime and accelerated play without packet teleports', () => {
+    const pose = new LivePoseInterpolator(15);
+    pose.push(frame(0, 0, 0), 1000);
+    pose.push(frame(1, .1, 1), 1100);
+    const p1 = pose.sample(1120)!.x;
+    pose.setMaxVisualSpeedMps(15 * 16);
+    expect(pose.sample(1120)?.x).toBe(p1);
+    pose.push(frame(2, .2, 5), 1120);
+    expect(pose.sample(1120)?.x).toBeCloseTo(p1);
+    expect(pose.sample(1200)?.x).toBe(5);
+    pose.setMaxVisualSpeedMps(15);
+    expect(pose.sample(2000)?.x).toBe(5);
   });
 });

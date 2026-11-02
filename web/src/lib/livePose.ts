@@ -42,6 +42,12 @@ function interpolatePose(from: LivePose, to: LivePose, amount: number): LivePose
 }
 
 export class LivePoseInterpolator {
+  constructor(private maxVisualSpeedMps: number = Number.POSITIVE_INFINITY) {}
+
+  setMaxVisualSpeedMps(limit: number): void {
+    if (!Number.isFinite(limit) || limit <= 0) throw new Error('Invalid visual speed limit');
+    this.maxVisualSpeedMps = limit;
+  }
   private previous: BufferedPose | null = null;
   private latest: BufferedPose | null = null;
   private heldPose: LivePose | null = null;
@@ -54,10 +60,14 @@ export class LivePoseInterpolator {
     if (this.terminal || !Number.isFinite(receivedAt) || this.heldPose && !this.resumeFromHeldPose) return false;
     if (!isLivePoseFrameInOrder(this.latest, frame)) return false;
 
+    // Evaluate the pose that is visible at the instant the new authoritative
+    // packet arrives. Starting from the previous *packet* rather than the
+    // currently rendered pose causes a backward jump whenever packets are
+    // faster than the previous interpolation interval.
+    const visiblePose = this.heldPose ?? this.sample(receivedAt);
     const next: BufferedPose = { tick: frame.tick, time_s: frame.time_s, receivedAt, pose: toPose(frame) };
     const origin = this.latest;
-    const originPose = this.heldPose ?? origin?.pose;
-    if (!originPose) {
+    if (!visiblePose) {
       this.latest = next;
       this.previous = null;
       this.interpolationMs = 0;
@@ -66,22 +76,23 @@ export class LivePoseInterpolator {
 
     const expectedMs = frame.dt_s * 1000;
     const arrivalGap = origin ? receivedAt - origin.receivedAt : expectedMs;
-    // A bounded two-frame interpolation interval resists WebSocket burst jitter.
-    // Physics positions remain authoritative; never extrapolate past the latest frame.
-    const duration = this.resumeFromHeldPose ? expectedMs
+    // Never extrapolate beyond the newest authoritative packet. A delayed
+    // packet is blended from the held visible pose, not teleported into place.
+    // Minimum duration prevents an oversized position step on a burst.
+    const distance = Math.hypot(
+      next.pose.x - visiblePose.x, next.pose.y - visiblePose.y, next.pose.z - visiblePose.z,
+    );
+    // An explicitly configured visual speed budget bounds packet-burst catch-up.
+    // Physics remains authoritative and the optional default preserves generic unit uses.
+    const minimumMs = distance / this.maxVisualSpeedMps * 1000;
+    const nominalMs = this.resumeFromHeldPose ? expectedMs
       : Math.max(expectedMs * 0.75, Math.min(arrivalGap, expectedMs * 1.5));
-    if (!Number.isFinite(duration) || duration <= 0 ||
-        (!this.resumeFromHeldPose && (!Number.isFinite(arrivalGap) ||
-          arrivalGap <= 0 || arrivalGap > MAX_FRAME_GAP_MS))) {
-      this.previous = null;
-      this.latest = next;
-      this.interpolationMs = 0;
-      this.heldPose = null;
-      this.resumeFromHeldPose = false;
-      return true;
+    const duration = Math.max(1, nominalMs, minimumMs);
+    if (!Number.isFinite(duration) || !Number.isFinite(arrivalGap) || arrivalGap <= 0) {
+      return false;
     }
 
-    this.previous = origin ? { ...origin, pose: originPose } : next;
+    this.previous = origin ? { ...origin, pose: visiblePose } : next;
     this.latest = next;
     this.interpolationMs = duration;
     this.heldPose = null;

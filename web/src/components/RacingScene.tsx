@@ -5,6 +5,7 @@ import { BufferAttribute, BufferGeometry, Camera, DoubleSide, Plane, Quaternion,
 import type { PropKind, RoadSample, TrackDocument, TrackProp } from '../lib/track';
 import { pointAt, sampleRoad } from '../lib/track';
 import { isRuntimePoseTerminal, LivePoseInterpolator, type LivePose, type LivePoseFrame } from '../lib/livePose';
+import { smoothFollowVector } from '../lib/cameraFollow';
 import type { RuntimeSessionStatus } from '../lib/runtime';
 import SolidRoad from './SolidRoad';
 import { BoosterSurface, CheckpointGate } from './RoadAttachments';
@@ -47,7 +48,9 @@ function Road({ track, samples }: { track: TrackDocument; samples: RoadSample[] 
   </>;
 }
 
-function CarModel({ pose, livePose, follow }: { pose: CarPose; livePose: LivePoseInterpolator | null; follow: boolean }) {
+function CarModel({ pose, livePose, follow, simulationSpeed }: {
+  pose: CarPose; livePose: LivePoseInterpolator | null; follow: boolean; simulationSpeed: number;
+}) {
   const car = useRef<Group>(null);
   const { camera } = useThree();
   const front = useMemo(() => new Vector3(), []);
@@ -56,6 +59,7 @@ function CarModel({ pose, livePose, follow }: { pose: CarPose; livePose: LivePos
   const cameraTarget = useMemo(() => new Vector3(), []);
   const rotation = useMemo(() => new Quaternion(), []);
   const worldUp = useMemo(() => new Vector3(0, 1, 0), []);
+  const cameraInitialized = useRef(false);
   useFrame((_, delta) => {
     const current = livePose?.sample(performance.now()) ?? pose;
     if (!car.current) return;
@@ -74,10 +78,20 @@ function CarModel({ pose, livePose, follow }: { pose: CarPose; livePose: LivePos
       front.set(0, 0, 1).applyQuaternion(rotation);
       desiredCamera.set(current.x - front.x * 19, current.y + 12.2, current.z - front.z * 19);
       desiredTarget.set(current.x + front.x * 6, current.y + 1.3, current.z + front.z * 6);
-      const smooth = 1 - Math.exp(-4 * Math.min(delta, 0.1));
-      camera.position.lerp(desiredCamera, smooth);
-      cameraTarget.lerp(desiredTarget, smooth);
+      if (!cameraInitialized.current) {
+        // Entering Drive may change camera mode instantly; only the first
+        // frame snaps the camera, never an incoming live Physics packet.
+        camera.position.copy(desiredCamera);
+        cameraTarget.copy(desiredTarget);
+        cameraInitialized.current = true;
+      } else {
+        const multiplier = Math.max(0.25, Math.min(16, simulationSpeed));
+        smoothFollowVector(camera.position, desiredCamera, delta, 4 * multiplier, 20 * multiplier);
+        smoothFollowVector(cameraTarget, desiredTarget, delta, 4 * multiplier, 20 * multiplier);
+      }
       camera.lookAt(cameraTarget);
+    } else {
+      cameraInitialized.current = false;
     }
     // Development-only bounded probe, enabled only with ?renderAudit=1. Never alters Physics or render pose.
     if (import.meta.env.DEV && new URLSearchParams(window.location.search).get('renderAudit') === '1') {
@@ -158,9 +172,9 @@ function TrackObject({ prop, track, selected, onPick, onRelease }: {
 }
 
 
-function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, livePose, roadSamples, onCamera, onDragChange }: {
+function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, livePose, simulationSpeed, roadSamples, onCamera, onDragChange }: {
   track: TrackDocument; mode: Mode; selectedId: string | null; armed: PropKind | null;
-  pose: CarPose; livePose: LivePoseInterpolator | null; roadSamples?: RoadSample[]; onCamera: (camera: Camera) => void;
+  pose: CarPose; livePose: LivePoseInterpolator | null; simulationSpeed: number; roadSamples?: RoadSample[]; onCamera: (camera: Camera) => void;
   onSelect: (id: string | null) => void;
   onPlace: (kind: PropKind | null, x: number, z: number, id?: string) => void;
   onDragChange: (id: string | null) => void;
@@ -191,19 +205,22 @@ function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, livePo
     </mesh>
     {track.props.map((p) => <TrackObject key={p.id} prop={p} track={track} selected={selectedId === p.id}
       onPick={(e) => choose(e, p.id)} onRelease={stopDrag}/>)}
-    <CarModel pose={pose} livePose={livePose} follow={mode === 'drive'}/>
+    <CarModel pose={pose} livePose={livePose} follow={mode === 'drive'} simulationSpeed={simulationSpeed}/>
   </>;
 }
 
-export default function RacingScene({ track, mode, selectedId, armed, pose, roadSamples, liveFrame, liveStatus, onSelect, onPlace }: {
+export default function RacingScene({ track, mode, selectedId, armed, pose, roadSamples, liveFrame, liveStatus, simulationSpeed, onSelect, onPlace }: {
   track: TrackDocument; mode: Mode; selectedId: string | null; armed: PropKind | null; pose: CarPose; roadSamples?: RoadSample[];
-  liveFrame: LivePoseFrame | null; liveStatus: RuntimeSessionStatus['status'] | null;
+  liveFrame: LivePoseFrame | null; liveStatus: RuntimeSessionStatus['status'] | null; simulationSpeed: number;
   onSelect: (id: string | null) => void;
   onPlace: (kind: PropKind | null, x: number, z: number, id?: string) => void;
 }) {
   const cameraRef = useRef<Camera | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const livePose = useRef(new LivePoseInterpolator()).current;
+  const livePose = useRef(new LivePoseInterpolator(15)).current;
+  useEffect(() => {
+    livePose.setMaxVisualSpeedMps(15 * Math.max(0.25, Math.min(16, simulationSpeed)));
+  }, [livePose, simulationSpeed]);
   const [dragging, setDragging] = useState<string | null>(null);
   const onCamera = (camera: Camera) => { cameraRef.current = camera; };
   useEffect(() => {
@@ -276,7 +293,7 @@ export default function RacingScene({ track, mode, selectedId, armed, pose, road
     <Canvas shadows dpr={[1, 1.8]} camera={{ position: [65, 122, 108], fov: 52, near: 0.1, far: 650 }}>
       <Suspense fallback={null}>
         <World track={track} mode={mode} selectedId={selectedId} armed={armed} pose={pose}
-          livePose={mode === 'drive' ? livePose : null} roadSamples={roadSamples}
+          livePose={mode === 'drive' ? livePose : null} simulationSpeed={simulationSpeed} roadSamples={roadSamples}
           onSelect={onSelect} onPlace={onPlace} onCamera={onCamera} onDragChange={setDragging}/>
         {mode === 'build' && <OrbitControls makeDefault target={[center.x, center.y, center.z]}
           enableDamping dampingFactor={0.09} enabled={!dragging}

@@ -536,6 +536,7 @@ export default function App() {
               pose={mode === 'build' ? spawnPose(track) : activePose} roadSamples={mode === 'drive' ? sceneRoadSamples : undefined}
               liveFrame={mode === 'drive' && driveMode !== 'replay' ? runtimeStatus?.latest_frame ?? null : null}
               liveStatus={mode === 'drive' && driveMode !== 'replay' ? runtimeStatus?.status ?? null : null}
+              simulationSpeed={mode === 'drive' && driveMode !== 'replay' ? runtimeStatus?.speed_multiplier ?? 1 : 1}
               onSelect={setSelected} onPlace={onPlace}/>
           </Suspense>
           {mode === 'build' && runtimeTrackSelection.kind === 'custom'
