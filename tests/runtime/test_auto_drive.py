@@ -179,3 +179,40 @@ def test_right_hand_controller_does_not_change_with_racing_obstacle_planner():
     b = controller(route, (0, 0.5, 5), config=cfg,
                    obstacles=(_physics_obstacle(),),body_geometry=_body_hitbox())
     assert all(a._target_point(i) == b._target_point(i) for i in range(0, 100, 5))
+
+
+def test_speed_envelope_satisfies_lateral_acceleration_and_braking_distance():
+    cfg = AutoDriveConfig(driving_style="right", target_max_speed_kmh=54.0,
+                          corner_acceleration_mps2=2.2, braking_factor=0.65)
+    ctrl = controller([(0, 0, 0), (0, 0, 65), (10, 0, 75),
+                       (20, 0, 85), (20, 0, 155)], (0, 0.5, 5), config=cfg)
+    s, v = ctrl._speed_distances, ctrl._speed_limits
+    for i in range(len(s)):
+        assert v[i] <= ctrl.max_speed + 1e-8
+        assert v[i] ** 2 * ctrl._path_curvature(s[i]) <= cfg.corner_acceleration_mps2 + 1e-6
+        if i + 1 < len(s):
+            delta = s[i + 1] - s[i]
+            assert v[i] ** 2 <= v[i + 1] ** 2 + (
+                2 * ctrl.vehicle.max_braking * cfg.braking_factor * delta + 1e-6
+            )
+    assert ctrl._target_speed(20) > min(ctrl._target_speed(float(x)) for x in range(60, 90))
+
+
+def test_profile_releases_speed_after_bend_and_obeys_physical_cap():
+    cfg = AutoDriveConfig(driving_style="centerline", target_max_speed_kmh=240.0)
+    ctrl = controller([(0, 0, 0), (0, 0, 65), (12, 0, 77),
+                       (12, 0, 160)], (0, 0.5, 5), config=cfg)
+    assert ctrl._target_speed(15) > ctrl._target_speed(65)
+    assert ctrl._target_speed(125) > ctrl._target_speed(65)
+    assert all(speed <= ctrl.vehicle.max_ground_speed for speed in ctrl._speed_limits)
+
+
+def test_profile_respects_obstacle_speed_and_grade_limits_without_hitbox_change():
+    cfg = AutoDriveConfig(driving_style="racing", target_max_speed_kmh=90.0)
+    ctrl = controller([(0, 0, 0), (0, 0, 100)], (0, 0.5, 5), config=cfg,
+                      obstacles=(_physics_obstacle(),), body_geometry=_body_hitbox())
+    assert ctrl._target_speed(45) <= 5.0
+    assert ctrl._hazards[0].obstacle_id == "cone-real-hitbox"
+    assert ctrl._hazards[0].safe_lateral_m < 0
+    flat = controller([(0, 0, 0), (0, 0, 80)], (0, 0.5, 5))
+    assert flat._target_speed(5) >= ctrl._target_speed(45)

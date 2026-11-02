@@ -47,6 +47,7 @@ class AutoDriveController:
         )
         self.corner_curvatures = self._corner_curvatures(navigation.points)
         self._hazards = self._obstacle_corridors(obstacles, body_geometry)
+        self._speed_distances, self._speed_limits = self._build_speed_profile()
 
     def _corner_curvatures(self, points: tuple[Vec3, ...]) -> tuple[tuple[float, float, float], ...]:
         corners = []
@@ -198,32 +199,87 @@ class AutoDriveController:
         horizontal = hypot(second.x - first.x, second.z - first.z)
         return 0.0 if horizontal <= 1e-8 else (second.y - first.y) / horizontal
 
-    def _target_speed(self, distance: float) -> float:
+    def _path_curvature(self, distance: float) -> float:
+        """Centered-chord road curvature with a conservative offset-radius cap.
+
+        Sampling the changing *target* point directly overestimates curvature
+        at Racing-Line lane changes, forcing a car to crawl on straight roads.
+        Curvature is measured on the actual authored road instead, then
+        inflated for the smaller inner turning radius of the lateral offset.
+        Separate low-speed envelopes handle obstacle-driven lane changes.
+        """
+        window = 3.0
+        previous = self._point_at(max(0.0, distance - window))
+        point = self._point_at(distance)
+        following = self._point_at(min(self.route.total_meters, distance + window))
+        abx, abz = point.x - previous.x, point.z - previous.z
+        bcx, bcz = following.x - point.x, following.z - point.z
+        acx, acz = following.x - previous.x, following.z - previous.z
+        a = hypot(abx, abz)
+        b = hypot(bcx, bcz)
+        c = hypot(acx, acz)
+        if min(a, b, c) < 1e-6:
+            return 0.0
+        road_curvature = 2.0 * abs(abx * bcz - abz * bcx) / (a * b * c)
+        offset = abs(self._offset_at(distance))
+        return road_curvature / max(0.65, 1.0 - road_curvature * offset)
+
+    def _local_speed_limit(self, distance: float) -> float:
         cfg = self.config
+        curvature = self._path_curvature(distance)
         target = self.max_speed
-        braking = self.vehicle.max_braking * cfg.braking_factor
-        for corner_distance, curvature, _ in self.corner_curvatures:
-            distance_to_corner = corner_distance - distance
-            if distance_to_corner < -2.0:
-                continue
-            corner_speed = min(self.max_speed, sqrt(cfg.corner_acceleration_mps2 / curvature))
-            braking_distance = max(0.0, distance_to_corner - cfg.corner_anticipation_m)
-            target = min(target, sqrt(corner_speed * corner_speed + 2.0 * braking * braking_distance))
-        first_grade = max(0, bisect_right(self.distances, distance) - 1)
-        end_grade = min(len(self.segment_grades), bisect_right(self.distances, distance + cfg.grade_lookahead_m))
-        grade = max(self.segment_grades[first_grade:end_grade] or (abs(self._grade_at(distance)),))
+        if curvature > 1e-6:
+            target = min(target, sqrt(cfg.corner_acceleration_mps2 / curvature))
+
+        # Preserve grade-dependent physical caps; no change to road or Physics.
+        first = max(0, bisect_right(self.distances, distance) - 1)
+        last = min(len(self.segment_grades), bisect_right(self.distances, distance + cfg.grade_lookahead_m))
+        grade = max(self.segment_grades[first:last] or (abs(self._grade_at(distance)),))
         if grade > cfg.steep_grade_threshold:
             target = min(target, cfg.steep_grade_speed_mps)
         elif grade > cfg.moderate_grade_threshold:
             target = min(target, cfg.moderate_grade_speed_mps)
-        if self._hazards:
-            for hazard in self._hazards:
-                remaining = hazard.progress_m - distance
-                if -8.0 <= remaining <= 36.0:
-                    safe_speed = 5.0
-                    if remaining > 18.0:
-                        safe_speed += min(self.max_speed, 3.0) * (remaining - 18.0) / 18.0
-                    target = min(target, safe_speed)
+
+        # The hitbox-based obstacle corridor remains a hard planning cap.
+        for hazard in self._hazards:
+            remaining = hazard.progress_m - distance
+            if -8.0 <= remaining <= 36.0:
+                safe_speed = 5.0
+                if remaining > 18.0:
+                    safe_speed += min(self.max_speed, 3.0) * (remaining - 18.0) / 18.0
+                target = min(target, safe_speed)
+        return max(0.5, target)
+
+    def _build_speed_profile(self) -> tuple[tuple[float, ...], tuple[float, ...]]:
+        """Braking-feasible backward speed envelope over the actual route.
+
+        v_before² <= v_after² + 2*a_brake*distance. In contrast to a
+        corner-vertex-only speed target, this lets the car accelerate on
+        low-curvature sections while preparing for the next real bend.
+        """
+        length = self.route.total_meters
+        steps = max(1, int(length / 2.0) + 1)
+        distances = tuple(length * i / steps for i in range(steps + 1))
+        limits = [self._local_speed_limit(s) for s in distances]
+        braking = self.vehicle.max_braking * self.config.braking_factor
+        for i in range(steps - 1, -1, -1):
+            ds = distances[i + 1] - distances[i]
+            feasible = sqrt(limits[i + 1] ** 2 + 2.0 * braking * ds)
+            limits[i] = min(limits[i], feasible)
+        return distances, tuple(limits)
+
+    def _target_speed(self, distance: float) -> float:
+        # Conservative spatial anticipation for controller response time,
+        # rather than changing the underlying Physics braking strength.
+        target_distance = min(self.route.total_meters,
+                              max(0.0, distance + self.config.corner_anticipation_m))
+        index = min(len(self._speed_distances) - 2,
+                    max(0, bisect_right(self._speed_distances, target_distance) - 1))
+        before = self._speed_distances[index]
+        after = self._speed_distances[index + 1]
+        fraction = (target_distance - before) / max(after - before, 1e-8)
+        v0, v1 = self._speed_limits[index:index + 2]
+        target = sqrt(max(0.0, v0 * v0 * (1 - fraction) + v1 * v1 * fraction))
         return min(self.max_speed, max(0.5, target))
 
     def predict(self, _observation, *, deterministic: bool = True) -> np.ndarray:
