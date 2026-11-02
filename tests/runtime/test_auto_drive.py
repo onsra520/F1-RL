@@ -1,3 +1,4 @@
+from itertools import pairwise
 from types import SimpleNamespace
 
 import gymnasium as gym
@@ -14,7 +15,7 @@ from src.tracks.model import AuthoredNavigation
 VEHICLE = VehicleParameters(3.0, 0.5, 0.5, 6.0, 10.0, 0.4, 0.1, 15.0, 9.81)
 
 
-def controller(points, position, *, heading=0.0, speed=0.0, config=None):
+def controller(points, position, *, heading=0.0, speed=0.0, config=None, obstacles=(), body_geometry=None, road_width=12.0):
     navigation = AuthoredNavigation(tuple(Vec3(*point) for point in points),
                                     tuple(f"road-{index}" for index in range(len(points) - 1)), ())
     env = SimpleNamespace(
@@ -27,7 +28,7 @@ def controller(points, position, *, heading=0.0, speed=0.0, config=None):
             "next_checkpoint_index": 0,
         },
     )
-    return AutoDriveController(env, navigation, VEHICLE, 12.0, config or AutoDriveConfig(driving_style="centerline", target_max_speed_kmh=43.2))
+    return AutoDriveController(env, navigation, VEHICLE, road_width, config or AutoDriveConfig(driving_style="centerline", target_max_speed_kmh=43.2), obstacles=obstacles, body_geometry=body_geometry)
 
 
 def test_auto_drive_accelerates_and_keeps_straight_centerline():
@@ -122,3 +123,59 @@ def test_racing_line_uses_opposite_corner_side_for_left_and_right_turns():
                        (0, .5, 5), config=config)
     assert left._offset_at(9) > 0
     assert right._offset_at(9) < 0
+
+from src.simulation.body_collision import VehicleBodyGeometry
+from src.simulation.entities.obstacle import Obstacle
+from src.simulation.geometry.rotation import Quaternion
+from src.simulation.track.volume import OrientedBoxVolume
+
+
+def _physics_obstacle(x=2.8, y=0.66, z=50.0):
+    return Obstacle("cone-real-hitbox", OrientedBoxVolume(
+        Vec3(x, y, z), Vec3(0.65, 0.60, 0.65), Quaternion(1, 0, 0, 0),
+    ))
+
+
+def _body_hitbox():
+    return VehicleBodyGeometry(1.8, 1.2, 4.0, Vec3(0, 0.3, 0))
+
+
+def test_racing_obstacle_planner_uses_physics_hitbox_and_anticipates_without_jump():
+    cfg = AutoDriveConfig(driving_style="racing")
+    route = [(0, 0, 0), (0, 0, 100)]
+    bare = controller(route, (0, 0.5, 5), config=cfg)
+    hazard = controller(route, (0, 0.5, 5), config=cfg,
+                        obstacles=(_physics_obstacle(),), body_geometry=_body_hitbox())
+    assert hazard._offset_at(5) == bare._offset_at(5) == 0.0
+    assert hazard._offset_at(50) < 0.0
+    assert hazard._offset_at(50) < bare._offset_at(50)
+    assert hazard._target_speed(45) <= 5.0
+    # Finite, smooth lane transition instead of steering/target teleport.
+    values = [hazard._offset_at(i * 0.1) for i in range(900)]
+    assert max(abs(b-a) for a, b in pairwise(values)) < 0.1
+    assert hazard._offset_at(80) == 0.0
+
+
+def test_racing_hitbox_rejects_obstacle_if_no_valid_road_clearance():
+    cfg = AutoDriveConfig(driving_style="racing")
+    with pytest.raises(ValueError, match="cannot certify a road-width-safe corridor"):
+        controller([(0, 0, 0), (0, 0, 100)], (0, 0.5, 5), config=cfg,
+                   obstacles=(_physics_obstacle(x=0.2),),
+                   body_geometry=_body_hitbox(), road_width=4.0)
+
+
+def test_different_elevation_obstacle_does_not_force_unneeded_swerve():
+    cfg = AutoDriveConfig(driving_style="racing")
+    a = controller([(0, 0, 0), (0, 0, 100)], (0, 0.5, 5), config=cfg,
+                   obstacles=(_physics_obstacle(y=7.0),), body_geometry=_body_hitbox())
+    assert a._hazards == ()
+    assert a._offset_at(50) == 0.0
+
+
+def test_right_hand_controller_does_not_change_with_racing_obstacle_planner():
+    cfg = AutoDriveConfig()
+    route = [(0, 0, 0), (0, 0, 100)]
+    a = controller(route, (0, 0.5, 5), config=cfg)
+    b = controller(route, (0, 0.5, 5), config=cfg,
+                   obstacles=(_physics_obstacle(),),body_geometry=_body_hitbox())
+    assert all(a._target_point(i) == b._target_point(i) for i in range(0, 100, 5))

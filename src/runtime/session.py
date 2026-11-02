@@ -360,6 +360,8 @@ class RuntimeSession:
                         self.track.vehicle_parameters,
                         min(surface.width for surface in self.track.track.surfaces),
                         self.auto_drive_config,
+                        obstacles=self.track.track.obstacles,
+                        body_geometry=(self.track.body_geometry or self.track.physics_config.body_geometry),
                     )
                 self._emit("status", {"status": "running", "reset": self._restart.is_set()})
                 row = evaluate_policy_episode(

@@ -2,20 +2,34 @@
 from __future__ import annotations
 
 from bisect import bisect_right
+from dataclasses import dataclass
 from math import atan, atan2, cos, hypot, sin, sqrt
 
 import numpy as np
 
 from src.rl.route_navigation import AuthoredRoute
 from src.runtime.drive_config import AutoDriveConfig
+from src.simulation.body_collision import VehicleBodyGeometry
+from src.simulation.entities.obstacle import Obstacle
 from src.simulation.geometry.vector import Vec3
 from src.simulation.vehicle import VehicleParameters
 from src.tracks.model import AuthoredNavigation
 
 
+@dataclass(frozen=True, slots=True)
+class _ObstacleCorridor:
+    progress_m: float
+    safe_lateral_m: float
+    obstacle_id: str
+
+
+
+
 class AutoDriveController:
     def __init__(self, env, navigation: AuthoredNavigation, vehicle: VehicleParameters,
-                 track_width: float, config: AutoDriveConfig | None = None) -> None:
+                 track_width: float, config: AutoDriveConfig | None = None, *,
+                 obstacles: tuple[Obstacle, ...] = (),
+                 body_geometry: VehicleBodyGeometry | None = None) -> None:
         self.env = env
         self.route = AuthoredRoute(navigation)
         self.vehicle = vehicle
@@ -32,6 +46,7 @@ class AutoDriveController:
             for first, second in zip(navigation.points, navigation.points[1:], strict=False)
         )
         self.corner_curvatures = self._corner_curvatures(navigation.points)
+        self._hazards = self._obstacle_corridors(obstacles, body_geometry)
 
     def _corner_curvatures(self, points: tuple[Vec3, ...]) -> tuple[tuple[float, float, float], ...]:
         corners = []
@@ -51,6 +66,67 @@ class AutoDriveController:
             if curvature > 1e-5:
                 corners.append((self.distances[index], curvature, -1.0 if cross < 0 else 1.0))
         return tuple(corners)
+
+    def _obstacle_corridors(self, obstacles: tuple[Obstacle, ...],
+                            body: VehicleBodyGeometry | None) -> tuple[_ObstacleCorridor, ...]:
+        """Plan around the actual simulator OBBs, never the decorative meshes.
+
+        A yaw allowance covers the turning body's longitudinal hull. This is
+        a conservative *planner*, not collision certification: Physics SAT
+        remains authoritative and unscored contacts remain invalid.
+        """
+        if self.config.driving_style != "racing" or not obstacles:
+            return ()
+        if body is None:
+            raise ValueError("Racing obstacle avoidance requires registered body hitbox geometry")
+        cfg = self.config
+        road_room = max(0.0, self.track_width / 2.0
+                        - max(cfg.vehicle_width_m / 2.0, body.width_m / 2.0)
+                        - cfg.edge_margin_m)
+        corridors = []
+        for obstacle in obstacles:
+            center = obstacle.volume.center
+            projected = self.route.project(center, next_checkpoint_index=0)
+            distance = projected.progress_meters
+            point = self._point_at(distance)
+            if abs(center.y - point.y) > obstacle.volume.half_extents.y + body.height_m + 0.5:
+                continue  # Different deck/elevation: no lateral hazard.
+            tx, tz = self._tangent_at(distance)
+            nx, nz = tz, -tx
+            lateral = (center.x - point.x) * nx + (center.z - point.z) * nz
+            right = obstacle.volume.orientation.rotate(Vec3(1.0, 0.0, 0.0))
+            forward = obstacle.volume.orientation.rotate(Vec3(0.0, 0.0, 1.0))
+            projected_half_width = (
+                obstacle.volume.half_extents.x * abs(right.x * nx + right.z * nz)
+                + obstacle.volume.half_extents.z * abs(forward.x * nx + forward.z * nz)
+            )
+            # Include the registered body width, swept yaw envelope and a
+            # separate planning safety margin, without changing either hitbox.
+            envelope = (projected_half_width + body.width_m / 2.0
+                        + min(0.65, body.length_m * 0.15) + 0.35)
+            safe_lateral = (min(0.0, lateral - envelope - 0.35) if lateral >= 0.0
+                            else max(0.0, lateral + envelope + 0.35))
+            if abs(safe_lateral) > road_room:
+                raise ValueError(
+                    f"Auto Drive cannot certify a road-width-safe corridor around "
+                    f"{obstacle.id}; move the obstacle in Build Editor"
+                )
+            corridors.append(_ObstacleCorridor(distance, safe_lateral, obstacle.id))
+        return tuple(sorted(corridors, key=lambda row: row.progress_m))
+
+    @staticmethod
+    def _hazard_weight(distance: float, progress: float) -> float:
+        """C1-smooth anticipation and recovery, never a 1-frame lane jump."""
+        before = progress - distance
+        if before >= 36.0 or before <= -23.0:
+            return 0.0
+        if before > 15.0:
+            fraction = (36.0 - before) / 21.0
+        elif before < -8.0:
+            fraction = (before + 23.0) / 15.0
+        else:
+            return 1.0
+        return fraction * fraction * (3.0 - 2.0 * fraction)
 
     def _segment(self, distance: float) -> tuple[int, float]:
         distance = min(self.route.total_meters, max(0.0, distance))
@@ -90,10 +166,24 @@ class AutoDriveController:
                        for cd, curvature, sign in self.corner_curvatures
                        if -2.0 <= cd - distance <= max(10.0, cfg.max_lookahead_m * 2)]
         if not approaching:
-            return 0.0
+            return self._avoid_obstacles(distance, 0.0)
         _, curvature, sign = min(approaching)
-        return min(clearance * 0.75, self.track_width * 0.2,
-                   1.0 / max(curvature, 1e-5) * 0.25) * sign
+        racing_offset = (min(clearance * 0.75, self.track_width * 0.2,
+                             1.0 / max(curvature, 1e-5) * 0.25) * sign)
+        return self._avoid_obstacles(distance, racing_offset)
+
+    def _avoid_obstacles(self, distance: float, racing_offset: float) -> float:
+        if not self._hazards:
+            return racing_offset
+        nearest = max(
+            ((self._hazard_weight(distance, h.progress_m), h)
+             for h in self._hazards),
+            key=lambda pair: pair[0],
+        )
+        weight, corridor = nearest
+        if weight == 0.0:
+            return racing_offset
+        return racing_offset * (1.0 - weight) + corridor.safe_lateral_m * weight
 
     def _target_point(self, distance: float) -> Vec3:
         point = self._point_at(distance)
@@ -126,6 +216,14 @@ class AutoDriveController:
             target = min(target, cfg.steep_grade_speed_mps)
         elif grade > cfg.moderate_grade_threshold:
             target = min(target, cfg.moderate_grade_speed_mps)
+        if self._hazards:
+            for hazard in self._hazards:
+                remaining = hazard.progress_m - distance
+                if -8.0 <= remaining <= 36.0:
+                    safe_speed = 5.0
+                    if remaining > 18.0:
+                        safe_speed += min(self.max_speed, 3.0) * (remaining - 18.0) / 18.0
+                    target = min(target, safe_speed)
         return min(self.max_speed, max(0.5, target))
 
     def predict(self, _observation, *, deterministic: bool = True) -> np.ndarray:
