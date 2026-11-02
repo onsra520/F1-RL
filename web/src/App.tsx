@@ -15,8 +15,9 @@ import { manualActionFromKeys } from './lib/manual';
 import { isLivePoseFrameInOrder } from './lib/livePose';
 import RuntimeOutcomeMessage from './RuntimeOutcomeMessage';
 import {
-  invalidateRuntimeTrackSelection, isCurrentCustomTrackValidation, resolveRuntimeTrackRequest,
-  matchesValidatedCustomTrack, shouldValidateCustomTrackOnDrive, RuntimeApiError, RuntimeClient, type RuntimeCatalog,
+  customTrackSelectionAfterMapEdit, isCurrentCustomTrackValidation, resolveRuntimeTrackRequest,
+  matchesValidatedCustomTrack, shouldKeepReplayOnDrive, shouldValidateCustomTrackOnDrive,
+  RuntimeApiError, RuntimeClient, type RuntimeCatalog,
   type RuntimeSessionStatus, type RuntimeSocketClient, type RuntimeTrackSelection,
 } from './lib/runtime';
 
@@ -152,7 +153,7 @@ export default function App() {
   const invalidateCustomTrackValidation = useCallback(() => {
     trackValidationRevision.current += 1;
     setTrackValidationBusy(false);
-    setRuntimeTrackSelection(invalidateRuntimeTrackSelection);
+    setRuntimeTrackSelection(customTrackSelectionAfterMapEdit());
     sessionRef.current = null;
     latestRuntimeFrame.current = null;
     runtimeSocketRef.current?.disconnect();
@@ -403,18 +404,18 @@ export default function App() {
     setRuntimeError('');
   };
 
-  const startDrive = () => {
+  const startDrive = (keepReplay: boolean) => {
     if (!canDrive) return;
     setPose(spawnPose(track));
     setPlaying(false); setReplayTime(activeReplay?.frames[0]?.time_s ?? 0);
-    setDriveMode(activeReplay && (replay !== null || driveMode === 'replay') ? 'replay' : 'auto');
+    setDriveMode(keepReplay && activeReplay ? 'replay' : 'auto');
     setMode('drive');
     setArmed(null); setSelected(null);
   };
   const changeMode = (target: Mode) => {
     if (target === 'drive') {
-      const keepReplay = Boolean(activeReplay && (replay !== null || driveMode === 'replay'));
-      startDrive();
+      const keepReplay = shouldKeepReplayOnDrive(mode, driveMode, Boolean(activeReplay));
+      startDrive(keepReplay);
       if (shouldValidateCustomTrackOnDrive(mode, keepReplay)) void validateCurrentTrack();
       return;
     }

@@ -29,8 +29,8 @@ export type RuntimeCustomTrack = {
 export type RuntimeTrackSelection = { kind: 'train' } | { kind: 'custom'; validated: RuntimeCustomTrack | null };
 export type RuntimeTrackRequest = { kind: 'train'; trackId: string } | { kind: 'custom' };
 
-export function invalidateRuntimeTrackSelection(selection: RuntimeTrackSelection): RuntimeTrackSelection {
-  return selection.kind === 'custom' ? { kind: 'custom', validated: null } : selection;
+export function customTrackSelectionAfterMapEdit(): RuntimeTrackSelection {
+  return { kind: 'custom', validated: null };
 }
 
 export function isCurrentCustomTrackValidation(requestRevision: number, currentRevision: number): boolean {
@@ -60,6 +60,14 @@ export function shouldValidateCustomTrackOnDrive(
   keepReplay: boolean,
 ): boolean {
   return previousMode !== 'drive' && !keepReplay;
+}
+
+export function shouldKeepReplayOnDrive(
+  previousMode: 'sketch' | 'build' | 'drive',
+  driveMode: 'auto' | 'manual' | 'ppo' | 'replay',
+  hasReplay: boolean,
+): boolean {
+  return previousMode === 'drive' && driveMode === 'replay' && hasReplay;
 }
 
 export type RuntimeSessionStatus = {

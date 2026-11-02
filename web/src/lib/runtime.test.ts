@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  invalidateRuntimeTrackSelection,
+  customTrackSelectionAfterMapEdit,
   isCurrentCustomTrackValidation,
   matchesValidatedCustomTrack,
   parseRuntimeSocketEvent,
   resolveRuntimeTrackRequest,
+  shouldKeepReplayOnDrive,
   RuntimeClient,
   RuntimeApiError,
   shouldValidateCustomTrackOnDrive,
@@ -36,10 +37,14 @@ describe('runtime track selection', () => {
   });
 
   it('invalidates a stale validation after a map edit without switching to TRAIN', () => {
-    const selection = invalidateRuntimeTrackSelection({ kind: 'custom', validated: customTrack });
+    const selection = customTrackSelectionAfterMapEdit();
     expect(isCurrentCustomTrackValidation(4, 5)).toBe(false);
     expect(selection).toEqual({ kind: 'custom', validated: null });
     expect(resolveRuntimeTrackRequest(selection, 'straight-sprint-v1', 'ppo')).toBeNull();
+  });
+
+  it('selects Custom after map edits even if TRAIN was previously chosen', () => {
+    expect(customTrackSelectionAfterMapEdit()).toEqual({ kind: 'custom', validated: null });
   });
 
   it('uses Custom or the deliberately selected TRAIN track', () => {
@@ -60,6 +65,12 @@ describe('runtime track selection', () => {
     expect(shouldValidateCustomTrackOnDrive('build', false)).toBe(true);
     expect(shouldValidateCustomTrackOnDrive('drive', false)).toBe(false);
     expect(shouldValidateCustomTrackOnDrive('build', true)).toBe(false);
+  });
+
+  it('keeps Replay only when re-entering Drive from the active Replay view', () => {
+    expect(shouldKeepReplayOnDrive('build', 'replay', true)).toBe(false);
+    expect(shouldKeepReplayOnDrive('drive', 'replay', true)).toBe(true);
+    expect(shouldKeepReplayOnDrive('drive', 'auto', true)).toBe(false);
   });
 
   it('never falls back to a TRAIN track for an incompatible Custom PPO selection', () => {
