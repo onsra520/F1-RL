@@ -41,15 +41,15 @@ class CreateSessionRequest(BaseModel):
     model_id: str | None = Field(default=None, min_length=1, max_length=32)
     track_id: str | None = Field(default=None, min_length=1, max_length=64)
     seed: int = Field(ge=0, le=MAX_SEED)
-    mode: Literal["ppo", "manual"] = "ppo"
+    mode: Literal["ppo", "manual", "auto"] = "ppo"
     custom_track: dict[str, object] | None = None
 
     @model_validator(mode="after")
     def controller_matches_mode(self):
         if self.mode == "ppo" and self.model_id is None:
             raise ValueError("PPO mode requires model_id")
-        if self.mode == "manual" and self.model_id is not None:
-            raise ValueError("manual mode cannot select model_id")
+        if self.mode in ("manual", "auto") and self.model_id is not None:
+            raise ValueError(f"{self.mode} mode cannot select model_id")
         if self.custom_track is None and self.track_id is None:
             raise ValueError("registered sessions require track_id")
         if self.custom_track is not None and self.track_id is not None:

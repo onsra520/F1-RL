@@ -24,6 +24,24 @@ describe('read-only replay', () => {
     expect(() => parseReplay({...fixture,frames:[...fixture.frames,{...fixture.frames[1],time_s:NaN}]})).toThrow();
   });
 
+  it('accepts authoritative Auto Drive replay provenance', () => {
+    const hash = 'a'.repeat(64);
+    const replay = parseReplay({
+      schema: 'f1rl_racing_sandbox_replay_v2', label: 'Auto Drive · custom-track · seed 412',
+      provenance: { dataset_split: 'DEVELOPMENT', runtime_mode: 'development', source_sha256: hash,
+        model_id: 'auto-drive', model_sha256: null, track_id: 'custom-track', track_sha256: hash, seed: 412 },
+      result: { status: 'finished', valid_sample: true, successful_finish: true, reason: null,
+        steps: 1, duration_s: 0.1, trace_sha256: hash },
+      frames: [
+        { time_s: 0, position: [0, 0, 0], heading_rad: 0, speed_mps: 0 },
+        { time_s: 0.1, position: [0, 0, 1], heading_rad: 0, speed_mps: 10 },
+      ],
+    });
+
+    expect(replayModelId(replay)).toBe('auto-drive');
+    expect(replayAt(replay, 0.05).position[2]).toBe(0.5);
+  });
+
   it('validates and preserves version 2 authoritative TRAIN telemetry and provenance', () => {
     const hash = 'a'.repeat(64);
     const runtimeFrame = (tick: number, time_s: number) => ({

@@ -301,7 +301,8 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             patch=patches[contact.patch_id]
             arm=state.orientation.rotate(local)
             point_velocity=state.velocity+state.angular_velocity.cross(arm)
-            gradient=patch.normal/patch.normal.y
+            gradient=contact.surface_gradient or patch.normal/patch.normal.y
+            normal=gradient.normalized()
             gap_rate=gradient.dot(point_velocity)
             raw_elastic=preload+physics.spring_stiffness_npm*contact.deflection_m
             elastic=max(0.,raw_elastic)
@@ -317,13 +318,13 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             coverage=footprints[index].coverage if footprints is not None else 1.
             edge_gradient=(footprints[index].coverage_gradient
                            if footprints is not None else Vec3(0.,0.,0.))
-            normal_force=coverage*load/patch.normal.y
+            normal_force=coverage*load*gradient.magnitude
             angle=control.steering*parameters.max_steering_angle if local.z>0. and ground_effect else 0.
-            heading=state.orientation.rotate(Vec3(sin(angle),0.,cos(angle))).reject_from(patch.normal)
+            heading=state.orientation.rotate(Vec3(sin(angle),0.,cos(angle))).reject_from(normal)
             if heading.magnitude<1e-8:
                 raise SuspensionResolutionError('wheel tangent direction unresolved')
             tangent=heading.normalized()
-            lateral=patch.normal.cross(tangent)
+            lateral=normal.cross(tangent)
             speed,slip=point_velocity.dot(tangent),point_velocity.dot(lateral)
             longitudinal=coverage*mass*(control.throttle*parameters.max_acceleration
                 -control.brake*parameters.max_braking*tanh(speed/traction.brake_speed_scale_mps))/4.
@@ -773,7 +774,20 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                 if phase_domain=='atlas_rotating_edge_v4':
                     signatures=tuple(tuple(item.wheel_index for item in stage.contacts) for stage in (*stages,final))
                     raise SuspensionResolutionError(f'v4 spatial energy refinement exhausted: h={h:.3g} residual={residual:.9g} tol={tolerance:.9g} spring0={a.spring_energy:.8g} spring1={final.spring_energy:.8g} masks={signatures}')
-                raise SuspensionResolutionError('spatial energy balance unresolved at refinement limit')
+                masks = tuple(tuple(item.patch_id for item in force.contacts) for force in (*stages, final))
+                contact_samples = tuple(tuple(
+                    (sample.contact.patch_id, sample.contact.ground_height_m,
+                     sample.contact.deflection_m, sample.vertical_wheel_velocity_mps,
+                     sample.contact.surface_gradient)
+                    for sample in force.samples
+                ) for force in (*stages, final))
+                raise SuspensionResolutionError(
+                    f'spatial energy balance unresolved at refinement limit: '
+                    f'start={start:.9g} h={h:.9g} depth={depth} '
+                    f'residual_j={residual:.9g} tolerance_j={tolerance:.9g} '
+                    f'spring_start_j={a.spring_energy:.9g} spring_end_j={final.spring_energy:.9g} '
+                    f'contact_masks={masks} contact_samples={contact_samples}'
+                )
             middle=advance(y,start,h/2.,depth+1)
             return advance(middle,times[-1],h/2.,depth+1)
         first,last=vehicle(y),vehicle(end)

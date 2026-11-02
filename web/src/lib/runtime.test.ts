@@ -43,6 +43,10 @@ describe('runtime track selection', () => {
   });
 
   it('uses Custom or the deliberately selected TRAIN track', () => {
+    expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: customTrack }, 'straight-sprint-v1', 'auto'))
+      .toEqual({ kind: 'custom' });
+    expect(resolveRuntimeTrackRequest({ kind: 'train' }, 'ramp-v1', 'auto'))
+      .toEqual({ kind: 'train', trackId: 'ramp-v1' });
     expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: customTrack }, 'straight-sprint-v1', 'ppo'))
       .toEqual({ kind: 'custom' });
     expect(resolveRuntimeTrackRequest({ kind: 'train' }, 'ramp-v1', 'ppo'))
@@ -121,6 +125,21 @@ describe('Python runtime HTTP client', () => {
       mode: 'manual', seed: 5, custom_track: doc,
     });
     expect((fetchMock.mock.calls[1][1] as RequestInit).headers).toMatchObject({ 'x-trace-id': 'trace-412' });
+  });
+
+  it('starts Auto Drive without a PPO model on registered and custom maps', async () => {
+    const fetchMock = vi.fn().mockImplementation(async () =>
+      new Response(JSON.stringify({ session_id: 'auto-session' }), { status: 201 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new RuntimeClient();
+    await client.createAutoSession('slalom-v1', 412);
+    await client.createCustomSession(track.preview, 'auto', 5);
+    expect(JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body))).toEqual({
+      mode: 'auto', track_id: 'slalom-v1', seed: 412,
+    });
+    expect(JSON.parse(String((fetchMock.mock.calls[1][1] as RequestInit).body))).toEqual({
+      mode: 'auto', seed: 5, custom_track: track.preview,
+    });
   });
 
   it('turns structured backend failures into typed client errors', async () => {

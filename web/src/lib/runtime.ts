@@ -40,7 +40,7 @@ export function isCurrentCustomTrackValidation(requestRevision: number, currentR
 export function resolveRuntimeTrackRequest(
   selection: RuntimeTrackSelection,
   trackId: string,
-  mode: 'ppo' | 'manual' | 'replay',
+  mode: 'auto' | 'ppo' | 'manual' | 'replay',
 ): RuntimeTrackRequest | null {
   if (mode === 'replay') return null;
   if (selection.kind === 'train') return { kind: 'train', trackId };
@@ -65,7 +65,7 @@ export function shouldValidateCustomTrackOnDrive(
 export type RuntimeSessionStatus = {
   protocol_version: 'f1rl_runtime_v1';
   session_id: string;
-  mode: 'ppo' | 'manual';
+  mode: 'auto' | 'ppo' | 'manual';
   model_id: string | null;
   track_id: string;
   seed: number;
@@ -76,7 +76,7 @@ export type RuntimeSessionStatus = {
   latest_frame: RuntimeFrame | null;
   episode_result: Record<string, unknown> | null;
   error: string | null;
-  provenance: 'TRAIN-development' | 'manual-development' | 'custom-development';
+  provenance: 'TRAIN-development' | 'manual-development' | 'auto-development' | 'custom-development';
   speed_multiplier?: number;
   track_preview?: RuntimeCustomTrack;
 };
@@ -174,7 +174,13 @@ export class RuntimeClient {
       body: JSON.stringify({ mode: 'manual', track_id: trackId, seed }),
     });
   }
-  createCustomSession(track: unknown, mode: 'manual' | 'ppo', seed: number, modelId?: string, traceId?: string): Promise<RuntimeSessionStatus> {
+  createAutoSession(trackId: string, seed: number): Promise<RuntimeSessionStatus> {
+    return request(this.baseUrl, '/api/v1/sessions', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mode: 'auto', track_id: trackId, seed }),
+    });
+  }
+  createCustomSession(track: unknown, mode: 'auto' | 'manual' | 'ppo', seed: number, modelId?: string, traceId?: string): Promise<RuntimeSessionStatus> {
     const body: Record<string, unknown> = { mode, seed, custom_track: track };
     if (modelId) body.model_id = modelId;
     return request(this.baseUrl, '/api/v1/sessions', {

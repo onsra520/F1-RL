@@ -21,7 +21,7 @@ import {
 } from './lib/runtime';
 
 type Mode = 'sketch' | 'build' | 'drive';
-type DriveMode = 'manual' | 'ppo' | 'replay';
+type DriveMode = 'auto' | 'manual' | 'ppo' | 'replay';
 const STORAGE_KEY = 'f1rl.racing-sandbox.draft.v1';
 const REPLAY_TRACK_UNAVAILABLE: TrackDocument = {
   schema: 'f1rl_racing_sandbox_draft_v1', id: 'replay-track-unavailable', name: 'Track unavailable',
@@ -66,7 +66,7 @@ export default function App() {
   const [mode, setMode] = useState<Mode>('sketch');
   const [selected, setSelected] = useState<string | null>(null);
   const [armed, setArmed] = useState<PropKind | null>(null);
-  const [driveMode, setDriveMode] = useState<DriveMode>('ppo');
+  const [driveMode, setDriveMode] = useState<DriveMode>('auto');
   const [pose, setPose] = useState<CarPose>(() => spawnPose(initialTrack()));
   const [replay, setReplay] = useState<Replay | null>(null);
   const [replayTime, setReplayTime] = useState(0);
@@ -153,6 +153,13 @@ export default function App() {
     trackValidationRevision.current += 1;
     setTrackValidationBusy(false);
     setRuntimeTrackSelection(invalidateRuntimeTrackSelection);
+    sessionRef.current = null;
+    latestRuntimeFrame.current = null;
+    runtimeSocketRef.current?.disconnect();
+    runtimeSocketRef.current = null;
+    setRuntimeBusy(false);
+    setRuntimeStatus(null);
+    setPose(spawnPose(trackRef.current));
     setRuntimeError('');
   }, []);
   const changeTrack = useCallback((update: (prev: TrackDocument) => TrackDocument) => {
@@ -261,10 +268,12 @@ export default function App() {
     let createdSessionId: string | null = null;
     try {
       const created = trackRequest.kind === 'custom'
-        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : undefined, traceId)
+        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : driveMode === 'auto' ? 'auto' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : undefined, traceId)
         : driveMode === 'manual'
           ? await runtimeClient.createManualSession(trackRequest.trackId, runtimeSeed)
-          : await runtimeClient.createPpoSession(modelId, trackRequest.trackId, runtimeSeed);
+          : driveMode === 'auto'
+            ? await runtimeClient.createAutoSession(trackRequest.trackId, runtimeSeed)
+            : await runtimeClient.createPpoSession(modelId, trackRequest.trackId, runtimeSeed);
       createdSessionId = created.session_id;
       if (trackRequest.kind === 'custom' &&
           (!validatedCustomTrack || !matchesValidatedCustomTrack(validatedCustomTrack, created.track_preview))) {
@@ -398,7 +407,7 @@ export default function App() {
     if (!canDrive) return;
     setPose(spawnPose(track));
     setPlaying(false); setReplayTime(activeReplay?.frames[0]?.time_s ?? 0);
-    setDriveMode(activeReplay && (replay !== null || driveMode === 'replay') ? 'replay' : 'ppo');
+    setDriveMode(activeReplay && (replay !== null || driveMode === 'replay') ? 'replay' : 'auto');
     setMode('drive');
     setArmed(null); setSelected(null);
   };
@@ -520,6 +529,9 @@ export default function App() {
               liveStatus={mode === 'drive' && driveMode !== 'replay' ? runtimeStatus?.status ?? null : null}
               onSelect={setSelected} onPlace={onPlace}/>
           </Suspense>
+          {mode === 'build' && runtimeTrackSelection.kind === 'custom'
+            && !runtimeTrackSelection.validated && runtimeError &&
+            <div className="build-validation-error" role="alert"><TriangleAlert size={15}/><span>Python Physics rejected this map · {runtimeError}</span></div>}
           {mode === 'build' && <>
             <div className="world-label"><span className="live-glow"/> 3D EDITOR <span>·</span> {Math.round(trackMeters)}M ROAD {autoBridges > 0 && <span>· {autoBridges} AUTO BRIDGE{autoBridges > 1 ? 'S' : ''}</span>}</div>
             <div className="build-instructions"><MousePointer2 size={16}/> {armed ? 'Click the road to place ' + armed : 'Drag an item from the hotbar onto the track · keys 1–6'}</div>
@@ -540,12 +552,15 @@ export default function App() {
           </>}
           {mode === 'drive' && <div className="drive-overlay">
             <div className="drive-mode-switch">
+              <button className={driveMode === 'auto' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'auto'} onClick={() => {setDriveMode('auto'); setPlaying(false);}}>Auto Drive</button>
               <button className={driveMode === 'manual' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'manual'} onClick={() => {setDriveMode('manual'); setPlaying(false);}}>Manual</button>
               <button className={driveMode === 'ppo' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'ppo'} onClick={() => {setDriveMode('ppo'); setPlaying(false);}}>PPO</button>
               <button className={driveMode === 'replay' ? 'selected' : ''} disabled={!activeReplay || runtimeBusy} onClick={() => {setDriveMode('replay'); setPlaying(false);}}>Replay</button>
             </div>
             <div className="speed-readout"><span>SPEED</span><strong>{Math.round(activePose.speed * 3.6)}</strong><small>KM/H</small></div>
-            <div className="drive-warning"><TriangleAlert size={14}/>{driveMode === 'manual'
+            <div className="drive-warning"><TriangleAlert size={14}/>{driveMode === 'auto'
+              ? `Auto Drive · Python Physics · ${runtimeTrackSelection.kind === 'custom' ? 'custom' : 'TRAIN'} development`
+              : driveMode === 'manual'
               ? `Manual Python physics · ${runtimeTrackSelection.kind === 'custom' ? 'custom' : 'TRAIN'} development only`
               : driveMode === 'ppo'
                 ? `Frozen PPO · ${runtimeTrackSelection.kind === 'custom' ? 'custom' : 'TRAIN'} development · scientific admission disabled`
@@ -598,7 +613,7 @@ export default function App() {
                 </>}
                 <div className="runtime-actions">
                   <button className="runtime-run" onClick={() => void runRuntimeSession()} disabled={!runtimeCatalog || runtimeBusy || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !runtimeTrackRequest}>
-                    {runtimeBusy ? <><LoaderCircle size={16}/> {runtimeStatus?.status === 'paused' ? 'PAUSED' : driveMode === 'manual' ? 'MANUAL PYTHON SIMULATION' : 'RUNNING PPO INFERENCE'}</> : <><Play size={16}/> {driveMode === 'manual' ? 'START MANUAL DRIVE' : 'RUN EPISODE'}</>}
+                    {runtimeBusy ? <><LoaderCircle size={16}/> {runtimeStatus?.status === 'paused' ? 'PAUSED' : driveMode === 'manual' ? 'MANUAL PYTHON SIMULATION' : driveMode === 'auto' ? 'AUTO DRIVE · PYTHON PHYSICS' : 'RUNNING PPO INFERENCE'}</> : <><Play size={16}/> {driveMode === 'manual' ? 'START MANUAL DRIVE' : driveMode === 'auto' ? 'RUN AUTO DRIVE' : 'RUN EPISODE'}</>}
                   </button>
                   {runtimeBusy && <button className="runtime-stop" onClick={() => void stopRuntimeSession()}>Stop</button>}
                   <button className="runtime-import" onClick={() => replayInput.current?.click()}><Upload size={15}/> Import replay</button>

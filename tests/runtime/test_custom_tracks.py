@@ -14,12 +14,12 @@ def catalog():
     return RuntimeCatalog(ROOT)
 
 
-def draft(points, props=()):
+def draft(points, props=(), *, width=12):
     return {
         "schema": "f1rl_racing_sandbox_draft_v1",
         "id": "sandbox-test",
         "name": "Runtime test circuit",
-        "width": 12,
+        "width": width,
         "points": [{"x": x, "z": z} for x, z in points],
         "props": list(props),
     }
@@ -53,19 +53,32 @@ def test_custom_track_converts_to_authoritative_world_and_manual_gym_environment
         env.close()
 
 
-def test_custom_track_adapts_ramps_and_rejects_unsupported_auto_overpasses(catalog):
+def test_custom_track_adapts_ramps_and_converts_separated_overpass_decks(catalog):
     ramped = convert_custom_track(draft([(0, 0), (0, 80)], [prop("ramp", 0.5)]), catalog)
     assert max(sample["y"] for sample in ramped.road_samples) >= 2.7
     assert any(abs(surface.normal.y - 1.0) > 1e-4 for surface in ramped.factory.track.surfaces)
 
-    with pytest.raises(TrackValidationError) as error:
-        convert_custom_track(draft([(0, 0), (20, 20), (0, 20), (20, 0), (30, 0)]), catalog)
-    assert error.value.code == "unsupported_intersection"
+    crossing = convert_custom_track(draft([(0, 0), (100, 100), (0, 100), (100, 0), (160, 0)]), catalog)
+    assert crossing.auto_bridge_count == 1
+    assert max(sample["y"] for sample in crossing.road_samples) >= 1.8
+    assert all(surface.route_index is not None for surface in crossing.factory.track.surfaces)
+
+
+def test_custom_track_converts_elevated_turn_and_reports_short_approach(catalog):
+    elevated = convert_custom_track(draft([(0, 0), (0, 60), (40, 100), (80, 60), (80, 0)], [
+        prop("bridge", 0.5),
+    ]), catalog)
+    assert max(sample["y"] for sample in elevated.road_samples) >= 4.9
+    assert max(abs(surface.normal.x) + abs(surface.normal.z) for surface in elevated.factory.track.surfaces) > 0.1
+
+    with pytest.raises(TrackValidationError, match="lengthen the map") as error:
+        convert_custom_track(draft([(0, 0), (0, 40)], [prop("bridge", 0.03)]), catalog)
+    assert error.value.code == "unsupported_slope"
 
 
 def test_custom_track_maps_bridge_obstacle_boost_checkpoint_and_finish(catalog):
-    converted = convert_custom_track(draft([(0, 0), (0, 100)], [
-        prop("bridge", 0.25),
+    converted = convert_custom_track(draft([(0, 0), (0, 110)], [
+        prop("bridge", 0.5),
         prop("barrier", 0.4, offset=-4),
         prop("cone", 0.5, offset=4),
         prop("booster", 0.6),
@@ -75,7 +88,7 @@ def test_custom_track_maps_bridge_obstacle_boost_checkpoint_and_finish(catalog):
 
     assert max(sample["y"] for sample in converted.road_samples) >= 4.9
     ramp_height = min(converted.road_samples, key=lambda sample: abs(sample["t"] - 0.75))["y"]
-    assert 2.7 <= ramp_height <= 2.9
+    assert 2.5 <= ramp_height <= 2.9
     assert len(converted.factory.track.obstacles) == 2
     assert len(converted.factory.track.boost_pads) == 1
     assert len(converted.factory.track.checkpoints) == 1

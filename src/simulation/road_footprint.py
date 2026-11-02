@@ -14,6 +14,7 @@ returns UNCERTAIN, never CLEAR.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from math import acos, isfinite
 
 from .body_collision import VehicleBodyGeometry, _slerp
@@ -100,8 +101,13 @@ def _subtract(subject:_POLYGON,patch:_POLYGON)->tuple[_POLYGON,...]:
 
 
 def _uncovered_area(subject:_POLYGON,road_polygons:tuple[_POLYGON,...])->float:
+    if not subject:
+        return 0.0
+    subject_bounds=_bounds(subject)
     fragments=(subject,)
-    for road in road_polygons:
+    for road,bounds in zip(road_polygons,_polygon_bounds(road_polygons),strict=True):
+        if not _bounds_overlap(subject_bounds,bounds):
+            continue
         next_fragments=[]
         for fragment in fragments:
             next_fragments.extend(_subtract(fragment,road))
@@ -141,6 +147,20 @@ def _inflate(poly:_POLYGON,radius:float)->_POLYGON:
         for dx in (-radius,radius)
         for dz in (-radius,radius)
     ))
+
+
+def _bounds(poly:_POLYGON)->tuple[float,float,float,float]:
+    return min(x for x,_ in poly),max(x for x,_ in poly),min(z for _,z in poly),max(z for _,z in poly)
+
+
+def _bounds_overlap(first:tuple[float,float,float,float],second:tuple[float,float,float,float])->bool:
+    return not (first[1]<second[0] or second[1]<first[0]
+                or first[3]<second[2] or second[3]<first[2])
+
+
+@lru_cache(maxsize=32)
+def _polygon_bounds(polygons:tuple[_POLYGON,...])->tuple[tuple[float,float,float,float],...]:
+    return tuple(_bounds(polygon) for polygon in polygons)
 
 
 def _flat_roads(surfaces:tuple[PlanarSurfacePatch,...])->tuple[_POLYGON,...]|None:

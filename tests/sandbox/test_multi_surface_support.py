@@ -8,7 +8,8 @@ from src.simulation.body_collision import VehicleBodyGeometry
 from src.simulation.geometry.rotation import Quaternion
 from src.simulation.geometry.vector import Vec3
 from src.simulation.multi_surface_support import (
-    MultiSurfaceSuspensionPolicy, certify_multisurface_support,
+    MultiSurfaceSuspensionPolicy, _atlas, _surface_sample, certify_multisurface_support,
+    surface_intersection_issue,
 )
 from src.simulation.ramp_support import WheelContactPoints
 from src.simulation.track.patch import PlanarSurfacePatch
@@ -73,6 +74,63 @@ def test_large_height_difference_rejected_even_when_two_decks_overlap():
     top = patch("top", 0., y=3.)
     result = report(car(0.), car(0.), (bottom, top))
     assert result.status == "unsupported"
+
+
+@pytest.mark.parametrize("height", [2.0, 6.0])
+def test_explicit_separated_route_decks_keep_wheel_contact_on_the_near_layer(height):
+    bottom = replace(patch("bottom", 0.), route_index=0)
+    top = replace(patch("top", 0., y=height), route_index=10)
+    lower = report(car(0.), car(0.), (bottom, top))
+    upper = report(car(0., y=height + 0.3), car(0., y=height + 0.3), (bottom, top))
+
+    assert lower.valid, lower
+    assert upper.valid, upper
+    assert {contact.patch_id for contact in lower.contacts} == {"bottom"}
+    assert {contact.patch_id for contact in upper.contacts} == {"top"}
+
+
+def test_overlapping_route_contacts_follow_vehicle_heading():
+    north = PlanarSurfacePatch("north", Vec3(0., 0., 0.), FWD, UP, 10., 10., route_index=0)
+    east = PlanarSurfacePatch("east", Vec3(0., 0., 0.), Vec3(1., 0., 0.), UP, 10., 10., route_index=10)
+
+    northbound = report(car(0.), car(0.), (north, east))
+    eastbound = report(
+        replace(car(0.), orientation=Quaternion.from_axis_angle(UP, pi / 2.)),
+        replace(car(0.), orientation=Quaternion.from_axis_angle(UP, pi / 2.)),
+        (north, east),
+    )
+
+    assert {contact.patch_id for contact in northbound.contacts} == {"north"}
+    assert {contact.patch_id for contact in eastbound.contacts} == {"east"}
+
+
+def test_nearby_unapproved_route_decks_remain_unsupported():
+    bottom = replace(patch("bottom", 0.), route_index=0)
+    top = replace(patch("top", 0., y=1.0), route_index=10)
+    assert report(car(0.), car(0.), (bottom, top)).status == "unsupported"
+    assert _atlas((bottom, top), 1e-6) is None
+    assert surface_intersection_issue((bottom, top), 1e-6) == ("bottom", "top", 0.0, 0.0)
+
+
+def test_authored_road_facet_transition_has_continuous_height_and_gradient():
+    flat = PlanarSurfacePatch("flat", Vec3(0., 0., .5), FWD, UP, 4., 1.5,
+                              route_index=0, route_overlap_m=.5)
+    grade = .1
+    forward = Vec3(0., grade, 1.).normalized()
+    normal = Vec3(0., 1., -grade).normalized()
+    ramp = PlanarSurfacePatch("ramp", Vec3(0., .05, 1.5), forward, normal, 4., 1.5,
+                              route_index=1, route_overlap_m=.5)
+    route = {0: flat, 1: ramp}
+
+    for z in (.76, .9, 1.0, 1.1, 1.24):
+        flat_height, flat_gradient, _ = _surface_sample(flat, 0., z, route)
+        ramp_height, ramp_gradient, _ = _surface_sample(ramp, 0., z, route)
+        assert flat_height == pytest.approx(ramp_height, abs=.002)
+        assert flat_gradient.x == pytest.approx(ramp_gradient.x, abs=.003)
+        assert flat_gradient.z == pytest.approx(ramp_gradient.z, abs=.003)
+        before, _, _ = _surface_sample(ramp, 0., z - 1e-4, route)
+        after, _, _ = _surface_sample(ramp, 0., z + 1e-4, route)
+        assert ramp_gradient.z == pytest.approx(-(after - before) / 2e-4, abs=.002)
 
 
 def test_discontinuous_step_at_touching_seam_fails_closed():

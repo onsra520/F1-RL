@@ -182,6 +182,23 @@ def test_manual_runtime_session_uses_same_gym_track_and_accepts_typed_actions():
     assert created.json()["seed"] == 73
 
 
+def test_auto_runtime_session_is_registered_without_a_ppo_model():
+    with TestClient(create_app(repository_root=ROOT)) as client:
+        created = client.post("/api/v1/sessions", json={
+            "mode": "auto", "track_id": "straight-sprint-v1", "seed": 412,
+        })
+        assert created.status_code == 201
+        assert created.json()["mode"] == "auto"
+        assert created.json()["model_id"] is None
+        assert created.json()["provenance"] == "auto-development"
+
+        invalid = client.post("/api/v1/sessions", json={
+            "mode": "auto", "model_id": "A-seed0", "track_id": "straight-sprint-v1", "seed": 412,
+        })
+        assert invalid.status_code == 422
+        assert client.delete(f"/api/v1/sessions/{created.json()['session_id']}").status_code == 204
+
+
 def test_custom_track_validation_and_manual_simulation_use_python_gym():
     with TestClient(create_app(repository_root=ROOT)) as client:
         document = _custom_track()

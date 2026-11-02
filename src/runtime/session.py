@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import numpy as np
 
+from src.runtime.auto_drive import AutoDriveController
 from src.runtime.catalog import MAX_RUNTIME_STEPS, RuntimeCatalog
 from src.runtime.frames import (
     EpisodeResult,
@@ -66,12 +67,12 @@ class RuntimeSession:
     ) -> None:
         self.catalog = catalog
         self.session_id = session_id
-        if mode not in ("ppo", "manual"):
-            raise ValueError("runtime mode must be ppo or manual")
+        if mode not in ("ppo", "manual", "auto"):
+            raise ValueError("runtime mode must be ppo, manual, or auto")
         if mode == "ppo" and model_id is None:
             raise ValueError("PPO mode requires a registered frozen model")
-        if mode == "manual" and model_id is not None:
-            raise ValueError("manual mode cannot select a PPO model")
+        if mode in ("manual", "auto") and model_id is not None:
+            raise ValueError(f"{mode} mode cannot select a PPO model")
         self.mode = mode
         self.model = catalog.model(model_id) if model_id is not None else None
         self._custom_factory = custom_factory
@@ -220,6 +221,7 @@ class RuntimeSession:
                 "error": self._error,
                 "provenance": "TRAIN-development" if self.mode == "ppo" and self._custom_factory is None
                 else "custom-development" if self._custom_factory is not None
+                else "auto-development" if self.mode == "auto"
                 else "manual-development",
                 "speed_multiplier": self._speed_multiplier,
             }
@@ -232,11 +234,11 @@ class RuntimeSession:
                 raise RuntimeFault("replay_unavailable", "session ended before a simulation frame was captured", status_code=409)
             document = ReplayDocument(
                 schema="f1rl_racing_sandbox_replay_v2",
-                label=f"{self.model.model_id if self.model is not None else 'Manual'} · {self.track_id} · seed {self.seed}",
+                label=f"{self.model.model_id if self.model is not None else 'Auto Drive' if self.mode == 'auto' else 'Manual'} · {self.track_id} · seed {self.seed}",
                 provenance=ReplayProvenance(
                     dataset_split="TRAIN" if self.mode == "ppo" and self._custom_factory is None else "DEVELOPMENT",
                     source_sha256=self.catalog.source_sha256,
-                    model_id=self.model.model_id if self.model is not None else "manual",
+                    model_id=self.model.model_id if self.model is not None else "auto-drive" if self.mode == "auto" else "manual",
                     model_sha256=None if self.model is None else self.model.sha256,
                     track_id=self.track_id,
                     track_sha256=self._custom_track_sha256 or self.catalog.track_sha256(self.track_id),
@@ -333,14 +335,23 @@ class RuntimeSession:
                 if self.mode == "ppo":
                     assert self.model is not None
                     model = self.catalog.load_model(self.model.model_id, env=env)
-                else:
+                elif self.mode == "manual":
                     assert self._manual is not None
                     model = self._manual
+                else:
+                    if self.track.navigation is None:
+                        raise RuntimeFault("missing_navigation", "Auto Drive requires an authored track centerline")
+                    model = AutoDriveController(
+                        env,
+                        self.track.navigation,
+                        self.track.vehicle_parameters,
+                        min(surface.width for surface in self.track.track.surfaces),
+                    )
                 self._emit("status", {"status": "running", "reset": self._restart.is_set()})
                 row = evaluate_policy_episode(
                     env,
                     model,
-                    policy_name="trained_final" if self.mode == "ppo" else "manual",
+                    policy_name="trained_final" if self.mode == "ppo" else "manual" if self.mode == "manual" else "auto_drive",
                     episode=0,
                     environment_seed=self.seed,
                     on_reset=lambda observation, info, env=env: self._capture_reset(env, observation, info),
@@ -450,11 +461,11 @@ class RuntimeSessionManager:
             if model_id is None:
                 raise ValueError("PPO mode requires a registered frozen model")
             self.catalog.model(model_id)
-        elif mode == "manual":
+        elif mode in ("manual", "auto"):
             if model_id is not None:
-                raise ValueError("manual mode cannot select a PPO model")
+                raise ValueError(f"{mode} mode cannot select a PPO model")
         else:
-            raise ValueError("runtime mode must be ppo or manual")
+            raise ValueError("runtime mode must be ppo, manual, or auto")
         if custom_factory is None:
             self.catalog.track_factory(track_id)
         if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed <= 2**32 - 1:

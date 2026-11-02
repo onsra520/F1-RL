@@ -157,7 +157,7 @@ export function parseReplay(raw: unknown): Replay {
     const result = d.result as ReplayV2['result'] | undefined;
     if (!provenance || !['TRAIN', 'DEVELOPMENT'].includes(provenance.dataset_split) ||
         provenance.runtime_mode !== 'development' || !digest(provenance.source_sha256) ||
-        typeof provenance.model_id !== 'string' || !(provenance.model_id === 'manual' || /^[A-D]-seed[0-2]$/.test(provenance.model_id)) ||
+        typeof provenance.model_id !== 'string' || !(provenance.model_id === 'manual' || provenance.model_id === 'auto-drive' || /^[A-D]-seed[0-2]$/.test(provenance.model_id)) ||
         (provenance.model_sha256 !== null && !digest(provenance.model_sha256)) ||
         typeof provenance.track_id !== 'string' || !provenance.track_id || !digest(provenance.track_sha256) ||
         !Number.isInteger(provenance.seed) || provenance.seed < 0 || provenance.seed > 0xffffffff ||
