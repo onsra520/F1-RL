@@ -11,6 +11,7 @@ import numpy as np
 
 from src.runtime.auto_drive import AutoDriveController
 from src.runtime.catalog import MAX_RUNTIME_STEPS, RuntimeCatalog
+from src.runtime.drive_config import AutoDriveConfig
 from src.runtime.frames import (
     EpisodeResult,
     ReplayDocument,
@@ -64,6 +65,7 @@ class RuntimeSession:
         mode: str = "ppo",
         custom_factory=None,
         custom_track_sha256: str | None = None,
+        auto_drive_config: AutoDriveConfig | None = None,
     ) -> None:
         self.catalog = catalog
         self.session_id = session_id
@@ -73,6 +75,9 @@ class RuntimeSession:
             raise ValueError("PPO mode requires a registered frozen model")
         if mode in ("manual", "auto") and model_id is not None:
             raise ValueError(f"{mode} mode cannot select a PPO model")
+        if mode != "auto" and auto_drive_config is not None:
+            raise ValueError("Auto Drive configuration is allowed only for auto mode")
+        self.auto_drive_config = (auto_drive_config or AutoDriveConfig()) if mode == "auto" else None
         self.mode = mode
         self.model = catalog.model(model_id) if model_id is not None else None
         self._custom_factory = custom_factory
@@ -224,6 +229,10 @@ class RuntimeSession:
                 else "auto-development" if self.mode == "auto"
                 else "manual-development",
                 "speed_multiplier": self._speed_multiplier,
+                **({"auto_drive_config": self.auto_drive_config.model_dump(mode="json"),
+                    "effective_max_speed_kmh": 3.6 * min(self.track.vehicle_parameters.max_ground_speed,
+                                                       self.auto_drive_config.target_max_speed_kmh / 3.6)}
+                   if self.auto_drive_config is not None else {}),
             }
 
     def replay(self) -> dict[str, object]:
@@ -246,8 +255,12 @@ class RuntimeSession:
                 ),
                 result=self._result,
                 frames=list(self._frames),
+                auto_drive_config=self.auto_drive_config.model_dump(mode="json") if self.auto_drive_config else None,
             )
-            return document.model_dump(mode="json", by_alias=True)
+            result = document.model_dump(mode="json", by_alias=True)
+            if self.auto_drive_config is None:
+                result.pop("auto_drive_config", None)
+            return result
 
     def _capture_reset(self, env, _observation, info) -> None:
         action = np.zeros(env.action_space.shape, dtype=np.float32)
@@ -346,6 +359,7 @@ class RuntimeSession:
                         self.track.navigation,
                         self.track.vehicle_parameters,
                         min(surface.width for surface in self.track.track.surfaces),
+                        self.auto_drive_config,
                     )
                 self._emit("status", {"status": "running", "reset": self._restart.is_set()})
                 row = evaluate_policy_episode(
@@ -456,6 +470,7 @@ class RuntimeSessionManager:
         mode: str = "ppo",
         custom_factory=None,
         custom_track_sha256: str | None = None,
+        auto_drive_config: AutoDriveConfig | None = None,
     ) -> RuntimeSession:
         if mode == "ppo":
             if model_id is None:
@@ -486,6 +501,7 @@ class RuntimeSessionManager:
                 mode=mode,
                 custom_factory=custom_factory,
                 custom_track_sha256=custom_track_sha256,
+                auto_drive_config=auto_drive_config,
             )
             self._sessions[session.session_id] = session
             return session

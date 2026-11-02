@@ -117,3 +117,17 @@
 .custom-track-selection{display:flex;flex-direction:column;gap:5px;padding:9px;border:1px solid #506a50;border-radius:8px;background:#1e3129}.custom-track-selection>span{font-size:8px;color:#a9c097;letter-spacing:1px;font-weight:900}.custom-track-selection strong{font:700 14px 'Space Grotesk',sans-serif;color:#e5f5d3}.custom-track-selection small{font-size:9px;color:#9cb0a1;line-height:1.4}.custom-track-selection button{height:26px;border:1px solid #4f6255;border-radius:6px;background:#263837;color:#d3e2d8;font-size:8px;font-weight:800}
 .replay-controls select{height:29px;border:1px solid #435955;border-radius:7px;background:#1d2e30;color:#d7e7dc;padding:0 5px;font-size:10px;font-weight:800}
 @media(max-width:710px){.runtime-panel{top:111px;left:9px;width:min(285px,calc(100% - 18px));max-height:calc(100% - 210px);padding:9px;gap:6px}.runtime-panel label{grid-template-columns:74px 1fr;font-size:8px}.runtime-panel select,.runtime-panel input{height:27px;font-size:10px}.runtime-telemetry{gap:4px;padding:6px}.runtime-telemetry span{font-size:7px}.runtime-actions button{min-height:29px;font-size:8px}.replay-controls{left:9px;right:9px;bottom:59px;padding:8px;gap:5px}.replay-controls .replay-name{display:none}.replay-controls button{width:31px;height:30px}.runtime-progress{font-size:8px}.drive-bottom{left:9px;right:9px;bottom:9px}.drive-bottom button{font-size:10px;padding:8px 10px}}
+
+/* Local development-only Auto Drive tuning: compact and accessible within existing Drive panel. */
+.auto-drive-settings{display:flex;flex-direction:column;gap:8px;border:1px solid #425e59;padding:9px;border-radius:8px;background:#172a2b}
+.auto-settings-title{display:flex;justify-content:space-between;align-items:center;color:#d3eee0;font-size:10px;letter-spacing:1px}
+.auto-settings-title button{background:#243c39;border:1px solid #557367;border-radius:6px;color:#cbeade;padding:5px;font-size:9px}
+.auto-speed-range{display:grid;grid-template-columns:minmax(70px,1fr) 61px 30px;align-items:center;gap:5px}
+.auto-speed-range input[type=range]{padding:0;height:22px;accent-color:#92d9b6}
+.auto-speed-range small,.auto-advanced-value small{font-size:9px;color:#bac9c4}
+.auto-drive-cap{color:#8db2a4;font-size:10px;line-height:1.4}
+.auto-advanced{border-top:1px solid #405852;padding-top:8px}
+.auto-advanced summary{cursor:pointer;color:#c9e4dc;font-size:10px;font-weight:700;margin-bottom:8px}
+.auto-advanced label{padding:3px 0;font-weight:500;letter-spacing:0}
+.auto-advanced-value{display:flex;align-items:center;gap:5px}
+.auto-advanced-value input{width:80px}

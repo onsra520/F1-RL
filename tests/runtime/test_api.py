@@ -324,3 +324,30 @@ def test_runtime_cors_allows_only_local_editor_ports():
         })
         assert preflight.status_code == 200
         assert "x-trace-id" in preflight.headers["access-control-allow-headers"].lower()
+
+
+def test_auto_drive_config_api_is_validated_and_snapshot_is_immutable():
+    from src.runtime.drive_config import AutoDriveConfig
+    with TestClient(create_app(repository_root=ROOT)) as client:
+        payload = {"mode": "auto", "track_id": "straight-sprint-v1", "seed": 412,
+                   "auto_drive_config": {"driving_style": "racing", "speed_profile": "hyper",
+                                         "target_max_speed_kmh": 240.0}}
+        created = client.post("/api/v1/sessions", json=payload)
+        assert created.status_code == 201, created.text
+        status = created.json()
+        assert status["auto_drive_config"]["driving_style"] == "racing"
+        assert status["auto_drive_config"]["target_max_speed_kmh"] == 240.0
+        assert status["effective_max_speed_kmh"] <= 3.6 * 15.0 + 1e-6
+        payload["auto_drive_config"]["driving_style"] = "right"
+        repeated = client.get(f"/api/v1/sessions/{status['session_id']}").json()
+        assert repeated["auto_drive_config"]["driving_style"] == "racing"
+        assert client.delete(f"/api/v1/sessions/{status['session_id']}").status_code == 204
+        for bad in ({"target_max_speed_kmh": -1.0}, {"target_max_speed_kmh": 999.0},
+                    {"min_lookahead_m": 20.0}, {"edge_margin_m": -0.1}, {"extra_override": True}):
+            failed = client.post("/api/v1/sessions", json={"mode": "auto", "track_id": "straight-sprint-v1",
+                "seed": 1, "auto_drive_config": bad})
+            assert failed.status_code == 422
+        ppo = client.post("/api/v1/sessions", json={"mode": "ppo", "model_id": "A-seed0",
+            "track_id": "straight-sprint-v1", "seed": 1, "auto_drive_config": {"driving_style": "right"}})
+        assert ppo.status_code == 422
+        assert AutoDriveConfig().driving_style == "right"

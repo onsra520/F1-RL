@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { BufferAttribute, BufferGeometry, Camera, DoubleSide, Plane, Raycaster, Vector2, Vector3, type Group } from 'three';
+import { BufferAttribute, BufferGeometry, Camera, DoubleSide, Plane, Quaternion, Raycaster, Vector2, Vector3, type Group } from 'three';
 import type { PropKind, RoadSample, TrackDocument, TrackProp } from '../lib/track';
 import { pointAt, sampleRoad } from '../lib/track';
 import { isRuntimePoseTerminal, LivePoseInterpolator, type LivePose, type LivePoseFrame } from '../lib/livePose';
@@ -47,28 +47,52 @@ function Road({ track, samples }: { track: TrackDocument; samples: RoadSample[] 
   </>;
 }
 
-function CarModel({ pose, livePose }: { pose: CarPose; livePose: LivePoseInterpolator | null }) {
+function CarModel({ pose, livePose, follow }: { pose: CarPose; livePose: LivePoseInterpolator | null; follow: boolean }) {
   const car = useRef<Group>(null);
-  useFrame(() => {
-    if (!livePose) return;
-    const current = livePose.sample(performance.now()) ?? pose;
-    car.current?.position.set(current.x, current.y + 0.74, current.z);
-    if (car.current) car.current.rotation.y = current.heading;
+  const { camera } = useThree();
+  const front = useMemo(() => new Vector3(), []);
+  const desiredCamera = useMemo(() => new Vector3(), []);
+  const desiredTarget = useMemo(() => new Vector3(), []);
+  const cameraTarget = useMemo(() => new Vector3(), []);
+  const rotation = useMemo(() => new Quaternion(), []);
+  const worldUp = useMemo(() => new Vector3(0, 1, 0), []);
+  useFrame((_, delta) => {
+    const current = livePose?.sample(performance.now()) ?? pose;
+    if (!car.current) return;
+    // Python VehicleState.position is the body reference centre, ride_height=0.5m.
+    // Never translate an authoritative physics frame vertically.
+    const physicalPose = Boolean(current.orientation_wxyz);
+    car.current.position.set(current.x, current.y + (physicalPose ? 0 : 0.5), current.z);
+    if (current.orientation_wxyz) {
+      const [w, x, y, z] = current.orientation_wxyz;
+      rotation.set(x, y, z, w).normalize();
+    } else {
+      rotation.setFromAxisAngle(worldUp, current.heading);
+    }
+    car.current.quaternion.copy(rotation);
+    if (follow) {
+      front.set(0, 0, 1).applyQuaternion(rotation);
+      desiredCamera.set(current.x - front.x * 19, current.y + 12.2, current.z - front.z * 19);
+      desiredTarget.set(current.x + front.x * 6, current.y + 1.3, current.z + front.z * 6);
+      const smooth = 1 - Math.exp(-4 * Math.min(delta, 0.1));
+      camera.position.lerp(desiredCamera, smooth);
+      cameraTarget.lerp(desiredTarget, smooth);
+      camera.lookAt(cameraTarget);
+    }
   });
-  return <group ref={car} position={livePose ? undefined : [pose.x, pose.y + 0.74, pose.z]}
-    rotation={livePose ? undefined : [0, pose.heading, 0]}>
-    <mesh castShadow position={[0, 0.25, 0]}><boxGeometry args={[1.5, 0.52, 3.5]} /><meshStandardMaterial color="#f27555" roughness={0.35} metalness={0.28}/></mesh>
-    <mesh castShadow position={[0, 0.58, -0.25]}><boxGeometry args={[0.9, 0.47, 1.65]} /><meshStandardMaterial color="#253039" roughness={0.36}/></mesh>
-    <mesh castShadow position={[0, 0.42, 1.52]}><boxGeometry args={[0.42, 0.35, 1.15]} /><meshStandardMaterial color="#ec6046" metalness={0.3}/></mesh>
-    <mesh castShadow position={[0, 0.24, 1.78]}><boxGeometry args={[2.6, 0.15, 0.39]} /><meshStandardMaterial color="#f5c85e" /></mesh>
-    <mesh castShadow position={[0, 0.71, -1.60]}><boxGeometry args={[2.45, 0.13, 0.46]} /><meshStandardMaterial color="#202c32" /></mesh>
-    {[-1.05, 1.05].flatMap((x) => [-1.2, 1.18].map((z) => (
-      <group key={`${x}:${z}`} position={[x, -0.04, z]}>
+  return <group ref={car}>
+    <mesh castShadow position={[0, 0.11, 0]}><boxGeometry args={[1.5, 0.52, 3.5]} /><meshStandardMaterial color="#f27555" roughness={0.35} metalness={0.28}/></mesh>
+    <mesh castShadow position={[0, 0.44, -0.25]}><boxGeometry args={[0.9, 0.47, 1.65]} /><meshStandardMaterial color="#253039" roughness={0.36}/></mesh>
+    <mesh castShadow position={[0, 0.28, 1.52]}><boxGeometry args={[0.42, 0.35, 1.15]} /><meshStandardMaterial color="#ec6046" metalness={0.3}/></mesh>
+    <mesh castShadow position={[0, 0.10, 1.78]}><boxGeometry args={[2.6, 0.15, 0.39]} /><meshStandardMaterial color="#f5c85e" /></mesh>
+    <mesh castShadow position={[0, 0.57, -1.60]}><boxGeometry args={[2.45, 0.13, 0.46]} /><meshStandardMaterial color="#202c32" /></mesh>
+    {[-1.05, 1.05].flatMap((x) => [-1.5, 1.5].map((z) => (
+      <group key={x + ':' + z} position={[x, -0.07, z]}>
         <mesh rotation={[0, 0, Math.PI / 2]} castShadow><cylinderGeometry args={[0.43, 0.43, 0.35, 14]}/><meshStandardMaterial color="#141a1d" roughness={0.9}/></mesh>
         <mesh rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.20, 0.20, 0.366, 14]}/><meshStandardMaterial color="#858e93" metalness={0.6}/></mesh>
       </group>
     )))}
-    <mesh position={[0, 0.91, -0.8]}><sphereGeometry args={[0.36, 14, 10]}/><meshStandardMaterial color="#121c24"/></mesh>
+    <mesh position={[0, 0.77, -0.8]}><sphereGeometry args={[0.36, 14, 10]}/><meshStandardMaterial color="#121c24"/></mesh>
   </group>;
 }
 
@@ -120,17 +144,6 @@ function TrackObject({ prop, track, selected, onPick, onRelease }: {
   </group>;
 }
 
-function ChaseCamera({ pose, livePose }: { pose: CarPose; livePose: LivePoseInterpolator | null }) {
-  const { camera } = useThree();
-  const behind = useMemo(() => new Vector3(), []);
-  useFrame((_, delta) => {
-    const current = livePose?.sample(performance.now()) ?? pose;
-    behind.set(current.x - Math.sin(current.heading) * 19, current.y + 12.2, current.z - Math.cos(current.heading) * 19);
-    camera.position.lerp(behind, 1 - Math.exp(-4 * Math.min(delta, 0.1)));
-    camera.lookAt(current.x, current.y + 1.3, current.z + Math.cos(current.heading) * 6);
-  });
-  return null;
-}
 
 function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, livePose, roadSamples, onCamera, onDragChange }: {
   track: TrackDocument; mode: Mode; selectedId: string | null; armed: PropKind | null;
@@ -165,8 +178,7 @@ function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, livePo
     </mesh>
     {track.props.map((p) => <TrackObject key={p.id} prop={p} track={track} selected={selectedId === p.id}
       onPick={(e) => choose(e, p.id)} onRelease={stopDrag}/>)}
-    <CarModel pose={pose} livePose={livePose}/>
-    {mode === 'drive' ? <ChaseCamera pose={pose} livePose={livePose}/> : null}
+    <CarModel pose={pose} livePose={livePose} follow={mode === 'drive'}/>
   </>;
 }
 

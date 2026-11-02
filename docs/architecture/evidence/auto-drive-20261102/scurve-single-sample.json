@@ -1,0 +1,15 @@
+[
+  {
+    "speed_kmh": 25,
+    "offset_m": 0.8,
+    "status": "finished",
+    "steps": 296,
+    "success": true,
+    "error": null,
+    "last_position": [
+      0.5374978054642934,
+      0.5000206597156249,
+      90.68010139961713
+    ]
+  }
+]

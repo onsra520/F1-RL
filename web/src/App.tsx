@@ -13,6 +13,8 @@ import { createTrack, getAutoBridges, nearestRoad, parseTrack, pointAt, PROP_KIN
 import { parseReplay, replayAt, replayModelId, type Replay } from './lib/replay';
 import { manualActionFromKeys } from './lib/manual';
 import { isLivePoseFrameInOrder } from './lib/livePose';
+import { AUTO_CONFIG_STORAGE, loadAutoConfig, type AutoDriveConfig } from './lib/autoDriveConfig';
+import AutoDriveSettings from './components/AutoDriveSettings';
 import RuntimeOutcomeMessage from './RuntimeOutcomeMessage';
 import {
   customTrackSelectionAfterMapEdit, isCurrentCustomTrackValidation, resolveRuntimeTrackRequest,
@@ -68,6 +70,7 @@ export default function App() {
   const [selected, setSelected] = useState<string | null>(null);
   const [armed, setArmed] = useState<PropKind | null>(null);
   const [driveMode, setDriveMode] = useState<DriveMode>('auto');
+  const [autoConfig, setAutoConfig] = useState<AutoDriveConfig>(loadAutoConfig);
   const [pose, setPose] = useState<CarPose>(() => spawnPose(initialTrack()));
   const [replay, setReplay] = useState<Replay | null>(null);
   const [replayTime, setReplayTime] = useState(0);
@@ -118,15 +121,20 @@ export default function App() {
   const sceneRoadSamples = mode === 'drive' ? activeRuntimeTrack?.road_samples : undefined;
   const activePose = driveMode === 'replay' && activeReplay ? (() => {
     const p = replayAt(activeReplay, replayTime);
-    return { x: p.position[0], y: p.position[1], z: p.position[2], heading: p.heading_rad, speed: p.speed_mps };
+    return { x: p.position[0], y: p.position[1], z: p.position[2], heading: p.heading_rad, speed: p.speed_mps,
+      ...(p.orientation_wxyz ? { orientation_wxyz: p.orientation_wxyz } : {}) };
   })() : runtimeStatus?.latest_frame ? {
     x: runtimeStatus.latest_frame.position[0], y: runtimeStatus.latest_frame.position[1], z: runtimeStatus.latest_frame.position[2],
     heading: runtimeStatus.latest_frame.heading_rad, speed: runtimeStatus.latest_frame.speed_mps,
+    orientation_wxyz: runtimeStatus.latest_frame.orientation_wxyz,
   } : activeRuntimeTrack ? {
     x: activeRuntimeTrack.road_samples[0]?.x ?? 0, y: activeRuntimeTrack.road_samples[0]?.y ?? 0,
     z: activeRuntimeTrack.road_samples[0]?.z ?? 0, heading: activeRuntimeTrack.road_samples[0]?.heading ?? 0, speed: 0,
   } : pose;
 
+  useEffect(() => {
+    try { localStorage.setItem(AUTO_CONFIG_STORAGE, JSON.stringify(autoConfig)); } catch { /* storage optional */ }
+  }, [autoConfig]);
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(track)); setSaved(false); }
     catch { setSaved(false); }
@@ -269,11 +277,11 @@ export default function App() {
     let createdSessionId: string | null = null;
     try {
       const created = trackRequest.kind === 'custom'
-        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : driveMode === 'auto' ? 'auto' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : undefined, traceId)
+        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : driveMode === 'auto' ? 'auto' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : undefined, traceId, driveMode === 'auto' ? autoConfig : undefined)
         : driveMode === 'manual'
           ? await runtimeClient.createManualSession(trackRequest.trackId, runtimeSeed)
           : driveMode === 'auto'
-            ? await runtimeClient.createAutoSession(trackRequest.trackId, runtimeSeed)
+            ? await runtimeClient.createAutoSession(trackRequest.trackId, runtimeSeed, autoConfig)
             : await runtimeClient.createPpoSession(modelId, trackRequest.trackId, runtimeSeed);
       createdSessionId = created.session_id;
       if (trackRequest.kind === 'custom' &&
@@ -592,6 +600,9 @@ export default function App() {
                     {trackValidationBusy ? <><LoaderCircle size={14}/> VALIDATING IN PYTHON…</> : <><Check size={14}/> VALIDATE & USE CURRENT MAP</>}
                   </button>
                 </>}
+                {driveMode === 'auto' && <AutoDriveSettings config={autoConfig} onChange={setAutoConfig}
+                  disabled={runtimeBusy} physicalCapKmh={runtimeStatus?.mode === 'auto'
+                    ? runtimeStatus.effective_max_speed_kmh : undefined}/>}
                 <label>SEED<input aria-label="Episode seed" type="number" min="0" max="4294967295" step="1" value={runtimeSeed} onChange={(event) => setRuntimeSeed(Number(event.target.value))} disabled={runtimeBusy}/></label>
                 {catalogError ? <p className="runtime-error"><TriangleAlert size={15}/><span>{catalogError}. Start the Python runtime to run episodes.</span><button onClick={() => setCatalogError('')}>Retry connection</button></p> : !runtimeCatalog ?
                   <p className="runtime-loading"><LoaderCircle size={15}/> Connecting to local Python runtime…</p> : null}

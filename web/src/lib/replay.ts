@@ -1,4 +1,6 @@
 import { parseTrack, type RoadSample, type TrackDocument } from './track';
+import { slerpWxyz } from './orientation';
+import { validateAutoConfig, type AutoDriveConfig } from './autoDriveConfig';
 
 export type ReplayFrame = {
   time_s: number;
@@ -44,6 +46,7 @@ export type ReplayV2 = {
     seed: number;
   };
   track_preview?: ReplayTrackPreview;
+  auto_drive_config?: AutoDriveConfig;
   result: {
     status: 'finished' | 'failed' | 'cancelled' | 'stopped';
     valid_sample: boolean;
@@ -168,9 +171,12 @@ export function parseReplay(raw: unknown): Replay {
       throw new Error('Unsupported replay schema or provenance (HELD-OUT is not allowed)');
     }
     const trackPreview = validateTrackPreview(d.track_preview, provenance.track_id, provenance.track_sha256);
+    if (d.auto_drive_config !== undefined && provenance.model_id !== 'auto-drive') throw new Error('Config belongs to Auto Drive only');
+    const autoConfig = d.auto_drive_config === undefined ? undefined : validateAutoConfig(d.auto_drive_config);
     return {
       schema: d.schema, label: d.label, provenance: { ...provenance }, result: { ...result }, frames,
       ...(trackPreview ? { track_preview: trackPreview } : {}),
+      ...(autoConfig ? { auto_drive_config: autoConfig } : {}),
     };
   }
   throw new Error('Unsupported replay schema or provenance (HELD-OUT is not allowed)');
@@ -199,5 +205,7 @@ export function replayAt(replay: Replay, time: number): ReplayFrame {
     position: [0, 1, 2].map((i) => a.position[i] + (b.position[i] - a.position[i]) * u) as [number, number, number],
     heading_rad: a.heading_rad + turn * u,
     speed_mps: a.speed_mps + (b.speed_mps - a.speed_mps) * u,
+      ...(a.orientation_wxyz && b.orientation_wxyz
+        ? { orientation_wxyz: slerpWxyz(a.orientation_wxyz, b.orientation_wxyz, u) } : {}),
   };
 }

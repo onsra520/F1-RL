@@ -120,3 +120,23 @@ describe('LivePoseInterpolator', () => {
     expect(isRuntimePoseTerminal('resetting')).toBe(false);
   });
 });
+
+describe('3D quaternion and bounded WebSocket jitter interpolation', () => {
+  it('interpolates authoritative pitch and roll with shortest-arc SLERP', () => {
+    const poses = new LivePoseInterpolator();
+    const a = { ...frame(0, 0, 0), orientation_wxyz: [1, 0, 0, 0] as [number,number,number,number] };
+    const b = { ...frame(1, 0.1, 4), orientation_wxyz: [Math.SQRT1_2, Math.SQRT1_2, 0, 0] as [number,number,number,number] };
+    poses.push(a, 1000); poses.push(b, 1100);
+    expect(poses.sample(1150)?.orientation_wxyz?.[0]).toBeCloseTo(Math.cos(Math.PI / 8), 6);
+    expect(poses.sample(1150)?.orientation_wxyz?.[1]).toBeCloseTo(Math.sin(Math.PI / 8), 6);
+    expect(poses.sample(1200)?.orientation_wxyz).toEqual(b.orientation_wxyz);
+  });
+  it('smooths bounded fast packet arrival without extrapolating or altering final physics state', () => {
+    const poses = new LivePoseInterpolator();
+    poses.push(frame(0, 0, 0), 1000);
+    poses.push(frame(1, .1, 10), 1030);
+    expect(poses.sample(1055)?.x).toBeGreaterThan(0);
+    expect(poses.sample(1055)?.x).toBeLessThan(10);
+    expect(poses.sample(2000)?.x).toBe(10);
+  });
+});

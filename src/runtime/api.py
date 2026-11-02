@@ -18,6 +18,7 @@ from src.runtime.custom_tracks import (
     TrackValidationError,
     convert_custom_track,
 )
+from src.runtime.drive_config import AutoDriveConfig
 from src.runtime.protocol import (
     WS_COMMAND_ADAPTER,
     ActionCommand,
@@ -43,6 +44,7 @@ class CreateSessionRequest(BaseModel):
     seed: int = Field(ge=0, le=MAX_SEED)
     mode: Literal["ppo", "manual", "auto"] = "ppo"
     custom_track: dict[str, object] | None = None
+    auto_drive_config: AutoDriveConfig | None = None
 
     @model_validator(mode="after")
     def controller_matches_mode(self):
@@ -50,6 +52,8 @@ class CreateSessionRequest(BaseModel):
             raise ValueError("PPO mode requires model_id")
         if self.mode in ("manual", "auto") and self.model_id is not None:
             raise ValueError(f"{self.mode} mode cannot select model_id")
+        if self.mode != "auto" and self.auto_drive_config is not None:
+            raise ValueError("auto_drive_config is allowed only in Auto Drive")
         if self.custom_track is None and self.track_id is None:
             raise ValueError("registered sessions require track_id")
         if self.custom_track is not None and self.track_id is not None:
@@ -230,6 +234,7 @@ def create_app(
                 mode=payload.mode,
                 custom_factory=None if converted is None else converted.factory,
                 custom_track_sha256=None if converted is None else converted.track_sha256,
+                auto_drive_config=payload.auto_drive_config,
             )
         except RuntimeFault:
             raise

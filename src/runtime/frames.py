@@ -84,6 +84,7 @@ class ReplayDocument(BaseModel):
     provenance: ReplayProvenance
     result: EpisodeResult
     frames: list[RuntimeFrame] = Field(min_length=2, max_length=5001)
+    auto_drive_config: dict[str, object] | None = None
 
     @model_validator(mode="after")
     def ordered_frames(self):

@@ -2,17 +2,19 @@ from types import SimpleNamespace
 
 import gymnasium as gym
 import numpy as np
+import pytest
+from pydantic import ValidationError
 
 from src.runtime.auto_drive import AutoDriveController
+from src.runtime.drive_config import AutoDriveConfig
 from src.simulation.geometry.vector import Vec3
 from src.simulation.vehicle import VehicleParameters
 from src.tracks.model import AuthoredNavigation
 
-
 VEHICLE = VehicleParameters(3.0, 0.5, 0.5, 6.0, 10.0, 0.4, 0.1, 15.0, 9.81)
 
 
-def controller(points, position, *, heading=0.0, speed=0.0):
+def controller(points, position, *, heading=0.0, speed=0.0, config=None):
     navigation = AuthoredNavigation(tuple(Vec3(*point) for point in points),
                                     tuple(f"road-{index}" for index in range(len(points) - 1)), ())
     env = SimpleNamespace(
@@ -25,7 +27,7 @@ def controller(points, position, *, heading=0.0, speed=0.0):
             "next_checkpoint_index": 0,
         },
     )
-    return AutoDriveController(env, navigation, VEHICLE, 12.0)
+    return AutoDriveController(env, navigation, VEHICLE, 12.0, config or AutoDriveConfig(driving_style="centerline", target_max_speed_kmh=43.2))
 
 
 def test_auto_drive_accelerates_and_keeps_straight_centerline():
@@ -57,5 +59,66 @@ def test_auto_drive_plans_speed_before_an_uphill_ramp():
     flat = controller([(0, 0, 0), (0, 0, 60)], (0, 0.5, 5))
     ramp = controller([(0, 0, 0), (0, 0, 15), (0, 3, 35), (0, 3, 60)], (0, 0.5, 5))
 
-    assert flat._target_speed(5.0) == 12.0
+    assert flat._target_speed(5.0) == pytest.approx(12.0)
     assert ramp._target_speed(5.0) == 6.0
+
+
+def test_default_config_belongs_to_right_lane_and_is_physics_capped():
+    right = controller([(0, 0, 0), (0, 0, 50)], (0, 0.5, 2), config=AutoDriveConfig())
+    center = controller([(0, 0, 0), (0, 0, 50)], (0, 0.5, 2),
+                        config=AutoDriveConfig(driving_style="centerline"))
+    assert right._target_point(15).x > 0
+    assert center._target_point(15).x == 0
+    assert right.predict(None)[0] > center.predict(None)[0]
+    assert right.max_speed == pytest.approx(12.5)
+    hyper = controller([(0, 0, 0), (0, 0, 50)], (0, 0.5, 2),
+                       config=AutoDriveConfig(speed_profile="hyper", target_max_speed_kmh=240.0))
+    assert hyper.max_speed == VEHICLE.max_ground_speed
+
+
+def test_right_lane_stays_inside_narrow_road_with_vehicle_clearance():
+    config = AutoDriveConfig(edge_margin_m=0.7, vehicle_width_m=1.5)
+    p = controller([(0, 0, 0), (0, 0, 20)], (0, 0.5, 2), config=config)
+    p.track_width = 2.0
+    assert p._offset_at(5) == 0.0
+    p.track_width = 4.0
+    assert p._offset_at(5) <= 4 / 2 - config.vehicle_width_m / 2 - config.edge_margin_m
+
+
+def test_right_lane_tangent_is_continuous_at_s_curve_vertex():
+    config = AutoDriveConfig()
+    p = controller([(0, 0, 0), (0, 0, 10), (4, 0, 20), (0, 0, 30), (0, 0, 40)],
+                   (0, .5, 1), config=config)
+    before = p._target_point(p.distances[2] - .01)
+    after = p._target_point(p.distances[2] + .01)
+    assert (after-before).magnitude < .1
+    assert abs(p._offset_at(p.distances[2])) <= p.track_width / 2
+
+
+def test_racing_and_right_have_distinct_corner_targets_and_speed_tuning():
+    points = [(0, 0, 0), (0, 0, 12), (8, 0, 12), (8, 0, 20)]
+    right = controller(points, (0, .5, 5), config=AutoDriveConfig())
+    racing = controller(points, (0, .5, 5), config=AutoDriveConfig(driving_style="racing"))
+    assert right._target_point(9) != racing._target_point(9)
+    safe = controller(points, (0, .5, 5), config=AutoDriveConfig(corner_acceleration_mps2=1.0))
+    faster = controller(points, (0, .5, 5), config=AutoDriveConfig(corner_acceleration_mps2=5.0))
+    assert safe._target_speed(10) < faster._target_speed(10)
+
+
+@pytest.mark.parametrize("updates", [
+    {"target_max_speed_kmh": 0.0}, {"max_lookahead_m": 2.0, "min_lookahead_m": 8.0},
+    {"edge_margin_m": -1.0}, {"speed_profile": "unlimited"},
+    {"steep_grade_threshold": 0.08}, {"braking_factor": 1.1},
+])
+def test_invalid_drive_configuration_rejected(updates):
+    with pytest.raises(ValidationError):
+        AutoDriveConfig(**updates)
+
+def test_racing_line_uses_opposite_corner_side_for_left_and_right_turns():
+    config = AutoDriveConfig(driving_style="racing")
+    left = controller([(0, 0, 0), (0, 0, 12), (-8, 0, 12), (-8, 0, 20)],
+                      (0, .5, 5), config=config)
+    right = controller([(0, 0, 0), (0, 0, 12), (8, 0, 12), (8, 0, 20)],
+                       (0, .5, 5), config=config)
+    assert left._offset_at(9) > 0
+    assert right._offset_at(9) < 0

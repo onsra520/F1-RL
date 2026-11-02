@@ -1,7 +1,8 @@
 import type { RuntimeFrame, RuntimeSessionStatus } from './runtime';
+import { slerpWxyz, type Wxyz } from './orientation';
 
-export type LivePose = { x: number; y: number; z: number; heading: number; speed: number };
-export type LivePoseFrame = Pick<RuntimeFrame, 'tick' | 'time_s' | 'dt_s' | 'position' | 'heading_rad' | 'speed_mps'>;
+export type LivePose = { x: number; y: number; z: number; heading: number; speed: number; orientation_wxyz?: Wxyz };
+export type LivePoseFrame = Pick<RuntimeFrame, 'tick' | 'time_s' | 'dt_s' | 'position' | 'heading_rad' | 'speed_mps'> & { orientation_wxyz?: Wxyz };
 type OrderedFrame = Pick<LivePoseFrame, 'tick' | 'time_s'>;
 type RuntimePoseStatus = RuntimeSessionStatus['status'] | 'resetting';
 
@@ -23,6 +24,7 @@ function toPose(frame: LivePoseFrame): LivePose {
   return {
     x: frame.position[0], y: frame.position[1], z: frame.position[2],
     heading: frame.heading_rad, speed: frame.speed_mps,
+    ...(frame.orientation_wxyz ? { orientation_wxyz: [...frame.orientation_wxyz] as Wxyz } : {}),
   };
 }
 
@@ -34,6 +36,8 @@ function interpolatePose(from: LivePose, to: LivePose, amount: number): LivePose
     z: from.z + (to.z - from.z) * amount,
     heading: from.heading + headingDelta * amount,
     speed: from.speed + (to.speed - from.speed) * amount,
+    ...(from.orientation_wxyz && to.orientation_wxyz
+      ? { orientation_wxyz: slerpWxyz(from.orientation_wxyz, to.orientation_wxyz, amount) } : {}),
   };
 }
 
@@ -60,9 +64,15 @@ export class LivePoseInterpolator {
       return true;
     }
 
-    const arrivalGap = origin ? receivedAt - origin.receivedAt : frame.dt_s * 1000;
-    const duration = this.resumeFromHeldPose ? frame.dt_s * 1000 : arrivalGap;
-    if (!Number.isFinite(duration) || duration <= 0 || duration > MAX_FRAME_GAP_MS) {
+    const expectedMs = frame.dt_s * 1000;
+    const arrivalGap = origin ? receivedAt - origin.receivedAt : expectedMs;
+    // A bounded two-frame interpolation interval resists WebSocket burst jitter.
+    // Physics positions remain authoritative; never extrapolate past the latest frame.
+    const duration = this.resumeFromHeldPose ? expectedMs
+      : Math.max(expectedMs * 0.75, Math.min(arrivalGap, expectedMs * 1.5));
+    if (!Number.isFinite(duration) || duration <= 0 ||
+        (!this.resumeFromHeldPose && (!Number.isFinite(arrivalGap) ||
+          arrivalGap <= 0 || arrivalGap > MAX_FRAME_GAP_MS))) {
       this.previous = null;
       this.latest = next;
       this.interpolationMs = 0;
