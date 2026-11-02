@@ -79,6 +79,19 @@ function CarModel({ pose, livePose, follow }: { pose: CarPose; livePose: LivePos
       cameraTarget.lerp(desiredTarget, smooth);
       camera.lookAt(cameraTarget);
     }
+    // Development-only bounded probe, enabled only with ?renderAudit=1. Never alters Physics or render pose.
+    if (import.meta.env.DEV && new URLSearchParams(window.location.search).get('renderAudit') === '1') {
+      type Sample = { t: number; camera: [number, number, number]; car: [number, number, number];
+        target: [number, number, number]; quat: [number, number, number, number]; speed: number };
+      const auditWindow = window as Window & { __F1RL_RENDER_AUDIT__?: Sample[] };
+      const samples = auditWindow.__F1RL_RENDER_AUDIT__ ??= [];
+      if (samples.length < 12000) samples.push({
+        t: performance.now(), camera: [camera.position.x, camera.position.y, camera.position.z],
+        car: [car.current.position.x, car.current.position.y, car.current.position.z],
+        target: [cameraTarget.x, cameraTarget.y, cameraTarget.z],
+        quat: [rotation.x, rotation.y, rotation.z, rotation.w], speed: current.speed,
+      });
+    }
   });
   return <group ref={car}>
     <mesh castShadow position={[0, 0.11, 0]}><boxGeometry args={[1.5, 0.52, 3.5]} /><meshStandardMaterial color="#f27555" roughness={0.35} metalness={0.28}/></mesh>
