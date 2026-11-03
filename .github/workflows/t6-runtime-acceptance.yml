@@ -1,0 +1,102 @@
+name: T6 runtime scoped release acceptance
+
+on:
+  push:
+    branches:
+      - fix/auto-drive-lane-render-config
+  pull_request:
+    branches:
+      - feature/runtime-simulator-bridge
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: t6-runtime-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-integrity:
+    name: Locked T5 code identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify candidate source is unchanged from full T5 regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          PINNED=adfb33ec505c22cd4dab18d6077dbd5e5d540367
+          TREE=a068bdd3e82a31c669f95febfee59284b045baae
+          test "$(git rev-parse "${PINNED}^{tree}")" = "$TREE"
+          git diff --exit-code "$PINNED" HEAD -- src tests web configs pyproject.toml
+          test -z "$(git status --porcelain)"
+          echo "Pinned code matched; only non-code evidence/CI metadata may have changed."
+      - name: Check no training artifact changes on stacked branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --quiet e2fa09c172fea7d61a3ced1fb84a6720285af210 HEAD -- artifacts/checkpoints artifacts/policies artifacts/runs models checkpoints || {
+            echo "Training artifacts changed; manual scientific review required." >&2
+            exit 1
+          }
+
+  python-runtime-regression:
+    name: Windows Python runtime, track and Physics subset
+    runs-on: windows-latest
+    needs: source-integrity
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install runtime and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[runtime,dev]"
+      - name: Run portable, source-bound runtime regression
+        env:
+          OMP_NUM_THREADS: '1'
+          OPENBLAS_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTHONHASHSEED: '0'
+        run: |
+          python -B -m pytest tests/runtime tests/track_assets tests/research/test_wp3_finite_tire_footprint_v4.py -q --tb=short --disable-warnings --junitxml=t6-python-junit.xml
+      - name: Upload Python test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: t6-python-runtime-junit
+          path: t6-python-junit.xml
+          if-no-files-found: ignore
+
+  frontend-regression:
+    name: Frontend Vitest and production build
+    runs-on: ubuntu-latest
+    needs: source-integrity
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: Run all frontend tests
+        run: npm test
+      - name: Typecheck and production build
+        run: npm run build
+
+# This hosted CI is a portable subset. It does NOT replace the separate sealed,
+# evidence-dependent full 3,214-test T5 sequential regression receipt.
