@@ -13,7 +13,7 @@ independently certified scientific force model.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import hypot,isfinite
+from math import hypot, isfinite
 
 from .geometry.vector import Vec3
 from .independent_suspension_dynamics import SuspensionResolutionError
@@ -99,15 +99,42 @@ def sample_finite_wheel_coverage(
                 raise fault
             if deflection < -contact_policy.max_droop_m-1e-9:
                 continue
-            options.append((weight,-abs(deflection),patch.id,height,deflection))
+            options.append((weight,-abs(deflection),patch.id,height,deflection,
+                            normal,patch.normal/patch.normal.y,patch.route_index))
             alpha+=weight
             gradient=gradient+normal
         if not options or alpha<=0.:
             out.append(FootprintWheel(None,0.,Vec3(0.,0.,0.)))
             continue
-        _,_,pid,h,d=max(options)
+        # Neighbouring route patches overlap by design, but their planar
+        # slopes differ. Picking the largest footprint weight changes the
+        # spring potential discontinuously at the seam; RK4 cannot refine
+        # away a finite energy jump. Use a differentiable partition of unity
+        # for BOTH the potential height and its exact spatial derivative.
+        # This is an explicit v4 contact law: the old v3 source is untouched.
+        heights=[entry[3] for entry in options]
+        if len(options)>1:
+            from .multi_surface_support import _ADJACENT_PATCH_STEP_M
+            same_route=all(entry[7] is not None for entry in options)
+            seam_bound=(_ADJACENT_PATCH_STEP_M if same_route
+                        else contact_policy.seam_height_tolerance_m)
+            if max(heights)-min(heights)>seam_bound+1e-9:
+                raise SuspensionResolutionError(
+                    'finite-tire blended seam would combine distinct road decks')
+        h=sum(entry[0]*entry[3] for entry in options)/alpha
+        # h = sum(w_i h_i)/sum(w_i), hence grad h is the product-rule
+        # derivative including the coverage-gradient term. Omitting the
+        # latter would still create numerical energy at transition seams.
+        dh=Vec3(0.,0.,0.)
+        for weight,_,_,height,_,grad_weight,plane_gradient,_ in options:
+            dh=dh+(Vec3(-plane_gradient.x,0.,-plane_gradient.z)*weight
+                   +grad_weight*(height-h))
+        dh=dh/alpha
+        _,_,pid,_,_,_,_,_=max(options)
+        blended_gradient=Vec3(-dh.x,1.,-dh.z)
         if alpha>=1.:
             alpha,gradient=1.,Vec3(0.,0.,0.)
-        out.append(FootprintWheel(IndependentWheelContact(name,pid,h,d),
-                                  alpha,gradient))
+        out.append(FootprintWheel(
+            IndependentWheelContact(name,pid,h,h-point.y,blended_gradient),
+            alpha,gradient))
     return tuple(out)

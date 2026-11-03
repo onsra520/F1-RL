@@ -242,3 +242,31 @@ describe('simulation playback multiplier visual cap', () => {
     expect(pose.sample(2000)?.x).toBe(5);
   });
 });
+
+
+describe('visual reset transition', () => {
+  it('does not teleport at reset or when the first new authoritative tick arrives', () => {
+    const poses = new LivePoseInterpolator(15);
+    poses.push(frame(0, 0, 0), 1000);
+    poses.push(frame(1, .1, 30), 1100);
+    const visible = poses.sample(1200)!;
+    poses.prepareRestart(1200);
+    expect(poses.sample(1200)!.x).toBeCloseTo(visible.x, 9);
+    expect(poses.push(frame(0, 0, 0), 1300)).toBe(true);
+    expect(poses.sample(1300)!.x).toBeCloseTo(visible.x, 9);
+    const after10ms = poses.sample(1310)!;
+    expect(Math.abs(after10ms.x - visible.x)).toBeLessThanOrEqual(.15 + 1e-6);
+    poses.push(frame(1, .1, 1), 1400);
+    expect(poses.sample(1400)!.x).toBeCloseTo(poses.sample(1400)!.x, 9);
+    expect(poses.sample(6000)!.x).toBe(1);
+  });
+  it('allows a new tick 0 after resetting but still rejects reordered frames', () => {
+    const p = new LivePoseInterpolator(15);
+    p.push(frame(0,0,0), 1000);
+    p.push(frame(40,4,20), 1200);
+    p.prepareRestart(1300);
+    expect(p.push(frame(0,0,0),1300)).toBe(true);
+    expect(p.push(frame(0,0,0),1400)).toBe(false);
+    expect(p.push(frame(1,.1,1),1400)).toBe(true);
+  });
+});

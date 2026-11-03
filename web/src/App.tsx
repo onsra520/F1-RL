@@ -8,7 +8,7 @@ import {
 import SketchEditor from './components/SketchEditor';
 import type { CarPose } from './components/RacingScene';
 const RacingScene = lazy(() => import('./components/RacingScene'));
-import { createTrack, getAutoBridges, nearestRoad, parseTrack, pointAt, PROP_KINDS, roadLength, sampleRoad,
+import { createT3V4JumpTrack, createTrack, getAutoBridges, nearestRoad, parseTrack, pointAt, PROP_KINDS, roadLength, sampleRoad,
          type Point2, type PropKind, type TrackDocument, type TrackProp } from './lib/track';
 import { parseReplay, replayAt, replayModelId, type Replay } from './lib/replay';
 import { manualActionFromKeys } from './lib/manual';
@@ -37,6 +37,8 @@ const assets: { kind: PropKind; title: string; description: string; icon: typeof
   { kind: 'cone', title: 'Cone', description: 'Small obstacle', icon: TriangleAlert, color: 'orange' },
   { kind: 'booster', title: 'Booster', description: 'Speed pad', icon: Waves, color: 'lime' },
   { kind: 'checkpoint', title: 'Checkpoint', description: 'Route marker', icon: Flag, color: 'blue' },
+  { kind: 'jump', title: 'V4 Certified Jump', description: '3.7 m real gap + launch and receiving ramp (development)', icon: Mountain, color: 'lime' },
+  { kind: 'gap', title: 'Jump Gap', description: 'Experimental Physics V4: road void (2–6 m)', icon: TriangleAlert, color: 'orange' },
 ];
 
 function initialTrack(): TrackDocument {
@@ -71,6 +73,7 @@ export default function App() {
   const [armed, setArmed] = useState<PropKind | null>(null);
   const [driveMode, setDriveMode] = useState<DriveMode>('auto');
   const [autoConfig, setAutoConfig] = useState<AutoDriveConfig>(loadAutoConfig);
+  const [experimentalPhysicsV4, setExperimentalPhysicsV4] = useState(false);
   const [pose, setPose] = useState<CarPose>(() => spawnPose(initialTrack()));
   const [replay, setReplay] = useState<Replay | null>(null);
   const [replayTime, setReplayTime] = useState(0);
@@ -106,6 +109,8 @@ export default function App() {
   const autoBridges = useMemo(() => getAutoBridges(track).length, [track]);
   const canDrive = track.points.length >= 2;
   const activeReplay = replay ?? runtimeReplay;
+  const currentReplayFrame = driveMode === 'replay' && activeReplay
+    ? replayAt(activeReplay, replayTime) : null;
   const activeRuntimeTrack = driveMode === 'replay'
     ? activeReplay?.schema === 'f1rl_racing_sandbox_replay_v2'
       ? activeReplay.track_preview ?? runtimeCatalog?.tracks.find((item) => item.track_id === activeReplay.provenance.track_id)
@@ -119,8 +124,8 @@ export default function App() {
     ? activeRuntimeTrack?.preview ?? (replayTrackUnavailable ? REPLAY_TRACK_UNAVAILABLE : track)
     : track;
   const sceneRoadSamples = mode === 'drive' ? activeRuntimeTrack?.road_samples : undefined;
-  const activePose = driveMode === 'replay' && activeReplay ? (() => {
-    const p = replayAt(activeReplay, replayTime);
+  const activePose = currentReplayFrame ? (() => {
+    const p = currentReplayFrame;
     return { x: p.position[0], y: p.position[1], z: p.position[2], heading: p.heading_rad, speed: p.speed_mps,
       ...(p.orientation_wxyz ? { orientation_wxyz: p.orientation_wxyz } : {}) };
   })() : runtimeStatus?.latest_frame ? {
@@ -210,11 +215,11 @@ export default function App() {
       // Checkpoint gates always span the road from edge to edge; the editor
       // only needs the route location, never manual lateral alignment.
       const movingKind = track.props.find((p) => p.id === moveId)?.kind;
-      updateProp(moveId, { t: target.t, offset: movingKind === 'checkpoint' ? 0 : offset });
+      updateProp(moveId, (movingKind === 'gap' || movingKind === 'jump') ? { t: target.t } : { t: target.t, offset: movingKind === 'checkpoint' ? 0 : offset });
     } else if (kind && PROP_KINDS.includes(kind)) {
       const id = newId();
       changeTrack((prev) => ({ ...prev,
-        props: [...prev.props, { id, kind, t: target.t, offset: kind === 'checkpoint' ? 0 : offset, rotation: 0 }],
+        props: [...prev.props, { id, kind, t: target.t, offset: kind === 'checkpoint' ? 0 : kind === 'gap' ? 3 : kind === 'jump' ? 3.7 : offset, rotation: 0 }],
       }));
       setSelected(id);
       setArmed(null);
@@ -226,7 +231,7 @@ export default function App() {
     const shortcuts = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.ctrlKey || e.altKey || e.metaKey) return;
       if (e.code === 'Escape') { setArmed(null); setSelected(null); return; }
-      if (/^Digit[1-6]$/.test(e.code)) {
+      if (/^Digit[1-8]$/.test(e.code)) {
         const kind = PROP_KINDS[Number(e.code.slice(-1)) - 1];
         setArmed((current) => current === kind ? null : kind);
       }
@@ -277,7 +282,7 @@ export default function App() {
     let createdSessionId: string | null = null;
     try {
       const created = trackRequest.kind === 'custom'
-        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : driveMode === 'auto' ? 'auto' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : undefined, traceId, driveMode === 'auto' ? autoConfig : undefined)
+        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : driveMode === 'auto' ? 'auto' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : undefined, traceId, driveMode === 'auto' ? autoConfig : undefined, driveMode === 'auto' && experimentalPhysicsV4)
         : driveMode === 'manual'
           ? await runtimeClient.createManualSession(trackRequest.trackId, runtimeSeed)
           : driveMode === 'auto'
@@ -537,6 +542,7 @@ export default function App() {
               liveFrame={mode === 'drive' && driveMode !== 'replay' ? runtimeStatus?.latest_frame ?? null : null}
               liveStatus={mode === 'drive' && driveMode !== 'replay' ? runtimeStatus?.status ?? null : null}
               simulationSpeed={mode === 'drive' && driveMode !== 'replay' ? runtimeStatus?.speed_multiplier ?? 1 : 1}
+              cameraEpoch={mode === 'build' ? 'build' : driveMode === 'replay' ? 'replay' : 'live'}
               onSelect={setSelected} onPlace={onPlace}/>
           </Suspense>
           {mode === 'build' && runtimeTrackSelection.kind === 'custom'
@@ -544,11 +550,28 @@ export default function App() {
             <div className="build-validation-error" role="alert"><TriangleAlert size={15}/><span>Python Physics rejected this map · {runtimeError}</span></div>}
           {mode === 'build' && <>
             <div className="world-label"><span className="live-glow"/> 3D EDITOR <span>·</span> {Math.round(trackMeters)}M ROAD {autoBridges > 0 && <span>· {autoBridges} AUTO BRIDGE{autoBridges > 1 ? 'S' : ''}</span>}</div>
+            <button className="runtime-validate-track" disabled={runtimeBusy}
+              aria-label="Load T3 V4 jump test map"
+              onClick={() => { changeTrack(() => createT3V4JumpTrack()); setExperimentalPhysicsV4(true);
+                setSelected(null); setArmed(null); setToast('Development V4 jump map loaded. Validate in Python before Drive.'); }}>
+              LOAD V4 JUMP TEST MAP (3.7 M)
+            </button>
             <div className="build-instructions"><MousePointer2 size={16}/> {armed ? 'Click the road to place ' + armed : 'Drag an item from the hotbar onto the track · keys 1–6'}</div>
             {selectedProp && <div className="prop-inspector">
               <div className="inspector-top"><strong>{selectedProp.kind[0].toUpperCase() + selectedProp.kind.slice(1)}</strong><button aria-label="Close selection" onClick={() => setSelected(null)}><X size={16}/></button></div>
-              {selectedProp.kind === 'checkpoint' || selectedProp.kind === 'booster'
-                ? <p className="inspector-auto">Auto-fitted to road · drag to reposition</p>
+              {selectedProp.kind === 'checkpoint' || selectedProp.kind === 'booster' || selectedProp.kind === 'gap' || selectedProp.kind === 'jump'
+                ? selectedProp.kind === 'gap'
+                  ? <label>Gap length (2-6 metres)
+                    <input aria-label="Gap length metres" type="number" min="2" max="6" step="0.25"
+                      value={selectedProp.offset} onChange={e => updateProp(selectedProp.id, { offset: Number(e.target.value) })}/>
+                    <small>Physics V4 development only; require safe takeoff and landing</small>
+                  </label>
+                  : selectedProp.kind === 'jump'
+                    ? <p className="inspector-auto">Physics V4 development only: fixed 3.7 m void,
+                      16 m launch, C1 receiving apron and absorption trough.
+                      Use a straight road of at least 10 m width, adequate approach/runout and explicit V4.
+                      No arbitrary jump size or Physics override.</p>
+                    : <p className="inspector-auto">Auto-fitted to road - drag to reposition</p>
                 : <>
                     <span className="inspector-label">ROTATION</span>
                     <div className="inspector-actions">
@@ -568,13 +591,18 @@ export default function App() {
               <button className={driveMode === 'replay' ? 'selected' : ''} disabled={!activeReplay || runtimeBusy} onClick={() => {setDriveMode('replay'); setPlaying(false);}}>Replay</button>
             </div>
             <div className="speed-readout"><span>SPEED</span><strong>{Math.round(activePose.speed * 3.6)}</strong><small>KM/H</small></div>
+            {currentReplayFrame?.grounded !== undefined && <div className="replay-ground-state" aria-label="Replay Physics ground state">
+              {currentReplayFrame.grounded ? 'RECORDED GROUNDED' : 'RECORDED AIRBORNE'}
+            </div>}
             <div className="drive-warning"><TriangleAlert size={14}/>{driveMode === 'auto'
               ? `Auto Drive · Python Physics · ${runtimeTrackSelection.kind === 'custom' ? 'custom' : 'TRAIN'} development`
               : driveMode === 'manual'
               ? `Manual Python physics · ${runtimeTrackSelection.kind === 'custom' ? 'custom' : 'TRAIN'} development only`
               : driveMode === 'ppo'
                 ? `Frozen PPO · ${runtimeTrackSelection.kind === 'custom' ? 'custom' : 'TRAIN'} development · scientific admission disabled`
-                : 'Recorded frames · imported data is not independently verified'}</div>
+                : replay
+                  ? 'Imported replay: recorded frames are not independently verified'
+                  : 'Local Python Runtime replay: recorded development frames, scientific admission disabled'}</div>
             {driveMode !== 'replay' ? <>
               <div className="runtime-panel">
                 {driveMode === 'ppo' && <label>FROZEN MODEL<select aria-label="Frozen PPO model" value={modelId} onChange={(event) => setModelId(event.target.value)} disabled={!runtimeCatalog || runtimeBusy}>
@@ -604,11 +632,21 @@ export default function App() {
                 {driveMode === 'auto' && <AutoDriveSettings config={autoConfig} onChange={setAutoConfig}
                   disabled={runtimeBusy} physicalCapKmh={runtimeStatus?.mode === 'auto'
                     ? runtimeStatus.effective_max_speed_kmh : undefined}/>}
+                {driveMode === 'auto' && runtimeTrackSelection.kind === 'custom' && <label>
+                  <input aria-label="Experimental Physics V4" type="checkbox"
+                    checked={experimentalPhysicsV4} disabled={runtimeBusy}
+                    onChange={(event) => setExperimentalPhysicsV4(event.target.checked)}/>
+                  Experimental Physics V4 / Race V4 (development only; may fail closed)
+                </label>}
                 <label>SEED<input aria-label="Episode seed" type="number" min="0" max="4294967295" step="1" value={runtimeSeed} onChange={(event) => setRuntimeSeed(Number(event.target.value))} disabled={runtimeBusy}/></label>
                 {catalogError ? <p className="runtime-error"><TriangleAlert size={15}/><span>{catalogError}. Start the Python runtime to run episodes.</span><button onClick={() => setCatalogError('')}>Retry connection</button></p> : !runtimeCatalog ?
                   <p className="runtime-loading"><LoaderCircle size={15}/> Connecting to local Python runtime…</p> : null}
                 {runtimeError && <p className="runtime-error"><TriangleAlert size={15}/>{runtimeError}</p>}
                 {runtimeStatus && <>
+                  <div className="runtime-physics-profile" aria-label="Authoritative Physics profile">
+                    PHYSICS {runtimeStatus.physics?.ground_motion_version ?? 'not reported'}
+                    {runtimeStatus.physics && ` | SHA ${runtimeStatus.physics.sha256.slice(0, 12)}`}
+                  </div>
                   <div className="runtime-progress"><span>{runtimeStatus.status.toUpperCase()} · {runtimeStatus.steps}/{runtimeStatus.max_steps} STEPS</span><progress max="1" value={runtimeStatus.step_progress}/></div>
                   {runtimeStatus.latest_frame && <div className="runtime-telemetry">
                     <span>POSITION M <b>{runtimeStatus.latest_frame.position.map((value) => value.toFixed(1)).join(', ')}</b></span>

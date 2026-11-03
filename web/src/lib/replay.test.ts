@@ -95,3 +95,33 @@ describe('read-only replay', () => {
     expect(() => parseReplay(wrongTrack)).toThrow(/does not match replay provenance/);
   });
 });
+
+
+describe('Physics contact metadata in replay interpolation', () => {
+  it('never reports airborne before the certified incoming Physics frame', () => {
+    const r = parseReplay({...fixture,frames:[
+      {time_s:0,position:[0,.5,0],heading_rad:0,speed_mps:0,grounded:true,physical_event_types:[]},
+      {time_s:.1,position:[0,.8,0],heading_rad:0,speed_mps:2,grounded:false,physical_event_types:['takeoff']},
+      {time_s:.2,position:[0,.5,0],heading_rad:0,speed_mps:0,grounded:true,physical_event_types:['landing']},
+    ]});
+    expect(replayAt(r,.05).grounded).toBe(true);
+    expect(replayAt(r,.05).physical_event_types).toEqual([]);
+    expect(replayAt(r,.1).grounded).toBe(false);
+    expect(replayAt(r,.15).grounded).toBe(false);
+    expect(replayAt(r,.15).physical_event_types).toEqual(['takeoff']);
+    expect(replayAt(r,.2).grounded).toBe(true);
+  });
+});
+
+describe('rounded replay timeline vs authoritative floating-point event tick', () => {
+  it('shows a certified landing at slider 0.35 for a frame time 0.35000000000000003', () => {
+    const r = parseReplay({...fixture,frames:[
+      {time_s:0.34,position:[0,.61,0],heading_rad:0,speed_mps:1,grounded:false,physical_event_types:[]},
+      {time_s:0.35000000000000003,position:[0,.58,0],heading_rad:0,speed_mps:1,grounded:true,physical_event_types:['landing']},
+      {time_s:0.36,position:[0,.55,0],heading_rad:0,speed_mps:1,grounded:true,physical_event_types:[]},
+    ]});
+    expect(replayAt(r,0.3499).grounded).toBe(false);
+    expect(replayAt(r,0.35).grounded).toBe(true);
+    expect(replayAt(r,0.35).physical_event_types).toEqual(['landing']);
+  });
+});

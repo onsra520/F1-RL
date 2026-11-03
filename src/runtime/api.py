@@ -45,6 +45,7 @@ class CreateSessionRequest(BaseModel):
     mode: Literal["ppo", "manual", "auto"] = "ppo"
     custom_track: dict[str, object] | None = None
     auto_drive_config: AutoDriveConfig | None = None
+    physics_profile: Literal["legacy_v3", "experimental_v4"] = "legacy_v3"
 
     @model_validator(mode="after")
     def controller_matches_mode(self):
@@ -54,6 +55,9 @@ class CreateSessionRequest(BaseModel):
             raise ValueError(f"{self.mode} mode cannot select model_id")
         if self.mode != "auto" and self.auto_drive_config is not None:
             raise ValueError("auto_drive_config is allowed only in Auto Drive")
+        if self.physics_profile == "experimental_v4" and (
+                self.mode != "auto" or self.custom_track is None):
+            raise ValueError("experimental Physics v4 is custom Auto Drive only")
         if self.custom_track is None and self.track_id is None:
             raise ValueError("registered sessions require track_id")
         if self.custom_track is not None and self.track_id is not None:
@@ -222,6 +226,12 @@ def create_app(
                     payload.custom_track,
                     request.app.state.catalog,
                 )
+                if (any(item["kind"] in ("gap", "jump") for item in converted.source_document["props"])
+                        and (payload.mode != "auto" or payload.physics_profile != "experimental_v4")):
+                    raise RuntimeFault(
+                        "requires_v4", "jump-gap road requires custom Auto Drive with explicit Physics V4 development profile",
+                        status_code=422,
+                    )
                 if payload.mode == "ppo" and not converted.ppo_compatible:
                     raise RuntimeFault("incompatible_model", "custom track observation/action spaces are incompatible with frozen PPO models", status_code=422)
             track_id = converted.track_id if converted is not None else payload.track_id
@@ -235,6 +245,7 @@ def create_app(
                 custom_factory=None if converted is None else converted.factory,
                 custom_track_sha256=None if converted is None else converted.track_sha256,
                 auto_drive_config=payload.auto_drive_config,
+                physics_profile=payload.physics_profile,
             )
         except RuntimeFault:
             raise

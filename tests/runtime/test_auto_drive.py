@@ -216,3 +216,17 @@ def test_profile_respects_obstacle_speed_and_grade_limits_without_hitbox_change(
     assert ctrl._hazards[0].safe_lateral_m < 0
     flat = controller([(0, 0, 0), (0, 0, 80)], (0, 0.5, 5))
     assert flat._target_speed(5) >= ctrl._target_speed(45)
+
+
+def test_speed_presets_change_actual_throttle_without_changing_physics_or_vehicle_cap():
+    """At equal speed target, the driver profiles must produce measured distinct control."""
+    actions = {}
+    for name in ("normal", "racing", "hyper"):
+        c = controller([(0, 0, 0), (0, 0, 150)], (0, 0.5, 2),
+                       config=AutoDriveConfig(driving_style="centerline",
+                                              speed_profile=name,
+                                              target_max_speed_kmh=120.0))
+        actions[name] = c.predict(None)
+        assert c.max_speed == VEHICLE.max_ground_speed
+    assert 0 < actions["normal"][1] < actions["racing"][1] < actions["hyper"][1] <= 1.0
+    assert all(action[2] == 0 for action in actions.values())

@@ -197,10 +197,19 @@ export function replayAt(replay: Replay, time: number): ReplayFrame {
   }
   const b = frames[lo], a = frames[Math.max(0, lo - 1)];
   if (b === a) return b;
+  // Range inputs quantize time to decimals such as 0.35, while a Physics
+  // timestamp can be 0.35000000000000003. Interpret sub-nanosecond binary
+  // rounding as the *same certified frame*, never as an earlier tick.
+  // Do not enlarge this to a visual frame tolerance: that would announce
+  // airborne/landing/collision events before their actual Physics samples.
+  if (Math.abs(b.time_s - bounded) <= 1e-10) return b;
   const u = (bounded - a.time_s) / (b.time_s - a.time_s);
   const turn = Math.atan2(Math.sin(b.heading_rad - a.heading_rad), Math.cos(b.heading_rad - a.heading_rad));
   return {
-    ...b,
+    // Discrete Physics fields belong to the last certified sample at or
+    // before the requested replay time. Never preview future "airborne",
+    // "landing", collision or checkpoint events between frames.
+    ...(u >= 1 ? b : a),
     time_s: bounded,
     position: [0, 1, 2].map((i) => a.position[i] + (b.position[i] - a.position[i]) * u) as [number, number, number],
     heading_rad: a.heading_rad + turn * u,

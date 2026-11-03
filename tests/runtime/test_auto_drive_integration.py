@@ -30,3 +30,44 @@ def test_right_vs_centerline_changes_real_physics_trajectory_and_replay_snapshot
         assert results["right"]["action"]["steering"] != results["centerline"]["action"]["steering"]
     finally:
         manager.shutdown()
+
+def test_right_hand_track_never_crosses_centerline_on_original_t05_s_curve():
+    """Regression: at seed 412 the former auto offset produced -0.105 m at tick 86."""
+    import json
+
+    from src.runtime.auto_drive import AutoDriveController
+    from src.runtime.custom_tracks import convert_custom_track
+    from src.simulation.geometry.vector import Vec3
+
+    fixture = ROOT / "tests/runtime/fixtures/t05-original-obstacle-track.json"
+    catalog = RuntimeCatalog(ROOT)
+    converted = convert_custom_track(json.loads(fixture.read_text(encoding="utf-8")), catalog)
+    config = AutoDriveConfig(driving_style="right")
+    manager = RuntimeSessionManager(catalog)
+    env = converted.factory.create()
+    try:
+        session = manager.create(model_id=None, track_id=converted.track_id, seed=412, mode="auto",
+                                 custom_factory=converted.factory,
+                                 custom_track_sha256=converted.track_sha256, auto_drive_config=config)
+        session.start()
+        assert session.wait(120), "Original T05 regression must terminate"
+        replay = session.replay()
+        assert replay["result"]["successful_finish"], replay["result"]
+        env.reset(seed=412)
+        controller = AutoDriveController(
+            env, converted.factory.navigation, converted.factory.vehicle_parameters,
+            min(surface.width for surface in converted.factory.track.surfaces),
+            config, obstacles=converted.factory.track.obstacles,
+            body_geometry=converted.factory.physics_config.body_geometry,
+        )
+        lateral = []
+        for frame in replay["frames"]:
+            position = Vec3(*frame["position"])
+            distance = controller.route.project(position, next_checkpoint_index=0).progress_meters
+            origin = controller._point_at(distance)
+            tx, tz = controller._tangent_at(distance)
+            lateral.append((position.x - origin.x) * tz - (position.z - origin.z) * tx)
+        assert min(lateral) >= -1e-4, (min(lateral), lateral.index(min(lateral)))
+    finally:
+        env.close()
+        manager.shutdown()

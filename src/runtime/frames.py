@@ -140,6 +140,18 @@ def build_runtime_frame(
         *completed_checkpoint_ids_before,
         *race.get("completed_checkpoint_ids", ()),
     )))
+    # The snapshot may expose only a generic Python event class
+    # (FlightTransition). The authoritative physics transition audit has the
+    # actual takeoff/landing kind; forward that kind to Replay unchanged.
+    physics = info.get("physics") or {}
+    transition = physics.get("transition") if isinstance(physics, dict) else None
+    events = transition.get("events", ()) if isinstance(transition, dict) else ()
+    physical_event_types = list(snapshot.get("physical_event_types", ()))
+    if events:
+        if not all(isinstance(event, dict) and isinstance(event.get("kind"), str)
+                   and 0 < len(event["kind"]) <= 200 for event in events):
+            raise ValueError("malformed certified physics transition events")
+        physical_event_types = [event["kind"] for event in events]
     outcome = info.get("research_outcome")
     terminal_outcome = None
     if isinstance(outcome, dict):
@@ -172,6 +184,6 @@ def build_runtime_frame(
         checkpoint_crossings=list(race.get("directed_crossings", ())),
         collision_count=collision_count_before + len(collision_ids),
         collision_ids=collision_ids,
-        physical_event_types=list(snapshot.get("physical_event_types", ())),
+        physical_event_types=physical_event_types,
         outcome=terminal_outcome,
     )

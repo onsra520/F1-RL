@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from 'three';
-import { smoothFollowVector } from './cameraFollow';
+import { shouldReanchorAfterRenderStall, smoothFollowVector } from './cameraFollow';
 
 describe('camera follow smoothing', () => {
   it('bounds distance travelled by camera during abrupt pose updates', () => {
@@ -34,5 +34,19 @@ describe('camera follow smoothing', () => {
     smoothFollowVector(current, target, Number.NaN);
     expect(current.toArray()).toEqual([1, 2, 3]);
     expect(target.toArray()).toEqual([100, 200, 300]);
+  });
+});
+
+describe('real browser render suspension camera recovery', () => {
+  it('never reanchors on ordinary 60–240 Hz animation or jitter', () => {
+    for (const gap of [0, 4.2, 8.3, 16.7, 50, 200, 500, 750]) {
+      expect(shouldReanchorAfterRenderStall(gap)).toBe(false);
+    }
+  });
+  it('reanchors only after a genuine no-render interval', () => {
+    expect(shouldReanchorAfterRenderStall(751)).toBe(true);
+    expect(shouldReanchorAfterRenderStall(9823.5)).toBe(true);
+    expect(shouldReanchorAfterRenderStall(Number.NaN)).toBe(false);
+    expect(shouldReanchorAfterRenderStall(Infinity)).toBe(false);
   });
 });

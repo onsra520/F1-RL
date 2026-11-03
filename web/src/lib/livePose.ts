@@ -92,7 +92,7 @@ export class LivePoseInterpolator {
       return false;
     }
 
-    this.previous = origin ? { ...origin, pose: visiblePose } : next;
+    this.previous = { ...(origin ?? next), pose: visiblePose };
     this.latest = next;
     this.interpolationMs = duration;
     this.heldPose = null;
@@ -145,6 +145,20 @@ export class LivePoseInterpolator {
     this.previous = null;
     this.resumeFromHeldPose = false;
     this.terminal = true;
+  }
+
+  /**
+   * A user-requested Reset changes the authoritative physics epoch to tick 0.
+   * Preserve the last *visible* pose until tick 0 arrives, then blend back
+   * at the configured visual-speed budget rather than teleporting in one rAF.
+   */
+  prepareRestart(now: number): void {
+    const visible = this.sample(now);
+    this.reset();
+    if (visible) {
+      this.heldPose = visible;
+      this.resumeFromHeldPose = true;
+    }
   }
 
   reset(): void {

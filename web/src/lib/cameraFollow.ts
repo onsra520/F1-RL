@@ -1,5 +1,13 @@
 import type { Vector3 } from 'three';
 
+// Browser suspension may occur without visibilitychange (OS compositor,
+// device sleep, remote desktop stalls). A first re-render after a large
+// *actual render* gap must re-anchor to the accepted Physics position.
+// Ordinary packets are never a reason to snap the camera.
+export function shouldReanchorAfterRenderStall(elapsedMs: number): boolean {
+  return Number.isFinite(elapsedMs) && elapsedMs > 750;
+}
+
 /**
  * Smooth visual follow motion only; does not alter the simulated car pose.
  *

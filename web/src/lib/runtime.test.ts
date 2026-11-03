@@ -162,6 +162,26 @@ describe('Python runtime HTTP client', () => {
     });
   });
 
+  it('opts into Physics V4 only for a custom Auto Drive request', async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(
+      JSON.stringify({ session_id: 'experimental-auto' }), { status: 201 },
+    )));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new RuntimeClient();
+    await client.createCustomSession(track.preview, 'auto', 412, undefined, 'trace-412', undefined, true);
+    const autoPayload = JSON.parse(String((fetchMock.mock.calls[0] as [URL, RequestInit])[1].body));
+    expect(autoPayload.physics_profile).toBe('experimental_v4');
+    expect(autoPayload.mode).toBe('auto');
+    expect(autoPayload.custom_track).toEqual(track.preview);
+    expect(autoPayload.track_id).toBeUndefined();
+    await client.createCustomSession(track.preview, 'manual', 412, undefined, undefined, undefined, true);
+    const manualPayload = JSON.parse(String((fetchMock.mock.calls[1] as [URL, RequestInit])[1].body));
+    expect(manualPayload.physics_profile).toBeUndefined();
+    await client.createCustomSession(track.preview, 'auto', 412);
+    const defaultPayload = JSON.parse(String((fetchMock.mock.calls[2] as [URL, RequestInit])[1].body));
+    expect(defaultPayload.physics_profile).toBeUndefined();
+  });
+
   it('validates versioned live events and rejects frames from another session', () => {
     const frame = {
       schema_version: 'f1rl_runtime_frame_v1', tick: 0, time_s: 0, dt_s: 0.1,

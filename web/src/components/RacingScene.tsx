@@ -3,9 +3,9 @@ import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei';
 import { BufferAttribute, BufferGeometry, Camera, DoubleSide, Plane, Quaternion, Raycaster, Vector2, Vector3, type Group } from 'three';
 import type { PropKind, RoadSample, TrackDocument, TrackProp } from '../lib/track';
-import { pointAt, sampleRoad } from '../lib/track';
+import { pointAt, sampleRoad, visibleRoadSections } from '../lib/track';
 import { isRuntimePoseTerminal, LivePoseInterpolator, type LivePose, type LivePoseFrame } from '../lib/livePose';
-import { smoothFollowVector } from '../lib/cameraFollow';
+import { shouldReanchorAfterRenderStall, smoothFollowVector } from '../lib/cameraFollow';
 import type { RuntimeSessionStatus } from '../lib/runtime';
 import SolidRoad from './SolidRoad';
 import { BoosterSurface, CheckpointGate } from './RoadAttachments';
@@ -13,15 +13,18 @@ import { BoosterSurface, CheckpointGate } from './RoadAttachments';
 export type CarPose = LivePose;
 type Mode = 'build' | 'drive';
 
-function ribbon(samples: RoadSample[], left: number, right: number, offsetY: number) {
+function ribbon(sections: RoadSample[][], left: number, right: number, offsetY: number) {
   const positions: number[] = [], indices: number[] = [];
-  for (const s of samples) {
-    positions.push(s.x + s.nx * left, s.y + offsetY, s.z + s.nz * left);
-    positions.push(s.x + s.nx * right, s.y + offsetY, s.z + s.nz * right);
-  }
-  for (let i = 0; i < samples.length - 1; i++) {
-    const k = i * 2;
-    indices.push(k, k + 2, k + 1, k + 1, k + 2, k + 3);
+  for (const section of sections) {
+    const start = positions.length / 3;
+    for (const s of section) {
+      positions.push(s.x + s.nx * left, s.y + offsetY, s.z + s.nz * left);
+      positions.push(s.x + s.nx * right, s.y + offsetY, s.z + s.nz * right);
+    }
+    for (let i = 0; i < section.length - 1; i++) {
+      const k = start + i * 2;
+      indices.push(k, k + 2, k + 1, k + 1, k + 2, k + 3);
+    }
   }
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
@@ -31,11 +34,12 @@ function ribbon(samples: RoadSample[], left: number, right: number, offsetY: num
 }
 
 function Road({ track, samples }: { track: TrackDocument; samples: RoadSample[] }) {
-  const asphalt = useMemo(() => ribbon(samples, -track.width / 2, track.width / 2, 0.08), [samples, track.width]);
-  const shoulder = useMemo(() => ribbon(samples, -track.width / 2 - 0.7, track.width / 2 + 0.7, -0.1), [samples, track.width]);
-  const left = useMemo(() => ribbon(samples, -track.width / 2 + 0.55, -track.width / 2 + 0.75, 0.10), [samples, track.width]);
-  const right = useMemo(() => ribbon(samples, track.width / 2 - 0.75, track.width / 2 - 0.55, 0.10), [samples, track.width]);
-  const center = useMemo(() => ribbon(samples, -0.075, 0.075, 0.11), [samples]);
+  const sections = useMemo(() => visibleRoadSections(track, samples), [track, samples]);
+  const asphalt = useMemo(() => ribbon(sections, -track.width / 2, track.width / 2, 0.08), [sections, track.width]);
+  const shoulder = useMemo(() => ribbon(sections, -track.width / 2 - 0.7, track.width / 2 + 0.7, -0.1), [sections, track.width]);
+  const left = useMemo(() => ribbon(sections, -track.width / 2 + 0.55, -track.width / 2 + 0.75, 0.10), [sections, track.width]);
+  const right = useMemo(() => ribbon(sections, track.width / 2 - 0.75, track.width / 2 - 0.55, 0.10), [sections, track.width]);
+  const center = useMemo(() => ribbon(sections, -0.075, 0.075, 0.11), [sections]);
   useEffect(() => () => { asphalt.dispose(); shoulder.dispose(); left.dispose(); right.dispose(); center.dispose(); },
     [asphalt, shoulder, left, right, center]);
   return <>
@@ -44,12 +48,13 @@ function Road({ track, samples }: { track: TrackDocument; samples: RoadSample[] 
     <mesh geometry={left}><meshBasicMaterial color="#e3e9df" side={DoubleSide} /></mesh>
     <mesh geometry={right}><meshBasicMaterial color="#e3e9df" side={DoubleSide} /></mesh>
     <mesh geometry={center}><meshBasicMaterial color="#b4a781" transparent opacity={0.35} side={DoubleSide} /></mesh>
-    <SolidRoad track={track} samples={samples} />
+    <SolidRoad track={track} sections={sections} />
   </>;
 }
 
-function CarModel({ pose, livePose, follow, simulationSpeed }: {
-  pose: CarPose; livePose: LivePoseInterpolator | null; follow: boolean; simulationSpeed: number;
+function CarModel({ pose, livePose, follow, simulationSpeed, cameraEpoch }: {
+  pose: CarPose; livePose: LivePoseInterpolator | null; follow: boolean;
+  simulationSpeed: number; cameraEpoch: 'build' | 'live' | 'replay';
 }) {
   const car = useRef<Group>(null);
   const { camera } = useThree();
@@ -60,8 +65,36 @@ function CarModel({ pose, livePose, follow, simulationSpeed }: {
   const rotation = useMemo(() => new Quaternion(), []);
   const worldUp = useMemo(() => new Vector3(0, 1, 0), []);
   const cameraInitialized = useRef(false);
+  const lastEpoch = useRef(cameraEpoch);
+  const wasHidden = useRef(false);
+  const lastRenderMs = useRef<number | null>(null);
+  useEffect(() => {
+    const visibilityChanged = () => {
+      // A hidden browser is not rendering: re-anchor at the authoritative
+      // pose on the FIRST visible frame rather than leaving the camera far
+      // behind. This is never a Physics/vehicle position override.
+      if (document.hidden) wasHidden.current = true;
+    };
+    document.addEventListener('visibilitychange', visibilityChanged);
+    return () => document.removeEventListener('visibilitychange', visibilityChanged);
+  }, []);
   useFrame((_, delta) => {
-    const current = livePose?.sample(performance.now()) ?? pose;
+    const now = performance.now();
+    if (lastRenderMs.current !== null && shouldReanchorAfterRenderStall(now - lastRenderMs.current)) {
+      cameraInitialized.current = false;
+    }
+    lastRenderMs.current = now;
+    if (lastEpoch.current !== cameraEpoch) {
+      // An explicit Finish -> Replay starts a different camera epoch.
+      // Reset at the user-requested mode change, not each telemetry packet.
+      lastEpoch.current = cameraEpoch;
+      cameraInitialized.current = false;
+    }
+    if (wasHidden.current && !document.hidden) {
+      wasHidden.current = false;
+      cameraInitialized.current = false;
+    }
+    const current = livePose?.sample(now) ?? pose;
     if (!car.current) return;
     // Python VehicleState.position is the body reference centre, ride_height=0.5m.
     // Never translate an authoritative physics frame vertically.
@@ -124,7 +157,7 @@ function CarModel({ pose, livePose, follow, simulationSpeed }: {
 }
 
 const labelColors: Record<PropKind, string> = {
-  bridge: '#8396a5', ramp: '#eba65a', barrier: '#ef714f', cone: '#e08d45',
+  bridge: '#8396a5', ramp: '#eba65a', gap: '#fcab56', jump: '#c6ec75', barrier: '#ef714f', cone: '#e08d45',
   booster: '#b7ed6b', checkpoint: '#74c7ec',
 };
 
@@ -135,7 +168,7 @@ function TrackObject({ prop, track, selected, onPick, onRelease }: {
   onPick: (event: ThreeEvent<PointerEvent>) => void;
   onRelease: () => void;
 }) {
-  const p = pointAt(track, prop.t, prop.offset);
+  const p = pointAt(track, prop.t, (prop.kind === 'gap' || prop.kind === 'jump') ? 0 : prop.offset);
   const angle = p.heading + prop.rotation;
   const color = labelColors[prop.kind];
   if (prop.kind === 'checkpoint' || prop.kind === 'booster') {
@@ -151,7 +184,7 @@ function TrackObject({ prop, track, selected, onPick, onRelease }: {
     {selected && <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
       <ringGeometry args={[3.0, 3.18, 48]}/><meshBasicMaterial color="#d5f694" transparent opacity={0.94} side={DoubleSide} />
     </mesh>}
-    {(prop.kind === 'bridge' || prop.kind === 'ramp') && <group position={[track.width / 2 + 1.9, 0, 0]}>
+    {(prop.kind === 'bridge' || prop.kind === 'ramp' || prop.kind === 'gap' || prop.kind === 'jump') && <group position={[track.width / 2 + 1.9, 0, 0]}>
       {/* Selection handle lives beside the road: no overhead beam or ramp slab blocks the lane. */}
       <mesh castShadow position={[0, 0.9, 0]}>
         <cylinderGeometry args={[0.12, 0.12, 1.8, 8]}/><meshStandardMaterial color="#86999b"/>
@@ -172,9 +205,10 @@ function TrackObject({ prop, track, selected, onPick, onRelease }: {
 }
 
 
-function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, livePose, simulationSpeed, roadSamples, onCamera, onDragChange }: {
+function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, livePose, simulationSpeed, cameraEpoch, roadSamples, onCamera, onDragChange }: {
   track: TrackDocument; mode: Mode; selectedId: string | null; armed: PropKind | null;
-  pose: CarPose; livePose: LivePoseInterpolator | null; simulationSpeed: number; roadSamples?: RoadSample[]; onCamera: (camera: Camera) => void;
+  pose: CarPose; livePose: LivePoseInterpolator | null; simulationSpeed: number;
+  cameraEpoch: 'build' | 'live' | 'replay'; roadSamples?: RoadSample[]; onCamera: (camera: Camera) => void;
   onSelect: (id: string | null) => void;
   onPlace: (kind: PropKind | null, x: number, z: number, id?: string) => void;
   onDragChange: (id: string | null) => void;
@@ -205,13 +239,15 @@ function World({ track, mode, selectedId, onSelect, onPlace, armed, pose, livePo
     </mesh>
     {track.props.map((p) => <TrackObject key={p.id} prop={p} track={track} selected={selectedId === p.id}
       onPick={(e) => choose(e, p.id)} onRelease={stopDrag}/>)}
-    <CarModel pose={pose} livePose={livePose} follow={mode === 'drive'} simulationSpeed={simulationSpeed}/>
+    <CarModel pose={pose} livePose={livePose} follow={mode === 'drive'}
+      simulationSpeed={simulationSpeed} cameraEpoch={cameraEpoch}/>
   </>;
 }
 
-export default function RacingScene({ track, mode, selectedId, armed, pose, roadSamples, liveFrame, liveStatus, simulationSpeed, onSelect, onPlace }: {
+export default function RacingScene({ track, mode, selectedId, armed, pose, roadSamples, liveFrame, liveStatus, simulationSpeed, cameraEpoch, onSelect, onPlace }: {
   track: TrackDocument; mode: Mode; selectedId: string | null; armed: PropKind | null; pose: CarPose; roadSamples?: RoadSample[];
   liveFrame: LivePoseFrame | null; liveStatus: RuntimeSessionStatus['status'] | null; simulationSpeed: number;
+  cameraEpoch: 'build' | 'live' | 'replay';
   onSelect: (id: string | null) => void;
   onPlace: (kind: PropKind | null, x: number, z: number, id?: string) => void;
 }) {
@@ -225,7 +261,11 @@ export default function RacingScene({ track, mode, selectedId, armed, pose, road
   const onCamera = (camera: Camera) => { cameraRef.current = camera; };
   useEffect(() => {
     if (liveFrame) livePose.push(liveFrame, performance.now());
-    else livePose.reset();
+    else if (liveStatus === 'running' && livePose.sample(performance.now())) {
+      // The backend has explicitly reset its epoch; do not render a
+      // one-frame jump from the old location to the new spawn.
+      livePose.prepareRestart(performance.now());
+    } else livePose.reset();
   }, [liveFrame, livePose]);
   useEffect(() => {
     if (liveStatus === 'paused') livePose.pause(performance.now());
@@ -273,7 +313,7 @@ export default function RacingScene({ track, mode, selectedId, armed, pose, road
   const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const kind = e.dataTransfer.getData('application/x-f1rl-prop') as PropKind;
-    if (mode !== 'build' || !['bridge', 'ramp', 'barrier', 'cone', 'booster', 'checkpoint'].includes(kind)) return;
+    if (mode !== 'build' || !['bridge', 'ramp', 'barrier', 'cone', 'booster', 'checkpoint', 'gap', 'jump'].includes(kind)) return;
     const rect = containerRef.current!.getBoundingClientRect();
     const ndc = new Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1,
                            -((e.clientY - rect.top) / rect.height) * 2 + 1);
@@ -293,7 +333,8 @@ export default function RacingScene({ track, mode, selectedId, armed, pose, road
     <Canvas shadows dpr={[1, 1.8]} camera={{ position: [65, 122, 108], fov: 52, near: 0.1, far: 650 }}>
       <Suspense fallback={null}>
         <World track={track} mode={mode} selectedId={selectedId} armed={armed} pose={pose}
-          livePose={mode === 'drive' ? livePose : null} simulationSpeed={simulationSpeed} roadSamples={roadSamples}
+          livePose={mode === 'drive' ? livePose : null} simulationSpeed={simulationSpeed}
+          cameraEpoch={cameraEpoch} roadSamples={roadSamples}
           onSelect={onSelect} onPlace={onPlace} onCamera={onCamera} onDragChange={setDragging}/>
         {mode === 'build' && <OrbitControls makeDefault target={[center.x, center.y, center.z]}
           enableDamping dampingFactor={0.09} enabled={!dragging}

@@ -160,7 +160,12 @@ class AutoDriveController:
         if cfg.driving_style == "centerline" or clearance == 0.0:
             return 0.0
         if cfg.driving_style == "right":
-            desired = cfg.lane_offset_m if cfg.lane_offset_m else min(self.track_width * 0.07, 0.8)
+            # The default right-hand corridor must leave room for dynamic
+            # corner-tracking error, not just centre the car on a nominal
+            # 0.8 m offset. Strict right-hand acceptance rejects even brief
+            # crossings of the centerline. Road-width/vehicle-edge clamps
+            # remain authoritative for narrow roads.
+            desired = cfg.lane_offset_m if cfg.lane_offset_m else min(self.track_width * 0.10, 1.1)
             return min(clearance, desired)
         # Inside of the next corner only, with bounded anticipation. No road-edge crossing.
         approaching = [(abs(cd - distance), curvature, sign)
@@ -311,7 +316,7 @@ class AutoDriveController:
             target_speed = min(target_speed, cfg.recovery_speed_mps * 0.5)
         desired_acceleration = float(np.clip((target_speed - speed) * 1.2,
                                             -self.vehicle.max_braking * cfg.braking_factor,
-                                            self.vehicle.max_acceleration * cfg.acceleration_factor))
+                                            self.vehicle.max_acceleration * min(1.0, cfg.acceleration_factor * {"normal": 1.0, "racing": 1.25, "hyper": 1.5}[cfg.speed_profile])))
         grade = self._grade_at(projection.progress_meters)
         gravity_along_route = -self.vehicle.gravity * grade / sqrt(1.0 + grade * grade)
         required_acceleration = desired_acceleration - gravity_along_route
