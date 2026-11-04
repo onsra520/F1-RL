@@ -51,6 +51,26 @@ class RuntimeFrame(BaseModel):
     outcome: RuntimeOutcome | None = None
 
 
+class RuntimeCollisionTerminal(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+
+    schema_version: Literal["f1rl_runtime_collision_failure_dev_v1"]
+    obstacle_ids: list[str] = Field(min_length=1)
+    last_accepted_tick: int = Field(ge=0)
+    witness_interval_s: tuple[float, float]
+    diagnostic_penalty: float
+    penalty_kind: Literal["runtime_diagnostic_not_gym_reward"]
+    physics_transition_accepted: Literal[False]
+    contact_time_certified: Literal[False]
+    scientific_evidence: Literal[False]
+
+    @model_validator(mode="after")
+    def increasing_interval(self):
+        if self.witness_interval_s[0] < 0 or self.witness_interval_s[1] <= self.witness_interval_s[0]:
+            raise ValueError("collision witness interval must increase")
+        return self
+
+
 class EpisodeResult(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
 
@@ -83,11 +103,22 @@ class ReplayDocument(BaseModel):
     label: str = Field(min_length=1, max_length=120)
     provenance: ReplayProvenance
     result: EpisodeResult
-    frames: list[RuntimeFrame] = Field(min_length=2, max_length=5001)
+    frames: list[RuntimeFrame] = Field(min_length=1, max_length=5001)
     auto_drive_config: dict[str, object] | None = None
+    collision_terminal: RuntimeCollisionTerminal | None = None
 
     @model_validator(mode="after")
     def ordered_frames(self):
+        # A collision on the first attempted step leaves only tick-zero.
+        # Do not manufacture a second frame solely for replay validation.
+        if len(self.frames) == 1 and self.collision_terminal is None:
+            raise ValueError("non-collision replay needs at least two frames")
+        if self.collision_terminal is not None:
+            terminal = self.collision_terminal
+            if (terminal.last_accepted_tick != self.frames[-1].tick or
+                    abs(terminal.witness_interval_s[0] - self.frames[-1].time_s) > 1e-7 or
+                    any(frame.collision_ids for frame in self.frames)):
+                raise ValueError("unscored collision must reference last accepted frame")
         if any(
             later.time_s <= earlier.time_s
             for earlier, later in zip(self.frames, self.frames[1:])

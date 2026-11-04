@@ -153,3 +153,36 @@ describe('rounded replay timeline vs authoritative floating-point event tick', (
     expect(replayAt(r,0.35).physical_event_types).toEqual(['landing']);
   });
 });
+
+describe('unscored development collision replay', () => {
+  it('accepts one authentic tick-zero frame and preserves out-of-band terminal', () => {
+    const hash = 'a'.repeat(64);
+    const base = {
+      schema: 'f1rl_racing_sandbox_replay_v2',
+      label: 'Auto Drive collision',
+      provenance: { dataset_split: 'DEVELOPMENT', runtime_mode: 'development',
+        source_sha256: hash, model_id: 'auto-drive', model_sha256: null,
+        track_id: 'custom', track_sha256: hash, seed: 412 },
+      result: { status: 'failed', valid_sample: false, successful_finish: false,
+        reason: 'collision', steps: 0, duration_s: 0, trace_sha256: hash },
+      frames: [{ tick: 0, time_s: 0, position: [0,0,0], heading_rad: 0, speed_mps: 0,
+        collision_ids: [] }],
+      collision_terminal: { schema_version: 'f1rl_runtime_collision_failure_dev_v1',
+        obstacle_ids: ['cone-000'], last_accepted_tick: 0,
+        witness_interval_s: [0, 0.016], diagnostic_penalty: -5,
+        penalty_kind: 'runtime_diagnostic_not_gym_reward',
+        physics_transition_accepted: false, contact_time_certified: false,
+        scientific_evidence: false },
+    };
+    const replay = parseReplay(base);
+    expect(replay.schema).toBe('f1rl_racing_sandbox_replay_v2');
+    if (replay.schema !== 'f1rl_racing_sandbox_replay_v2') throw new Error('wrong replay');
+    expect(replay.collision_terminal?.diagnostic_penalty).toBe(-5);
+    expect(replayAt(replay, 0).tick).toBe(0);
+    expect(() => parseReplay({ ...base, collision_terminal: {
+      ...base.collision_terminal, last_accepted_tick: 1 } })).toThrow();
+    expect(() => parseReplay({ ...base, collision_terminal: {
+      ...base.collision_terminal, physics_transition_accepted: true } })).toThrow();
+    expect(() => parseReplay({ ...base, collision_terminal: undefined })).toThrow();
+  });
+});
