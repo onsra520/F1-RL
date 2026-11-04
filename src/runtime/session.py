@@ -12,6 +12,7 @@ import numpy as np
 from src.runtime.auto_drive import AutoDriveController
 from src.runtime.catalog import MAX_RUNTIME_STEPS, RuntimeCatalog
 from src.runtime.drive_config import AutoDriveConfig
+from src.runtime.development_collision_terminal import DevelopmentCollisionTerminalEnv
 from src.runtime.frames import (
     EpisodeResult,
     ReplayDocument,
@@ -354,6 +355,12 @@ class RuntimeSession:
                     if self._custom_factory is None
                     else self._custom_factory.create()
                 )
+                # Only custom development Auto Drive opts in. Registered PPO and
+                # experimental v4 crash scoring keep their original contracts.
+                if (self.mode == "auto" and self._custom_factory is not None
+                        and self.track.physics_config.ground_motion_version ==
+                        "spatial_rotating_compliant_lifecycle_v3"):
+                    env = DevelopmentCollisionTerminalEnv(env)
                 if self.mode == "ppo":
                     assert self.model is not None
                     model = self.catalog.load_model(self.model.model_id, env=env)
@@ -416,7 +423,8 @@ class RuntimeSession:
         registered_ppo = self.mode == "ppo" and self._custom_factory is None
         status = (
             "cancelled" if cancelled
-            else "failed" if error or (registered_ppo and row.get("valid_sample") is not True)
+            else "failed" if (error or (registered_ppo and row.get("valid_sample") is not True)
+                              or outcome.get("kind") == "collision_terminal_development")
             else "finished"
         )
         trace_sha256 = row.get("trace_sha256")

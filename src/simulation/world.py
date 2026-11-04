@@ -496,10 +496,15 @@ def step_world(
                     f"v4 airborne/uncertain collision witness remains unscored: {details}",
                     failure_code="verified_obstacle_contact",
                 )
-            raise FlightPhysicsError(
+            # Preserve the research failure contract, but expose the witnessed
+            # obstacle identity to explicitly opted-in development runtimes.
+            # This is NOT a certified impact time, impulse, or scored crash.
+            error = FlightPhysicsError(
                 "flight/substep body hit obstacle: no scored impact response registered",
                 failure_code="verified_obstacle_contact",
             )
+            error.witnessed_obstacle_ids = tuple(sorted({obstacle.id for obstacle in body_hits}))
+            raise error
         candidate_query = replace(candidate_query, obstacles=tuple(body_hits))
 
     accepted, obstacle_events = resolve_obstacle_block(state.vehicle, candidate, candidate_query)
