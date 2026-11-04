@@ -42,7 +42,9 @@ jobs:
             ':(exclude)web/src/lib/autoDriveConfig.ts' \
             ':(exclude)web/src/lib/replay.test.ts' \
             ':(exclude)web/src/lib/replay.ts'
-          git diff --exit-code "$CANDIDATE" HEAD -- src tests web configs pyproject.toml
+          git diff --exit-code "$CANDIDATE" HEAD -- . \
+            ':(exclude).github/workflows/t6-runtime-acceptance.yml' \
+            ':(exclude)docs/architecture/T6-RELEASE-ACCEPTANCE-20261104.md'
           test -z "$(git status --porcelain)"
           echo "Historical T5 tree verified; candidate delta is limited to the six reviewed frontend files."
           echo "T5 full-regression evidence applies to its original tree, not the modified frontend."
