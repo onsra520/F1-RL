@@ -274,7 +274,7 @@ export default function App() {
   const runRuntimeSession = async () => {
     const trackRequest = runtimeTrackRequest;
     const validatedCustomTrack = runtimeTrackSelection.kind === 'custom' ? runtimeTrackSelection.validated : null;
-    if (!runtimeCatalog || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !trackRequest) return;
+    if (!runtimeCatalog || (driveMode === 'auto' && !autoConfigValid) || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !trackRequest) return;
     const traceId = crypto.randomUUID();
     setRuntimeBusy(true);
     setRuntimeError(''); setReplay(null); setRuntimeReplay(null); setPlaying(false); setRuntimeStatus(null);
@@ -691,7 +691,7 @@ export default function App() {
               <button aria-label="Export replay JSON" onClick={() => downloadJSON('f1rl-runtime-replay.json', activeReplay)}><Download size={16}/></button>
               </div>
             </> : <div className="replay-empty"><span>No replay loaded</span><button onClick={() => replayInput.current?.click()}><Upload size={16}/> Import replay</button></div>}
-            <div className="drive-bottom"><button onClick={() => {
+            <div className="drive-bottom"><button disabled={!runtimeBusy && driveMode === 'auto' && !autoConfigValid} onClick={() => {
               if (runtimeBusy) controlRuntime('reset');
               else if (driveMode === 'replay') {setPlaying(false);setReplayTime(activeReplay?.frames[0]?.time_s ?? 0);}
               else void runRuntimeSession();
