@@ -86,3 +86,47 @@ def test_landing_kind_from_authoritative_transition():
     )
     assert frame.grounded
     assert frame.physical_event_types == ["landing"]
+
+def test_collision_replay_rejects_invalid_episode_result_in_backend():
+    from pydantic import ValidationError
+    from src.runtime.frames import ReplayDocument
+
+    frame = build_runtime_frame(
+        snapshot(), np.zeros(3, dtype=np.float32), {},
+        previous_velocity=(0.0, 0.0, 0.0),
+        collision_count_before=0, completed_checkpoint_ids_before=(),
+    )
+    digest = "a" * 64
+    document = {
+        "schema": "f1rl_racing_sandbox_replay_v2",
+        "label": "collision",
+        "provenance": {
+            "dataset_split": "DEVELOPMENT", "source_sha256": digest,
+            "model_id": "auto-drive", "track_id": "custom",
+            "track_sha256": digest, "seed": 412,
+        },
+        "result": {
+            "status": "failed", "reason": "collision",
+            "valid_sample": False, "successful_finish": False,
+            "steps": 4, "duration_s": .08, "trace_sha256": digest,
+        },
+        "frames": [frame.model_dump()],
+        "collision_terminal": {
+            "schema_version": "f1rl_runtime_collision_failure_dev_v1",
+            "obstacle_ids": ["cone"], "last_accepted_tick": 4,
+            "witness_interval_s": [.08, .1],
+            "diagnostic_penalty": -5.0,
+            "penalty_kind": "runtime_diagnostic_not_gym_reward",
+            "physics_transition_accepted": False,
+            "contact_time_certified": False,
+            "scientific_evidence": False,
+        },
+    }
+    assert ReplayDocument.model_validate(document).result.reason == "collision"
+    for field, invalid in (
+        ("status", "finished"), ("reason", "off_route"),
+        ("valid_sample", True), ("successful_finish", True),
+    ):
+        broken = {**document, "result": {**document["result"], field: invalid}}
+        with pytest.raises(ValidationError, match="unscored collision requires"):
+            ReplayDocument.model_validate(broken)

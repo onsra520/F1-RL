@@ -184,5 +184,7 @@ describe('unscored development collision replay', () => {
     expect(() => parseReplay({ ...base, collision_terminal: {
       ...base.collision_terminal, physics_transition_accepted: true } })).toThrow();
     expect(() => parseReplay({ ...base, collision_terminal: undefined })).toThrow();
+    expect(() => parseReplay({ ...base, result: {
+      ...base.result, successful_finish: true } })).toThrow();
   });
 });

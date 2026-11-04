@@ -115,6 +115,10 @@ class ReplayDocument(BaseModel):
             raise ValueError("non-collision replay needs at least two frames")
         if self.collision_terminal is not None:
             terminal = self.collision_terminal
+            result = self.result
+            if (result.status != "failed" or result.reason != "collision" or
+                    result.valid_sample or result.successful_finish):
+                raise ValueError("unscored collision requires a failed invalid episode")
             if (terminal.last_accepted_tick != self.frames[-1].tick or
                     abs(terminal.witness_interval_s[0] - self.frames[-1].time_s) > 1e-7 or
                     any(frame.collision_ids for frame in self.frames)):

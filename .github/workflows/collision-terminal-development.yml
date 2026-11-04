@@ -36,7 +36,7 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
           PYTHONHASHSEED: '0'
         run: |
-          python -B -m pytest tests/runtime/test_collision_terminal.py tests/runtime/test_frames.py tests/runtime/test_auto_drive.py tests/runtime/test_v4_dev_profile.py::test_development_gap_crash_uses_registered_physics_and_race_v4_terminal tests/research/test_wp3_campaign.py -q --tb=short --disable-warnings --junitxml=collision-terminal-junit.xml
+          python -B -m pytest tests/runtime/test_collision_terminal.py tests/runtime/test_frames.py tests/runtime/test_auto_drive.py tests/sandbox/test_multi_surface_support.py tests/runtime/test_v4_dev_profile.py::test_development_gap_crash_uses_registered_physics_and_race_v4_terminal tests/research/test_wp3_campaign.py -q --tb=short --disable-warnings --junitxml=collision-terminal-junit.xml
       - uses: actions/upload-artifact@v4
         if: always()
         with:

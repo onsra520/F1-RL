@@ -171,9 +171,10 @@ def _atlas(patches: tuple[PlanarSurfacePatch, ...], tol: float):
     if not isinstance(patches, tuple) or not patches:
         return None
     try:
-        return _cached_atlas(patches, tol)
+        hash((patches, tol))
     except TypeError:
         return None
+    return _cached_atlas(patches, tol)
 
 
 @lru_cache(maxsize=32)
