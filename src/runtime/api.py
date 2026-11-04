@@ -18,6 +18,7 @@ from src.runtime.custom_tracks import (
     TrackValidationError,
     convert_custom_track,
 )
+from src.runtime.drive_config import AutoDriveConfig
 from src.runtime.protocol import (
     WS_COMMAND_ADAPTER,
     ActionCommand,
@@ -31,7 +32,8 @@ from src.runtime.protocol import (
 from src.runtime.session import RuntimeFault, RuntimeSessionManager
 
 logger = logging.getLogger(__name__)
-ALLOWED_ORIGINS = ("http://127.0.0.1:5173", "http://localhost:5173")
+ALLOWED_ORIGINS = ("http://127.0.0.1:5173", "http://localhost:5173",
+                   "http://127.0.0.1:5174", "http://localhost:5174")
 
 
 class CreateSessionRequest(BaseModel):
@@ -40,15 +42,22 @@ class CreateSessionRequest(BaseModel):
     model_id: str | None = Field(default=None, min_length=1, max_length=32)
     track_id: str | None = Field(default=None, min_length=1, max_length=64)
     seed: int = Field(ge=0, le=MAX_SEED)
-    mode: Literal["ppo", "manual"] = "ppo"
+    mode: Literal["ppo", "manual", "auto"] = "ppo"
     custom_track: dict[str, object] | None = None
+    auto_drive_config: AutoDriveConfig | None = None
+    physics_profile: Literal["legacy_v3", "experimental_v4"] = "legacy_v3"
 
     @model_validator(mode="after")
     def controller_matches_mode(self):
         if self.mode == "ppo" and self.model_id is None:
             raise ValueError("PPO mode requires model_id")
-        if self.mode == "manual" and self.model_id is not None:
-            raise ValueError("manual mode cannot select model_id")
+        if self.mode in ("manual", "auto") and self.model_id is not None:
+            raise ValueError(f"{self.mode} mode cannot select model_id")
+        if self.mode != "auto" and self.auto_drive_config is not None:
+            raise ValueError("auto_drive_config is allowed only in Auto Drive")
+        if self.physics_profile == "experimental_v4" and (
+                self.mode != "auto" or self.custom_track is None):
+            raise ValueError("experimental Physics v4 is custom Auto Drive only")
         if self.custom_track is None and self.track_id is None:
             raise ValueError("registered sessions require track_id")
         if self.custom_track is not None and self.track_id is not None:
@@ -119,7 +128,7 @@ def create_app(
         CORSMiddleware,
         allow_origins=list(ALLOWED_ORIGINS),
         allow_methods=["GET", "POST", "DELETE"],
-        allow_headers=["content-type"],
+        allow_headers=["content-type", "x-trace-id"],
         allow_credentials=False,
     )
 
@@ -217,6 +226,12 @@ def create_app(
                     payload.custom_track,
                     request.app.state.catalog,
                 )
+                if (any(item["kind"] in ("gap", "jump") for item in converted.source_document["props"])
+                        and (payload.mode != "auto" or payload.physics_profile != "experimental_v4")):
+                    raise RuntimeFault(
+                        "requires_v4", "jump-gap road requires custom Auto Drive with explicit Physics V4 development profile",
+                        status_code=422,
+                    )
                 if payload.mode == "ppo" and not converted.ppo_compatible:
                     raise RuntimeFault("incompatible_model", "custom track observation/action spaces are incompatible with frozen PPO models", status_code=422)
             track_id = converted.track_id if converted is not None else payload.track_id
@@ -229,6 +244,8 @@ def create_app(
                 mode=payload.mode,
                 custom_factory=None if converted is None else converted.factory,
                 custom_track_sha256=None if converted is None else converted.track_sha256,
+                auto_drive_config=payload.auto_drive_config,
+                physics_profile=payload.physics_profile,
             )
         except RuntimeFault:
             raise

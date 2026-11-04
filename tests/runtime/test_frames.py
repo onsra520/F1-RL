@@ -64,3 +64,25 @@ def test_runtime_frame_rejects_actions_outside_the_registered_contract(action):
             snapshot(), action, {}, previous_velocity=(0.0, 0.0, 0.0),
             collision_count_before=0, completed_checkpoint_ids_before=(),
         )
+
+def test_flight_event_kinds_come_from_authoritative_physics_transition():
+    state = {**snapshot(), "grounded": False, "physical_event_types": ["FlightTransition"]}
+    info = {"physics": {"transition": {"events": ({"kind": "takeoff", "time_s": .003},)}}}
+    frame = build_runtime_frame(
+        state, np.zeros(3, dtype=np.float32), info,
+        previous_velocity=(0., 0., 0.), collision_count_before=0,
+        completed_checkpoint_ids_before=(),
+    )
+    assert not frame.grounded
+    assert frame.physical_event_types == ["takeoff"]
+
+def test_landing_kind_from_authoritative_transition():
+    state = {**snapshot(), "grounded": True, "physical_event_types": ["FlightTransition"]}
+    info = {"physics": {"transition": {"events": ({"kind": "landing", "time_s": .002},)}}}
+    frame = build_runtime_frame(
+        state, np.zeros(3, dtype=np.float32), info,
+        previous_velocity=(0., 0., 0.), collision_count_before=0,
+        completed_checkpoint_ids_before=(),
+    )
+    assert frame.grounded
+    assert frame.physical_event_types == ["landing"]

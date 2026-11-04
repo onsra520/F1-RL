@@ -1,5 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { parseRuntimeSocketEvent, RuntimeClient } from './runtime';
+import {
+  customTrackSelectionAfterMapEdit,
+  isCurrentCustomTrackValidation,
+  matchesValidatedCustomTrack,
+  parseRuntimeSocketEvent,
+  resolveRuntimeTrackRequest,
+  shouldKeepReplayOnDrive,
+  RuntimeClient,
+  RuntimeApiError,
+  shouldValidateCustomTrackOnDrive,
+  type RuntimeCustomTrack,
+} from './runtime';
 
 const track = {
   track_id: 'straight-sprint-v1', split: 'TRAIN' as const, purpose: 'development' as const,
@@ -9,9 +20,80 @@ const track = {
   road_samples: [{ x: 0, y: 0, z: 0, t: 0, heading: 0, nx: 1, nz: 0 }, { x: 0, y: 0, z: 20, t: 1, heading: 0, nx: 1, nz: 0 }],
 };
 
+const customTrack: RuntimeCustomTrack = {
+  schema_version: 'f1rl_custom_track_conversion_v1', development_only: true,
+  track_id: 'sandbox-custom', track_sha256: 'c'.repeat(64), preview: track.preview,
+  road_samples: track.road_samples, auto_bridge_count: 0, ppo_compatible: true,
+  surface_count: 10, checkpoint_count: 1, obstacle_count: 0, boost_pad_count: 0, warnings: [],
+};
+
 afterEach(() => vi.unstubAllGlobals());
 
+describe('runtime track selection', () => {
+  it('keeps an invalid Custom selection selected and blocks Run', () => {
+    const selection = { kind: 'custom', validated: null } as const;
+    expect(resolveRuntimeTrackRequest(selection, 'straight-sprint-v1', 'manual')).toBeNull();
+    expect(selection.kind).toBe('custom');
+  });
+
+  it('invalidates a stale validation after a map edit without switching to TRAIN', () => {
+    const selection = customTrackSelectionAfterMapEdit();
+    expect(isCurrentCustomTrackValidation(4, 5)).toBe(false);
+    expect(selection).toEqual({ kind: 'custom', validated: null });
+    expect(resolveRuntimeTrackRequest(selection, 'straight-sprint-v1', 'ppo')).toBeNull();
+  });
+
+  it('selects Custom after map edits even if TRAIN was previously chosen', () => {
+    expect(customTrackSelectionAfterMapEdit()).toEqual({ kind: 'custom', validated: null });
+  });
+
+  it('uses Custom or the deliberately selected TRAIN track', () => {
+    expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: customTrack }, 'straight-sprint-v1', 'auto'))
+      .toEqual({ kind: 'custom' });
+    expect(resolveRuntimeTrackRequest({ kind: 'train' }, 'ramp-v1', 'auto'))
+      .toEqual({ kind: 'train', trackId: 'ramp-v1' });
+    expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: customTrack }, 'straight-sprint-v1', 'ppo'))
+      .toEqual({ kind: 'custom' });
+    expect(resolveRuntimeTrackRequest({ kind: 'train' }, 'ramp-v1', 'ppo'))
+      .toEqual({ kind: 'train', trackId: 'ramp-v1' });
+    expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: customTrack }, 'ramp-v1', 'replay'))
+      .toBeNull();
+  });
+
+  it('validates the edited map on entry from Sketch or Build but keeps Replay attached', () => {
+    expect(shouldValidateCustomTrackOnDrive('sketch', false)).toBe(true);
+    expect(shouldValidateCustomTrackOnDrive('build', false)).toBe(true);
+    expect(shouldValidateCustomTrackOnDrive('drive', false)).toBe(false);
+    expect(shouldValidateCustomTrackOnDrive('build', true)).toBe(false);
+  });
+
+  it('keeps Replay only when re-entering Drive from the active Replay view', () => {
+    expect(shouldKeepReplayOnDrive('build', 'replay', true)).toBe(false);
+    expect(shouldKeepReplayOnDrive('drive', 'replay', true)).toBe(true);
+    expect(shouldKeepReplayOnDrive('drive', 'auto', true)).toBe(false);
+  });
+
+  it('never falls back to a TRAIN track for an incompatible Custom PPO selection', () => {
+    expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: { ...customTrack, ppo_compatible: false } }, 'slalom-v1', 'ppo'))
+      .toBeNull();
+    expect(resolveRuntimeTrackRequest({ kind: 'custom', validated: { ...customTrack, ppo_compatible: false } }, 'slalom-v1', 'manual'))
+      .toEqual({ kind: 'custom' });
+  });
+
+  it('accepts a custom runtime session only when Python used the validated map hash', () => {
+    expect(matchesValidatedCustomTrack(customTrack, customTrack)).toBe(true);
+    expect(matchesValidatedCustomTrack(customTrack, { ...customTrack, track_id: 'sandbox-other' })).toBe(false);
+    expect(matchesValidatedCustomTrack(customTrack, { ...customTrack, track_sha256: 'd'.repeat(64) })).toBe(false);
+    expect(matchesValidatedCustomTrack(customTrack, undefined)).toBe(false);
+  });
+});
+
 describe('Python runtime HTTP client', () => {
+  it('retains trace identity on runtime invariant errors', () => {
+    const error = new RuntimeApiError('track mismatch', 'track_mismatch', 409, 'trace-412');
+    expect(error).toMatchObject({ code: 'track_mismatch', status: 409, traceId: 'trace-412' });
+  });
+
   it('loads the read-only frozen catalog and rejects a non-TRAIN track', async () => {
     const models = ['A', 'B', 'C', 'D'].flatMap((candidate) => [0, 1, 2].map((seed) => ({
       model_id: `${candidate}-seed${seed}`, sha256: 'b'.repeat(64), bytes: 100,
@@ -49,9 +131,25 @@ describe('Python runtime HTTP client', () => {
     const client = new RuntimeClient();
     const doc = { schema: 'f1rl_racing_sandbox_draft_v1', id: 'draft', name: 'Draft', width: 12, points: track.preview.points, props: [] };
     expect((await client.validateCustomTrack(doc)).development_only).toBe(true);
-    await client.createCustomSession(doc, 'manual', 5);
+    await client.createCustomSession(doc, 'manual', 5, undefined, 'trace-412');
     expect(JSON.parse(String((fetchMock.mock.calls[1][1] as RequestInit).body))).toEqual({
       mode: 'manual', seed: 5, custom_track: doc,
+    });
+    expect((fetchMock.mock.calls[1][1] as RequestInit).headers).toMatchObject({ 'x-trace-id': 'trace-412' });
+  });
+
+  it('starts Auto Drive without a PPO model on registered and custom maps', async () => {
+    const fetchMock = vi.fn().mockImplementation(async () =>
+      new Response(JSON.stringify({ session_id: 'auto-session' }), { status: 201 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new RuntimeClient();
+    await client.createAutoSession('slalom-v1', 412);
+    await client.createCustomSession(track.preview, 'auto', 5);
+    expect(JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body))).toEqual({
+      mode: 'auto', track_id: 'slalom-v1', seed: 412,
+    });
+    expect(JSON.parse(String((fetchMock.mock.calls[1][1] as RequestInit).body))).toEqual({
+      mode: 'auto', seed: 5, custom_track: track.preview,
     });
   });
 
@@ -62,6 +160,26 @@ describe('Python runtime HTTP client', () => {
     await expect(new RuntimeClient().createPpoSession('A-seed0', 'x', 1)).rejects.toMatchObject({
       code: 'invalid_track', status: 400,
     });
+  });
+
+  it('opts into Physics V4 only for a custom Auto Drive request', async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(
+      JSON.stringify({ session_id: 'experimental-auto' }), { status: 201 },
+    )));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new RuntimeClient();
+    await client.createCustomSession(track.preview, 'auto', 412, undefined, 'trace-412', undefined, true);
+    const autoPayload = JSON.parse(String((fetchMock.mock.calls[0] as [URL, RequestInit])[1].body));
+    expect(autoPayload.physics_profile).toBe('experimental_v4');
+    expect(autoPayload.mode).toBe('auto');
+    expect(autoPayload.custom_track).toEqual(track.preview);
+    expect(autoPayload.track_id).toBeUndefined();
+    await client.createCustomSession(track.preview, 'manual', 412, undefined, undefined, undefined, true);
+    const manualPayload = JSON.parse(String((fetchMock.mock.calls[1] as [URL, RequestInit])[1].body));
+    expect(manualPayload.physics_profile).toBeUndefined();
+    await client.createCustomSession(track.preview, 'auto', 412);
+    const defaultPayload = JSON.parse(String((fetchMock.mock.calls[2] as [URL, RequestInit])[1].body));
+    expect(defaultPayload.physics_profile).toBeUndefined();
   });
 
   it('validates versioned live events and rejects frames from another session', () => {

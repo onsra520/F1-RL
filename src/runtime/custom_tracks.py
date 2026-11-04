@@ -9,7 +9,7 @@ from math import atan2, hypot, isfinite, sqrt
 
 import numpy as np
 
-from src.runtime.catalog import RuntimeCatalog
+from src.runtime.catalog import MAX_RUNTIME_STEPS, RuntimeCatalog
 from src.simulation.ballistic_flight import FlightState
 from src.simulation.entities.boost_pad import BoostPad
 from src.simulation.entities.checkpoint import Checkpoint
@@ -19,7 +19,7 @@ from src.simulation.geometry.rotation import Quaternion
 from src.simulation.geometry.vector import Vec3
 from src.simulation.independent_suspension_dynamics import SuspensionDynamicsState
 from src.simulation.interactions.state import InteractionState
-from src.simulation.multi_surface_support import _atlas
+from src.simulation.multi_surface_support import _atlas, surface_intersection_issue
 from src.simulation.rules.scoring import ScoreState
 from src.simulation.track.model import TrackWorld
 from src.simulation.track.patch import PlanarSurfacePatch
@@ -34,11 +34,16 @@ MAX_CONTROL_POINTS = 512
 MAX_PROPS = 200
 MAX_ROUTE_LENGTH_M = 1_000.0
 MAX_SURFACES = 512
-SURFACE_SPACING_M = 4.0
+SURFACE_SPACING_M = 2.0
+SURFACE_OVERLAP_M = 0.5
 ROAD_PREVIEW_SPACING_M = 1.0
 MIN_CHECKPOINT_GAP_M = 6.0
 SPAWN_DISTANCE_M = 2.6
+MAX_ROAD_GRADE = 0.18
+MIN_OVERPASS_CLEARANCE_M = 1.8
 CONVERSION_SCHEMA = "f1rl_custom_track_conversion_v1"
+JUMP_LAUNCH_CONTRACT = "custom_jump_launch_receiver_v1"
+JUMP_GAP_M = 3.7
 
 
 class TrackValidationError(ValueError):
@@ -142,6 +147,71 @@ class _CentripetalSpline:
 
 
 @dataclass(frozen=True, slots=True)
+class _TierRamp:
+    """A permanently raised road level, with a bounded-grade entry ramp."""
+
+    start_m: float
+    finish_m: float
+    rise_m: float
+
+
+def _certified_tier_ramps(points, distances, total, width):
+    """Find three *route visits* at a shared crossing, not three 2-D lines.
+
+    Only a separated three-pass route with enough approach length gets tier
+    ramps. Other topologies remain subject to the original atlas rejection.
+    """
+    crossings = []
+    for first in range(len(points)-1):
+        for second in range(first+3,len(points)-1):
+            if distances[second] - distances[first+1] < 16.:
+                continue
+            hit = _segment_intersection(points[first],points[first+1],points[second],points[second+1])
+            if hit is None:continue
+            u,v,(x,z)=hit
+            under=distances[first]+u*(distances[first+1]-distances[first])
+            over=distances[second]+v*(distances[second+1]-distances[second])
+            crossings.append((x,z,under,over))
+    groups = []
+    for x,z,under,over in crossings:
+        for group in groups:
+            if hypot(group[0][0]-x,group[0][1]-z) < 1.5:
+                group.append((x,z,under,over))
+                break
+        else:
+            groups.append([(x,z,under,over)])
+    ramps=[]
+    excluded=[]
+    for group in groups:
+        if len(group)<3:continue
+        visits=[]
+        for item in group:
+            for distance in (item[2],item[3]):
+                if all(abs(distance-existing)>5. for existing in visits):
+                    visits.append(distance)
+        visits.sort()
+        if len(visits)!=3 or any(b-a<110. for a,b in pairwise(visits)):
+            raise TrackValidationError('unsupported_multideck',
+                'three-level crossing requires exactly three separated route visits with long safe approaches')
+        # Use a plateau around every crossing: this makes the deck separation
+        # unambiguous across the full intersection footprint and wheelbase.
+        for visit in visits[1:]:
+            start,finish=visit-54.,visit-26.
+            rise=2.4
+            if (start<=SPAWN_DISTANCE_M+SURFACE_SPACING_M
+                    or finish>=total-20.
+                    or 1.5*rise/(finish-start)>MAX_ROAD_GRADE):
+                raise TrackValidationError('unsupported_multideck',
+                    'three-level crossing lacks enough runway for a certified ramp')
+            ramps.append(_TierRamp(start,finish,rise))
+        excluded.append((group[0][0],group[0][1]))
+    if any(b.start_m-a.finish_m<20. for a,b in pairwise(sorted(ramps,key=lambda r:r.start_m))):
+        raise TrackValidationError('unsupported_multideck',
+            'separate three-level crossings need non-overlapping approach ramps')
+    return tuple(sorted(ramps,key=lambda r:r.start_m)),tuple(excluded)
+
+
+@dataclass(frozen=True, slots=True)
 class _AutoBridge:
     under_m: float
     over_m: float
@@ -164,7 +234,8 @@ def _segment_intersection(a, b, c, d):
     return u, v, (a[0] + u * rx, a[1] + u * rz)
 
 
-def _auto_bridges(points: list[tuple[float, float]], distances: list[float], total: float) -> tuple[_AutoBridge, ...]:
+def _auto_bridges(points: list[tuple[float, float]], distances: list[float], total: float, width: float,
+                  excluded_crossings=()) -> tuple[_AutoBridge, ...]:
     intersections = []
     for first in range(len(points) - 1):
         for second in range(first + 3, len(points) - 1):
@@ -174,24 +245,35 @@ def _auto_bridges(points: list[tuple[float, float]], distances: list[float], tot
             if hit is None:
                 continue
             u, v, point = hit
+            if any(hypot(point[0]-x,point[1]-z)<1.5 for x,z in excluded_crossings):
+                continue
             under = distances[first] + u * (distances[first + 1] - distances[first])
             over = distances[second] + v * (distances[second + 1] - distances[second])
             if any(hypot(existing[0] - point[0], existing[1] - point[1]) < 1.5 for existing in intersections):
                 continue
-            intersections.append((point[0], point[1], under, over))
+            first_dx = points[first + 1][0] - points[first][0]
+            first_dz = points[first + 1][1] - points[first][1]
+            second_dx = points[second + 1][0] - points[second][0]
+            second_dz = points[second + 1][1] - points[second][1]
+            first_length = hypot(first_dx, first_dz)
+            second_length = hypot(second_dx, second_dz)
+            crossing_sine = abs(first_dx * second_dz - first_dz * second_dx) / (first_length * second_length)
+            intersections.append((point[0], point[1], under, over, crossing_sine))
     intersections.sort(key=lambda value: value[3])
     result: list[_AutoBridge] = []
-    for _, _, under, over in intersections:
+    for x, z, under, over, crossing_sine in intersections:
         remaining = min(over, total - over)
-        if remaining < 10.0:
-            raise TrackValidationError("unsupported_intersection", "route crossing is too close to the start or finish for a safe overpass")
-        plateau = 6.0
-        outer = min(42.0, remaining - 0.1)
-        if outer <= plateau + 1.0:
-            raise TrackValidationError("unsupported_intersection", "route crossing has insufficient room for a supported overpass")
+        plateau = max(4.0, width / max(crossing_sine, 0.1) + 1.0)
+        outer = min(56.0, remaining - 0.1, over - SPAWN_DISTANCE_M - SURFACE_SPACING_M)
+        maximum_rise = max(0.0, MAX_ROAD_GRADE * (outer - plateau) / 1.5)
+        if maximum_rise < MIN_OVERPASS_CLEARANCE_M:
+            raise TrackValidationError(
+                "unsupported_intersection",
+                f"crossing near ({x:.1f}, {z:.1f}) has insufficient runway for a safe overpass; move it farther from the start/finish or lengthen the route",
+            )
         existing_over = sum(item.rise * _bump(over, item.over_m, item.plateau_m, item.outer_m) for item in result)
         existing_under = sum(item.rise * _bump(under, item.over_m, item.plateau_m, item.outer_m) for item in result)
-        rise = max(0.0, 6.0 - (existing_over - existing_under))
+        rise = max(0.0, min(6.0, maximum_rise) - (existing_over - existing_under))
         if rise >= 0.01:
             result.append(_AutoBridge(under, over, rise, plateau, outer))
     return tuple(result)
@@ -222,7 +304,7 @@ def _parse_document(raw: object) -> tuple[dict[str, object], list[tuple[float, f
         raise TrackValidationError("invalid_geometry", "track route must have nonzero length")
     props = []
     identities = set()
-    kinds = {"bridge", "ramp", "barrier", "cone", "booster", "checkpoint"}
+    kinds = {"bridge", "ramp", "barrier", "cone", "booster", "checkpoint", "gap", "jump"}
     for index, item in enumerate(raw_props):
         if not isinstance(item, dict) or set(item) != {"id", "kind", "t", "offset", "rotation"}:
             raise TrackValidationError("invalid_props", f"prop {index} must contain exactly id, kind, t, offset, rotation")
@@ -231,6 +313,17 @@ def _parse_document(raw: object) -> tuple[dict[str, object], list[tuple[float, f
                 or prop_id in identities or not isinstance(kind, str) or kind not in kinds):
             raise TrackValidationError("invalid_props", f"prop {index} has a duplicate id or unsupported kind")
         identities.add(prop_id)
+        if kind in ("gap", "jump"):
+            # Jump v1 is a specific certified receiving-road profile, not
+            # permission to pick arbitrary unverified flight geometry.
+            length = _number(item["offset"], f"props[{index}].gap_length_m",
+                             2.0 if kind == "gap" else JUMP_GAP_M,
+                             6.0 if kind == "gap" else JUMP_GAP_M)
+            angle = _number(item["rotation"], f"props[{index}].rotation", -1000.0, 1000.0)
+            if angle != 0.0:
+                raise TrackValidationError("unsupported_gap", "gap/jump requires zero rotation")
+            if kind == "jump" and length != JUMP_GAP_M:
+                raise TrackValidationError("unsupported_jump", "unregistered jump length")
         props.append({
             "id": prop_id,
             "kind": kind,
@@ -246,16 +339,66 @@ def _parse_document(raw: object) -> tuple[dict[str, object], list[tuple[float, f
     return clean, points, props
 
 
-def _track_elevation(t: float, props: list[dict[str, object]], bridges: tuple[_AutoBridge, ...], total: float) -> float:
+def _hermite_height(u: float, low: float, high: float, slope0: float,
+                    slope1: float, span: float) -> float:
+    return ((2*u**3-3*u*u+1)*low + (u**3-2*u*u+u)*span*slope0
+            + (-2*u**3+3*u*u)*high + (u**3-u*u)*span*slope1)
+
+
+def _jump_height(distance: float, prop: dict[str, object], total: float) -> float:
+    """Versioned actual launch and receiving road for one 3.7 m void.
+
+    Existing gap remains intentionally flat. This is a different authored
+    geometry contract, fitted to v4 conservative force/impact dynamics:
+    a C1 ascending 16m launch, absent support in the void, a 1.5m level
+    receiving apron, a C1 descending 0.22m/4m absorption trough and 5m
+    runout, then a smooth 16m transition back to reference road height.
+    No change to Physics vehicle limits, suspension, impulses or solver.
+    """
+    center = float(prop["t"])*total
+    lip = center - JUMP_GAP_M/2
+    receive = center + JUMP_GAP_M/2
+    if distance <= lip-16.:
+        return 0.
+    if distance < lip:
+        return _hermite_height((distance-(lip-16.))/16.,0.,.8,0.,.1,16.)
+    if distance <= receive:
+        # This is ONLY authored route / preview height: there is NO physical
+        # surface in the gap. Do not claim road, support or landing here.
+        return .8+(.4-.8)*(distance-lip)/JUMP_GAP_M
+    if distance < receive+1.5:
+        return .4
+    if distance < receive+5.5:
+        return _hermite_height((distance-receive-1.5)/4.,.4,.18,0.,0.,4.)
+    if distance < receive+10.5:
+        return .18
+    if distance < receive+26.5:
+        return _hermite_height((distance-receive-10.5)/16.,.18,0.,0.,0.,16.)
+    return 0.
+
+
+def _track_elevation(t: float, props: list[dict[str, object]], bridges: tuple[_AutoBridge, ...], total: float,
+                     tier_ramps: tuple[_TierRamp,...] = ()) -> float:
     height = 0.0
     for prop in props:
-        delta = abs(t - float(prop["t"]))
-        if prop["kind"] == "bridge":
-            height = max(height, 5.0 * (1.0 - _smooth_step(0.055, 0.125, delta)))
-        elif prop["kind"] == "ramp":
-            height = max(height, 2.8 * (1.0 - _smooth_step(0.0, 0.075, delta)))
+        kind = prop["kind"]
+        if kind not in ("bridge", "ramp"):
+            continue
+        center = float(prop["t"]) * total
+        remaining = min(center, total - center)
+        rise, plateau, preferred_outer = (5.0, 4.0, 46.0) if kind == "bridge" else (2.8, 3.0, 27.0)
+        outer = min(preferred_outer, remaining - 0.1, center - SPAWN_DISTANCE_M - SURFACE_SPACING_M)
+        maximum_rise = max(0.0, MAX_ROAD_GRADE * (outer - plateau) / 1.5)
+        if maximum_rise < MIN_OVERPASS_CLEARANCE_M:
+            raise TrackValidationError(
+                "unsupported_slope",
+                f"{kind} near route t={float(prop['t']):.3f} has insufficient approach length; move it toward the route midpoint or lengthen the map",
+            )
+        height = max(height, min(rise, maximum_rise) * _bump(t * total, center, plateau, outer))
     distance = t * total
-    return height + sum(item.rise * _bump(distance, item.over_m, item.plateau_m, item.outer_m) for item in bridges)
+    return (height + sum(item.rise * _bump(distance, item.over_m, item.plateau_m, item.outer_m) for item in bridges)
+            + sum(item.rise_m * _smooth_step(item.start_m,item.finish_m,distance) for item in tier_ramps)
+            + sum(_jump_height(distance, item, total) for item in props if item["kind"] == "jump"))
 
 
 def _route_point(points: list[tuple[float, float]], distances: list[float], distance: float) -> tuple[float, float, float]:
@@ -266,7 +409,7 @@ def _route_point(points: list[tuple[float, float]], distances: list[float], dist
     return first[0] + (second[0] - first[0]) * fraction, first[1] + (second[1] - first[1]) * fraction, index + fraction
 
 
-def _pose_at(points, distances, distance, props, bridges, total):
+def _pose_at(points, distances, distance, props, bridges, total, tier_ramps=()):
     x, z, segment = _route_point(points, distances, distance)
     index = min(len(points) - 2, int(segment))
     first, second = points[index], points[index + 1]
@@ -275,7 +418,7 @@ def _pose_at(points, distances, distance, props, bridges, total):
     if horizontal <= 1e-9:
         raise TrackValidationError("invalid_geometry", "vertical centerline segments are not supported")
     t = distance / total
-    y = _track_elevation(t, props, bridges, total)
+    y = _track_elevation(t, props, bridges, total, tier_ramps)
     heading = atan2(dx, dz)
     return x, y, z, heading, -dz / horizontal, dx / horizontal
 
@@ -302,12 +445,11 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
     total = curve_distances[-1]
     if total > MAX_ROUTE_LENGTH_M:
         raise TrackValidationError("resource_limit", f"route length exceeds {MAX_ROUTE_LENGTH_M:g} metres")
-    bridges = _auto_bridges(curve_points, curve_distances, total)
-    if bridges:
-        raise TrackValidationError(
-            "unsupported_intersection",
-            "automatic overpasses create stacked road decks, which the registered spatial physics contract does not support",
-        )
+    tier_ramps, excluded_crossings = _certified_tier_ramps(
+        curve_points, curve_distances, total, float(clean["width"])
+    )
+    bridges = _auto_bridges(curve_points, curve_distances, total, float(clean["width"]), excluded_crossings)
+    surface_spacing = SURFACE_SPACING_M
 
     checkpoint_props = sorted((item for item in props if item["kind"] == "checkpoint"), key=lambda item: float(item["t"]))
     checkpoint_distances = [float(item["t"]) * total for item in checkpoint_props]
@@ -321,17 +463,50 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         if item["kind"] == "booster" and abs(item["rotation"]) > 1e-9:
             raise TrackValidationError("unsupported_booster_transform", "boost pads follow route direction and cannot be rotated independently")
 
+    # A gap is an actual finite void in the source road atlas, not a visual
+    # decal. Its absent interval remains in navigation for a ballistic route;
+    # Physics v4 must certify takeoff, recontact, or fail closed.
+    gap_props = [item for item in props if item["kind"] in ("gap", "jump")]
+    if len(gap_props) > 1:
+        raise TrackValidationError("unsupported_gap", "one bounded jump gap per custom track")
+    gap_bounds = None
+    if gap_props:
+        item = gap_props[0]
+        if (item["kind"] == "jump" and
+                (len(control_points) != 2 or float(clean["width"]) < 10. or
+                 tier_ramps or bridges or any(p["kind"] in ("bridge", "ramp") for p in props))):
+            raise TrackValidationError(
+                "unsupported_jump",
+                "jump v1 needs a straight, at least 10 m wide road without other elevation props")
+        center = float(item["t"]) * total
+        half = float(item["offset"]) / 2.0
+        if center - half < max(22.0, SPAWN_DISTANCE_M + 10.0) or total - center - half < 22.0:
+            raise TrackValidationError("unsupported_gap", "gap requires at least 22 m approach and run-out")
+        if any(abs(center - cp) < half + 8.0 for cp in checkpoint_distances):
+            raise TrackValidationError("unsupported_gap", "gap must not overlap checkpoints")
+        if item["kind"] == "jump" and (
+                center-half-16. < SPAWN_DISTANCE_M+5. or
+                center+half+26.5 > total-5.):
+            raise TrackValidationError("unsupported_jump", "jump v1 needs a 16 m launch and 26.5 m receiver runout")
+        gap_bounds = (center - half, center + half)
+
     # Preview and navigation both use the same authoritative, arc-length road samples.
     preview_distances = [float(index) for index in np.arange(0.0, total, ROAD_PREVIEW_SPACING_M)] + [total]
     road_samples = []
     for distance in preview_distances:
-        x, y, z, heading, nx, nz = _pose_at(curve_points, curve_distances, distance, props, bridges, total)
+        x, y, z, heading, nx, nz = _pose_at(curve_points, curve_distances, distance, props, bridges, total, tier_ramps)
         road_samples.append({"x": x, "y": y, "z": z, "t": distance / total, "heading": heading, "nx": nx, "nz": nz})
 
     surface_distances = [SPAWN_DISTANCE_M]
-    surface_distances.extend(float(distance) for distance in np.arange(SURFACE_SPACING_M + SPAWN_DISTANCE_M, total, SURFACE_SPACING_M))
+    surface_distances.extend(float(distance) for distance in np.arange(surface_spacing + SPAWN_DISTANCE_M, total, surface_spacing))
     surface_distances.extend(distance for distance in checkpoint_distances if distance > SPAWN_DISTANCE_M)
     surface_distances.append(total)
+    if gap_bounds:
+        a, b = gap_bounds
+        # Align existing route samples to the exact bounded empty interval.
+        surface_distances = [d for d in surface_distances
+                             if min(abs(d-a),abs(d-b)) >= .6]
+        surface_distances.extend((a,b))
     surface_distances = sorted(surface_distances)
     deduplicated = []
     for distance in surface_distances:
@@ -343,10 +518,10 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         raise TrackValidationError("resource_limit", f"converted road exceeds the {MAX_SURFACES} surface limit")
 
     route_points: list[Vec3] = []
-    surface_ids: list[str] = []
+    surface_ids: list[str | None] = []
     surfaces: list[PlanarSurfacePatch] = []
     for index, distance in enumerate(deduplicated):
-        x, y, z, _, _, _ = _pose_at(curve_points, curve_distances, distance, props, bridges, total)
+        x, y, z, _, _, _ = _pose_at(curve_points, curve_distances, distance, props, bridges, total, tier_ramps)
         route_points.append(Vec3(x, y, z))
         if index == 0:
             continue
@@ -360,16 +535,32 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         horizontal = hypot(delta.x, delta.z)
         lateral = Vec3(delta.z / horizontal, 0.0, -delta.x / horizontal)
         normal = forward.cross(lateral).normalized()
-        if normal.y < 0.7:
-            raise TrackValidationError("unsupported_slope", "road slope exceeds the registered physics contact limit")
+        if normal.y < 0.98:
+            raise TrackValidationError(
+                "unsupported_slope",
+                f"road segment {index - 1} near ({current.x:.1f}, {current.z:.1f}) is steeper than the supported vehicle tilt; lengthen the ramp or reduce its rise",
+            )
+        if gap_bounds and (gap_bounds[0] - 1e-7 <=
+                           deduplicated[index-1] and
+                           distance <= gap_bounds[1] + 1e-7):
+            surface_ids.append(None)
+            continue
         surface_id = f"surface-{index - 1:04d}"
+        # At a genuine gap lip the support patch ENDS exactly at the edge:
+        # no overhang of standard adjacent-route overlap into the void.
+        edge_lip = bool(gap_bounds and
+                        (abs(distance-gap_bounds[0]) < 1e-7
+                         or abs(deduplicated[index-1]-gap_bounds[1]) < 1e-7))
+        overlap = 0.0 if edge_lip else SURFACE_OVERLAP_M
         patch = PlanarSurfacePatch(
             surface_id,
             (previous + current) * 0.5,
             forward,
             normal,
             float(clean["width"]),
-            length,
+            length + overlap,
+            route_index=index - 1,
+            route_overlap_m=overlap,
         )
         surfaces.append(patch)
         surface_ids.append(surface_id)
@@ -380,26 +571,37 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
     )
     if any(deduplicated[index] - distance > 0.2 for index, distance in zip(checkpoint_point_indices, checkpoint_distances, strict=True)):
         raise TrackValidationError("checkpoint_order", "checkpoint could not be aligned to a route point")
-    navigation = AuthoredNavigation(tuple(route_points), tuple(surface_ids), checkpoint_point_indices)
+    # The authored route may cross open air, but its registered surface
+    # references must all correspond to real, existing support patches.
+    previous_support = next((item for item in surface_ids if item is not None), None)
+    if previous_support is None:
+        raise TrackValidationError("unsupported_gap", "gap removed all supporting road")
+    referenced = []
+    for item in surface_ids:
+        if item is not None:
+            previous_support = item
+        referenced.append(previous_support)
+    navigation = AuthoredNavigation(tuple(route_points), tuple(referenced), checkpoint_point_indices)
 
     checkpoints = []
     for order, (item, index) in enumerate(zip(checkpoint_props, checkpoint_point_indices, strict=True)):
-        _, _, _, heading, _, _ = _pose_at(curve_points, curve_distances, checkpoint_distances[order], props, bridges, total)
+        _, _, _, heading, _, _ = _pose_at(curve_points, curve_distances, checkpoint_distances[order], props, bridges, total, tier_ramps)
         checkpoints.append(Checkpoint(
             f"checkpoint-{order:03d}",
             _volume(route_points[index], Vec3(float(clean["width"]) / 2.0 + 1.0, 3.0, 1.0), heading),
             order,
         ))
-    finish_pose = _pose_at(curve_points, curve_distances, total, props, bridges, total)
+    finish_pose = _pose_at(curve_points, curve_distances, total, props, bridges, total, tier_ramps)
     finish = FinishLine("finish", _volume(route_points[-1], Vec3(float(clean["width"]) / 2.0 + 1.0, 3.0, 1.0), finish_pose[3]))
+    base = catalog.track_factory(reference_track_id)
     obstacles = []
     boost_pads = []
     for index, item in enumerate(props):
         kind = item["kind"]
-        if kind in ("bridge", "ramp", "checkpoint"):
+        if kind in ("bridge", "ramp", "checkpoint", "gap", "jump"):
             continue
         distance = float(item["t"]) * total
-        x, y, z, heading, nx, nz = _pose_at(curve_points, curve_distances, distance, props, bridges, total)
+        x, y, z, heading, nx, nz = _pose_at(curve_points, curve_distances, distance, props, bridges, total, tier_ramps)
         x += nx * float(item["offset"])
         z += nz * float(item["offset"])
         heading += float(item["rotation"])
@@ -409,7 +611,13 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         elif kind == "cone":
             obstacles.append(Obstacle(identity, _volume(Vec3(x, y + 0.66, z), Vec3(0.65, 0.60, 0.65), heading)))
         elif kind == "booster":
-            boost_pads.append(BoostPad(identity, _volume(Vec3(x, y + 0.25, z), Vec3(2.4, 0.2, 3.1), heading), 3.0))
+            # The motion modifier samples the chassis reference point, which
+            # lives at the authored ride height, not at asphalt height. Keep
+            # the trigger volume centered on that real reference; no velocity
+            # override or changed force law is introduced.
+            boost_pads.append(BoostPad(identity, _volume(
+                Vec3(x, y + base.vehicle_parameters.ride_height, z),
+                Vec3(2.4, 0.25, 3.1), heading), 3.0))
 
     first, second = route_points[0], route_points[1]
     first_forward = (second - first).normalized()
@@ -422,6 +630,7 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         Vec3(0.0, 1.0, 0.0),
         float(clean["width"]),
         SPAWN_DISTANCE_M,
+        route_index=-1,
     )
     last_forward = (route_points[-1] - route_points[-2]).normalized()
     finish_support = PlanarSurfacePatch(
@@ -431,12 +640,23 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         surfaces[-1].normal,
         float(clean["width"]),
         5.0,
+        route_index=len(surfaces),
     )
     road_surfaces = (start_support, *surfaces, finish_support)
     if _atlas(tuple(road_surfaces), 1e-6) is None:
+        issue = surface_intersection_issue(tuple(road_surfaces), 1e-6)
+        if issue is not None:
+            first_id, second_id, x, z = issue
+            message = (
+                f"road sections {first_id} and {second_id} overlap near ({x:.1f}, {z:.1f}) "
+                "without matching height or safe deck clearance; reshape the turn or increase "
+                "the crossing height and approach length"
+            )
+        else:
+            message = "road surfaces could not be certified; reshape the turn or move crossings farther apart"
         raise TrackValidationError(
             "unsupported_surface_intersection",
-            "road surfaces overlap with inconsistent heights; split elevated sections away from turns and intersections",
+            message,
         )
     world = TrackWorld(
         surfaces=tuple(road_surfaces),
@@ -445,9 +665,8 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         checkpoints=tuple(checkpoints),
         finish_lines=(finish,),
     )
-    base = catalog.track_factory(reference_track_id)
     start = route_points[0]
-    start_pose = _pose_at(curve_points, curve_distances, SPAWN_DISTANCE_M, props, bridges, total)
+    start_pose = _pose_at(curve_points, curve_distances, SPAWN_DISTANCE_M, props, bridges, total, tier_ramps)
     first_contact = world.surface_at(start, 0.0)
     if first_contact is None or first_contact.normal != Vec3(0.0, 1.0, 0.0):
         raise TrackValidationError("unsupported_spawn", "spawn must sit on a horizontal supported road segment")
@@ -465,6 +684,7 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         base,
         track=world,
         initial_state=initial,
+        episode_config=replace(base.episode_config, max_steps=MAX_RUNTIME_STEPS),
         navigation=navigation,
         offtrack_config=None,
         reset_config=None,
@@ -477,7 +697,7 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
             if not _spaces_match(custom_env.action_space, reference_env.action_space) or not _spaces_match(custom_env.observation_space, reference_env.observation_space):
                 ppo_compatible = False
             else:
-                ppo_compatible = True
+                ppo_compatible = not bool(gap_bounds)
             observation, _ = custom_env.reset(seed=0)
             if not np.isfinite(observation).all() or custom_env.runtime_snapshot()["tick"] != 0:
                 raise TrackValidationError("invalid_spawn", "custom Gym environment did not reset to a finite initial state")
@@ -502,7 +722,7 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         clean,
         factory,
         tuple(road_samples),
-        len(bridges),
+        len(bridges) + len(tier_ramps),
         ppo_compatible,
         warnings,
     )

@@ -1,3 +1,7 @@
+import { parseTrack, type RoadSample, type TrackDocument } from './track';
+import { slerpWxyz } from './orientation';
+import { validateAutoConfig, type AutoDriveConfig } from './autoDriveConfig';
+
 export type ReplayFrame = {
   time_s: number;
   position: [number, number, number];
@@ -41,6 +45,8 @@ export type ReplayV2 = {
     track_sha256: string;
     seed: number;
   };
+  track_preview?: ReplayTrackPreview;
+  auto_drive_config?: AutoDriveConfig;
   result: {
     status: 'finished' | 'failed' | 'cancelled' | 'stopped';
     valid_sample: boolean;
@@ -52,11 +58,17 @@ export type ReplayV2 = {
   };
   frames: ReplayFrame[];
 };
+export type ReplayTrackPreview = {
+  track_id: string;
+  track_sha256: string;
+  preview: TrackDocument;
+  road_samples: RoadSample[];
+};
 export type Replay = ReplayV1 | ReplayV2;
 
 const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
 const digest = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
-const vector = (value: unknown, size: number): value is number[] => Array.isArray(value) && value.length === size && value.every(finite);
+const vector = (value: unknown, size: number): value is number[] => Array.isArray(value) && value.length === size && Array.from(value).every(finite);
 
 function validateFrame(frame: unknown): ReplayFrame {
   if (!frame || typeof frame !== 'object') throw new Error('Invalid replay frame');
@@ -68,7 +80,15 @@ function validateFrame(frame: unknown): ReplayFrame {
   for (const key of ['velocity', 'acceleration_mps2'] as const) {
     if (f[key] !== undefined && !vector(f[key], 3)) throw new Error(`Invalid replay ${key}`);
   }
-  if (f.orientation_wxyz !== undefined && !vector(f.orientation_wxyz, 4)) throw new Error('Invalid replay orientation');
+  let orientation: ReplayFrame['orientation_wxyz'];
+  if (f.orientation_wxyz !== undefined) {
+    if (!vector(f.orientation_wxyz, 4)) throw new Error('Invalid replay orientation');
+    const scale = Math.max(...f.orientation_wxyz.map(Math.abs));
+    if (scale === 0) throw new Error('Invalid replay orientation');
+    const scaled = f.orientation_wxyz.map(value => value / scale);
+    const length = Math.hypot(...scaled);
+    orientation = scaled.map(value => value / length) as ReplayFrame['orientation_wxyz'];
+  }
   if (f.action !== undefined && (!f.action || !finite(f.action.steering) || f.action.steering < -1 || f.action.steering > 1 ||
       !finite(f.action.throttle) || f.action.throttle < 0 || f.action.throttle > 1 ||
       !finite(f.action.brake) || f.action.brake < 0 || f.action.brake > 1)) throw new Error('Invalid replay action');
@@ -79,11 +99,49 @@ function validateFrame(frame: unknown): ReplayFrame {
   if (f.checkpoint_crossings !== undefined && !stringArray(f.checkpoint_crossings)) throw new Error('Invalid checkpoint crossings');
   if (f.collision_ids !== undefined && !stringArray(f.collision_ids)) throw new Error('Invalid collision ids');
   if (f.physical_event_types !== undefined && !stringArray(f.physical_event_types)) throw new Error('Invalid physical events');
-  return { ...f, position: [...f.position] as [number, number, number] } as ReplayFrame;
+  return { ...f, position: [...f.position] as [number, number, number],
+    ...(orientation ? { orientation_wxyz: orientation } : {}) } as ReplayFrame;
 }
 
 function stringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string' && item.length <= 200);
+}
+
+function preserveUnknownTrackFields(raw: unknown, validated: unknown): unknown {
+  if (Array.isArray(validated)) {
+    return validated.map((value, index) => preserveUnknownTrackFields(Array.isArray(raw) ? raw[index] : undefined, value));
+  }
+  if (validated && typeof validated === 'object') {
+    const original = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+    const parsed = validated as Record<string, unknown>;
+    return Object.fromEntries(Object.entries({ ...original, ...parsed }).map(([key, value]) => [
+      key, key in original && key in parsed ? preserveUnknownTrackFields(original[key], parsed[key]) : value,
+    ]));
+  }
+  return validated;
+}
+
+function validateTrackPreview(raw: unknown, trackId: string, trackSha256: string): ReplayTrackPreview | undefined {
+  if (raw === undefined) return undefined;
+  if (!raw || typeof raw !== 'object') throw new Error('Invalid replay track preview');
+  const value = raw as Record<string, unknown>;
+  if (value.track_id !== trackId || value.track_sha256 !== trackSha256 || !Array.isArray(value.road_samples)) {
+    throw new Error('Replay track preview does not match replay provenance');
+  }
+  const preview = preserveUnknownTrackFields(value.preview, parseTrack(value.preview)) as TrackDocument;
+  const roadSamples = value.road_samples as RoadSample[];
+  if (preview.id !== trackId || roadSamples.length < 2 || roadSamples.some((sample, index) =>
+    !sample || ![sample.x, sample.y, sample.z, sample.t, sample.heading, sample.nx, sample.nz].every(finite) ||
+    sample.t < 0 || sample.t > 1 || (index > 0 && sample.t <= roadSamples[index - 1].t))) {
+    throw new Error('Invalid replay track geometry');
+  }
+  return {
+    ...value,
+    track_id: trackId,
+    track_sha256: trackSha256,
+    preview,
+    road_samples: roadSamples.map((sample) => ({ ...sample })),
+  };
 }
 
 export function parseReplay(raw: unknown): Replay {
@@ -111,7 +169,7 @@ export function parseReplay(raw: unknown): Replay {
     const result = d.result as ReplayV2['result'] | undefined;
     if (!provenance || !['TRAIN', 'DEVELOPMENT'].includes(provenance.dataset_split) ||
         provenance.runtime_mode !== 'development' || !digest(provenance.source_sha256) ||
-        typeof provenance.model_id !== 'string' || !(provenance.model_id === 'manual' || /^[A-D]-seed[0-2]$/.test(provenance.model_id)) ||
+        typeof provenance.model_id !== 'string' || !(provenance.model_id === 'manual' || provenance.model_id === 'auto-drive' || /^[A-D]-seed[0-2]$/.test(provenance.model_id)) ||
         (provenance.model_sha256 !== null && !digest(provenance.model_sha256)) ||
         typeof provenance.track_id !== 'string' || !provenance.track_id || !digest(provenance.track_sha256) ||
         !Number.isInteger(provenance.seed) || provenance.seed < 0 || provenance.seed > 0xffffffff ||
@@ -121,7 +179,14 @@ export function parseReplay(raw: unknown): Replay {
         !finite(result.duration_s) || result.duration_s < 0 || !digest(result.trace_sha256)) {
       throw new Error('Unsupported replay schema or provenance (HELD-OUT is not allowed)');
     }
-    return { schema: d.schema, label: d.label, provenance: { ...provenance }, result: { ...result }, frames };
+    const trackPreview = validateTrackPreview(d.track_preview, provenance.track_id, provenance.track_sha256);
+    if (d.auto_drive_config !== undefined && provenance.model_id !== 'auto-drive') throw new Error('Config belongs to Auto Drive only');
+    const autoConfig = d.auto_drive_config === undefined ? undefined : validateAutoConfig(d.auto_drive_config);
+    return {
+      schema: d.schema, label: d.label, provenance: { ...provenance }, result: { ...result }, frames,
+      ...(trackPreview ? { track_preview: trackPreview } : {}),
+      ...(autoConfig ? { auto_drive_config: autoConfig } : {}),
+    };
   }
   throw new Error('Unsupported replay schema or provenance (HELD-OUT is not allowed)');
 }
@@ -141,13 +206,24 @@ export function replayAt(replay: Replay, time: number): ReplayFrame {
   }
   const b = frames[lo], a = frames[Math.max(0, lo - 1)];
   if (b === a) return b;
+  // Range inputs quantize time to decimals such as 0.35, while a Physics
+  // timestamp can be 0.35000000000000003. Interpret sub-nanosecond binary
+  // rounding as the *same certified frame*, never as an earlier tick.
+  // Do not enlarge this to a visual frame tolerance: that would announce
+  // airborne/landing/collision events before their actual Physics samples.
+  if (Math.abs(b.time_s - bounded) <= 1e-10) return b;
   const u = (bounded - a.time_s) / (b.time_s - a.time_s);
   const turn = Math.atan2(Math.sin(b.heading_rad - a.heading_rad), Math.cos(b.heading_rad - a.heading_rad));
   return {
-    ...b,
+    // Discrete Physics fields belong to the last certified sample at or
+    // before the requested replay time. Never preview future "airborne",
+    // "landing", collision or checkpoint events between frames.
+    ...(u >= 1 ? b : a),
     time_s: bounded,
     position: [0, 1, 2].map((i) => a.position[i] + (b.position[i] - a.position[i]) * u) as [number, number, number],
     heading_rad: a.heading_rad + turn * u,
     speed_mps: a.speed_mps + (b.speed_mps - a.speed_mps) * u,
+      ...(a.orientation_wxyz && b.orientation_wxyz
+        ? { orientation_wxyz: slerpWxyz(a.orientation_wxyz, b.orientation_wxyz, u) } : {}),
   };
 }

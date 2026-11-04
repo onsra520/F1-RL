@@ -17,6 +17,8 @@ class PlanarSurfacePatch:
     normal: Vec3
     width: float
     length: float
+    route_index: int | None = None
+    route_overlap_m: float = 0.0
 
     def __post_init__(self) -> None:
         if not isinstance(self.id, str) or not self.id.strip():
@@ -31,6 +33,12 @@ class PlanarSurfacePatch:
             raise ValueError("width must be finite and positive")
         if not isfinite(self.length) or self.length <= 0.0:
             raise ValueError("length must be finite and positive")
+        if self.route_index is not None and (type(self.route_index) is not int or self.route_index < -1):
+            raise ValueError("route_index must be an integer greater than or equal to -1")
+        if not isfinite(self.route_overlap_m) or self.route_overlap_m < 0.0 or self.route_overlap_m >= self.length:
+            raise ValueError("route_overlap_m must be finite and within [0, length)")
+        if self.route_overlap_m and self.route_index is None:
+            raise ValueError("route overlap requires an authored route index")
 
     @property
     def right(self) -> Vec3:

@@ -19,7 +19,10 @@ from .independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy, SuspensionDynamicsResult,
     SuspensionDynamicsState, SuspensionResolutionError, WheelForceSample,
 )
-from .multi_surface_support import _atlas, _contacts, _intersection, _square, certify_multisurface_support
+from .multi_surface_support import (
+    _WHEEL_NAMES, _atlas, _contacts, _intersection, _square, _within_shape,
+    certify_multisurface_support,
+)
 from .spatial_partial_wheel_contact import sample_spatial_partial_wheels
 from .finite_tire_footprint_v4 import sample_finite_wheel_coverage
 from .wheel_edge_release_energy import certify_wheel_edge_release_energy
@@ -265,6 +268,18 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             footprints=None
             contacts=_contacts(state,physics.contact,atlas,free_extension=lifecycle)
         if contacts is None:
+            if lifecycle:
+                outside_wheel = None
+                for name, local in zip(_WHEEL_NAMES, physics.contact.wheels.positions, strict=True):
+                    point = state.position + state.orientation.rotate(local)
+                    if not any(_within_shape(point.x, point.z, polygon) for polygon in atlas[1]):
+                        outside_wheel = name
+                        break
+                if outside_wheel is not None:
+                    raise SuspensionResolutionError(
+                        f'track_boundary_exit: {outside_wheel} wheel center left road support',
+                        failure_code='track_boundary_exit',
+                    )
             raise SuspensionResolutionError('spatial wheel support/travel missing')
         compressed=any(c is not None and preload+physics.spring_stiffness_npm*c.deflection_m>0.
                        for c in contacts)
@@ -286,7 +301,8 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             patch=patches[contact.patch_id]
             arm=state.orientation.rotate(local)
             point_velocity=state.velocity+state.angular_velocity.cross(arm)
-            gradient=patch.normal/patch.normal.y
+            gradient=contact.surface_gradient or patch.normal/patch.normal.y
+            normal=gradient.normalized()
             gap_rate=gradient.dot(point_velocity)
             raw_elastic=preload+physics.spring_stiffness_npm*contact.deflection_m
             elastic=max(0.,raw_elastic)
@@ -302,13 +318,13 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             coverage=footprints[index].coverage if footprints is not None else 1.
             edge_gradient=(footprints[index].coverage_gradient
                            if footprints is not None else Vec3(0.,0.,0.))
-            normal_force=coverage*load/patch.normal.y
+            normal_force=coverage*load*gradient.magnitude
             angle=control.steering*parameters.max_steering_angle if local.z>0. and ground_effect else 0.
-            heading=state.orientation.rotate(Vec3(sin(angle),0.,cos(angle))).reject_from(patch.normal)
+            heading=state.orientation.rotate(Vec3(sin(angle),0.,cos(angle))).reject_from(normal)
             if heading.magnitude<1e-8:
                 raise SuspensionResolutionError('wheel tangent direction unresolved')
             tangent=heading.normalized()
-            lateral=patch.normal.cross(tangent)
+            lateral=normal.cross(tangent)
             speed,slip=point_velocity.dot(tangent),point_velocity.dot(lateral)
             longitudinal=coverage*mass*(control.throttle*parameters.max_acceleration
                 -control.brake*parameters.max_braking*tanh(speed/traction.brake_speed_scale_mps))/4.
@@ -758,7 +774,20 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                 if phase_domain=='atlas_rotating_edge_v4':
                     signatures=tuple(tuple(item.wheel_index for item in stage.contacts) for stage in (*stages,final))
                     raise SuspensionResolutionError(f'v4 spatial energy refinement exhausted: h={h:.3g} residual={residual:.9g} tol={tolerance:.9g} spring0={a.spring_energy:.8g} spring1={final.spring_energy:.8g} masks={signatures}')
-                raise SuspensionResolutionError('spatial energy balance unresolved at refinement limit')
+                masks = tuple(tuple(item.patch_id for item in force.contacts) for force in (*stages, final))
+                contact_samples = tuple(tuple(
+                    (sample.contact.patch_id, sample.contact.ground_height_m,
+                     sample.contact.deflection_m, sample.vertical_wheel_velocity_mps,
+                     sample.contact.surface_gradient)
+                    for sample in force.samples
+                ) for force in (*stages, final))
+                raise SuspensionResolutionError(
+                    f'spatial energy balance unresolved at refinement limit: '
+                    f'start={start:.9g} h={h:.9g} depth={depth} '
+                    f'residual_j={residual:.9g} tolerance_j={tolerance:.9g} '
+                    f'spring_start_j={a.spring_energy:.9g} spring_end_j={final.spring_energy:.9g} '
+                    f'contact_masks={masks} contact_samples={contact_samples}'
+                )
             middle=advance(y,start,h/2.,depth+1)
             return advance(middle,times[-1],h/2.,depth+1)
         first,last=vehicle(y),vehicle(end)
@@ -888,7 +917,10 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             ballistic_sag_m=gravity*h*h/8. if ballistic else 0.,
             maximum_deflection_m=-preload/physics.spring_stiffness_npm if ballistic else None,
             minimum_support_deflection_m=-preload/physics.spring_stiffness_npm
-                if lifecycle and not ballistic and not phase_change else None)
+                if lifecycle and not ballistic and not phase_change else None,
+            body_coverage_domain=(
+                'wheel_supported_overhang_v1' if lifecycle else 'full_footprint_v1'
+            ))
         if phase_domain!='atlas_rotating_edge_v4' and not verdict.valid:
             if lifecycle and not phase_change and h>1e-8 and phase_depth<24:
                 middle=advance(y,start,h/2.,depth,phase_depth+1)

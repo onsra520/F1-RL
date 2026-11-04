@@ -1,0 +1,55 @@
+INFO:     Started server process [32948]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:52847 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54923 - "GET /api/v1/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52510 - "GET /api/v1/tracks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63669 - "OPTIONS /api/v1/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63669 - "POST /api/v1/sessions HTTP/1.1" 201 Created
+INFO:     127.0.0.1:60051 - "WebSocket /api/v1/sessions/03443688-d034-4980-b3f5-580bb67ce643/ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:57349 - "GET /api/v1/sessions/03443688-d034-4980-b3f5-580bb67ce643/replay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53651 - "POST /api/v1/sessions HTTP/1.1" 201 Created
+INFO:     127.0.0.1:57466 - "WebSocket /api/v1/sessions/341043b7-395d-4890-a0d5-438508971beb/ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:63175 - "GET /api/v1/sessions/341043b7-395d-4890-a0d5-438508971beb/replay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54207 - "POST /api/v1/sessions HTTP/1.1" 201 Created
+INFO:     127.0.0.1:63627 - "WebSocket /api/v1/sessions/f1d1f483-9c94-460c-aab9-7ae50430510c/ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:56227 - "GET /api/v1/sessions/f1d1f483-9c94-460c-aab9-7ae50430510c/replay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57441 - "POST /api/v1/sessions HTTP/1.1" 201 Created
+INFO:     127.0.0.1:53965 - "WebSocket /api/v1/sessions/364d8ab3-cbc8-410e-badf-d8a7ec635755/ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:59214 - "GET /api/v1/sessions/364d8ab3-cbc8-410e-badf-d8a7ec635755/replay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62295 - "POST /api/v1/sessions HTTP/1.1" 201 Created
+INFO:     127.0.0.1:65339 - "WebSocket /api/v1/sessions/535f08c2-7447-4db9-913a-e312fb947c6c/ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:62240 - "GET /api/v1/sessions/535f08c2-7447-4db9-913a-e312fb947c6c/replay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62588 - "POST /api/v1/sessions HTTP/1.1" 201 Created
+INFO:     127.0.0.1:63057 - "WebSocket /api/v1/sessions/243e0181-2dec-4f90-a587-2f79b9b13768/ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:50060 - "GET /api/v1/sessions/243e0181-2dec-4f90-a587-2f79b9b13768/replay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52667 - "POST /api/v1/sessions HTTP/1.1" 201 Created
+INFO:     127.0.0.1:62431 - "WebSocket /api/v1/sessions/2390e4c8-451c-4b09-8572-10fa65a5e56f/ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:62149 - "GET /api/v1/sessions/2390e4c8-451c-4b09-8572-10fa65a5e56f/replay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62149 - "POST /api/v1/sessions HTTP/1.1" 201 Created
+INFO:     127.0.0.1:52176 - "WebSocket /api/v1/sessions/b0f2cb85-1c92-461a-97e0-b9a229dce7f0/ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:58206 - "GET /api/v1/sessions/b0f2cb85-1c92-461a-97e0-b9a229dce7f0/replay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58328 - "GET /api/v1/sessions/b0f2cb85-1c92-461a-97e0-b9a229dce7f0/replay HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50906 - "OPTIONS /api/v1/sessions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50906 - "POST /api/v1/sessions HTTP/1.1" 201 Created
+INFO:     127.0.0.1:57148 - "WebSocket /api/v1/sessions/4afb51dd-fa01-4eae-9d59-e389cf3bb419/ws" [accepted]
+INFO:     connection open
+INFO:     Started server process [68696]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:60254 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52701 - "POST /api/v1/sessions HTTP/1.1" 201 Created
+INFO:     127.0.0.1:62532 - "WebSocket /api/v1/sessions/e1f769b7-fda0-4a61-bd41-225dba187175/ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:56134 - "GET /api/v1/sessions/e1f769b7-fda0-4a61-bd41-225dba187175/replay HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55354 - "GET /api/v1/sessions/e1f769b7-fda0-4a61-bd41-225dba187175/replay HTTP/1.1" 404 Not Found

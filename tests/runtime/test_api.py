@@ -1,4 +1,5 @@
 import re
+import time
 from pathlib import Path
 
 import pytest
@@ -93,7 +94,14 @@ def test_runtime_websocket_v1_rejects_manual_action_on_ppo_and_disconnect_cleans
             rejected = socket.receive_json()
             assert rejected["type"] == "error"
             assert rejected["data"]["code"] == "invalid_controller"
-        missing = client.get(f"/api/v1/sessions/{session_id}")
+        # The ASGI disconnect handler runs concurrently with TestClient's close.
+        # Require the actual cleanup within a strict bound rather than racing it.
+        deadline = time.monotonic() + 2.0
+        while True:
+            missing = client.get(f"/api/v1/sessions/{session_id}")
+            if missing.status_code == 404 or time.monotonic() >= deadline:
+                break
+            time.sleep(0.01)
     assert missing.status_code == 404
 
 
@@ -172,6 +180,23 @@ def test_manual_runtime_session_uses_same_gym_track_and_accepts_typed_actions():
                     break
                 received.append(socket.receive_json())
     assert created.json()["seed"] == 73
+
+
+def test_auto_runtime_session_is_registered_without_a_ppo_model():
+    with TestClient(create_app(repository_root=ROOT)) as client:
+        created = client.post("/api/v1/sessions", json={
+            "mode": "auto", "track_id": "straight-sprint-v1", "seed": 412,
+        })
+        assert created.status_code == 201
+        assert created.json()["mode"] == "auto"
+        assert created.json()["model_id"] is None
+        assert created.json()["provenance"] == "auto-development"
+
+        invalid = client.post("/api/v1/sessions", json={
+            "mode": "auto", "model_id": "A-seed0", "track_id": "straight-sprint-v1", "seed": 412,
+        })
+        assert invalid.status_code == 422
+        assert client.delete(f"/api/v1/sessions/{created.json()['session_id']}").status_code == 204
 
 
 def test_custom_track_validation_and_manual_simulation_use_python_gym():
@@ -281,3 +306,170 @@ def test_ppo_runs_on_custom_track_with_development_provenance():
             assert replay["provenance"]["dataset_split"] == "DEVELOPMENT"
             assert replay["provenance"]["model_id"] == "A-seed0"
             assert replay["provenance"]["track_sha256"] == created.json()["track_preview"]["track_sha256"]
+
+
+def test_runtime_cors_allows_only_local_editor_ports():
+    with TestClient(create_app(repository_root=ROOT)) as client:
+        for origin in ("http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://localhost:5174"):
+            response = client.get("/api/v1/health", headers={"origin": origin})
+            assert response.status_code == 200
+            assert response.headers.get("access-control-allow-origin") == origin
+        external = client.get("/api/v1/health", headers={"origin": "https://other.example"})
+        assert external.status_code == 200
+        assert "access-control-allow-origin" not in external.headers
+        preflight = client.options("/api/v1/sessions", headers={
+            "origin": "http://127.0.0.1:5173",
+            "access-control-request-method": "POST",
+            "access-control-request-headers": "content-type,x-trace-id",
+        })
+        assert preflight.status_code == 200
+        assert "x-trace-id" in preflight.headers["access-control-allow-headers"].lower()
+
+
+def test_auto_drive_config_api_is_validated_and_snapshot_is_immutable():
+    from src.runtime.drive_config import AutoDriveConfig
+    with TestClient(create_app(repository_root=ROOT)) as client:
+        payload = {"mode": "auto", "track_id": "straight-sprint-v1", "seed": 412,
+                   "auto_drive_config": {"driving_style": "racing", "speed_profile": "hyper",
+                                         "target_max_speed_kmh": 240.0}}
+        created = client.post("/api/v1/sessions", json=payload)
+        assert created.status_code == 201, created.text
+        status = created.json()
+        assert status["auto_drive_config"]["driving_style"] == "racing"
+        assert status["auto_drive_config"]["target_max_speed_kmh"] == 240.0
+        assert status["effective_max_speed_kmh"] <= 3.6 * 15.0 + 1e-6
+        payload["auto_drive_config"]["driving_style"] = "right"
+        repeated = client.get(f"/api/v1/sessions/{status['session_id']}").json()
+        assert repeated["auto_drive_config"]["driving_style"] == "racing"
+        assert client.delete(f"/api/v1/sessions/{status['session_id']}").status_code == 204
+        for bad in ({"target_max_speed_kmh": -1.0}, {"target_max_speed_kmh": 999.0},
+                    {"min_lookahead_m": 20.0}, {"edge_margin_m": -0.1}, {"extra_override": True}):
+            failed = client.post("/api/v1/sessions", json={"mode": "auto", "track_id": "straight-sprint-v1",
+                "seed": 1, "auto_drive_config": bad})
+            assert failed.status_code == 422
+        ppo = client.post("/api/v1/sessions", json={"mode": "ppo", "model_id": "A-seed0",
+            "track_id": "straight-sprint-v1", "seed": 1, "auto_drive_config": {"driving_style": "right"}})
+        assert ppo.status_code == 422
+        assert AutoDriveConfig().driving_style == "right"
+
+def test_auto_drive_ws_ready_reports_applied_physics_version_and_source_hash():
+    """The live socket must disclose V3 instead of being labeled V4."""
+    with TestClient(create_app(repository_root=ROOT)) as client:
+        created = client.post("/api/v1/sessions", json={
+            "mode": "auto", "track_id": "straight-sprint-v1", "seed": 412,
+        })
+        assert created.status_code == 201
+        status = created.json()
+        assert status["physics"]["mode"] == "wp7_lifecycle_v1"
+        assert status["physics"]["ground_motion_version"] == "spatial_rotating_compliant_lifecycle_v3"
+        assert re.fullmatch(r"[a-f0-9]{64}", status["physics"]["sha256"])
+        with client.websocket_connect(f"/api/v1/sessions/{status['session_id']}/ws") as socket:
+            ready = socket.receive_json()
+            assert ready["type"] == "ready"
+            assert ready["data"]["physics"] == status["physics"]
+        fetched = client.get(f"/api/v1/sessions/{status['session_id']}")
+        # The transport is authoritative even if the user has not started driving.
+        assert fetched.status_code in (200, 404)
+        if fetched.status_code == 200:
+            assert fetched.json()["physics"] == status["physics"]
+
+def test_explicit_custom_auto_v4_is_version_bound_and_never_affects_frozen_train():
+    from src.rl.crash_terminal_registered import RACE_V4
+    with TestClient(create_app(repository_root=ROOT)) as client:
+        request = {"mode": "auto", "custom_track": _custom_track(),
+                   "seed": 412, "physics_profile": "experimental_v4"}
+        created = client.post("/api/v1/sessions", json=request)
+        assert created.status_code == 201, created.text
+        status = created.json()
+        assert status["physics"]["ground_motion_version"] == "spatial_road_edge_partial_lifecycle_v4"
+        assert status["race_contract"]["version"] == RACE_V4
+        assert status["provenance"] == "custom-development"
+        with client.websocket_connect(f"/api/v1/sessions/{status['session_id']}/ws") as socket:
+            ready = socket.receive_json()
+            assert ready["data"]["physics"] == status["physics"]
+            assert ready["data"]["race_contract"] == status["race_contract"]
+        default = client.post("/api/v1/sessions", json={
+            "mode": "auto", "custom_track": _custom_track(), "seed": 412})
+        assert default.status_code == 201, default.text
+        assert default.json()["physics"]["ground_motion_version"] == "spatial_rotating_compliant_lifecycle_v3"
+        assert default.json()["race_contract"]["version"] != RACE_V4
+        for invalid in (
+            {"mode": "auto", "track_id": "straight-sprint-v1", "seed": 412,
+             "physics_profile": "experimental_v4"},
+            {"mode": "manual", "custom_track": _custom_track(), "seed": 412,
+             "physics_profile": "experimental_v4"},
+            {"mode": "ppo", "model_id": "A-seed0", "custom_track": _custom_track(),
+             "seed": 412, "physics_profile": "experimental_v4"},
+            {"mode": "auto", "custom_track": _custom_track(), "seed": 412,
+             "physics_profile": "unregistered_v5"},
+        ):
+            rejected=client.post("/api/v1/sessions", json=invalid)
+            assert rejected.status_code == 422, rejected.text
+
+def test_gap_map_refuses_legacy_v3_and_non_auto_controller():
+    doc = {"schema": "f1rl_racing_sandbox_draft_v1",
+           "id": "v4-road-void", "name": "T3 4m gap", "width": 12.,
+           "points": [{"x": 0., "z": 0.}, {"x": 0., "z": 86.}],
+           "props": [{"id": "jump", "kind": "gap", "t": .52, "offset": 3., "rotation": 0.}]}
+    with TestClient(create_app(repository_root=ROOT)) as client:
+        valid = client.post("/api/v1/tracks/validate", json={"track": doc})
+        assert valid.status_code == 200, valid.text
+        assert valid.json()["ppo_compatible"] is False
+        legacy = client.post("/api/v1/sessions", json={
+            "mode": "auto", "seed": 412, "custom_track": doc})
+        assert legacy.status_code == 422, legacy.text
+        assert legacy.json()["error"]["code"] == "requires_v4"
+        manual = client.post("/api/v1/sessions", json={
+            "mode": "manual", "seed": 412, "custom_track": doc})
+        assert manual.status_code == 422, manual.text
+        v4 = client.post("/api/v1/sessions", json={
+            "mode": "auto", "seed": 412, "custom_track": doc,
+            "physics_profile": "experimental_v4"})
+        assert v4.status_code == 201, v4.text
+        assert v4.json()["physics"]["ground_motion_version"] == "spatial_road_edge_partial_lifecycle_v4"
+
+def test_gap_requires_explicit_v4_auto_and_never_uses_legacy_v3_or_ppo():
+    gap_track = {
+        "schema": "f1rl_racing_sandbox_draft_v1", "id": "t3-gap-gate",
+        "name": "T3 map with actual void", "width": 12.0,
+        "points": [{"x": 0, "z": 0}, {"x": 0, "z": 86}],
+        "props": [{"id": "gap", "kind": "gap", "t": 0.5, "offset": 4.0, "rotation": 0}],
+    }
+    with TestClient(create_app(repository_root=ROOT)) as client:
+        for mode in ("auto", "manual", "ppo"):
+            response=client.post("/api/v1/sessions",json={
+                "mode":mode,"seed":412,"custom_track":gap_track,
+                **({"model_id":"A-seed0"} if mode=="ppo" else {}),
+            })
+            assert response.status_code == 422, response.text
+        allowed=client.post("/api/v1/sessions",json={
+            "mode":"auto","seed":412,"custom_track":gap_track,
+            "physics_profile":"experimental_v4"})
+        assert allowed.status_code == 201, allowed.text
+        assert allowed.json()["physics"]["ground_motion_version"] == "spatial_road_edge_partial_lifecycle_v4"
+
+def test_t4_versioned_jump_refuses_legacy_v3_manual_and_ppo():
+    """The certified jump cannot accidentally fall back to v3 in the UI."""
+    import json
+
+    doc = json.loads(
+        (ROOT / "examples/t3-v4-launch-landing-map.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    with TestClient(create_app(repository_root=ROOT)) as client:
+        for mode in ("auto", "manual", "ppo"):
+            request = {"seed": 412, "custom_track": doc, "mode": mode}
+            if mode == "ppo":
+                request["model_id"] = "A-seed0"
+            response = client.post("/api/v1/sessions", json=request)
+            assert response.status_code == 422, response.text
+            assert response.json()["error"]["code"] == "requires_v4"
+        valid = client.post("/api/v1/sessions", json={
+            "seed": 412, "custom_track": doc, "mode": "auto",
+            "physics_profile": "experimental_v4",
+        })
+        assert valid.status_code == 201, valid.text
+        assert valid.json()["physics"]["ground_motion_version"] == (
+            "spatial_road_edge_partial_lifecycle_v4"
+        )

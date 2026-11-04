@@ -1,0 +1,215 @@
+{
+  "source_replay": "C:\\Users\\KHANH BANG\\Downloads\\f1rl-runtime-replay.json",
+  "source_sha256": "f8663ff0c8ccfaf6f5d5ece32ec1d254e4565c3dd29ff0fdfca49b78349287ba",
+  "track_sha256": "3359bae959535baa40d337ae7677540ab64f022e739acd148fa2f9b65369ec37",
+  "body": "VehicleBodyGeometry(width_m=1.8, height_m=1.2, length_m=4.0, local_center=Vec3(x=0.0, y=0.3, z=0.0))",
+  "obstacles": [
+    {
+      "id": "cone-001",
+      "center": "Vec3(x=14.522556534305782, y=0.66, z=21.905199462946243)",
+      "half_extents": "Vec3(x=0.65, y=0.6, z=0.65)"
+    }
+  ],
+  "closest": [
+    {
+      "tick": 263,
+      "gap_m": 0.7482,
+      "x": 12.577,
+      "z": 18.785,
+      "progress": 148.581,
+      "offset": 2.2,
+      "steer": 0.044,
+      "speed": 7.65
+    },
+    {
+      "tick": 262,
+      "gap_m": 1.51297,
+      "x": 11.972,
+      "z": 18.321,
+      "progress": 147.817,
+      "offset": 2.2,
+      "steer": 0.016,
+      "speed": 7.58
+    },
+    {
+      "tick": 261,
+      "gap_m": 2.26727,
+      "x": 11.379,
+      "z": 17.857,
+      "progress": 147.065,
+      "offset": 2.2,
+      "steer": -0.012,
+      "speed": 7.49
+    },
+    {
+      "tick": 260,
+      "gap_m": 3.01024,
+      "x": 10.797,
+      "z": 17.393,
+      "progress": 146.323,
+      "offset": -2.2,
+      "steer": -0.049,
+      "speed": 7.4
+    },
+    {
+      "tick": 259,
+      "gap_m": 3.74069,
+      "x": 10.228,
+      "z": 16.928,
+      "progress": 145.603,
+      "offset": -2.2,
+      "steer": -0.09,
+      "speed": 7.3
+    },
+    {
+      "tick": 258,
+      "gap_m": 4.4568,
+      "x": 9.67,
+      "z": 16.464,
+      "progress": 144.88,
+      "offset": -2.2,
+      "steer": -0.135,
+      "speed": 7.2
+    },
+    {
+      "tick": 257,
+      "gap_m": 5.15598,
+      "x": 9.12,
+      "z": 16.007,
+      "progress": 144.167,
+      "offset": -2.2,
+      "steer": -0.186,
+      "speed": 7.1
+    },
+    {
+      "tick": 256,
+      "gap_m": 5.83535,
+      "x": 8.57,
+      "z": 15.567,
+      "progress": 143.468,
+      "offset": -2.2,
+      "steer": -0.234,
+      "speed": 7.0
+    },
+    {
+      "tick": 255,
+      "gap_m": 6.49508,
+      "x": 8.007,
+      "z": 15.153,
+      "progress": 142.77,
+      "offset": 2.2,
+      "steer": -0.281,
+      "speed": 6.96
+    },
+    {
+      "tick": 254,
+      "gap_m": 7.15923,
+      "x": 7.428,
+      "z": 14.771,
+      "progress": 142.076,
+      "offset": 2.2,
+      "steer": -0.295,
+      "speed": 6.92
+    },
+    {
+      "tick": 253,
+      "gap_m": 7.8463,
+      "x": 6.827,
+      "z": 14.425,
+      "progress": 141.379,
+      "offset": 2.2,
+      "steer": -0.244,
+      "speed": 6.98
+    },
+    {
+      "tick": 252,
+      "gap_m": 8.5665,
+      "x": 6.205,
+      "z": 14.097,
+      "progress": 140.681,
+      "offset": 2.2,
+      "steer": 0.453,
+      "speed": 7.12
+    },
+    {
+      "tick": 251,
+      "gap_m": 9.32433,
+      "x": 5.583,
+      "z": 13.741,
+      "progress": 139.948,
+      "offset": 2.2,
+      "steer": 0.475,
+      "speed": 7.22
+    },
+    {
+      "tick": 250,
+      "gap_m": 10.07586,
+      "x": 4.98,
+      "z": 13.331,
+      "progress": 139.219,
+      "offset": 2.2,
+      "steer": 0.457,
+      "speed": 7.37
+    },
+    {
+      "tick": 249,
+      "gap_m": 10.81844,
+      "x": 4.392,
+      "z": 12.873,
+      "progress": 138.475,
+      "offset": -2.2,
+      "steer": -0.179,
+      "speed": 7.55
+    },
+    {
+      "tick": 248,
+      "gap_m": 11.546,
+      "x": 3.807,
+      "z": 12.402,
+      "progress": 137.734,
+      "offset": -2.2,
+      "steer": -0.225,
+      "speed": 7.46
+    },
+    {
+      "tick": 247,
+      "gap_m": 12.24882,
+      "x": 3.217,
+      "z": 11.953,
+      "progress": 136.993,
+      "offset": -2.2,
+      "steer": -0.273,
+      "speed": 7.39
+    },
+    {
+      "tick": 246,
+      "gap_m": 12.95693,
+      "x": 2.607,
+      "z": 11.533,
+      "progress": 136.253,
+      "offset": -2.2,
+      "steer": -0.31,
+      "speed": 7.41
+    },
+    {
+      "tick": 245,
+      "gap_m": 13.67076,
+      "x": 1.972,
+      "z": 11.148,
+      "progress": 135.547,
+      "offset": -2.2,
+      "steer": -0.31,
+      "speed": 7.46
+    },
+    {
+      "tick": 244,
+      "gap_m": 14.40816,
+      "x": 1.304,
+      "z": 10.805,
+      "progress": 134.806,
+      "offset": -2.2,
+      "steer": -0.253,
+      "speed": 7.58
+    }
+  ]
+}

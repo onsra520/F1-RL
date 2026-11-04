@@ -1,0 +1,74 @@
+{
+  "schema": "f1rl_racing_sandbox_draft_v1",
+  "id": "t3-certified-jump-launch-v1",
+  "name": "Physics V4 - development jump 3.7 m",
+  "width": 12,
+  "points": [
+    {
+      "x": 0,
+      "z": 0
+    },
+    {
+      "x": 0,
+      "z": 90
+    }
+  ],
+  "props": [
+    {
+      "id": "jump-landing-001",
+      "kind": "jump",
+      "t": 0.5,
+      "offset": 3.7,
+      "rotation": 0
+    },
+    {
+      "id": "launch-boost-1",
+      "kind": "booster",
+      "t": 0.18888888888888888,
+      "offset": 0,
+      "rotation": 0
+    },
+    {
+      "id": "launch-boost-2",
+      "kind": "booster",
+      "t": 0.23333333333333334,
+      "offset": 0,
+      "rotation": 0
+    },
+    {
+      "id": "launch-boost-3",
+      "kind": "booster",
+      "t": 0.2777777777777778,
+      "offset": 0,
+      "rotation": 0
+    },
+    {
+      "id": "launch-boost-4",
+      "kind": "booster",
+      "t": 0.32222222222222224,
+      "offset": 0,
+      "rotation": 0
+    },
+    {
+      "id": "launch-boost-5",
+      "kind": "booster",
+      "t": 0.36666666666666664,
+      "offset": 0,
+      "rotation": 0
+    },
+    {
+      "id": "launch-boost-6",
+      "kind": "booster",
+      "t": 0.4111111111111111,
+      "offset": 0,
+      "rotation": 0
+    },
+    {
+      "id": "launch-boost-7",
+      "kind": "booster",
+      "t": 0.45555555555555555,
+      "offset": 0,
+      "rotation": 0
+    }
+  ]
+}
