@@ -80,7 +80,15 @@ function validateFrame(frame: unknown): ReplayFrame {
   for (const key of ['velocity', 'acceleration_mps2'] as const) {
     if (f[key] !== undefined && !vector(f[key], 3)) throw new Error(`Invalid replay ${key}`);
   }
-  if (f.orientation_wxyz !== undefined && !vector(f.orientation_wxyz, 4)) throw new Error('Invalid replay orientation');
+  let orientation: ReplayFrame['orientation_wxyz'];
+  if (f.orientation_wxyz !== undefined) {
+    if (!vector(f.orientation_wxyz, 4)) throw new Error('Invalid replay orientation');
+    const scale = Math.max(...f.orientation_wxyz.map(Math.abs));
+    if (scale === 0) throw new Error('Invalid replay orientation');
+    const scaled = f.orientation_wxyz.map(value => value / scale);
+    const length = Math.hypot(...scaled);
+    orientation = scaled.map(value => value / length) as ReplayFrame['orientation_wxyz'];
+  }
   if (f.action !== undefined && (!f.action || !finite(f.action.steering) || f.action.steering < -1 || f.action.steering > 1 ||
       !finite(f.action.throttle) || f.action.throttle < 0 || f.action.throttle > 1 ||
       !finite(f.action.brake) || f.action.brake < 0 || f.action.brake > 1)) throw new Error('Invalid replay action');
@@ -91,7 +99,8 @@ function validateFrame(frame: unknown): ReplayFrame {
   if (f.checkpoint_crossings !== undefined && !stringArray(f.checkpoint_crossings)) throw new Error('Invalid checkpoint crossings');
   if (f.collision_ids !== undefined && !stringArray(f.collision_ids)) throw new Error('Invalid collision ids');
   if (f.physical_event_types !== undefined && !stringArray(f.physical_event_types)) throw new Error('Invalid physical events');
-  return { ...f, position: [...f.position] as [number, number, number] } as ReplayFrame;
+  return { ...f, position: [...f.position] as [number, number, number],
+    ...(orientation ? { orientation_wxyz: orientation } : {}) } as ReplayFrame;
 }
 
 function stringArray(value: unknown): value is string[] {

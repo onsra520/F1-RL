@@ -36,7 +36,7 @@ export const DEFAULT_AUTO_CONFIG: AutoDriveConfig = {
 };
 export const AUTO_CONFIG_STORAGE = 'f1rl.auto-drive.settings.v1';
 const ranges: Partial<Record<keyof AutoDriveConfig, [number, number]>> = {
-  target_max_speed_kmh: [1, 300], vehicle_width_m: [0.401, 4], lane_offset_m: [0, 5],
+  target_max_speed_kmh: [0, 300], vehicle_width_m: [0.401, 4], lane_offset_m: [0, 5],
   edge_margin_m: [0.2, 3], min_lookahead_m: [1, 15], max_lookahead_m: [2, 35],
   speed_lookahead_s: [0, 3], corner_acceleration_mps2: [0.201, 12],
   braking_factor: [0.101, 1], acceleration_factor: [0.101, 1], steering_gain: [0.251, 2],
@@ -54,7 +54,8 @@ export function validateAutoConfig(raw: unknown): AutoDriveConfig {
       !['normal','racing','hyper'].includes(full.speed_profile)) throw new Error('Invalid Auto Drive style/preset');
   for (const [key, [lo, hi]] of Object.entries(ranges)) {
     const value = full[key as keyof AutoDriveConfig];
-    if (typeof value !== 'number' || !Number.isFinite(value) || value < lo || value > hi) {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < lo || value > hi ||
+        (key === 'target_max_speed_kmh' && value === 0)) {
       throw new Error('Invalid Auto Drive value: ' + key);
     }
   }

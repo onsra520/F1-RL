@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseReplay, replayAt, replayModelId } from './replay';
+import { DEFAULT_AUTO_CONFIG } from './autoDriveConfig';
 
 const fixture = {
   schema: 'f1rl_racing_sandbox_replay_v1',
@@ -40,6 +41,33 @@ describe('read-only replay', () => {
 
     expect(replayModelId(replay)).toBe('auto-drive');
     expect(replayAt(replay, 0.05).position[2]).toBe(0.5);
+  });
+
+  it('accepts backend Auto Drive configuration with a fractional speed', () => {
+    const hash = 'a'.repeat(64);
+    const replay = parseReplay({ schema: 'f1rl_racing_sandbox_replay_v2', label: 'auto',
+      provenance: { dataset_split: 'DEVELOPMENT', runtime_mode: 'development', source_sha256: hash,
+        model_id: 'auto-drive', model_sha256: null, track_id: 'track', track_sha256: hash, seed: 1 },
+      result: { status: 'finished', valid_sample: false, successful_finish: true, reason: null,
+        steps: 1, duration_s: 2, trace_sha256: hash }, frames: fixture.frames,
+      auto_drive_config: { ...DEFAULT_AUTO_CONFIG, target_max_speed_kmh: 0.5 } });
+    expect(replay.schema === 'f1rl_racing_sandbox_replay_v2' && replay.auto_drive_config?.target_max_speed_kmh).toBe(0.5);
+  });
+
+  it('rejects malformed and zero-length orientations at parsing', () => {
+    for (const orientation of [[0, 0, 0, 0], [NaN, 0, 0, 1], [Infinity, 0, 0, 1], [1, 0, 0], 'invalid']) {
+      expect(() => parseReplay({ ...fixture, frames: fixture.frames.map(f => ({ ...f, orientation_wxyz: orientation })) })).toThrow(/orientation/i);
+    }
+  });
+
+  it('normalizes valid orientations before interpolation', () => {
+    const replay = parseReplay({ ...fixture, frames: fixture.frames.map((f, i) => ({ ...f, orientation_wxyz: i ? [0, 0, 2, 0] : [2, 0, 0, 0] })) });
+    expect(replay.frames[0].orientation_wxyz).toEqual([1, 0, 0, 0]);
+    expect(Math.hypot(...replayAt(replay, 1).orientation_wxyz!)).toBeCloseTo(1);
+    for (const value of [1e-200, 1e308]) {
+      const scaled = parseReplay({ ...fixture, frames: fixture.frames.map(f => ({ ...f, orientation_wxyz: [value, value, 0, 0] })) });
+      expect(Math.hypot(...scaled.frames[0].orientation_wxyz!)).toBeCloseTo(1);
+    }
   });
 
   it('validates and preserves version 2 authoritative TRAIN telemetry and provenance', () => {

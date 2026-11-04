@@ -47,7 +47,7 @@ export default function AutoDriveSettings({ config, onChange, disabled, physical
       <input aria-label="Target max speed slider" type="range" min="1" max="300" step="1"
         disabled={disabled} value={config.target_max_speed_kmh}
         onChange={event => update({ target_max_speed_kmh: Number(event.target.value) })}/>
-      <input aria-label="Target max speed km/h" type="number" min="1" max="300" step="1"
+      <input aria-label="Target max speed km/h" type="number" min="0" max="300" step="any"
         disabled={disabled} value={config.target_max_speed_kmh}
         onChange={event => update({ target_max_speed_kmh: Number(event.target.value) })}/>
       <small>km/h</small>
