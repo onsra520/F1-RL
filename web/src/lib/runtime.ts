@@ -85,6 +85,7 @@ export type RuntimeSessionStatus = {
   latest_frame: RuntimeFrame | null;
   episode_result: Record<string, unknown> | null;
   error: string | null;
+  collision_terminal?: import('./replay').DevelopmentCollisionTerminal;
   provenance: 'TRAIN-development' | 'manual-development' | 'auto-development' | 'custom-development';
   speed_multiplier?: number;
   physics?: { mode: string; ground_motion_version: string; sha256: string };

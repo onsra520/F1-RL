@@ -18,6 +18,7 @@ def evaluate_policy_episode(
     on_reset: Callable[[np.ndarray, dict], None] | None = None,
     before_step: Callable[[int], None] | None = None,
     on_frame: Callable[[int, np.ndarray, tuple], None] | None = None,
+    on_error: Callable[[Exception], None] | None = None,
 ) -> dict[str, object]:
     """Evaluate one already-created environment and return the stable rollout row.
 
@@ -76,6 +77,8 @@ def evaluate_policy_episode(
                 break
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
+        if on_error is not None:
+            on_error(exc)
     finally:
         env.close()
     outcome = (

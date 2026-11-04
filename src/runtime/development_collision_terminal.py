@@ -1,136 +1,66 @@
-"""Development-only, absorbing terminal for witnessed v3 obstacle contacts.
+"""Development-only collision evidence at the runtime boundary.
 
-A SAT body witness identifies the obstacle but does NOT certify the first contact
-time, point, impulse, or a post-impact physical state. Keep the last accepted
-vehicle pose and emit one terminal *bookkeeping* frame; never use this path for
-PPO, registered tracks, v4 crash scoring, or scientific evidence.
+No Gym transition, Physics tick, reward, or replay frame is synthesized here.
+Only an explicitly witnessed v3 custom Auto Drive obstacle contact is mapped
+to an unscored runtime failure. This is not valid PPO/scientific evidence.
 """
 from __future__ import annotations
+
+from dataclasses import dataclass
 
 from src.rl.rewards import CollisionPenalty
 from src.simulation.ballistic_flight import FlightPhysicsError
 
+CONTRACT = "f1rl_runtime_collision_failure_dev_v1"
+V3 = "spatial_rotating_compliant_lifecycle_v3"
 
-CONTRACT = "f1rl_custom_auto_collision_terminal_dev_v1"
 
+@dataclass(frozen=True, slots=True)
+class RuntimeCollisionEvidence:
+    obstacle_ids: tuple[str, ...]
+    last_accepted_tick: int
+    last_accepted_time_s: float
+    attempted_tick_end_s: float
+    diagnostic_penalty: float
 
-class DevelopmentCollisionTerminalEnv:
-    """Opt-in adapter exclusively for custom Auto Drive with v3 Physics."""
-
-    def __init__(self, env) -> None:
-        physics = env._physics_config
-        if (physics is None or physics.ground_motion_version !=
-                "spatial_rotating_compliant_lifecycle_v3" or
-                env._reset_config is not None):
-            raise ValueError("development collision terminal requires non-TRAIN v3 Physics")
-        self._env = env
-        self.action_space = env.action_space
-        self.observation_space = env.observation_space
-        self._terminal_snapshot = None
-        self._terminal_outcome = None
-
-    def __getattr__(self, name):
-        return getattr(self._env, name)
-
-    @property
-    def last_research_outcome(self):
-        return self._terminal_outcome or self._env.last_research_outcome
-
-    def reset(self, **kwargs):
-        self._terminal_snapshot = None
-        self._terminal_outcome = None
-        return self._env.reset(**kwargs)
-
-    def step(self, action):
-        if self._terminal_snapshot is not None:
-            raise RuntimeError("absorbing development collision terminal: reset required")
-        try:
-            return self._env.step(action)
-        except FlightPhysicsError as error:
-            ids = getattr(error, "witnessed_obstacle_ids", ())
-            if error.failure_code != "verified_obstacle_contact" or not ids:
-                raise
-            known = {item.id for item in self._env._track.obstacles}
-            if not all(isinstance(item, str) and item in known for item in ids):
-                raise
-            return self._terminal_on_witness(tuple(dict.fromkeys(ids)))
-
-    def _terminal_on_witness(self, obstacle_ids):
-        env = self._env
-        snapshot = env._simulation.snapshot
-        if env._progress is None or env._progress.finished:
-            raise RuntimeError("development collision cannot terminate without an active episode")
-        dt = env._simulation_config.fixed_dt
-        # The last accepted physical state is the only pose we may certify.
-        # The contact occurred somewhere within this attempted tick. Do not
-        # invent a post-impact state, a substep collision time, or route credit.
-        pose = snapshot.world.vehicle
-        frame = env.runtime_snapshot()
-        frame.update(
-            tick=snapshot.tick + 1,
-            time_s=snapshot.elapsed_time + dt,
-            physical_event_types=("ObstacleHit",),
-        )
-        self._terminal_snapshot = frame
-        penalties = {
-            term.name: (-float(term.penalty) if isinstance(term, CollisionPenalty) else 0.0)
-            for term in env._reward_composer.terms
-        }
-        outcome = {
-            "version": CONTRACT,
-            "kind": "collision_terminal_development",
-            "valid_sample": False,
-            "reason": "collision",
+    def document(self) -> dict[str, object]:
+        return {
+            "schema_version": CONTRACT,
+            "obstacle_ids": list(self.obstacle_ids),
+            "last_accepted_tick": self.last_accepted_tick,
+            "witness_interval_s": [
+                self.last_accepted_time_s, self.attempted_tick_end_s,
+            ],
+            "diagnostic_penalty": self.diagnostic_penalty,
+            "penalty_kind": "runtime_diagnostic_not_gym_reward",
+            "physics_transition_accepted": False,
+            "contact_time_certified": False,
             "scientific_evidence": False,
         }
-        self._terminal_outcome = outcome
-        info = env._reset_info()
-        # The bookkeeping tick has no accepted Physics transition. The
-        # preceding accepted frame is available separately in the replay.
-        physics_info = info.get("physics")
-        if isinstance(physics_info, dict):
-            info["physics"] = {
-                "configuration": physics_info.get("configuration"),
-                "sha256": physics_info.get("sha256"),
-                "transition": None,
-            }
-        info.update(
-            tick=snapshot.tick + 1,
-            elapsed_time=snapshot.elapsed_time + dt,
-            reward_components=penalties,
-            telemetry={
-                "vehicle_position": (pose.position.x, pose.position.y, pose.position.z),
-                "vehicle_velocity": (pose.velocity.x, pose.velocity.y, pose.velocity.z),
-                "vehicle_speed": float(pose.speed),
-                "grounded": pose.grounded,
-                "obstacle_hit_ids": obstacle_ids,
-                "applied_boost_pad_ids": (),
-                "applied_slow_zone_ids": (),
-            },
-            research_outcome=outcome,
-            collision_terminal={
-                "version": CONTRACT,
-                "obstacle_ids": list(obstacle_ids),
-                "witness_interval_s": [snapshot.elapsed_time, snapshot.elapsed_time + dt],
-                "pose_kind": "last_accepted_precontact",
-                "reward_kind": "configured_collision_penalty_only",
-                "certified_contact_time": False,
-                "physical_impulse_applied": False,
-                "scientific_evidence": False,
-            },
-            route_highwater_meters=env._route_highwater,
-        )
-        # Do not set WP7 race.terminal_failure: this collision has no
-        # certified WP7 crossing/impact score and is not an off-route event.
-        observation = env._encode_observation(
-            pose, env._route_target(pose, env._progress)
-        )
-        return observation, float(sum(penalties.values())), True, False, info
 
-    def runtime_snapshot(self):
-        if self._terminal_snapshot is not None:
-            return dict(self._terminal_snapshot)
-        return self._env.runtime_snapshot()
 
-    def close(self):
-        return self._env.close()
+def inspect_collision_error(error: Exception, env) -> RuntimeCollisionEvidence | None:
+    """Recognize only a witnessed custom v3 failure; never turn unknown into hit."""
+    if not isinstance(error, FlightPhysicsError) or error.failure_code != "verified_obstacle_contact":
+        return None
+    physics = env._physics_config
+    if (physics is None or physics.ground_motion_version != V3 or
+            env._reset_config is not None or env._progress is None or
+            env._progress.finished):
+        return None
+    ids = getattr(error, "witnessed_obstacle_ids", ())
+    known = {item.id for item in env._track.obstacles}
+    if (not isinstance(ids, tuple) or not ids or
+            any(not isinstance(item, str) or item not in known for item in ids)):
+        return None
+    snapshot = env._simulation.snapshot
+    dt = env._simulation_config.fixed_dt
+    penalty = -sum(float(term.penalty) for term in env._reward_composer.terms
+                   if isinstance(term, CollisionPenalty))
+    return RuntimeCollisionEvidence(
+        obstacle_ids=tuple(dict.fromkeys(ids)),
+        last_accepted_tick=snapshot.tick,
+        last_accepted_time_s=snapshot.elapsed_time,
+        attempted_tick_end_s=snapshot.elapsed_time + dt,
+        diagnostic_penalty=penalty,
+    )

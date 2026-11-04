@@ -1,55 +1,30 @@
-# Development Auto Drive Collision Terminal — PR #57
+# PR #57 — Runtime-only collision failure (development)
 
-Scope: **custom development Auto Drive with Physics v3 only**. This does not
-change PPO, TRAIN, HELD-OUT, registered model evaluation or experimental v4
-crash/impulse/score contracts.
+## Scope (fixed)
 
-## Decision
+- Custom Auto Drive with Physics v3, cone/barrier obstacles.
+- No change to TRAIN/PPO, frozen models, HELD-OUT, Physics v4 crash impulse contracts or scientific acceptance.
+- The user-facing result is **collision -> runtime diagnostic penalty -> failed episode -> reset**.
+- The penalty is a development diagnostic, **not** a Gym reward; collision data is **not** admissible RL evidence.
 
-- A geometrically witnessed body/obstacle intersection ends the custom Auto
-  Drive episode. No post-impact dynamics or synthetic impulse are simulated.
-- The `step_world` legacy failure is preserved for all other consumers. Its
-  unmodified `FlightPhysicsError` type, message and failure_code carry extra
-  obstacle identities for a deliberately opted-in development runtime adapter.
-- The adapter accepts only the witnessed obstacle identifiers from that precise
-  failure path. Unknown/uncertain sweeps and other errors still fail closed.
-- The terminal frame is **bookkeeping only**. Position/orientation/velocity are
-  the **last accepted precontact Physics pose**. The obstacle contact happened
-  somewhere within the attempted timestep, not at a certified exact time.
-- `reason=collision`, `status=failed`, replay collision IDs/count and
-  WebSocket collision event are emitted. The configured `CollisionPenalty` term
-  applies once (currently -5.0), with zero fabricated route/time credit.
-- `outcome.kind=collision_terminal_development`, `valid_sample=false`,
-  `scientific_evidence=false`. The adapter never claims an accepted physical
-  impact or a WP7 scored crash. Do not use these data for scientific acceptance.
+## Source-of-truth boundary
 
-## Verification
+1. `step_world` retains its fail-closed `FlightPhysicsError` when it witnesses a body hit but cannot accept a Physics collision transition. The witnessed obstacle IDs carry no time ordering.
+2. The Gym environment marks the physical transition invalid and raises. No Gym return, reward or accepted Physics step is invented.
+3. The **optional runtime-only** `evaluate_policy_episode(on_error=...)` callback inspects that exact witnessed v3 exception and records an out-of-band collision terminal. Other errors, uncertain sweeps, PPO and v4 remain unchanged.
+4. The last frame remains the last accepted Physics snapshot. Collision IDs, unscored penalty and witness tick interval appear **only** in `collision_terminal` and the out-of-band WebSocket collision event, not as a fabricated replay frame.
+5. Runtime result: `status=failed`, `reason=collision`, `valid_sample=false`, `scientific_evidence=false`. No fake impulse, first-contact timestamp, checkpoint or route reward.
+6. Reset from the recognized collision failure starts a fresh episode epoch on the same session. Previous replay/terminal is not appended to the new episode.
 
-- New cone/barrier regression: requires real Physics witness, failed terminal,
-  one collision, unchanged last accepted pose and no scientific validity.
-- Unit mapping: configured collision penalty only; no fake impulse or race
-  terminal owner event.
-- Legacy PPO and v4 remain on their existing exception/certified-crash paths.
-- Development clean-lap and longer map performance are separate from the
-  collision-terminal correctness contract.
+## Acceptance gates
 
-## Limits
+- Real cone + barrier witness: terminal metadata, accurate last accepted tick, monotonically ordered accepted frames, no fabricated collision frame and no false valid sample.
+- Diagnostic penalty equals the configured `CollisionPenalty` (-5 for current custom factory), applied once **outside** the Gym reward/rollout return.
+- Post-failure reset starts a distinct deterministic episode; state/replay are regenerated with tick 0.
+- Unknown IDs and uncertain contact stay invalid/fail-closed.
+- Legacy Physics and experimental v4 remain isolated.
+- Clean-commit tests, frontend build, and scoped CI must all pass before removing draft; browser E2E must be reported separately if not executed.
 
-No certified first-contact time/position, no impulse, and no post-contact
-physical movement. This is intentional for the current finish-or-crash demo.
+## Known scientific limit
 
-## Current local results (2026-11-04)
-
-- Cone and barrier full runtime collision regressions, plus direct penalty
-  contract: **3/3 PASS**.
-- Frontend: **81/81 PASS**, TypeScript typecheck and production build PASS.
-- Broader Python set: **46 PASS, 3 FAIL**. All three failures are
-  `session.wait(120.0)` timeouts (one v4 jump, two T05 avoidance tracks);
-  none reported a wrong terminal, collision count, or physics exception.
-  These are **NOT PASS**. Do not infer scientific v4 or T05 acceptance.
-- Isolated T05 diagnostic (normal preset): ongoing `running` and steps
-  28/45/63/80/98/119 at wall times 10/20/30/40/50/60 s, with no error.
-  This shows progress rather than deadlock, but does not explain the
-  platform slowdown or certify eventual finish.
-- The new PR #57 workflow executes scoped collision and v4 isolation checks
-  on a hosted Windows runner. Treat GitHub checks as pending until reported.
+This implementation does **not** provide a certified impact transition or Gym `terminated=True`. It satisfies the bounded development demo runtime contract only, **not** the separate ambition for trainable collision terminal rewards. If PPO must learn from contact penalties, that requires an independent, Physics-certified Gym contract and a new scientific acceptance plan.

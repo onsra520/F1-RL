@@ -32,6 +32,17 @@ export type ReplayV1 = {
   source: { split: 'TRAIN' | 'DEVELOPMENT'; model_id: string; source_sha256?: string };
   frames: ReplayFrame[];
 };
+export type DevelopmentCollisionTerminal = {
+  schema_version: 'f1rl_runtime_collision_failure_dev_v1';
+  obstacle_ids: string[];
+  last_accepted_tick: number;
+  witness_interval_s: [number, number];
+  diagnostic_penalty: number;
+  penalty_kind: 'runtime_diagnostic_not_gym_reward';
+  physics_transition_accepted: false;
+  contact_time_certified: false;
+  scientific_evidence: false;
+};
 export type ReplayV2 = {
   schema: 'f1rl_racing_sandbox_replay_v2';
   label: string;
@@ -47,6 +58,7 @@ export type ReplayV2 = {
   };
   track_preview?: ReplayTrackPreview;
   auto_drive_config?: AutoDriveConfig;
+  collision_terminal?: DevelopmentCollisionTerminal;
   result: {
     status: 'finished' | 'failed' | 'cancelled' | 'stopped';
     valid_sample: boolean;
@@ -144,11 +156,32 @@ function validateTrackPreview(raw: unknown, trackId: string, trackSha256: string
   };
 }
 
+function parseCollisionTerminal(raw: unknown, frames: ReplayFrame[]): DevelopmentCollisionTerminal | undefined {
+  if (raw === undefined) return undefined;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Invalid runtime collision terminal');
+  const c = raw as Partial<DevelopmentCollisionTerminal>;
+  const last = frames[frames.length - 1];
+  if (c.schema_version !== 'f1rl_runtime_collision_failure_dev_v1' ||
+      !stringArray(c.obstacle_ids) || c.obstacle_ids.length < 1 ||
+      !Number.isInteger(c.last_accepted_tick) || c.last_accepted_tick !== last.tick ||
+      !vector(c.witness_interval_s, 2) ||
+      Math.abs(c.witness_interval_s[0] - last.time_s) > 1e-7 ||
+      c.witness_interval_s[1] <= c.witness_interval_s[0] ||
+      !finite(c.diagnostic_penalty) || c.diagnostic_penalty > 0 ||
+      c.penalty_kind !== 'runtime_diagnostic_not_gym_reward' ||
+      c.physics_transition_accepted !== false || c.contact_time_certified !== false ||
+      c.scientific_evidence !== false ||
+      frames.some(f => (f.collision_ids?.length ?? 0) > 0)) {
+    throw new Error('Invalid runtime collision terminal');
+  }
+  return { ...c } as DevelopmentCollisionTerminal;
+}
+
 export function parseReplay(raw: unknown): Replay {
   if (!raw || typeof raw !== 'object') throw new Error('Invalid replay');
   const d = raw as Record<string, unknown>;
   if (typeof d.label !== 'string' || !d.label || d.label.length > 120 ||
-      !Array.isArray(d.frames) || d.frames.length < 2 || d.frames.length > 5001) {
+      !Array.isArray(d.frames) || d.frames.length < (d.schema === 'f1rl_racing_sandbox_replay_v2' && d.collision_terminal !== undefined ? 1 : 2) || d.frames.length > 5001) {
     throw new Error('Unsupported replay schema or frame count');
   }
   const frames = d.frames.map(validateFrame);
@@ -179,6 +212,10 @@ export function parseReplay(raw: unknown): Replay {
         !finite(result.duration_s) || result.duration_s < 0 || !digest(result.trace_sha256)) {
       throw new Error('Unsupported replay schema or provenance (HELD-OUT is not allowed)');
     }
+    const collisionTerminal = parseCollisionTerminal(d.collision_terminal, frames);
+    if (collisionTerminal && (result.reason !== 'collision' || result.status !== 'failed' || result.valid_sample)) {
+      throw new Error('Runtime collision must be a failed, invalid sample');
+    }
     const trackPreview = validateTrackPreview(d.track_preview, provenance.track_id, provenance.track_sha256);
     if (d.auto_drive_config !== undefined && provenance.model_id !== 'auto-drive') throw new Error('Config belongs to Auto Drive only');
     const autoConfig = d.auto_drive_config === undefined ? undefined : validateAutoConfig(d.auto_drive_config);
@@ -186,6 +223,7 @@ export function parseReplay(raw: unknown): Replay {
       schema: d.schema, label: d.label, provenance: { ...provenance }, result: { ...result }, frames,
       ...(trackPreview ? { track_preview: trackPreview } : {}),
       ...(autoConfig ? { auto_drive_config: autoConfig } : {}),
+      ...(collisionTerminal ? { collision_terminal: collisionTerminal } : {}),
     };
   }
   throw new Error('Unsupported replay schema or provenance (HELD-OUT is not allowed)');

@@ -6,7 +6,7 @@ on:
       - fix/collision-terminal-runtime
   pull_request:
     branches:
-      - fix/auto-drive-lane-render-config
+      - main
   workflow_dispatch:
 
 permissions:
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   collision-terminal:
-    name: Windows scoped collision terminal and Physics isolation
+    name: Windows witnessed-collision, reset, replay and v4 isolation
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
@@ -28,7 +28,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[runtime,dev]"
-      - name: Exercise witnessed development collision and existing physics isolation
+      - name: Test runtime-only collision and scientific isolation
         env:
           OMP_NUM_THREADS: '1'
           OPENBLAS_NUM_THREADS: '1'
@@ -36,10 +36,28 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
           PYTHONHASHSEED: '0'
         run: |
-          python -B -m pytest tests/runtime/test_collision_terminal.py tests/runtime/test_auto_drive.py tests/runtime/test_v4_dev_profile.py::test_development_gap_crash_uses_registered_physics_and_race_v4_terminal tests/research/test_wp3_campaign.py -q --tb=short --disable-warnings --junitxml=collision-terminal-junit.xml
+          python -B -m pytest tests/runtime/test_collision_terminal.py tests/runtime/test_frames.py tests/runtime/test_auto_drive.py tests/runtime/test_v4_dev_profile.py::test_development_gap_crash_uses_registered_physics_and_race_v4_terminal tests/research/test_wp3_campaign.py -q --tb=short --disable-warnings --junitxml=collision-terminal-junit.xml
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: collision-terminal-junit
           path: collision-terminal-junit.xml
           if-no-files-found: ignore
+
+  frontend-replay:
+    name: Frontend collision replay contract and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build

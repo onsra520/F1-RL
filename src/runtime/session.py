@@ -12,7 +12,7 @@ import numpy as np
 from src.runtime.auto_drive import AutoDriveController
 from src.runtime.catalog import MAX_RUNTIME_STEPS, RuntimeCatalog
 from src.runtime.drive_config import AutoDriveConfig
-from src.runtime.development_collision_terminal import DevelopmentCollisionTerminalEnv
+from src.runtime.development_collision_terminal import RuntimeCollisionEvidence, inspect_collision_error
 from src.runtime.frames import (
     EpisodeResult,
     ReplayDocument,
@@ -105,6 +105,8 @@ class RuntimeSession:
         self._steps = 0
         self._result: EpisodeResult | None = None
         self._error: str | None = None
+        self._collision_terminal: RuntimeCollisionEvidence | None = None
+        self._start_reset_epoch = False
         self._created_at = time.monotonic()
         self._finished_at: float | None = None
 
@@ -151,14 +153,35 @@ class RuntimeSession:
             self._emit("status", {"status": self.status})
 
     def reset(self) -> None:
+        # A terminal WebSocket event can arrive just before the producer
+        # thread leaves its finally block. Join outside the condition lock.
+        if self.status == "failed" and self._collision_terminal is not None:
+            previous_thread = self._thread
+            if previous_thread is not None and previous_thread is not threading.current_thread():
+                previous_thread.join(timeout=5.0)
+        restart_terminal = False
         with self._condition:
-            if self.status not in ("running", "paused"):
-                raise RuntimeFault("invalid_transition", f"session cannot reset from {self.status}", status_code=409)
-            self._paused = False
-            self._restart.set()
-            self.status = "running"
-            self._condition.notify_all()
-            self._emit("status", {"status": "resetting"})
+            if self.status == "failed" and self._collision_terminal is not None:
+                # The old episode thread has ended. Start a fresh epoch; do
+                # not append ticks or frames to the failed episode.
+                if self._thread is not None and self._thread.is_alive():
+                    raise RuntimeFault("invalid_transition", "previous episode is still closing", status_code=409)
+                self._cancel.clear()
+                self._restart.clear()
+                self._start_reset_epoch = True
+                self.status = "ready"
+                restart_terminal = True
+                self._emit("status", {"status": "resetting"})
+            else:
+                if self.status not in ("running", "paused"):
+                    raise RuntimeFault("invalid_transition", f"session cannot reset from {self.status}", status_code=409)
+                self._paused = False
+                self._restart.set()
+                self.status = "running"
+                self._condition.notify_all()
+                self._emit("status", {"status": "resetting"})
+        if restart_terminal:
+            self.start(paced=self._paced)
 
     def set_speed(self, multiplier: float) -> None:
         if isinstance(multiplier, bool) or not isinstance(multiplier, (float, int)) or not 0.25 <= multiplier <= 16.0:
@@ -233,6 +256,8 @@ class RuntimeSession:
                 "latest_frame": None if latest is None else latest.model_dump(mode="json"),
                 "episode_result": None if self._result is None else self._result.model_dump(mode="json"),
                 "error": self._error,
+                **({"collision_terminal": self._collision_terminal.document()}
+                   if self._collision_terminal is not None else {}),
                 "provenance": "TRAIN-development" if self.mode == "ppo" and self._custom_factory is None
                 else "custom-development" if self._custom_factory is not None
                 else "auto-development" if self.mode == "auto"
@@ -265,10 +290,14 @@ class RuntimeSession:
                 result=self._result,
                 frames=list(self._frames),
                 auto_drive_config=self.auto_drive_config.model_dump(mode="json") if self.auto_drive_config else None,
+                collision_terminal=(self._collision_terminal.document()
+                                    if self._collision_terminal is not None else None),
             )
             result = document.model_dump(mode="json", by_alias=True)
             if self.auto_drive_config is None:
                 result.pop("auto_drive_config", None)
+            if self._collision_terminal is None:
+                result.pop("collision_terminal", None)
             return result
 
     def _capture_reset(self, env, _observation, info) -> None:
@@ -314,6 +343,23 @@ class RuntimeSession:
         if frame.collision_ids:
             self._emit("collision", {"count": frame.collision_count, "ids": frame.collision_ids})
 
+    def _capture_failure(self, error: Exception, env) -> None:
+        if self.mode != "auto" or self._custom_factory is None:
+            return
+        evidence = inspect_collision_error(error, env)
+        if evidence is None:
+            return
+        with self._lock:
+            self._collision_terminal = evidence
+        # An out-of-band runtime event, NOT a Physics/Gym transition.
+        self._emit("collision", {
+            "count": len(evidence.obstacle_ids),
+            "ids": list(evidence.obstacle_ids),
+            "diagnostic_penalty": evidence.diagnostic_penalty,
+            "physics_transition_accepted": False,
+            "scientific_evidence": False,
+        })
+
     def _before_step(self, _step: int) -> None:
         with self._condition:
             while self._paused and not self._cancel.is_set() and not self._restart.is_set():
@@ -342,25 +388,21 @@ class RuntimeSession:
         try:
             from src.evaluation.rollout import evaluate_policy_episode
 
-            restart_epoch = False
+            restart_epoch = self._start_reset_epoch
+            self._start_reset_epoch = False
             while not self._cancel.is_set():
                 with self._lock:
                     self._frames = []
                     self._steps = 0
                     self._result = None
                     self._error = None
+                    self._collision_terminal = None
                     self._last_step_started = None
                 env = (
                     self.catalog.create_environment(self.track_id, seed=self.seed)
                     if self._custom_factory is None
                     else self._custom_factory.create()
                 )
-                # Only custom development Auto Drive opts in. Registered PPO and
-                # experimental v4 crash scoring keep their original contracts.
-                if (self.mode == "auto" and self._custom_factory is not None
-                        and self.track.physics_config.ground_motion_version ==
-                        "spatial_rotating_compliant_lifecycle_v3"):
-                    env = DevelopmentCollisionTerminalEnv(env)
                 if self.mode == "ppo":
                     assert self.model is not None
                     model = self.catalog.load_model(self.model.model_id, env=env)
@@ -392,6 +434,7 @@ class RuntimeSession:
                     environment_seed=self.seed,
                     on_reset=lambda observation, info, env=env: self._capture_reset(env, observation, info),
                     before_step=self._before_step,
+                    on_error=lambda error, env=env: self._capture_failure(error, env),
                     on_frame=lambda step, action, transition, env=env: self._capture_step(
                         env, step, action, transition
                     ),
@@ -421,10 +464,11 @@ class RuntimeSession:
         cancelled = self._cancel.is_set()
         error = row.get("error")
         registered_ppo = self.mode == "ppo" and self._custom_factory is None
+        witnessed_collision = self._collision_terminal is not None and not cancelled
         status = (
             "cancelled" if cancelled
-            else "failed" if (error or (registered_ppo and row.get("valid_sample") is not True)
-                              or outcome.get("kind") == "collision_terminal_development")
+            else "failed" if (error or witnessed_collision or
+                              (registered_ppo and row.get("valid_sample") is not True))
             else "finished"
         )
         trace_sha256 = row.get("trace_sha256")
@@ -437,6 +481,7 @@ class RuntimeSession:
             ).encode("utf-8")).hexdigest()
         reason = (
             "cancelled" if cancelled
+            else "collision" if witnessed_collision
             else str(error) if error
             else str(outcome.get("reason")) if outcome.get("reason")
             else None
@@ -452,7 +497,7 @@ class RuntimeSession:
         )
         with self._lock:
             self._result = result
-            self._error = None if error is None else str(error)
+            self._error = None if error is None or witnessed_collision else str(error)
             self.status = status
             self._finished_at = time.monotonic()
         self._emit("terminal", result.model_dump(mode="json"))

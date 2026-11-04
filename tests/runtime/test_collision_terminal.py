@@ -1,3 +1,4 @@
+"""Collision is a runtime failure, never a fake accepted Physics frame."""
 from pathlib import Path
 
 import pytest
@@ -6,75 +7,105 @@ from src.runtime.catalog import RuntimeCatalog
 from src.runtime.custom_tracks import convert_custom_track
 from src.runtime.drive_config import AutoDriveConfig
 from src.runtime.session import RuntimeSessionManager
+from src.runtime.development_collision_terminal import inspect_collision_error
+from src.simulation.ballistic_flight import FlightPhysicsError
 
 
-@pytest.mark.parametrize("kind", ["cone", "barrier"])
-def test_verified_contact_ends_with_collision_telemetry(kind):
-    root = Path(__file__).resolve().parents[2]
-    catalog = RuntimeCatalog(root)
-    track = {
+def make_track(catalog, kind="cone"):
+    return convert_custom_track({
         "schema": "f1rl_racing_sandbox_draft_v1", "id": "collision-terminal-test",
         "name": "Collision terminal", "width": 12,
         "points": [{"x": 0, "z": 0}, {"x": 0, "z": 120}],
         "props": [{"id": kind, "kind": kind, "t": 0.5, "offset": 0, "rotation": 0}],
-    }
-    converted = convert_custom_track(track, catalog)
+    }, catalog)
+
+
+def make_session(manager, track):
+    return manager.create(
+        model_id=None, track_id=track.track_id, seed=412, mode="auto",
+        custom_factory=track.factory, custom_track_sha256=track.track_sha256,
+        auto_drive_config=AutoDriveConfig(driving_style="centerline"))
+
+
+@pytest.mark.parametrize("kind", ["cone", "barrier"])
+def test_collision_terminal_is_out_of_band_without_fabricated_step(kind):
+    catalog = RuntimeCatalog(Path(__file__).resolve().parents[2])
+    converted = make_track(catalog, kind)
     manager = RuntimeSessionManager(catalog)
     try:
-        session = manager.create(model_id=None, track_id=converted.track_id, seed=412, mode="auto",
-                                 custom_factory=converted.factory,
-                                 custom_track_sha256=converted.track_sha256,
-                                 auto_drive_config=AutoDriveConfig(driving_style="centerline"))
+        session = make_session(manager, converted)
         session.start()
         assert session.wait(180)
         replay = session.replay()
+        terminal, frames = replay["collision_terminal"], replay["frames"]
         assert replay["result"]["status"] == "failed"
         assert replay["result"]["reason"] == "collision"
         assert replay["result"]["valid_sample"] is False
-        assert replay["result"]["successful_finish"] is False
-        assert replay["frames"][-1]["collision_ids"] == [converted.factory.track.obstacles[0].id]
-        assert replay["frames"][-1]["collision_count"] == 1
-        assert replay["frames"][-1]["tick"] == replay["frames"][-2]["tick"] + 1
-        assert replay["frames"][-1]["position"] == replay["frames"][-2]["position"]
-        assert replay["frames"][-1]["outcome"]["kind"] == "collision_terminal_development"
-        assert replay["frames"][-1]["outcome"]["valid_sample"] is False
-        events = []
+        assert session.status_document()["error"] is None
+        assert terminal["obstacle_ids"] == [converted.factory.track.obstacles[0].id]
+        assert terminal["last_accepted_tick"] == frames[-1]["tick"]
+        assert replay["result"]["steps"] == frames[-1]["tick"]
+        assert terminal["witness_interval_s"][0] == pytest.approx(frames[-1]["time_s"])
+        assert terminal["witness_interval_s"][1] > terminal["witness_interval_s"][0]
+        assert terminal["diagnostic_penalty"] == -5.0
+        assert terminal["penalty_kind"] == "runtime_diagnostic_not_gym_reward"
+        assert terminal["physics_transition_accepted"] is False
+        assert terminal["scientific_evidence"] is False
+        assert all(not frame["collision_ids"] for frame in frames)
+        assert all(b["tick"] == a["tick"] + 1 for a,b in zip(frames, frames[1:]))
+        events=[]
         while (event := session.next_event(timeout=0.01)) is not None:
             events.append(event)
-        collisions = [event for event in events if event["type"] == "collision"]
-        assert collisions[-1]["data"]["ids"] == [converted.factory.track.obstacles[0].id]
-        assert any(event["type"] == "terminal" and event["data"]["status"] == "failed"
-                   for event in events)
+        collisions=[e for e in events if e["type"]=="collision"]
+        assert len(collisions)==1
+        assert collisions[0]["data"]["ids"]==terminal["obstacle_ids"]
+        assert collisions[0]["data"]["physics_transition_accepted"] is False
+        assert any(e["type"]=="terminal" and e["data"]["status"]=="failed" for e in events)
     finally:
         manager.shutdown()
 
-def test_dev_terminal_uses_only_configured_collision_penalty_without_fake_physics():
-    """Contract mapping unit: real SAT witness is covered by the two E2E tests above."""
-    from src.runtime.development_collision_terminal import DevelopmentCollisionTerminalEnv
 
+def test_failed_collision_reset_starts_fresh_episode():
     catalog = RuntimeCatalog(Path(__file__).resolve().parents[2])
-    track = {
-        "schema": "f1rl_racing_sandbox_draft_v1", "id": "collision-penalty-test",
-        "name": "Collision mapping", "width": 12,
-        "points": [{"x": 0, "z": 0}, {"x": 0, "z": 120}],
-        "props": [{"id": "cone", "kind": "cone", "t": 0.5, "offset": 0, "rotation": 0}],
-    }
-    converted = convert_custom_track(track, catalog)
-    env = DevelopmentCollisionTerminalEnv(converted.factory.create())
+    converted = make_track(catalog)
+    manager = RuntimeSessionManager(catalog)
+    try:
+        session = make_session(manager, converted)
+        session.start()
+        assert session.wait(180)
+        first=session.replay()
+        assert first["result"]["reason"]=="collision"
+        session.reset()
+        assert session.wait(180)
+        second=session.replay()
+        assert second["result"]["reason"]=="collision"
+        assert second["frames"][0]["tick"]==0
+        assert second["frames"]==first["frames"]
+        assert second["collision_terminal"]==first["collision_terminal"]
+        assert second["result"]["trace_sha256"]==first["result"]["trace_sha256"]
+    finally:
+        manager.shutdown()
+
+
+def test_only_known_certified_witness_is_mapped_without_mutating_physics():
+    catalog = RuntimeCatalog(Path(__file__).resolve().parents[2])
+    converted=make_track(catalog)
+    env=converted.factory.create()
     try:
         env.reset(seed=412)
-        obstacle_id = converted.factory.track.obstacles[0].id
-        _, reward, terminated, truncated, info = env._terminal_on_witness((obstacle_id,))
-        assert terminated and not truncated
-        assert reward == -5.0
-        assert info["reward_components"] == {"route_progress": 0.0, "collision": -5.0, "time": 0.0}
-        assert info["collision_terminal"]["physical_impulse_applied"] is False
-        assert info["collision_terminal"]["certified_contact_time"] is False
-        assert info["research_outcome"]["valid_sample"] is False
-        assert info["research_outcome"]["reason"] == "collision"
-        assert not info["race"].get("terminal_failure", False)
-        assert env.runtime_snapshot()["tick"] == 1
-        with pytest.raises(RuntimeError, match="absorbing"):
-            env.step(env.action_space.sample())
+        snapshot=env._simulation.snapshot
+        obstacle_id=converted.factory.track.obstacles[0].id
+        error=FlightPhysicsError("contact", failure_code="verified_obstacle_contact")
+        error.witnessed_obstacle_ids=(obstacle_id,)
+        evidence=inspect_collision_error(error, env)
+        assert evidence is not None
+        assert evidence.document()["diagnostic_penalty"]==-5.0
+        assert evidence.document()["physics_transition_accepted"] is False
+        assert env._simulation.snapshot is snapshot
+        error.witnessed_obstacle_ids=("invalid-id",)
+        assert inspect_collision_error(error, env) is None
+        uncertain=FlightPhysicsError("uncertain", failure_code="uncertified_physics")
+        uncertain.witnessed_obstacle_ids=(obstacle_id,)
+        assert inspect_collision_error(uncertain, env) is None
     finally:
         env.close()

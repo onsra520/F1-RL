@@ -658,7 +658,7 @@ export default function App() {
                     <span>THROTTLE <b>{runtimeStatus.latest_frame.action.throttle.toFixed(2)}</b></span>
                     <span>BRAKE <b>{runtimeStatus.latest_frame.action.brake.toFixed(2)}</b></span>
                     <span>CHECKPOINTS <b>{runtimeStatus.latest_frame.completed_checkpoint_ids.length}/{runtimeStatus.latest_frame.checkpoint_count}</b></span>
-                    <span>COLLISIONS <b>{runtimeStatus.latest_frame.collision_count}</b></span>
+                    <span>COLLISIONS <b>{runtimeStatus.latest_frame.collision_count + (runtimeStatus.collision_terminal?.obstacle_ids.length ?? 0)}</b></span>
                     <span>{runtimeStatus.latest_frame.grounded ? 'GROUNDED' : 'AIRBORNE'}</span>
                   </div>}
                   <RuntimeOutcomeMessage status={runtimeStatus} />
