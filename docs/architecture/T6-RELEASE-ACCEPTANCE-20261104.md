@@ -27,7 +27,7 @@ This is a **development/demo runtime acceptance**, not WP7/HELD-OUT scientific a
 
 ## CI and release decision
 
-The T6 GitHub Actions workflow validates the pinned T5 code against the release commit, portable Windows Python runtime/track/Physics tests, and frontend Vitest/build. This hosted subset does not replace the separate evidence-dependent full 3,214-test T5 regression.
+The T6 GitHub Actions workflow verifies the original pinned T5 tree, limits the delta to the six frontend files changed through `c30ce6b8ce4ac7c3582efa4aa4904190ff1f7950`, and checks that the candidate source is unchanged from that separately validated commit. It then runs portable Windows Python runtime/track/Physics tests and frontend Vitest/build on the candidate. The T5 full regression remains evidence for its original tree; it does not certify the changed frontend or replace validation of the candidate. This hosted subset does not replace the separate evidence-dependent full 3,214-test T5 regression.
 
 **Do not merge unless actual GitHub Actions checks succeed and independent review completes.** Absence of checks must never count as PASS.
 

@@ -18,23 +18,34 @@ concurrency:
 
 jobs:
   source-integrity:
-    name: Locked T5 code identity
+    name: T5 provenance and candidate source identity
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Verify candidate source is unchanged from full T5 regression
+      - name: Verify historical T5 tree and locked candidate delta
         shell: bash
         run: |
           set -euo pipefail
           PINNED=adfb33ec505c22cd4dab18d6077dbd5e5d540367
           TREE=a068bdd3e82a31c669f95febfee59284b045baae
+          CANDIDATE=c30ce6b8ce4ac7c3582efa4aa4904190ff1f7950
           test "$(git rev-parse "${PINNED}^{tree}")" = "$TREE"
-          git diff --exit-code "$PINNED" HEAD -- src tests web configs pyproject.toml
+          git merge-base --is-ancestor "$PINNED" "$CANDIDATE"
+          git merge-base --is-ancestor "$CANDIDATE" HEAD
+          git diff --exit-code "$PINNED" "$CANDIDATE" -- src tests configs pyproject.toml web \
+            ':(exclude)web/src/App.tsx' \
+            ':(exclude)web/src/components/AutoDriveSettings.tsx' \
+            ':(exclude)web/src/lib/autoDriveConfig.test.ts' \
+            ':(exclude)web/src/lib/autoDriveConfig.ts' \
+            ':(exclude)web/src/lib/replay.test.ts' \
+            ':(exclude)web/src/lib/replay.ts'
+          git diff --exit-code "$CANDIDATE" HEAD -- src tests web configs pyproject.toml
           test -z "$(git status --porcelain)"
-          echo "Pinned code matched; only non-code evidence/CI metadata may have changed."
+          echo "Historical T5 tree verified; candidate delta is limited to the six reviewed frontend files."
+          echo "T5 full-regression evidence applies to its original tree, not the modified frontend."
       - name: Check no training artifact changes on stacked branch
         shell: bash
         run: |
