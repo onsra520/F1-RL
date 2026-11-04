@@ -213,7 +213,7 @@ export function parseReplay(raw: unknown): Replay {
       throw new Error('Unsupported replay schema or provenance (HELD-OUT is not allowed)');
     }
     const collisionTerminal = parseCollisionTerminal(d.collision_terminal, frames);
-    if (collisionTerminal && (result.reason !== 'collision' || result.status !== 'failed' || result.valid_sample)) {
+    if (collisionTerminal && (result.reason !== 'collision' || result.status !== 'failed' || result.valid_sample || result.successful_finish)) {
       throw new Error('Runtime collision must be a failed, invalid sample');
     }
     const trackPreview = validateTrackPreview(d.track_preview, provenance.track_id, provenance.track_sha256);

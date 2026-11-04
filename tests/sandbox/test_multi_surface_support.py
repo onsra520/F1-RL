@@ -217,3 +217,15 @@ def test_world_multi_surface_policy_is_explicit_and_mutually_exclusive():
     result = step_world(*args, body_geometry=BODY, multi_surface_policy=POLICY)
     assert result.state.vehicle.grounded
     assert result.events == ()
+
+def test_atlas_rejects_unhashable_input_without_masking_internal_type_error(monkeypatch):
+    import src.simulation.multi_surface_support as module
+
+    assert module._atlas(([],), 1e-6) is None
+
+    def broken_atlas(_patches, _tol):
+        raise TypeError("internal atlas construction failure")
+
+    monkeypatch.setattr(module, "_cached_atlas", broken_atlas)
+    with pytest.raises(TypeError, match="internal atlas construction failure"):
+        module._atlas((patch("valid", 0.),), 1e-6)
