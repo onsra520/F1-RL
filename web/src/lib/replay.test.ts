@@ -55,7 +55,7 @@ describe('read-only replay', () => {
   });
 
   it('rejects malformed and zero-length orientations at parsing', () => {
-    for (const orientation of [[0, 0, 0, 0], [NaN, 0, 0, 1], [Infinity, 0, 0, 1], [1, 0, 0], 'invalid']) {
+    for (const orientation of [[0, 0, 0, 0], [NaN, 0, 0, 1], [Infinity, 0, 0, 1], [1, 0, 0], [ , 0, 0, 1], 'invalid']) {
       expect(() => parseReplay({ ...fixture, frames: fixture.frames.map(f => ({ ...f, orientation_wxyz: orientation })) })).toThrow(/orientation/i);
     }
   });

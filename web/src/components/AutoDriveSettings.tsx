@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { DEFAULT_AUTO_CONFIG, PRESET_SPEEDS_KMH, selectSpeedProfile, validateAutoConfig,
   type AutoDriveConfig, type DrivingStyle, type SpeedProfile } from '../lib/autoDriveConfig';
 
@@ -26,6 +27,8 @@ export default function AutoDriveSettings({ config, onChange, disabled, physical
   disabled: boolean;
   physicalCapKmh?: number;
 }) {
+  const [speedInput, setSpeedInput] = useState(String(config.target_max_speed_kmh));
+  useEffect(() => setSpeedInput(String(config.target_max_speed_kmh)), [config.target_max_speed_kmh]);
   const update = (patch: Partial<AutoDriveConfig>) => {
     try { onChange(validateAutoConfig({ ...config, ...patch })); }
     catch { /* reject inconsistent values rather than sending invalid configuration */ }
@@ -47,9 +50,10 @@ export default function AutoDriveSettings({ config, onChange, disabled, physical
       <input aria-label="Target max speed slider" type="range" min="1" max="300" step="1"
         disabled={disabled} value={config.target_max_speed_kmh}
         onChange={event => update({ target_max_speed_kmh: Number(event.target.value) })}/>
-      <input aria-label="Target max speed km/h" type="number" min="0" max="300" step="any"
-        disabled={disabled} value={config.target_max_speed_kmh}
-        onChange={event => update({ target_max_speed_kmh: Number(event.target.value) })}/>
+      <input aria-label="Target max speed km/h" type="text" inputMode="decimal"
+        disabled={disabled} value={speedInput}
+        onChange={event => { setSpeedInput(event.target.value); update({ target_max_speed_kmh: Number(event.target.value) }); }}
+        onBlur={() => setSpeedInput(String(config.target_max_speed_kmh))}/>
       <small>km/h</small>
     </span></label>
     <small className="auto-drive-cap">Target {config.target_max_speed_kmh} km/h · Physical limit {physicalCapKmh == null

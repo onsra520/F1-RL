@@ -68,7 +68,7 @@ export type Replay = ReplayV1 | ReplayV2;
 
 const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
 const digest = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
-const vector = (value: unknown, size: number): value is number[] => Array.isArray(value) && value.length === size && value.every(finite);
+const vector = (value: unknown, size: number): value is number[] => Array.isArray(value) && value.length === size && Array.from(value).every(finite);
 
 function validateFrame(frame: unknown): ReplayFrame {
   if (!frame || typeof frame !== 'object') throw new Error('Invalid replay frame');
