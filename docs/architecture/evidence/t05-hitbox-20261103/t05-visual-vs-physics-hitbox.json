@@ -1,0 +1,20 @@
+{
+  "scenario": "T05 original cone hitbox visual-to-physics comparison",
+  "map_sha256": "3359bae959535baa40d337ae7677540ab64f022e739acd148fa2f9b65369ec37",
+  "frontend": {
+    "x": 14.54489312698091,
+    "z": 21.919602343300536,
+    "y_center_m": 0.68,
+    "heading_rad": 1.0027668769847211
+  },
+  "physics": {
+    "x": 14.522556534305782,
+    "z": 21.905199462946243,
+    "y_center_m": 0.66,
+    "heading_rad": 0.9943123924641467
+  },
+  "planar_center_difference_m": 0.026577553213842923,
+  "vertical_center_difference_m": 0.02,
+  "heading_difference_deg": 0.4844062809875984,
+  "notes": "Visual cone mesh centroid vs physics OBB center. Frontend pointAt() compiled from current TypeScript. Physics collision box half-extents 0.65,0.60,0.65, yaw from registered Quaternion. Close visual alignment does not make cone mesh the collision solver; registered body OBB remains authoritative."
+}

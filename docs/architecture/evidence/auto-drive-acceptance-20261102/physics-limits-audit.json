@@ -1,0 +1,26 @@
+[
+  {
+    "case": "short_stacked_crossing",
+    "decision": "supported",
+    "auto_bridge_count": 1,
+    "max_preview_elevation_m": 4.057218626919883,
+    "surface_count": 144,
+    "development_only": true,
+    "ppo_compatible": true
+  },
+  {
+    "case": "supported_separated_overpass",
+    "decision": "supported",
+    "auto_bridge_count": 1,
+    "max_preview_elevation_m": 5.148890342903889,
+    "surface_count": 228,
+    "development_only": true,
+    "ppo_compatible": true
+  },
+  {
+    "case": "short_bridge_ramp",
+    "decision": "fail_closed",
+    "code": "unsupported_slope",
+    "reason": "bridge near route t=0.030 has insufficient approach length; move it toward the route midpoint or lengthen the map"
+  }
+]

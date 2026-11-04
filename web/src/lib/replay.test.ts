@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseReplay, replayAt, replayModelId } from './replay';
+import { DEFAULT_AUTO_CONFIG } from './autoDriveConfig';
 
 const fixture = {
   schema: 'f1rl_racing_sandbox_replay_v1',
@@ -40,6 +41,33 @@ describe('read-only replay', () => {
 
     expect(replayModelId(replay)).toBe('auto-drive');
     expect(replayAt(replay, 0.05).position[2]).toBe(0.5);
+  });
+
+  it('accepts backend Auto Drive configuration with a fractional speed', () => {
+    const hash = 'a'.repeat(64);
+    const replay = parseReplay({ schema: 'f1rl_racing_sandbox_replay_v2', label: 'auto',
+      provenance: { dataset_split: 'DEVELOPMENT', runtime_mode: 'development', source_sha256: hash,
+        model_id: 'auto-drive', model_sha256: null, track_id: 'track', track_sha256: hash, seed: 1 },
+      result: { status: 'finished', valid_sample: false, successful_finish: true, reason: null,
+        steps: 1, duration_s: 2, trace_sha256: hash }, frames: fixture.frames,
+      auto_drive_config: { ...DEFAULT_AUTO_CONFIG, target_max_speed_kmh: 0.5 } });
+    expect(replay.schema === 'f1rl_racing_sandbox_replay_v2' && replay.auto_drive_config?.target_max_speed_kmh).toBe(0.5);
+  });
+
+  it('rejects malformed and zero-length orientations at parsing', () => {
+    for (const orientation of [[0, 0, 0, 0], [NaN, 0, 0, 1], [Infinity, 0, 0, 1], [1, 0, 0], [ , 0, 0, 1], 'invalid']) {
+      expect(() => parseReplay({ ...fixture, frames: fixture.frames.map(f => ({ ...f, orientation_wxyz: orientation })) })).toThrow(/orientation/i);
+    }
+  });
+
+  it('normalizes valid orientations before interpolation', () => {
+    const replay = parseReplay({ ...fixture, frames: fixture.frames.map((f, i) => ({ ...f, orientation_wxyz: i ? [0, 0, 2, 0] : [2, 0, 0, 0] })) });
+    expect(replay.frames[0].orientation_wxyz).toEqual([1, 0, 0, 0]);
+    expect(Math.hypot(...replayAt(replay, 1).orientation_wxyz!)).toBeCloseTo(1);
+    for (const value of [1e-200, 1e308]) {
+      const scaled = parseReplay({ ...fixture, frames: fixture.frames.map(f => ({ ...f, orientation_wxyz: [value, value, 0, 0] })) });
+      expect(Math.hypot(...scaled.frames[0].orientation_wxyz!)).toBeCloseTo(1);
+    }
   });
 
   it('validates and preserves version 2 authoritative TRAIN telemetry and provenance', () => {
@@ -93,5 +121,35 @@ describe('read-only replay', () => {
     const wrongTrack = JSON.parse(JSON.stringify(replay)) as { track_preview: { track_sha256: string } };
     wrongTrack.track_preview.track_sha256 = 'b'.repeat(64);
     expect(() => parseReplay(wrongTrack)).toThrow(/does not match replay provenance/);
+  });
+});
+
+
+describe('Physics contact metadata in replay interpolation', () => {
+  it('never reports airborne before the certified incoming Physics frame', () => {
+    const r = parseReplay({...fixture,frames:[
+      {time_s:0,position:[0,.5,0],heading_rad:0,speed_mps:0,grounded:true,physical_event_types:[]},
+      {time_s:.1,position:[0,.8,0],heading_rad:0,speed_mps:2,grounded:false,physical_event_types:['takeoff']},
+      {time_s:.2,position:[0,.5,0],heading_rad:0,speed_mps:0,grounded:true,physical_event_types:['landing']},
+    ]});
+    expect(replayAt(r,.05).grounded).toBe(true);
+    expect(replayAt(r,.05).physical_event_types).toEqual([]);
+    expect(replayAt(r,.1).grounded).toBe(false);
+    expect(replayAt(r,.15).grounded).toBe(false);
+    expect(replayAt(r,.15).physical_event_types).toEqual(['takeoff']);
+    expect(replayAt(r,.2).grounded).toBe(true);
+  });
+});
+
+describe('rounded replay timeline vs authoritative floating-point event tick', () => {
+  it('shows a certified landing at slider 0.35 for a frame time 0.35000000000000003', () => {
+    const r = parseReplay({...fixture,frames:[
+      {time_s:0.34,position:[0,.61,0],heading_rad:0,speed_mps:1,grounded:false,physical_event_types:[]},
+      {time_s:0.35000000000000003,position:[0,.58,0],heading_rad:0,speed_mps:1,grounded:true,physical_event_types:['landing']},
+      {time_s:0.36,position:[0,.55,0],heading_rad:0,speed_mps:1,grounded:true,physical_event_types:[]},
+    ]});
+    expect(replayAt(r,0.3499).grounded).toBe(false);
+    expect(replayAt(r,0.35).grounded).toBe(true);
+    expect(replayAt(r,0.35).physical_event_types).toEqual(['landing']);
   });
 });

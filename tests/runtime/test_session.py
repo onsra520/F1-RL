@@ -206,3 +206,65 @@ def test_auto_drive_uses_the_latest_edited_custom_track():
         assert replay["frames"][0]["position"][0] == pytest.approx(100.0)
     finally:
         manager.shutdown()
+
+def test_auto_drive_status_exposes_actual_physics_source_not_a_claimed_v4_label():
+    """Live clients must see the applied immutable Physics identity."""
+    catalog = RuntimeCatalog(ROOT)
+    manager = RuntimeSessionManager(catalog)
+    try:
+        session = manager.create(
+            model_id=None, track_id="straight-sprint-v1", seed=412, mode="auto"
+        )
+        status = session.status_document()
+        assert status["physics"]["mode"] == session.track.physics_config.mode
+        assert status["physics"]["ground_motion_version"] == (
+            session.track.physics_config.ground_motion_version
+        )
+        assert status["physics"]["sha256"] == session.track.physics_config.sha256
+        assert status["physics"]["ground_motion_version"] != "spatial_road_edge_partial_lifecycle_v4"
+    finally:
+        manager.shutdown()
+
+def test_t4_reset_emits_versioned_new_epoch_before_tick_zero():
+    """Real paced Gym session: restart status must mark the new frame epoch."""
+    import time
+
+    manager = RuntimeSessionManager(RuntimeCatalog(ROOT))
+    try:
+        session = manager.create(
+            model_id=None, track_id="straight-sprint-v1",
+            seed=412, mode="manual",
+        )
+        session.start(paced=True)
+        initial_statuses = []
+        deadline = time.monotonic() + 12.0
+        while session.status_document()["steps"] < 5 and time.monotonic() < deadline:
+            event = session.next_event(timeout=0.3)
+            if event is not None and event["type"] == "status":
+                initial_statuses.append(event["data"])
+        assert session.status_document()["steps"] >= 5
+        assert {"status": "running", "reset": False} in initial_statuses
+
+        session.reset()
+        events_after_reset = []
+        restart_seen = False
+        fresh_frame_seen = False
+        deadline = time.monotonic() + 15.0
+        while time.monotonic() < deadline and not fresh_frame_seen:
+            event = session.next_event(timeout=0.25)
+            if event is None:
+                continue
+            events_after_reset.append(event)
+            if (event["type"] == "status" and
+                    event["data"].get("status") == "running" and
+                    event["data"].get("reset") is True):
+                restart_seen = True
+            if event["type"] == "frame" and event["data"]["tick"] == 0:
+                assert restart_seen, "new tick zero arrived without reset epoch marker"
+                fresh_frame_seen = True
+        assert fresh_frame_seen, "physical session did not restart after reset"
+        assert any(e["type"] == "status" and
+                   e["data"].get("status") == "resetting" for e in events_after_reset)
+        assert session.status_document()["status"] in {"running", "paused", "finished"}
+    finally:
+        manager.shutdown()

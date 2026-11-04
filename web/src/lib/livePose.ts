@@ -1,7 +1,8 @@
 import type { RuntimeFrame, RuntimeSessionStatus } from './runtime';
+import { slerpWxyz, type Wxyz } from './orientation';
 
-export type LivePose = { x: number; y: number; z: number; heading: number; speed: number };
-export type LivePoseFrame = Pick<RuntimeFrame, 'tick' | 'time_s' | 'dt_s' | 'position' | 'heading_rad' | 'speed_mps'>;
+export type LivePose = { x: number; y: number; z: number; heading: number; speed: number; orientation_wxyz?: Wxyz };
+export type LivePoseFrame = Pick<RuntimeFrame, 'tick' | 'time_s' | 'dt_s' | 'position' | 'heading_rad' | 'speed_mps'> & { orientation_wxyz?: Wxyz };
 type OrderedFrame = Pick<LivePoseFrame, 'tick' | 'time_s'>;
 type RuntimePoseStatus = RuntimeSessionStatus['status'] | 'resetting';
 
@@ -23,6 +24,7 @@ function toPose(frame: LivePoseFrame): LivePose {
   return {
     x: frame.position[0], y: frame.position[1], z: frame.position[2],
     heading: frame.heading_rad, speed: frame.speed_mps,
+    ...(frame.orientation_wxyz ? { orientation_wxyz: [...frame.orientation_wxyz] as Wxyz } : {}),
   };
 }
 
@@ -34,10 +36,18 @@ function interpolatePose(from: LivePose, to: LivePose, amount: number): LivePose
     z: from.z + (to.z - from.z) * amount,
     heading: from.heading + headingDelta * amount,
     speed: from.speed + (to.speed - from.speed) * amount,
+    ...(from.orientation_wxyz && to.orientation_wxyz
+      ? { orientation_wxyz: slerpWxyz(from.orientation_wxyz, to.orientation_wxyz, amount) } : {}),
   };
 }
 
 export class LivePoseInterpolator {
+  constructor(private maxVisualSpeedMps: number = Number.POSITIVE_INFINITY) {}
+
+  setMaxVisualSpeedMps(limit: number): void {
+    if (!Number.isFinite(limit) || limit <= 0) throw new Error('Invalid visual speed limit');
+    this.maxVisualSpeedMps = limit;
+  }
   private previous: BufferedPose | null = null;
   private latest: BufferedPose | null = null;
   private heldPose: LivePose | null = null;
@@ -50,28 +60,39 @@ export class LivePoseInterpolator {
     if (this.terminal || !Number.isFinite(receivedAt) || this.heldPose && !this.resumeFromHeldPose) return false;
     if (!isLivePoseFrameInOrder(this.latest, frame)) return false;
 
+    // Evaluate the pose that is visible at the instant the new authoritative
+    // packet arrives. Starting from the previous *packet* rather than the
+    // currently rendered pose causes a backward jump whenever packets are
+    // faster than the previous interpolation interval.
+    const visiblePose = this.heldPose ?? this.sample(receivedAt);
     const next: BufferedPose = { tick: frame.tick, time_s: frame.time_s, receivedAt, pose: toPose(frame) };
     const origin = this.latest;
-    const originPose = this.heldPose ?? origin?.pose;
-    if (!originPose) {
+    if (!visiblePose) {
       this.latest = next;
       this.previous = null;
       this.interpolationMs = 0;
       return true;
     }
 
-    const arrivalGap = origin ? receivedAt - origin.receivedAt : frame.dt_s * 1000;
-    const duration = this.resumeFromHeldPose ? frame.dt_s * 1000 : arrivalGap;
-    if (!Number.isFinite(duration) || duration <= 0 || duration > MAX_FRAME_GAP_MS) {
-      this.previous = null;
-      this.latest = next;
-      this.interpolationMs = 0;
-      this.heldPose = null;
-      this.resumeFromHeldPose = false;
-      return true;
+    const expectedMs = frame.dt_s * 1000;
+    const arrivalGap = origin ? receivedAt - origin.receivedAt : expectedMs;
+    // Never extrapolate beyond the newest authoritative packet. A delayed
+    // packet is blended from the held visible pose, not teleported into place.
+    // Minimum duration prevents an oversized position step on a burst.
+    const distance = Math.hypot(
+      next.pose.x - visiblePose.x, next.pose.y - visiblePose.y, next.pose.z - visiblePose.z,
+    );
+    // An explicitly configured visual speed budget bounds packet-burst catch-up.
+    // Physics remains authoritative and the optional default preserves generic unit uses.
+    const minimumMs = distance / this.maxVisualSpeedMps * 1000;
+    const nominalMs = this.resumeFromHeldPose ? expectedMs
+      : Math.max(expectedMs * 0.75, Math.min(arrivalGap, expectedMs * 1.5));
+    const duration = Math.max(1, nominalMs, minimumMs);
+    if (!Number.isFinite(duration) || !Number.isFinite(arrivalGap) || arrivalGap <= 0) {
+      return false;
     }
 
-    this.previous = origin ? { ...origin, pose: originPose } : next;
+    this.previous = { ...(origin ?? next), pose: visiblePose };
     this.latest = next;
     this.interpolationMs = duration;
     this.heldPose = null;
@@ -124,6 +145,20 @@ export class LivePoseInterpolator {
     this.previous = null;
     this.resumeFromHeldPose = false;
     this.terminal = true;
+  }
+
+  /**
+   * A user-requested Reset changes the authoritative physics epoch to tick 0.
+   * Preserve the last *visible* pose until tick 0 arrives, then blend back
+   * at the configured visual-speed budget rather than teleporting in one rAF.
+   */
+  prepareRestart(now: number): void {
+    const visible = this.sample(now);
+    this.reset();
+    if (visible) {
+      this.heldPose = visible;
+      this.resumeFromHeldPose = true;
+    }
   }
 
   reset(): void {

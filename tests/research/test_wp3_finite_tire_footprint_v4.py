@@ -1,10 +1,10 @@
 """Finite tire footprint at polygon road edges must have conservative work."""
-from math import isclose
 
 import pytest
 
 from src.simulation.finite_tire_footprint_v4 import (
-    FOOTPRINT_RADIUS_M,_single_polygon_coverage,
+    FOOTPRINT_RADIUS_M,
+    _single_polygon_coverage,
 )
 
 SQUARE=((-1.,-1.),(1.,-1.),(1.,1.),(-1.,1.))
@@ -19,7 +19,7 @@ def test_no_instantaneous_potential_jump_across_polygon_edge():
         assert 0.<=alpha<=1.
         assert gradient.y==0.
     a0,g0=_single_polygon_coverage(-1.-r,0.,SQUARE,r)
-    a1,g1=_single_polygon_coverage(-1.,0.,SQUARE,r)
+    a1,_g1=_single_polygon_coverage(-1.,0.,SQUARE,r)
     a2,g2=_single_polygon_coverage(-1.+r,0.,SQUARE,r)
     assert a0==0. and g0.magnitude==0.
     assert a1==pytest.approx(.5)
@@ -30,7 +30,7 @@ def test_exact_analytic_energy_gradient_cancels_work():
     E=533.440979
     r=FOOTPRINT_RADIUS_M
     for x,z in [(-1.,0.),(-.96,.1),(.98,-.07),(-.96,-.95)]:
-        a,g=_single_polygon_coverage(x,z,SQUARE,r)
+        _a,g=_single_polygon_coverage(x,z,SQUARE,r)
         dx=1e-6
         axp,_=_single_polygon_coverage(x+dx,z,SQUARE,r)
         axm,_=_single_polygon_coverage(x-dx,z,SQUARE,r)
@@ -52,3 +52,40 @@ def test_adjacent_seams_have_continuous_full_coverage():
 def test_invalid_footprint_radius_rejected(radius):
     with pytest.raises(ValueError):
         _single_polygon_coverage(0.,0.,SQUARE,radius)
+
+def test_adjacent_sloped_route_seam_is_potential_continuous_and_differentiable():
+    """No zero-time spring energy jump when adjacent certified ramps overlap."""
+    from math import sqrt
+
+    from src.simulation.finite_tire_footprint_v4 import sample_finite_wheel_coverage
+    from src.simulation.geometry.vector import Vec3
+    from src.simulation.multi_surface_support import _atlas
+    from src.simulation.track.patch import PlanarSurfacePatch
+    from tests.sandbox.test_partial_wheel_release import CONTACT, pose
+
+    slope = 0.09
+    direction = Vec3(0.,slope,1.).normalized()
+    normal = Vec3(0.,1.,-slope).normalized()
+    first = PlanarSurfacePatch('a-flat',Vec3(0.,0.,1.),Vec3(0.,0.,1.),Vec3(0.,1.,0.),
+                               8.,2.5,route_index=0,route_overlap_m=.5)
+    second = PlanarSurfacePatch('b-slope',Vec3(0.,slope,3.),direction,normal,
+                                8.,2.5*sqrt(1.+slope*slope),route_index=1,route_overlap_m=.5)
+    atlas = _atlas((first,second),CONTACT.seam_height_tolerance_m)
+    assert atlas is not None
+    # The b-slope tyre footprint reaches unit coverage at its near boundary
+    # while a-flat still overlaps at the same tire position.
+    wheels = []
+    for z in (1.851-1e-6,1.851+1e-6):
+        # Front axle offset +0.8: the tire contact is at z.
+        wheel = sample_finite_wheel_coverage(pose(z-.8,y=.3),CONTACT,atlas)[0]
+        assert wheel.contact is not None
+        wheels.append(wheel)
+    assert abs(wheels[1].contact.ground_height_m-wheels[0].contact.ground_height_m)<1e-4
+    assert abs(wheels[1].contact.surface_gradient.z-wheels[0].contact.surface_gradient.z)<.05
+    for z in (1.72, 1.82, 1.98, 2.12, 2.23):
+        eps = 1e-5
+        middle = sample_finite_wheel_coverage(pose(z-.8,y=.3),CONTACT,atlas)[0]
+        before = sample_finite_wheel_coverage(pose(z-.8-eps,y=.3),CONTACT,atlas)[0]
+        after = sample_finite_wheel_coverage(pose(z-.8+eps,y=.3),CONTACT,atlas)[0]
+        numerical_dz = (after.contact.ground_height_m-before.contact.ground_height_m)/(2*eps)
+        assert -middle.contact.surface_gradient.z == pytest.approx(numerical_dz,abs=5e-5)

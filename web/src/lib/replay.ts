@@ -1,4 +1,6 @@
 import { parseTrack, type RoadSample, type TrackDocument } from './track';
+import { slerpWxyz } from './orientation';
+import { validateAutoConfig, type AutoDriveConfig } from './autoDriveConfig';
 
 export type ReplayFrame = {
   time_s: number;
@@ -44,6 +46,7 @@ export type ReplayV2 = {
     seed: number;
   };
   track_preview?: ReplayTrackPreview;
+  auto_drive_config?: AutoDriveConfig;
   result: {
     status: 'finished' | 'failed' | 'cancelled' | 'stopped';
     valid_sample: boolean;
@@ -65,7 +68,7 @@ export type Replay = ReplayV1 | ReplayV2;
 
 const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
 const digest = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
-const vector = (value: unknown, size: number): value is number[] => Array.isArray(value) && value.length === size && value.every(finite);
+const vector = (value: unknown, size: number): value is number[] => Array.isArray(value) && value.length === size && Array.from(value).every(finite);
 
 function validateFrame(frame: unknown): ReplayFrame {
   if (!frame || typeof frame !== 'object') throw new Error('Invalid replay frame');
@@ -77,7 +80,15 @@ function validateFrame(frame: unknown): ReplayFrame {
   for (const key of ['velocity', 'acceleration_mps2'] as const) {
     if (f[key] !== undefined && !vector(f[key], 3)) throw new Error(`Invalid replay ${key}`);
   }
-  if (f.orientation_wxyz !== undefined && !vector(f.orientation_wxyz, 4)) throw new Error('Invalid replay orientation');
+  let orientation: ReplayFrame['orientation_wxyz'];
+  if (f.orientation_wxyz !== undefined) {
+    if (!vector(f.orientation_wxyz, 4)) throw new Error('Invalid replay orientation');
+    const scale = Math.max(...f.orientation_wxyz.map(Math.abs));
+    if (scale === 0) throw new Error('Invalid replay orientation');
+    const scaled = f.orientation_wxyz.map(value => value / scale);
+    const length = Math.hypot(...scaled);
+    orientation = scaled.map(value => value / length) as ReplayFrame['orientation_wxyz'];
+  }
   if (f.action !== undefined && (!f.action || !finite(f.action.steering) || f.action.steering < -1 || f.action.steering > 1 ||
       !finite(f.action.throttle) || f.action.throttle < 0 || f.action.throttle > 1 ||
       !finite(f.action.brake) || f.action.brake < 0 || f.action.brake > 1)) throw new Error('Invalid replay action');
@@ -88,7 +99,8 @@ function validateFrame(frame: unknown): ReplayFrame {
   if (f.checkpoint_crossings !== undefined && !stringArray(f.checkpoint_crossings)) throw new Error('Invalid checkpoint crossings');
   if (f.collision_ids !== undefined && !stringArray(f.collision_ids)) throw new Error('Invalid collision ids');
   if (f.physical_event_types !== undefined && !stringArray(f.physical_event_types)) throw new Error('Invalid physical events');
-  return { ...f, position: [...f.position] as [number, number, number] } as ReplayFrame;
+  return { ...f, position: [...f.position] as [number, number, number],
+    ...(orientation ? { orientation_wxyz: orientation } : {}) } as ReplayFrame;
 }
 
 function stringArray(value: unknown): value is string[] {
@@ -168,9 +180,12 @@ export function parseReplay(raw: unknown): Replay {
       throw new Error('Unsupported replay schema or provenance (HELD-OUT is not allowed)');
     }
     const trackPreview = validateTrackPreview(d.track_preview, provenance.track_id, provenance.track_sha256);
+    if (d.auto_drive_config !== undefined && provenance.model_id !== 'auto-drive') throw new Error('Config belongs to Auto Drive only');
+    const autoConfig = d.auto_drive_config === undefined ? undefined : validateAutoConfig(d.auto_drive_config);
     return {
       schema: d.schema, label: d.label, provenance: { ...provenance }, result: { ...result }, frames,
       ...(trackPreview ? { track_preview: trackPreview } : {}),
+      ...(autoConfig ? { auto_drive_config: autoConfig } : {}),
     };
   }
   throw new Error('Unsupported replay schema or provenance (HELD-OUT is not allowed)');
@@ -191,13 +206,24 @@ export function replayAt(replay: Replay, time: number): ReplayFrame {
   }
   const b = frames[lo], a = frames[Math.max(0, lo - 1)];
   if (b === a) return b;
+  // Range inputs quantize time to decimals such as 0.35, while a Physics
+  // timestamp can be 0.35000000000000003. Interpret sub-nanosecond binary
+  // rounding as the *same certified frame*, never as an earlier tick.
+  // Do not enlarge this to a visual frame tolerance: that would announce
+  // airborne/landing/collision events before their actual Physics samples.
+  if (Math.abs(b.time_s - bounded) <= 1e-10) return b;
   const u = (bounded - a.time_s) / (b.time_s - a.time_s);
   const turn = Math.atan2(Math.sin(b.heading_rad - a.heading_rad), Math.cos(b.heading_rad - a.heading_rad));
   return {
-    ...b,
+    // Discrete Physics fields belong to the last certified sample at or
+    // before the requested replay time. Never preview future "airborne",
+    // "landing", collision or checkpoint events between frames.
+    ...(u >= 1 ? b : a),
     time_s: bounded,
     position: [0, 1, 2].map((i) => a.position[i] + (b.position[i] - a.position[i]) * u) as [number, number, number],
     heading_rad: a.heading_rad + turn * u,
     speed_mps: a.speed_mps + (b.speed_mps - a.speed_mps) * u,
+      ...(a.orientation_wxyz && b.orientation_wxyz
+        ? { orientation_wxyz: slerpWxyz(a.orientation_wxyz, b.orientation_wxyz, u) } : {}),
   };
 }

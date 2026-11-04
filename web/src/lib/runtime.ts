@@ -1,3 +1,4 @@
+import type { AutoDriveConfig } from './autoDriveConfig';
 import { parseReplay, type Replay } from './replay';
 import type { TrackDocument } from './track';
 
@@ -86,6 +87,10 @@ export type RuntimeSessionStatus = {
   error: string | null;
   provenance: 'TRAIN-development' | 'manual-development' | 'auto-development' | 'custom-development';
   speed_multiplier?: number;
+  physics?: { mode: string; ground_motion_version: string; sha256: string };
+  race_contract?: { version: string } | null;
+  auto_drive_config?: AutoDriveConfig;
+  effective_max_speed_kmh?: number;
   track_preview?: RuntimeCustomTrack;
 };
 export type RuntimeFrame = {
@@ -182,15 +187,17 @@ export class RuntimeClient {
       body: JSON.stringify({ mode: 'manual', track_id: trackId, seed }),
     });
   }
-  createAutoSession(trackId: string, seed: number): Promise<RuntimeSessionStatus> {
+  createAutoSession(trackId: string, seed: number, config?: AutoDriveConfig): Promise<RuntimeSessionStatus> {
     return request(this.baseUrl, '/api/v1/sessions', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ mode: 'auto', track_id: trackId, seed }),
+      body: JSON.stringify({ mode: 'auto', track_id: trackId, seed, ...(config ? { auto_drive_config: config } : {}) }),
     });
   }
-  createCustomSession(track: unknown, mode: 'auto' | 'manual' | 'ppo', seed: number, modelId?: string, traceId?: string): Promise<RuntimeSessionStatus> {
+  createCustomSession(track: unknown, mode: 'auto' | 'manual' | 'ppo', seed: number, modelId?: string, traceId?: string, config?: AutoDriveConfig, experimentalV4 = false): Promise<RuntimeSessionStatus> {
     const body: Record<string, unknown> = { mode, seed, custom_track: track };
     if (modelId) body.model_id = modelId;
+    if (mode === 'auto' && config) body.auto_drive_config = config;
+    if (mode === 'auto' && experimentalV4) body.physics_profile = 'experimental_v4';
     return request(this.baseUrl, '/api/v1/sessions', {
       method: 'POST', headers: { 'content-type': 'application/json', ...(traceId ? { 'x-trace-id': traceId } : {}) }, body: JSON.stringify(body),
     });

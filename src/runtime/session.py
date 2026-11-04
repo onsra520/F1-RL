@@ -11,6 +11,7 @@ import numpy as np
 
 from src.runtime.auto_drive import AutoDriveController
 from src.runtime.catalog import MAX_RUNTIME_STEPS, RuntimeCatalog
+from src.runtime.drive_config import AutoDriveConfig
 from src.runtime.frames import (
     EpisodeResult,
     ReplayDocument,
@@ -19,6 +20,7 @@ from src.runtime.frames import (
     RuntimeFrame,
     build_runtime_frame,
 )
+from src.runtime.v4_dev_profile import bind_custom_auto_v4
 
 MAX_ACTIVE_SESSIONS = 2
 MAX_RETAINED_SESSIONS = 8
@@ -64,6 +66,7 @@ class RuntimeSession:
         mode: str = "ppo",
         custom_factory=None,
         custom_track_sha256: str | None = None,
+        auto_drive_config: AutoDriveConfig | None = None,
     ) -> None:
         self.catalog = catalog
         self.session_id = session_id
@@ -73,6 +76,9 @@ class RuntimeSession:
             raise ValueError("PPO mode requires a registered frozen model")
         if mode in ("manual", "auto") and model_id is not None:
             raise ValueError(f"{mode} mode cannot select a PPO model")
+        if mode != "auto" and auto_drive_config is not None:
+            raise ValueError("Auto Drive configuration is allowed only for auto mode")
+        self.auto_drive_config = (auto_drive_config or AutoDriveConfig()) if mode == "auto" else None
         self.mode = mode
         self.model = catalog.model(model_id) if model_id is not None else None
         self._custom_factory = custom_factory
@@ -211,6 +217,13 @@ class RuntimeSession:
                 "model_sha256": None if self.model is None else self.model.sha256,
                 "track_id": self.track_id,
                 "track_sha256": self._custom_track_sha256 or self.catalog.track_sha256(self.track_id),
+                "physics": {
+                    "mode": self.track.physics_config.mode,
+                    "ground_motion_version": self.track.physics_config.ground_motion_version,
+                    "sha256": self.track.physics_config.sha256,
+                },
+                "race_contract": {"version": self.track.race_config.version}
+                    if self.track.race_config is not None else None,
                 "seed": self.seed,
                 "status": self.status,
                 "steps": self._steps,
@@ -224,6 +237,10 @@ class RuntimeSession:
                 else "auto-development" if self.mode == "auto"
                 else "manual-development",
                 "speed_multiplier": self._speed_multiplier,
+                **({"auto_drive_config": self.auto_drive_config.model_dump(mode="json"),
+                    "effective_max_speed_kmh": 3.6 * min(self.track.vehicle_parameters.max_ground_speed,
+                                                       self.auto_drive_config.target_max_speed_kmh / 3.6)}
+                   if self.auto_drive_config is not None else {}),
             }
 
     def replay(self) -> dict[str, object]:
@@ -246,8 +263,12 @@ class RuntimeSession:
                 ),
                 result=self._result,
                 frames=list(self._frames),
+                auto_drive_config=self.auto_drive_config.model_dump(mode="json") if self.auto_drive_config else None,
             )
-            return document.model_dump(mode="json", by_alias=True)
+            result = document.model_dump(mode="json", by_alias=True)
+            if self.auto_drive_config is None:
+                result.pop("auto_drive_config", None)
+            return result
 
     def _capture_reset(self, env, _observation, info) -> None:
         action = np.zeros(env.action_space.shape, dtype=np.float32)
@@ -320,6 +341,7 @@ class RuntimeSession:
         try:
             from src.evaluation.rollout import evaluate_policy_episode
 
+            restart_epoch = False
             while not self._cancel.is_set():
                 with self._lock:
                     self._frames = []
@@ -346,8 +368,15 @@ class RuntimeSession:
                         self.track.navigation,
                         self.track.vehicle_parameters,
                         min(surface.width for surface in self.track.track.surfaces),
+                        self.auto_drive_config,
+                        obstacles=self.track.track.obstacles,
+                        body_geometry=(self.track.body_geometry or self.track.physics_config.body_geometry),
                     )
-                self._emit("status", {"status": "running", "reset": self._restart.is_set()})
+                # The restart request is cleared before this new episode.
+                # Carry the epoch marker explicitly so browser clients can
+                # discard stale frames and accept the new tick zero.
+                self._emit("status", {"status": "running", "reset": restart_epoch})
+                restart_epoch = False
                 row = evaluate_policy_episode(
                     env,
                     model,
@@ -362,6 +391,7 @@ class RuntimeSession:
                 )
                 if self._restart.is_set() and not self._cancel.is_set():
                     self._restart.clear()
+                    restart_epoch = True
                     continue
                 self._complete(row)
                 break
@@ -456,6 +486,8 @@ class RuntimeSessionManager:
         mode: str = "ppo",
         custom_factory=None,
         custom_track_sha256: str | None = None,
+        auto_drive_config: AutoDriveConfig | None = None,
+        physics_profile: str = "legacy_v3",
     ) -> RuntimeSession:
         if mode == "ppo":
             if model_id is None:
@@ -466,6 +498,12 @@ class RuntimeSessionManager:
                 raise ValueError(f"{mode} mode cannot select a PPO model")
         else:
             raise ValueError("runtime mode must be ppo, manual, or auto")
+        if physics_profile not in ("legacy_v3", "experimental_v4"):
+            raise ValueError("unregistered Auto Drive Physics development profile")
+        if physics_profile == "experimental_v4":
+            if mode != "auto" or custom_factory is None:
+                raise ValueError("experimental Physics v4 requires custom Auto Drive")
+            custom_factory = bind_custom_auto_v4(custom_factory)
         if custom_factory is None:
             self.catalog.track_factory(track_id)
         if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed <= 2**32 - 1:
@@ -486,6 +524,7 @@ class RuntimeSessionManager:
                 mode=mode,
                 custom_factory=custom_factory,
                 custom_track_sha256=custom_track_sha256,
+                auto_drive_config=auto_drive_config,
             )
             self._sessions[session.session_id] = session
             return session
