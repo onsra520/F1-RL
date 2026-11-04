@@ -73,6 +73,7 @@ export default function App() {
   const [armed, setArmed] = useState<PropKind | null>(null);
   const [driveMode, setDriveMode] = useState<DriveMode>('auto');
   const [autoConfig, setAutoConfig] = useState<AutoDriveConfig>(loadAutoConfig);
+  const [autoConfigValid, setAutoConfigValid] = useState(true);
   const [experimentalPhysicsV4, setExperimentalPhysicsV4] = useState(false);
   const [pose, setPose] = useState<CarPose>(() => spawnPose(initialTrack()));
   const [replay, setReplay] = useState<Replay | null>(null);
@@ -629,7 +630,7 @@ export default function App() {
                     {trackValidationBusy ? <><LoaderCircle size={14}/> VALIDATING IN PYTHON…</> : <><Check size={14}/> VALIDATE & USE CURRENT MAP</>}
                   </button>
                 </>}
-                {driveMode === 'auto' && <AutoDriveSettings config={autoConfig} onChange={setAutoConfig}
+                {driveMode === 'auto' && <AutoDriveSettings config={autoConfig} onChange={setAutoConfig} onValidityChange={setAutoConfigValid}
                   disabled={runtimeBusy} physicalCapKmh={runtimeStatus?.mode === 'auto'
                     ? runtimeStatus.effective_max_speed_kmh : undefined}/>}
                 {driveMode === 'auto' && runtimeTrackSelection.kind === 'custom' && <label>
@@ -663,7 +664,7 @@ export default function App() {
                   <RuntimeOutcomeMessage status={runtimeStatus} />
                 </>}
                 <div className="runtime-actions">
-                  <button className="runtime-run" onClick={() => void runRuntimeSession()} disabled={!runtimeCatalog || runtimeBusy || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !runtimeTrackRequest}>
+                  <button className="runtime-run" onClick={() => void runRuntimeSession()} disabled={!runtimeCatalog || runtimeBusy || (driveMode === 'auto' && !autoConfigValid) || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !runtimeTrackRequest}>
                     {runtimeBusy ? <><LoaderCircle size={16}/> {runtimeStatus?.status === 'paused' ? 'PAUSED' : driveMode === 'manual' ? 'MANUAL PYTHON SIMULATION' : driveMode === 'auto' ? 'AUTO DRIVE · PYTHON PHYSICS' : 'RUNNING PPO INFERENCE'}</> : <><Play size={16}/> {driveMode === 'manual' ? 'START MANUAL DRIVE' : driveMode === 'auto' ? 'RUN AUTO DRIVE' : 'RUN EPISODE'}</>}
                   </button>
                   {runtimeBusy && <button className="runtime-stop" onClick={() => void stopRuntimeSession()}>Stop</button>}

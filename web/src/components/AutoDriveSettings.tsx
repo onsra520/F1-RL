@@ -21,21 +21,26 @@ const advanced: { key: keyof AutoDriveConfig; label: string; unit: string; step:
   { key: 'steep_grade_speed_mps', label: 'Steep slope speed', unit: 'm/s', step: 0.5, min: 1, max: 15 },
   { key: 'corner_anticipation_m', label: 'Corner anticipation', unit: 'm', step: 0.5, min: 0, max: 10 },
 ];
-export default function AutoDriveSettings({ config, onChange, disabled, physicalCapKmh }: {
+export default function AutoDriveSettings({ config, onChange, onValidityChange, disabled, physicalCapKmh }: {
   config: AutoDriveConfig;
   onChange: (config: AutoDriveConfig) => void;
+  onValidityChange: (valid: boolean) => void;
   disabled: boolean;
   physicalCapKmh?: number;
 }) {
   const [speedInput, setSpeedInput] = useState(String(config.target_max_speed_kmh));
-  useEffect(() => setSpeedInput(String(config.target_max_speed_kmh)), [config.target_max_speed_kmh]);
+  const [speedValid, setSpeedValid] = useState(true);
+  useEffect(() => { setSpeedInput(String(config.target_max_speed_kmh)); setSpeedValid(true); onValidityChange(true); }, [config.target_max_speed_kmh, onValidityChange]);
   const update = (patch: Partial<AutoDriveConfig>) => {
     try { onChange(validateAutoConfig({ ...config, ...patch })); }
     catch { /* reject inconsistent values rather than sending invalid configuration */ }
   };
+  const selectConfig = (next: AutoDriveConfig) => {
+    setSpeedInput(String(next.target_max_speed_kmh)); setSpeedValid(true); onValidityChange(true); onChange(next);
+  };
   return <section className="auto-drive-settings" aria-label="Auto Drive Settings">
     <div className="auto-settings-title"><strong>AUTO DRIVE SETTINGS</strong>
-      <button type="button" disabled={disabled} onClick={() => onChange({ ...DEFAULT_AUTO_CONFIG })}>Reset defaults</button>
+      <button type="button" disabled={disabled} onClick={() => selectConfig({ ...DEFAULT_AUTO_CONFIG })}>Reset defaults</button>
     </div>
     <label>DRIVING STYLE<select aria-label="Driving style" disabled={disabled} value={config.driving_style}
       onChange={event => update({ driving_style: event.target.value as DrivingStyle })}>
@@ -43,19 +48,24 @@ export default function AutoDriveSettings({ config, onChange, disabled, physical
       <option value="racing">Racing line (simulation)</option>
     </select></label>
     <label>SPEED PROFILE<select aria-label="Speed profile" disabled={disabled} value={config.speed_profile}
-      onChange={event => onChange(selectSpeedProfile(config, event.target.value as SpeedProfile))}>
+      onChange={event => selectConfig(selectSpeedProfile(config, event.target.value as SpeedProfile))}>
       {Object.keys(PRESET_SPEEDS_KMH).map(key => <option key={key} value={key}>{key.toUpperCase()}</option>)}
     </select></label>
     <label>MAX SPEED <span className="auto-speed-range">
       <input aria-label="Target max speed slider" type="range" min="1" max="300" step="1"
         disabled={disabled} value={config.target_max_speed_kmh}
-        onChange={event => update({ target_max_speed_kmh: Number(event.target.value) })}/>
+        onChange={event => selectConfig({ ...config, target_max_speed_kmh: Number(event.target.value) })}/>
       <input aria-label="Target max speed km/h" type="text" inputMode="decimal"
-        disabled={disabled} value={speedInput}
-        onChange={event => { setSpeedInput(event.target.value); update({ target_max_speed_kmh: Number(event.target.value) }); }}
-        onBlur={() => setSpeedInput(String(config.target_max_speed_kmh))}/>
+        disabled={disabled} value={speedInput} aria-invalid={!speedValid}
+        onChange={event => {
+          const input = event.target.value;
+          setSpeedInput(input);
+          try { onChange(validateAutoConfig({ ...config, target_max_speed_kmh: Number(input) })); setSpeedValid(true); onValidityChange(true); }
+          catch { setSpeedValid(false); onValidityChange(false); }
+        }}/>
       <small>km/h</small>
     </span></label>
+    {!speedValid && <small role="alert">Enter a speed above 0 and at most 300 km/h.</small>}
     <small className="auto-drive-cap">Target {config.target_max_speed_kmh} km/h · Physical limit {physicalCapKmh == null
       ? 'determined by track vehicle' : physicalCapKmh.toFixed(1) + ' km/h'} · no synthetic velocity</small>
     <details className="auto-advanced"><summary>Advanced settings</summary>
