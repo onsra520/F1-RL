@@ -99,3 +99,6 @@
 /src/validation/wp7_execution.py text eol=lf
 /src/validation/wp7_protocol.py text eol=lf
 /src/validation/wp7_track_feasibility.py text eol=lf
+
+# Preserve original Windows WP3 evidence receipt hash; no normalization.
+/docs/research/WP3-CRASH-TERMINAL-V1-REGRESSION-20261024.txt -text
