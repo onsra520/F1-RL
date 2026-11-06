@@ -14,7 +14,7 @@ def test_registered_parent_and_worker_deny_before_model_or_environment_access(tm
     with pytest.raises(ScientificAdmissionError):
         evaluate_registered_cell(ROOT,protocol,policy_id='multitrack-seed1',track_id='ramp-v1',
             stratum='randomized_train',model_path=tmp_path/'missing.zip',expected_model_sha256='0'*64)
-    from f1rl.cli.internal.wp7_ppo_fixture_worker_v4 import run_registered
+    from src.cli.internal.wp7_ppo_fixture_worker_v4 import run_registered
     result=run_registered(dict(protocol=protocol,policy_id='multitrack-seed1',track_id='ramp-v1',
         stratum='randomized_train',authorization=True,model_bytes=b'invalid archive'))
     assert result[0]=='error' and result[1]=='ScientificAdmissionError'
@@ -68,7 +68,7 @@ def test_parent_boolean_cannot_admit_the_independent_worker_or_publish_evidence(
 
 def test_child_rechecks_signatures_even_if_its_report_booleans_are_forged(monkeypatch):
     import f1rl.research.wp7_cell_evaluation as module
-    from f1rl.cli.internal.wp7_ppo_fixture_worker_v4 import run_registered
+    from src.cli.internal.wp7_ppo_fixture_worker_v4 import run_registered
     protocol = build_protocol(ROOT, profile=PROFILE)
     fake = dict(training_authorized=True, authorization=dict(verified=True,
         protocol_sha256=protocol['sha256'], policy_id='multitrack-seed1',
