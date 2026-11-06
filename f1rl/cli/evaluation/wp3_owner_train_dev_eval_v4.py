@@ -1,10 +1,10 @@
 """WP3 owner-authorized internal TRAIN-development full evaluation (not scientific).
 
 Windows examples:
-  python scripts/wp3_owner_train_dev_eval.py prepare --out D:/new-eval-root --run-id WP3-OWNER-TRAINDEV-20261024-001 --owner-approved
-  python scripts/wp3_owner_train_dev_eval.py status --out D:/new-eval-root
-  python scripts/wp3_owner_train_dev_eval.py run --out D:/new-eval-root --workers 2
-  python scripts/wp3_owner_train_dev_eval.py resume --out D:/new-eval-root --workers 2
+  python -m scripts.evaluation.wp3_owner_train_dev_eval_v4 prepare --out D:/new-eval-root --run-id WP3-OWNER-TRAINDEV-20261024-001 --owner-approved
+  python -m scripts.evaluation.wp3_owner_train_dev_eval_v4 status --out D:/new-eval-root
+  python -m scripts.evaluation.wp3_owner_train_dev_eval_v4 run --out D:/new-eval-root --workers 2
+  python -m scripts.evaluation.wp3_owner_train_dev_eval_v4 resume --out D:/new-eval-root --workers 2
 
 Never use this command to change the scientific full gate. Independent
 physics certification remains pending and all outputs are development-only.
@@ -15,8 +15,7 @@ import argparse
 import json
 import sys
 
-ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT))
+ROOT=Path(__file__).resolve().parents[3]
 from f1rl.research.wp3_owner_train_dev_eval import new_run, load_run, run, snapshot
 
 HISTORY=Path(r"D:\F1-RL-WP3-EVIDENCE\wp3-eval-issue51-v1")

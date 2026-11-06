@@ -8,8 +8,7 @@ from pathlib import Path
 from statistics import mean, median
 import sys
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+ROOT = Path(__file__).resolve().parents[3]
 SEEDS = (10000, 10001, 11000, 11001, 11002, 11003, 11004, 11005)
 
 

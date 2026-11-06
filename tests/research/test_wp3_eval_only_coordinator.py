@@ -154,7 +154,7 @@ def test_full_eval_hard_gate_propagates(monkeypatch,tmp_path):
 
 
 def test_cli_entrypoint_parses_as_python():
-    script = Path(__file__).resolve().parents[2] / "scripts/wp3_eval_only_coordinator.py"
+    script = Path(__file__).resolve().parents[2] / "f1rl/cli/evaluation/wp3_eval_only_coordinator_v4.py"
     compile(script.read_text(encoding="utf8"), str(script), "exec")
 
 

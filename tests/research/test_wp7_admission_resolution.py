@@ -228,7 +228,7 @@ spec=importlib.util.spec_from_file_location('f1rl',root/'f1rl/__init__.py',submo
 module=importlib.util.module_from_spec(spec)
 sys.modules['f1rl']=module
 spec.loader.exec_module(module)
-sys.argv=[str(root/'scripts/wp7_training_admission.py'),'--help']
+sys.argv=[str(root/'f1rl/cli/evidence/wp7_training_admission_v4.py'),'--help']
 runpy.run_path(sys.argv[0],run_name='__main__')
 '''
     result = subprocess.run([sys.executable, '-I', '-B', '-c', bootstrap, str(ROOT)],

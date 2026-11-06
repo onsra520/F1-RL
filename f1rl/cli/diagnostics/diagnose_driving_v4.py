@@ -10,10 +10,7 @@ import pstats
 import sys
 import time
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
-
+ROOT = Path(__file__).resolve().parents[3]
 def diagnostic_action(observation, yaw_rate):
     import numpy as np
     heading_error = atan2(float(observation[10]), float(observation[12]))

@@ -40,7 +40,7 @@ jobs:
         run: python -m pip install -e ".[dev]"
 
       - name: Verify on-repo draft identity and deny execution routes
-        run: python -B scripts/wp7_train5_ci_preflight.py
+        run: python -B -m f1rl.cli.evidence.wp7_train5_ci_preflight
 
       - name: Run scoped TRAIN-only Physics/compatibility checks
         run: >-

@@ -102,3 +102,24 @@
 
 # Preserve original Windows WP3 evidence receipt hash; no normalization.
 /docs/research/WP3-CRASH-TERMINAL-V1-REGRESSION-20261024.txt -text
+
+# Grouped v4 supplement: source lock uses byte-exact LF for all new modules.
+/f1rl/cli/diagnostics/diagnose_driving_v4.py text eol=lf
+/f1rl/cli/diagnostics/vector_benchmark_v4.py text eol=lf
+/f1rl/cli/diagnostics/wp7_capture_gpu_v1.py text eol=lf
+/f1rl/cli/diagnostics/wp7_certify_planar_execution_v4.py text eol=lf
+/f1rl/cli/evaluation/compare_driving_v4.py text eol=lf
+/f1rl/cli/evaluation/wp3_eval_only_coordinator_v4.py text eol=lf
+/f1rl/cli/evaluation/wp3_owner_train_dev_eval_v4.py text eol=lf
+/f1rl/cli/evidence/wp7_dual_turn_v4_feasibility.py text eol=lf
+/f1rl/cli/evidence/wp7_train5_ci_preflight.py text eol=lf
+/f1rl/cli/evidence/wp7_training_admission_v4.py text eol=lf
+/f1rl/cli/evidence/wp7_verify_run_evidence_v4.py text eol=lf
+/f1rl/cli/internal/wp7_ppo_fixture_worker_v4.py text eol=lf
+/f1rl/cli/training/exploratory_demo_launcher_v4.py text eol=lf
+/f1rl/cli/training/wp7_train_acceptance_v4.py text eol=lf
+/docs/.superpowers/handoff/evidence/step3-original-dual-turn-runner.py.txt -text
+/docs/.superpowers/handoff/evidence/step3-original-wp7-protocol.py.txt -text
+/docs/.superpowers/handoff/evidence/wp7-historical-gpu-probe.py.txt -text
+/f1rl/research/wp7_cell_evaluation.py text eol=lf
+/f1rl/research/wp7_train5_v2_protocol.py text eol=lf

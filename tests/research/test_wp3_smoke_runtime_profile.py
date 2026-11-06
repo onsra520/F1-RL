@@ -97,7 +97,7 @@ def test_full06_profile_emits_valid_registered_physical_crash_terminal():
 
 
 def test_smoke_cli_propagates_requested_runtime_profile(monkeypatch, tmp_path):
-    cli_path = ROOT / "scripts/wp3_eval_only_coordinator.py"
+    cli_path = ROOT / "f1rl/cli/evaluation/wp3_eval_only_coordinator_v4.py"
     spec = importlib.util.spec_from_file_location("wp3_eval_only_coordinator_cli", cli_path)
     cli = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(cli)
@@ -116,7 +116,7 @@ def test_smoke_cli_propagates_requested_runtime_profile(monkeypatch, tmp_path):
 
 
 def test_smoke_cli_rejects_v3_request_before_starting_run(monkeypatch, tmp_path):
-    cli_path = ROOT / "scripts/wp3_eval_only_coordinator.py"
+    cli_path = ROOT / "f1rl/cli/evaluation/wp3_eval_only_coordinator_v4.py"
     spec = importlib.util.spec_from_file_location("wp3_eval_only_coordinator_cli", cli_path)
     cli = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(cli)

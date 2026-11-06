@@ -1,16 +1,15 @@
 """WP3 Issue #51: independent source-bound Eval-only coordinator.
 
 Usage:
-    python scripts/wp3_eval_only_coordinator.py preflight
-    python scripts/wp3_eval_only_coordinator.py smoke --runtime-profile wp3_full06_physics_v4 --out D:/unique-new-run-dir
-    python scripts/wp3_eval_only_coordinator.py full  # intentionally fail-closed
+    python -m scripts.evaluation.wp3_eval_only_coordinator_v4 preflight
+    python -m scripts.evaluation.wp3_eval_only_coordinator_v4 smoke --runtime-profile wp3_full06_physics_v4 --out D:/unique-new-run-dir
+    python -m scripts.evaluation.wp3_eval_only_coordinator_v4 full  # intentionally fail-closed
 """
 from __future__ import annotations
 from pathlib import Path
 import argparse, json, sys
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+ROOT = Path(__file__).resolve().parents[3]
 from f1rl.research.wp3_eval_only_coordinator import (
     FULL06_RUNTIME_PROFILE, RUNTIME_PROFILE_SPECS,
     preflight, forbid_registered_full_eval, run_engineering, runtime_profile_spec)

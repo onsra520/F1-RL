@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def test_runtime_fallback_relaunches_inference_without_training(monkeypatch):
-    path = Path(__file__).resolve().parents[2]/'scripts/launch_exploratory_demo.py'
+    path = Path(__file__).resolve().parents[2]/'f1rl/cli/training/exploratory_demo_launcher_v4.py'
     spec = importlib.util.spec_from_file_location('demo_launcher', path)
     launcher = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(launcher)

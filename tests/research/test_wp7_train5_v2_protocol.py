@@ -33,7 +33,7 @@ def test_source_and_external_real_v4_witness_preflight_valid():
     assert reg["status"]=="draft_not_authorized"
     assert reg["preflight_digest"]==p._digest(
         {k:v for k,v in reg.items() if k!="preflight_digest"})
-    assert len(reg["source_sha256"])==44
+    assert len(reg["source_sha256"])==60
     assert len(reg["evidence_sha256"])==4
     assert reg["runtime_profile"]==p.RUNTIME_SPEC
     for rel,digest in reg["source_sha256"].items():

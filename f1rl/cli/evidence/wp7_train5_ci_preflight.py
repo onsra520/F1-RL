@@ -9,8 +9,7 @@ from hashlib import sha256
 import json
 
 import sys
-ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT))
+ROOT=Path(__file__).resolve().parents[3]
 from f1rl.research import wp7_train5_v2_protocol as protocol
 REG=ROOT/protocol.REGISTRATION
 UNAVAILABLE=ROOT/"_external_witness_not_checked_in"

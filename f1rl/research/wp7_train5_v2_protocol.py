@@ -71,11 +71,27 @@ SOURCE_FILES=(
  "f1rl/runtime/physics.py",
  "f1rl/research/wp7_track_feasibility.py",
  "f1rl/research/wp7_protocol.py",
+ "f1rl/research/wp7_cell_evaluation.py",
+ "f1rl/cli/diagnostics/vector_benchmark_v4.py",
+ "f1rl/cli/diagnostics/diagnose_driving_v4.py",
+ "f1rl/cli/evaluation/compare_driving_v4.py",
+ "f1rl/cli/training/exploratory_demo_launcher_v4.py",
+ "f1rl/cli/evaluation/wp3_eval_only_coordinator_v4.py",
+ "f1rl/cli/evaluation/wp3_owner_train_dev_eval_v4.py",
+ "f1rl/cli/diagnostics/wp7_certify_planar_execution_v4.py",
+ "f1rl/cli/internal/wp7_ppo_fixture_worker_v4.py",
+ "f1rl/cli/evidence/wp7_train5_ci_preflight.py",
+ "f1rl/cli/evidence/wp7_training_admission_v4.py",
+ "f1rl/cli/training/wp7_train_acceptance_v4.py",
+ "f1rl/cli/evidence/wp7_verify_run_evidence_v4.py",
+ "docs/.superpowers/handoff/evidence/step3-original-wp7-protocol.py.txt",
  "f1rl/research/wp3_eval_only_coordinator.py",
  "f1rl/research/wp7_executed_feasibility.py",
  "f1rl/research/wp7_train5_v2_protocol.py",
- "scripts/wp7_dual_turn_v4_feasibility.py",
- "scripts/wp7_capture_gpu.py",
+ "docs/.superpowers/handoff/evidence/step3-original-dual-turn-runner.py.txt",
+ "f1rl/cli/evidence/wp7_dual_turn_v4_feasibility.py",
+ "docs/.superpowers/handoff/evidence/wp7-historical-gpu-probe.py.txt",
+ "f1rl/cli/diagnostics/wp7_capture_gpu_v1.py",
  "pyproject.toml",
 )+tuple(f"models/{m}/model-final.zip" for m in MODEL_IDS)
 
@@ -207,7 +223,7 @@ def _evidence_contract(repo_root:Path,evidence_root:Path, hashes:dict, rows:list
             and witness.get("verdict")=="PASS_TWO_REAL_INDEPENDENT_PHYSICS_V4_FINISHES",
             "Step3 source/witness did not certify required real v4 finishes")
     _assert(receipt.get("runner_source_script_sha256")==
-                source_hashes["scripts/wp7_dual_turn_v4_feasibility.py"]
+                source_hashes["docs/.superpowers/handoff/evidence/step3-original-dual-turn-runner.py.txt"]
             and receipt.get("runtime_profile")==RUNTIME_SPEC["physics_version"]
             and receipt.get("race_version")==RUNTIME_SPEC["race_version"]
             and receipt.get("terminal_contract")==RUNTIME_SPEC["terminal_contract"]
@@ -226,8 +242,16 @@ def _evidence_contract(repo_root:Path,evidence_root:Path, hashes:dict, rows:list
                 and raw["source_bindings"].get(track_file)==source_hashes[track_file]
                 and c["source_summary_sha256"]==hashes[EVIDENCE_FILES[2 if side=="right" else 3]],
                 "Step3 witness track/source binding mismatch")
+        # The historical Step3 witness used the original WP7 protocol.
+        # Compare to an immutable exact archived copy, not the later migrated
+        # source that has a different GPU-probe path.
+        step3_bindings=dict(raw["source_bindings"])
+        original_protocol=step3_bindings.pop("f1rl/research/wp7_protocol.py",None)
+        _assert(original_protocol==source_hashes[
+                    "docs/.superpowers/handoff/evidence/step3-original-wp7-protocol.py.txt"],
+                "Step3 original protocol source differs from archived input")
         _assert(all(name in source_hashes and value==source_hashes[name]
-                    for name,value in raw["source_bindings"].items()),
+                    for name,value in step3_bindings.items()),
                 "Step3 controller used unregistered/stale source")
         _assert(ep["finished"] is True and ep["exception"] is None
                 and ep["checkpoints_completed"]==["checkpoint-0","checkpoint-1"]

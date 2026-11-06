@@ -6,7 +6,7 @@ import pytest
 
 
 def test_diagnostic_controller_corrects_target_direction_without_claiming_ppo():
-    path = Path(__file__).resolve().parents[2]/'scripts/diagnose_driving.py'
+    path = Path(__file__).resolve().parents[2]/'f1rl/cli/diagnostics/diagnose_driving_v4.py'
     spec = importlib.util.spec_from_file_location('diagnostic', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -44,7 +44,7 @@ def test_vector_finite_validation_preserved(axis, invalid):
 
 
 def test_comparison_requires_progress_improvement_and_valid_samples():
-    path = Path(__file__).resolve().parents[2]/'scripts/compare_driving.py'
+    path = Path(__file__).resolve().parents[2]/'f1rl/cli/evaluation/compare_driving_v4.py'
     spec = importlib.util.spec_from_file_location('comparison', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

@@ -15,10 +15,8 @@ import time
 from uuid import uuid4
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 # Always import this checkout, never a stale installed F1-RL from another worktree.
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 BOOTSTRAP = ROOT / "scripts" / "exploratory_ppo.py"
 
 

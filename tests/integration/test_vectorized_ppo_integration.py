@@ -117,7 +117,7 @@ def _run_benchmark(backend: str, n_envs: int) -> dict[str, object]:
     completed = subprocess.run(
         [
             sys.executable,
-            "scripts/benchmark_vector_envs.py",
+            "-m", "f1rl.cli.diagnostics.vector_benchmark_v4",
             "--backend",
             backend,
             "--n-envs",

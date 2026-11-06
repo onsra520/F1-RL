@@ -95,7 +95,7 @@ def test_cli_never_ignores_reset_selection_for_a_different_execution_mode():
     import os
     import subprocess
     import sys
-    result=subprocess.run([sys.executable,'-B','scripts/wp7_certify_planar_execution.py',
+    result=subprocess.run([sys.executable,'-B','f1rl/cli/diagnostics/wp7_certify_planar_execution_v4.py',
                            '--track','straight-sprint-v1','--reset-index','7'],cwd=ROOT,
                           env={**os.environ,'PYTHONPATH':str(ROOT),'PYTHONDONTWRITEBYTECODE':'1'},
                           capture_output=True,text=True,timeout=30)

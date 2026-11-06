@@ -11,7 +11,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output',type=Path,required=True,help='new external evidence directory; never overwritten')
     args=parser.parse_args()
-    report=run_acceptance(Path(__file__).resolve().parents[1],args.output)
+    report=run_acceptance(Path(__file__).resolve().parents[3],args.output)
     print(json.dumps(report,indent=2,allow_nan=False))
     return 0 if report['all_pass'] else 2
 

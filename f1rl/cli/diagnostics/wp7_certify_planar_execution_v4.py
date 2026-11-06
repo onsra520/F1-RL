@@ -34,7 +34,7 @@ def main():
     args = parser.parse_args()
     if args.spatial_profile_track is None and any(v is not None for v in (args.seed_index,args.reset_rank,args.reset_index,args.profile)):
         parser.error('seed/reset selectors require --spatial-profile-track')
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[3]
     if args.replay is not None:
         if args.expected_sha256 is None:
             parser.error('--replay requires an independently retained --expected-sha256')

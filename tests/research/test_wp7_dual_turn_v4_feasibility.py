@@ -13,7 +13,7 @@ ROOT=Path(__file__).resolve().parents[2]
 
 @pytest.fixture(scope="module")
 def replay_runner():
-    path=ROOT/"scripts/wp7_dual_turn_v4_feasibility.py"
+    path=ROOT/"f1rl/cli/evidence/wp7_dual_turn_v4_feasibility.py"
     spec=importlib.util.spec_from_file_location("wp7_dual_turn_v4_feasibility_demo",path)
     module=importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

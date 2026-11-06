@@ -27,7 +27,7 @@ def run_registered(payload):
 def _run_cell(payload,*,registered):
     """The child checks actual admission; pipe booleans cannot authorize research."""
     try:
-        root=Path(__file__).resolve().parents[1]
+        root=Path(__file__).resolve().parents[3]
         protocol=payload['protocol']
         environments={}
         if registered:

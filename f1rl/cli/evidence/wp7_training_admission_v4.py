@@ -20,7 +20,7 @@ if __name__ == "__main__":
         parser.error('--review requires --run-manifest')
     if args.verify_execution != (args.execution_output is not None):
         parser.error('--verify-execution and --execution-output must be supplied together')
-    report = evaluate_admission(Path(__file__).resolve().parents[1],
+    report = evaluate_admission(Path(__file__).resolve().parents[3],
         verify_software=args.verify_software, profile=args.profile,
         verify_execution=args.verify_execution, execution_output=args.execution_output,
         run_manifest=read_json(args.run_manifest) if args.run_manifest else None,

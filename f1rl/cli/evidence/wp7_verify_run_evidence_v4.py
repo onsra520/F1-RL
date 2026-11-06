@@ -9,9 +9,7 @@ import sys
 
 # Source-bound CLI import for clean checkout without relying on a different
 # editable installation. This verifier never loads a PPO model or runs training.
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+ROOT = Path(__file__).resolve().parents[3]
 
 from f1rl.research.wp7_run_manifest import read_json, verify_run_manifest
 from f1rl.research.wp7_trusted_reviews import verify_run_reviews
