@@ -1,4 +1,11 @@
 import json
+import sys
+from pathlib import Path
+
+# Standalone subprocess must resolve this repository, not ambient editable installs.
+ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 import numpy as np
 
