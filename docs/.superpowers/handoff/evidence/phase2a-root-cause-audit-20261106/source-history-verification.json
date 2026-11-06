@@ -1,0 +1,108 @@
+{
+  "source_commit": "6c479540134d98d7d27331879c926c8ba82c2965",
+  "source_commit_title": "fix(wp3): certify ballistic airborne bounded-road impact lifecycle",
+  "source_commit_date": "2026-10-27",
+  "phase1_source_commit_matches": true,
+  "target_worktree_status": "## No commits yet on baseline/physics-v4-phase1-audit\n?? README.md\n?? assets/\n?? config.yml\n?? configs/\n?? f1rl/\n?? models/\n?? pyproject.toml\n?? tests/",
+  "target_head": null,
+  "target_worktree_is_unborn": true,
+  "files": [
+    {
+      "path": "f1rl/sandbox/spatial_contact_dynamics.py",
+      "target_sha256": "a8059f8e6ffd0eb38d5f60fa0259955e62ecb086e1f421e657f7d9bda722fc90",
+      "target_git_blob": "6770541ab3088ab920762dd0058756763d9d4c6e",
+      "source_commit_blob": "6770541ab3088ab920762dd0058756763d9d4c6e",
+      "matches_source_commit": true
+    },
+    {
+      "path": "f1rl/sandbox/multi_surface_support.py",
+      "target_sha256": "f4e06dfd84a2393fae7db3b0f239691ec5a715baba967989daaee7e4d59879d7",
+      "target_git_blob": "0aa33e17c89f7b52971c0c86b9b70dd548992ca6",
+      "source_commit_blob": "0aa33e17c89f7b52971c0c86b9b70dd548992ca6",
+      "matches_source_commit": true
+    },
+    {
+      "path": "f1rl/sandbox/world.py",
+      "target_sha256": "a989f77c4270522e57971b08292193fad47f91afbc73093b848a14c6a436db66",
+      "target_git_blob": "8f998cfcf2b1cf9bdc2b9ff8974816046490a3a5",
+      "source_commit_blob": "8f998cfcf2b1cf9bdc2b9ff8974816046490a3a5",
+      "matches_source_commit": true
+    },
+    {
+      "path": "f1rl/learning/gym_environment.py",
+      "target_sha256": "9bf2be0531ea23297e84ccf2a63c97b4338e288dbca45251283ab7c3ff6563db",
+      "target_git_blob": "eb39174b8790fdd96bf0b852909598edf3100841",
+      "source_commit_blob": "eb39174b8790fdd96bf0b852909598edf3100841",
+      "matches_source_commit": true
+    },
+    {
+      "path": "f1rl/research/wp7_protocol.py",
+      "target_sha256": "8cbd97ce7ee37174387fd391d2de98d96b5bd2150355b462f62ad9db9ef691c8",
+      "target_git_blob": "262d039c2f4451d6d8466e3656106a13ee02204a",
+      "source_commit_blob": "262d039c2f4451d6d8466e3656106a13ee02204a",
+      "matches_source_commit": true
+    },
+    {
+      "path": "f1rl/research/wp3_eval_only_coordinator.py",
+      "target_sha256": "993d44aa053ade400f2cae9f2e7eccccbc1b6a0e9ddfd5e81460a2e4a4c2efe6",
+      "target_git_blob": "8c7e9246ef07d768f73523509a625801e9891d75",
+      "source_commit_blob": "8c7e9246ef07d768f73523509a625801e9891d75",
+      "matches_source_commit": true
+    },
+    {
+      "path": "configs/research/wp7-rotating-owner-protocol-v3.json",
+      "target_sha256": "942f1d469506ec709c33adf5f3b8328c9808a2447a9131b5eaf3367bc807f516",
+      "target_git_blob": "e26b768b57e3352f24cf353258a56c1c7455bb99",
+      "source_commit_blob": "e26b768b57e3352f24cf353258a56c1c7455bb99",
+      "matches_source_commit": true
+    },
+    {
+      "path": "assets/tracks/training/straight-sprint-v1.json",
+      "target_sha256": "9efe209780cfa8358f8622d38bb5d56db30425a57dcebebc16e6e447a10b5f00",
+      "target_git_blob": "791144fc89eba570ed5fa7fc648468963e1825fd",
+      "source_commit_blob": "791144fc89eba570ed5fa7fc648468963e1825fd",
+      "matches_source_commit": true
+    },
+    {
+      "path": "assets/tracks/training/slalom-v1.json",
+      "target_sha256": "e9dd588740189f7ed857de8e8b8f5eeb99f3161fdb9b8d3fa05d18978cdefa53",
+      "target_git_blob": "afcab0bdbe4d039414c74e55d5912a5e4906bc0e",
+      "source_commit_blob": "afcab0bdbe4d039414c74e55d5912a5e4906bc0e",
+      "matches_source_commit": true
+    },
+    {
+      "path": "assets/tracks/training/right-turn-v1.json",
+      "target_sha256": "a302f5d1d7f08d2b51ae963a5e695d8600d52a0ebf2d1f212ca0a4fbf90e303e",
+      "target_git_blob": "1a50e362b44a130401300a59678e24cb0e5ae99e",
+      "source_commit_blob": "1a50e362b44a130401300a59678e24cb0e5ae99e",
+      "matches_source_commit": true
+    },
+    {
+      "path": "assets/tracks/training/ramp-v1.json",
+      "target_sha256": "6c0da56966962363ed601c8fda2343006c207ee9ea6497deb72e6f6018721bd3",
+      "target_git_blob": "a5c9128bded0d37dc3d3e6b00d5360967f0f143e",
+      "source_commit_blob": "a5c9128bded0d37dc3d3e6b00d5360967f0f143e",
+      "matches_source_commit": true
+    }
+  ],
+  "all_relevant_files_match_phase1_source": true,
+  "v3_profile_origin_commit": "1732fdf51aa8b33e127c0ebba728e6099b090554",
+  "v3_profile_origin_blob_equals_phase1_snapshot": true,
+  "phase1_model_archive_hashes": [
+    {
+      "model_id": "A-seed2",
+      "sha256": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc"
+    },
+    {
+      "model_id": "B-seed1",
+      "sha256": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021"
+    },
+    {
+      "model_id": "C-seed0",
+      "sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492"
+    }
+  ],
+  "phase1_model_manifest_evaluation_run_id": "WP3-OWNER-TRAINDEV-20261027-FULL-06",
+  "phase1_model_manifest_evaluation_source_commit": "6c479540134d98d7d27331879c926c8ba82c2965",
+  "heldout_access": false
+}

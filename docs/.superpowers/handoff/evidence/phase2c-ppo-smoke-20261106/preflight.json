@@ -1,0 +1,32 @@
+{
+  "phase": "F1-RL Phase 2C",
+  "status": "BLOCKED",
+  "executed_ppo_episodes": 0,
+  "target_worktree": "D:\\Projects\\.worktrees\\F1-RL\\physics-v4-phase1-audit",
+  "target_branch": "baseline/physics-v4-phase1-audit",
+  "target_worktree_has_head": false,
+  "target_worktree_is_unborn_snapshot": true,
+  "phase2b_named_profile_present_in_target": false,
+  "phase2b_cli_coordinator_present_in_target": false,
+  "phase2b_fix_worktree": "D:\\Projects\\.worktrees\\F1-RL\\phase2b-smoke-profile-wiring",
+  "phase2b_fix_branch": "fix/f1rl-phase2b-smoke-profile-wiring",
+  "phase2b_fix_committed": false,
+  "phase1_inputs": {
+    "source_commit": "6c479540134d98d7d27331879c926c8ba82c2965",
+    "reset_seed": 20261106,
+    "step_limit": 2500,
+    "inference_mode": "deterministic",
+    "models": ["C-seed0", "B-seed1", "A-seed2"],
+    "tracks": ["straight-sprint-v1", "slalom-v1", "right-turn-v1", "ramp-v1"],
+    "case_count": 12,
+    "phase1_finished": 4,
+    "phase1_invalid_physical_transition": 8
+  },
+  "phase2b_existing_evidence": {
+    "cases_replayed": 8,
+    "valid_physical_crash": 8,
+    "invalid_or_exception": 0,
+    "phase2c_12_case_results": false
+  },
+  "reason": "The requested target worktree does not contain the Phase 2B named runtime profile or CLI wiring. Phase 2B exists only as uncommitted changes in a separate worktree. Phase 2C prohibits porting/editing code, so the required precondition is unmet."
+}
