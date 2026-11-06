@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "track_id": "slalom-v1",
+  "spawn": {"position": [0, 0, 4], "orientation": [1, 0, 0, 0]},
+  "surfaces": [
+    {"id": "road-main", "origin": [0, 0, 65], "forward": [0, 0, 1], "normal": [0, 1, 0], "width": 14, "length": 130}
+  ],
+  "obstacles": [
+    {"id": "obstacle-0", "volume": {"center": [3.5, 1, 45], "half_extents": [2, 1, 2], "orientation": [1, 0, 0, 0]}},
+    {"id": "obstacle-1", "volume": {"center": [-3.5, 1, 60], "half_extents": [2, 1, 2], "orientation": [1, 0, 0, 0]}},
+    {"id": "obstacle-2", "volume": {"center": [3.5, 1, 85], "half_extents": [2, 1, 2], "orientation": [1, 0, 0, 0]}},
+    {"id": "obstacle-3", "volume": {"center": [-3.5, 1, 100], "half_extents": [2, 1, 2], "orientation": [1, 0, 0, 0]}}
+  ],
+  "boost_pads": [
+    {"id": "boost-0", "volume": {"center": [0, 1, 36], "half_extents": [7, 1, 4], "orientation": [1, 0, 0, 0]}, "acceleration_bonus": 3.0}
+  ],
+  "slow_zones": [],
+  "checkpoints": [
+    {"id": "checkpoint-0", "volume": {"center": [-3, 0, 30], "half_extents": [2, 2, 1.5], "orientation": [1, 0, 0, 0]}, "order": 0},
+    {"id": "checkpoint-1", "volume": {"center": [3, 0, 70], "half_extents": [2, 2, 1.5], "orientation": [1, 0, 0, 0]}, "order": 1},
+    {"id": "checkpoint-2", "volume": {"center": [-3, 0, 110], "half_extents": [2, 2, 1.5], "orientation": [1, 0, 0, 0]}, "order": 2}
+  ],
+  "finish_lines": [
+    {"id": "finish", "volume": {"center": [0, 0, 124], "half_extents": [7, 2, 1], "orientation": [1, 0, 0, 0]}}
+  ],
+  "score_pickups": [],
+  "navigation": {
+    "points": [
+      [0, 0, 4],
+      [-3, 0, 18],
+      [-3, 0, 30],
+      [-3, 0, 43],
+      [3, 0, 54],
+      [3, 0, 70],
+      [-3, 0, 80],
+      [-3, 0, 92],
+      [0, 0, 96],
+      [1.5, 0, 102],
+      [-3, 0, 110],
+      [0, 0, 124]
+    ],
+    "surface_ids": ["road-main", "road-main", "road-main", "road-main", "road-main", "road-main", "road-main", "road-main", "road-main", "road-main", "road-main"],
+    "checkpoint_point_indices": [2, 5, 10]
+  }
+}

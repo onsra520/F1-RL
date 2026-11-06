@@ -1,0 +1,82 @@
+schema_version: 2
+
+# Existing general training profile; retained for WP6/WP7 compatibility.
+training:
+  total_timesteps: 50000
+  checkpoint_every_steps: 25000
+  sampling_seed: 0
+  artifacts_root: artifacts/runs
+
+# General PPO hyperparameters. Exploratory has its own isolated profile below.
+ppo:
+  learning_rate: 0.0003
+  n_steps: 256
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  seed: 0
+  device: cpu
+
+vector_env:
+  n_envs: 8
+  backend: dummy
+  start_method: spawn
+
+# Bounded local pilot; these values NEVER grant scientific authorization.
+exploratory:
+  # Demo-only task; inference/evaluation always use the original registered task.
+  demo_training:
+    version: straight_route_stability_demo_v1
+    training_corridor_m: 2.0
+    lateral_penalty_per_m2_s: 2.0
+    terminal_penalty: 25.0
+  experiment:
+    mode: exploratory
+    track: straight-sprint-v1
+    physics_profile: spatial_rotating_owner_v3
+  resources:
+    cpu:
+      threads: 8
+      interop_threads: 1
+      blas_threads: 8
+  training:
+    total_timesteps: 16384
+    checkpoint_every_steps: 1024
+    sampling_seed: 1000
+    artifacts_root: artifacts/runs
+  ppo:
+    learning_rate: 0.0003
+    n_steps: 256
+    batch_size: 64
+    n_epochs: 10
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_range: 0.2
+    ent_coef: 0.0
+    vf_coef: 0.5
+    max_grad_norm: 0.5
+    seed: 0
+    device: cpu
+  vector_env:
+    n_envs: 1
+    backend: dummy
+    start_method: spawn
+  evaluation:
+    episodes_per_policy: 2
+    seed_start: 10000
+    policies: [random, untrained, trained_final]
+    deterministic: true
+    replay_episode: 0
+  execution:
+    wall_seconds: 3600
+    schedule: learning_first
+    preserve_checkpoints_on_failure: true
+  logging:
+    progress_every_steps: 256
+    save_metrics: true
+    save_episode_results: true

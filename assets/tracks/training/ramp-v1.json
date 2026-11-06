@@ -1,0 +1,34 @@
+{
+  "schema_version": 2,
+  "track_id": "ramp-v1",
+  "spawn": {"position": [0, 0, 4], "orientation": [1, 0, 0, 0]},
+  "surfaces": [
+    {"id": "road-approach", "origin": [0, 0, 25], "forward": [0, 0, 1], "normal": [0, 1, 0], "width": 12, "length": 50},
+    {"id": "road-incline", "origin": [0, 4.175193028801963, 79.7080420622471], "forward": [0, 0.13917310096006544, 0.9902680687415704], "normal": [0, 0.9902680687415704, -0.13917310096006544], "width": 12, "length": 60},
+    {"id": "road-upper", "origin": [0, 8.350386057603925, 134.41608412449422], "forward": [0, 0, 1], "normal": [0, 1, 0], "width": 12, "length": 50}
+  ],
+  "obstacles": [],
+  "boost_pads": [],
+  "slow_zones": [],
+  "checkpoints": [
+    {"id": "checkpoint-0", "volume": {"center": [0, 3.479327524001636, 74.75670171853926], "half_extents": [6, 2, 1], "orientation": [1, 0, 0, 0]}, "order": 0},
+    {"id": "checkpoint-1", "volume": {"center": [0, 8.350386057603925, 130], "half_extents": [6, 2, 1], "orientation": [1, 0, 0, 0]}, "order": 1}
+  ],
+  "finish_lines": [
+    {"id": "finish", "volume": {"center": [0, 8.350386057603925, 153], "half_extents": [6, 2, 1], "orientation": [1, 0, 0, 0]}}
+  ],
+  "score_pickups": [],
+  "navigation": {
+    "points": [
+      [0, 0, 4],
+      [0, 0, 40],
+      [0, 0, 50],
+      [0, 3.479327524001636, 74.75670171853926],
+      [0, 8.350386057603925, 109.41608412449422],
+      [0, 8.350386057603925, 130],
+      [0, 8.350386057603925, 153]
+    ],
+    "surface_ids": ["road-approach", "road-approach", "road-incline", "road-incline", "road-upper", "road-upper"],
+    "checkpoint_point_indices": [3, 5]
+  }
+}
