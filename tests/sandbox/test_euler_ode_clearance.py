@@ -6,19 +6,19 @@ bound, NOT trust in RK4 accuracy. Unresolved intervals are not contacts.
 from dataclasses import replace
 import pytest
 
-from src.simulation.euler_ode_clearance import (
+from f1rl.sandbox.euler_ode_clearance import (
     EulerODEEnclosurePolicy,certify_torque_free_ode_clearance,
 )
-from src.simulation.geometry.vector import Vec3
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.body_collision import VehicleBodyGeometry
-from src.simulation.multi_surface_support import _atlas
-from src.simulation.ramp_support import WheelContactPoints
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleState
-from src.simulation.torque_free_rotation import TorqueFreeRotationPolicy
-from src.simulation.torque_free_swept_ccd import TorqueFreeSweepPolicy
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.body_collision import VehicleBodyGeometry
+from f1rl.sandbox.multi_surface_support import _atlas
+from f1rl.sandbox.ramp_support import WheelContactPoints
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleState
+from f1rl.sandbox.torque_free_rotation import TorqueFreeRotationPolicy
+from f1rl.sandbox.torque_free_swept_ccd import TorqueFreeSweepPolicy
 
 ROAD=PlanarSurfacePatch("plane",Vec3(0.,0.,0.),Vec3(0.,0.,1.),Vec3(0.,1.,0.),10.,20.)
 ATLAS=_atlas((ROAD,),1e-6)
@@ -100,12 +100,12 @@ def test_invalid_enclosure_policy_rejected(field,value):
 
 
 def test_world_flight_optin_applies_both_analytic_and_numerical_ccd_gates():
-    from src.simulation.ballistic_flight import (
+    from f1rl.sandbox.ballistic_flight import (
         BallisticFlightPolicy,FlightPhysicsError,advance_ballistic_flight,
     )
-    from src.simulation.multi_surface_support import MultiSurfaceSuspensionPolicy
-    from src.simulation.independent_suspension_dynamics import IndependentSuspensionDynamicsPolicy
-    from src.simulation.contact_manifold import ContactManifoldPolicy
+    from f1rl.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
+    from f1rl.sandbox.independent_suspension_dynamics import IndependentSuspensionDynamicsPolicy
+    from f1rl.sandbox.contact_manifold import ContactManifoldPolicy
 
     contact=MultiSurfaceSuspensionPolicy(W,.12,.12)
     inertia=IndependentSuspensionDynamicsPolicy(

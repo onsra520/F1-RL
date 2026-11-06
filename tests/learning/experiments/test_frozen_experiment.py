@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.rl.experiments import (
+from f1rl.learning.experiments import (
     EpisodeExperimentConfig,
     EvaluationExperimentConfig,
     ExperimentDefinition,
@@ -19,7 +19,7 @@ from src.rl.experiments import (
     TrainingExperimentConfig,
     VehicleExperimentConfig,
 )
-from src.tracks import load_track_asset
+from f1rl.track_assets import load_track_asset
 
 
 def _track(track_id: str, surface_id: str | None, spawn_x: float = 0.0) -> dict:

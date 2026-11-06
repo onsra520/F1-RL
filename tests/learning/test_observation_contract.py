@@ -2,10 +2,10 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from src.simulation.geometry.vector import Vec3
-from src.simulation.perception.rangefinder import RangefinderSpec
-from src.simulation.perception.sensor_suite import SensorSuite
-from src.rl.observation import NavigationTarget, ObservationConfig, ObservationEncoder
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.perception.rangefinder import RangefinderSpec
+from f1rl.sandbox.perception.sensor_suite import SensorSuite
+from f1rl.learning.observation import NavigationTarget, ObservationConfig, ObservationEncoder
 
 
 def _suite(*ids: str) -> SensorSuite:

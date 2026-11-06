@@ -1,23 +1,20 @@
 import inspect
-from pathlib import Path
 
-from tests.dependency_rules import imports_project_layers
-
-import src.core.simulation as runtime_simulation
-from src.core.simulation import Simulation, SimulationConfig
-from src.simulation.entities.checkpoint import Checkpoint
-from src.simulation.entities.finish_line import FinishLine
-from src.simulation.entities.score_pickup import ScorePickup
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.state import InteractionState
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.state import TrackState
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
-from src.simulation.world import WorldState
+import f1rl.runtime.simulation as runtime_simulation
+from f1rl.runtime.simulation import Simulation, SimulationConfig
+from f1rl.sandbox.entities.checkpoint import Checkpoint
+from f1rl.sandbox.entities.finish_line import FinishLine
+from f1rl.sandbox.entities.score_pickup import ScorePickup
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.state import TrackState
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from f1rl.sandbox.world import WorldState
 
 
 def _road() -> PlanarSurfacePatch:
@@ -142,14 +139,11 @@ def test_runtime_public_surface_has_no_start_stop_or_scheduler_dependencies() ->
     assert not hasattr(simulation, "start")
     assert not hasattr(simulation, "stop")
 
-    assert not imports_project_layers(Path(inspect.getsourcefile(runtime_simulation)), ("rl", "training", "evaluation"))
     source = inspect.getsource(runtime_simulation).lower()
     forbidden = (
-        "src.rl",
-        "src.training",
-        "src.evaluation",
-        "src.api",
-        "src.drivers",
+        "f1rl.learning",
+        "f1rl.api",
+        "f1rl.drivers",
         "fastapi",
         "websocket",
         "time.sleep",

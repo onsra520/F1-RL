@@ -2,8 +2,8 @@
 from pathlib import Path
 from dataclasses import replace
 import pytest
-from src.validation.wp7_protocol import build_protocol,load_registration,prepare_scenarios,protocol_profile
-from src.validation.wp7_execution import build_policy_execution
+from f1rl.research.wp7_protocol import build_protocol,load_registration,prepare_scenarios,protocol_profile
+from f1rl.research.wp7_execution import build_policy_execution
 ROOT=Path(__file__).resolve().parents[2]
 PROFILE='spatial_owner_v2'
 
@@ -62,9 +62,9 @@ def test_actual_train_gym_resets_and_steps_all_four_bound_owner_factories():
 
 
 def test_owner_run_manifest_and_denied_runner_keep_exact_profile_before_artifacts(tmp_path):
-    from src.validation.wp7_run_manifest import capture_registered_run,verify_run_manifest
-    from src.training.runner import TrainingRunner
-    from src.validation.wp7_admission import ScientificAdmissionError
+    from f1rl.research.wp7_run_manifest import capture_registered_run,verify_run_manifest
+    from f1rl.learning.training.runner import TrainingRunner
+    from f1rl.research.wp7_admission import ScientificAdmissionError
     b=build_policy_execution(ROOT,'multitrack-seed2',profile=PROFILE)
     record=capture_registered_run(b,run_id='owner-v2-preparation')
     assert record['protocol']['schema_version']=='wp7_bound_protocol_v3'
@@ -81,7 +81,7 @@ def test_owner_run_manifest_and_denied_runner_keep_exact_profile_before_artifact
 
 
 def test_owner_evaluation_preparation_binds_independent_rng_without_running_a_model():
-    from src.validation.wp7_protocol import prepare_evaluation_factory
+    from f1rl.research.wp7_protocol import prepare_evaluation_factory
     p=build_protocol(ROOT,profile=PROFILE)
     first,identity=prepare_evaluation_factory(ROOT,p,'multitrack-seed1','ramp-v1','randomized_train',7)
     second,repeated=prepare_evaluation_factory(ROOT,p,'multitrack-seed1','ramp-v1','randomized_train',7)

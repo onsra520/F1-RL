@@ -4,8 +4,8 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from src.rl.wp7_race import WP7RaceConfig
-from src.simulation.ballistic_flight import FlightState
+from f1rl.learning.wp7_race import WP7RaceConfig
+from f1rl.sandbox.ballistic_flight import FlightState
 from tests.integration.test_pv5_lifecycle import lifecycle_config
 from tests.integration.test_wp7_race_contract import race_factory
 
@@ -71,9 +71,9 @@ def lifecycle_reset_factory():
 
 @pytest.mark.parametrize("backend",["dummy","subproc"])
 def test_lifecycle_reset_replays_and_retains_vector_rank_streams(backend):
-    from src.training.env_factory import TrainingScenario, TrainingScenarioSet
-    from src.training.vector_env import make_multi_track_vector_env
-    from src.training.config import VectorEnvConfig
+    from f1rl.learning.training.env_factory import TrainingScenario, TrainingScenarioSet
+    from f1rl.learning.training.vector_env import make_multi_track_vector_env
+    from f1rl.learning.training.config import VectorEnvConfig
     candidate = lifecycle_reset_factory()
     scenarios = TrainingScenarioSet((TrainingScenario(candidate.reset_track_id,candidate),))
     vec = make_multi_track_vector_env(scenarios,VectorEnvConfig(n_envs=2,backend=backend),23)
@@ -95,7 +95,7 @@ def test_lifecycle_reset_replays_and_retains_vector_rank_streams(backend):
 
 
 def test_actual_gym_crossing_uses_ballistic_height_at_thin_aperture():
-    from src.simulation.geometry.vector import Vec3
+    from f1rl.sandbox.geometry.vector import Vec3
     candidate = lifecycle_race_factory()
     cp = candidate.track.checkpoints[0]
     cp = replace(cp,volume=replace(cp.volume,center=Vec3(0.,.5877375,.25),
@@ -142,9 +142,9 @@ def test_lifecycle_reset_reproduces_without_restarting_from_gym_seed():
 
 
 def test_missing_timed_physics_path_cannot_publish_or_earn_finish():
-    from src.core.physics import PhysicsTransitionError
-    from src.simulation.world import step_world
-    from src.simulation.vehicle import VehicleControl
+    from f1rl.runtime.physics import PhysicsTransitionError
+    from f1rl.sandbox.world import step_world
+    from f1rl.sandbox.vehicle import VehicleControl
     candidate = lifecycle_race_factory()
     config = candidate.physics_config
     result = step_world(candidate.track,candidate.initial_state,VehicleControl(0.,0.,0.),
@@ -155,10 +155,10 @@ def test_missing_timed_physics_path_cannot_publish_or_earn_finish():
 
 
 def test_new_lifecycle_registration_still_blocks_all_training(tmp_path):
-    from src.training.runner import TrainingRunner
-    from src.training.config import TrainingRunConfig, VectorEnvConfig
-    from src.rl.algorithms.ppo import PPOConfig
-    from src.validation.wp7_admission import ScientificAdmissionError
+    from f1rl.learning.training.runner import TrainingRunner
+    from f1rl.learning.training.config import TrainingRunConfig, VectorEnvConfig
+    from f1rl.learning.algorithms.ppo import PPOConfig
+    from f1rl.research.wp7_admission import ScientificAdmissionError
     candidate = lifecycle_reset_factory()
     config = TrainingRunConfig(PPOConfig(),VectorEnvConfig(n_envs=1),artifacts_root=tmp_path/'forbidden')
     with pytest.raises(ScientificAdmissionError):
@@ -167,7 +167,7 @@ def test_new_lifecycle_registration_still_blocks_all_training(tmp_path):
 
 
 def test_lifecycle_hard_route_violation_remains_invalid_pending_owner_rule():
-    from src.rl.wp7_race import RaceContractError
+    from f1rl.learning.wp7_race import RaceContractError
     from tests.integration.test_wp7_race_contract import sideways_factory
     base = sideways_factory(.5)
     candidate = replace(base,physics_config=lifecycle_config(),
@@ -205,7 +205,7 @@ def test_automatic_edge_release_orders_airborne_gate_in_same_tick():
 
 
 def test_rebound_preserves_gate_order_and_time_after_impact():
-    from src.core.simulation import SimulationConfig
+    from f1rl.runtime.simulation import SimulationConfig
     base = race_factory(checkpoints=(.25,1.1),finish=1.2,speed=5.,max_steps=1)
     initial = replace(base.initial_state,flight=FlightState('airborne'),
         vehicle=replace(base.initial_state.vehicle,position=replace(base.initial_state.vehicle.position,y=.85),

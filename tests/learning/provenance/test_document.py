@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.rl.provenance import (
+from f1rl.learning.provenance import (
     FileFingerprint,
     GitProvenance,
     PackageVersion,

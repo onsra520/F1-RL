@@ -9,12 +9,12 @@ from pathlib import Path
 
 import pytest
 
-import src.training.runner as runner_module
-from src.rl.pilot_milestones import PilotMilestoneRecorder
-from src.rl.pilot_preflight import TRAIN_IDS
-from src.rl.reconstruction import RecoveryCandidate, build_training_scenarios
-from src.training.config import TrainingRunConfig
-from src.training.runner import TrainingRunner
+import f1rl.learning.training.runner as runner_module
+from f1rl.learning.pilot_milestones import PilotMilestoneRecorder
+from f1rl.learning.pilot_preflight import TRAIN_IDS
+from f1rl.learning.reconstruction import RecoveryCandidate, build_training_scenarios
+from f1rl.learning.training.config import TrainingRunConfig
+from f1rl.learning.training.runner import TrainingRunner
 
 from tests.learning.training.mocks.mock_ppo import MockPPOModel
 from tests.learning.training.mocks.mock_vec_env import MockVecEnv
@@ -177,7 +177,7 @@ def test_mock_final_actual_timesteps_can_overshoot_200k_by_rollout(tmp_path,monk
 
 
 def test_finished_mock_run_can_be_verified_after_copy_and_detects_tampering(tmp_path,monkeypatch):
-    from src.rl.pilot_milestones import verify_pilot_evidence_manifest
+    from f1rl.learning.pilot_milestones import verify_pilot_evidence_manifest
     runner,scenarios,_=_runner(tmp_path,monkeypatch,_mock_eval)
     result=runner.run_multi(scenarios)
     summary=verify_pilot_evidence_manifest(result.run_directory)
@@ -198,7 +198,7 @@ def test_finished_mock_run_can_be_verified_after_copy_and_detects_tampering(tmp_
 
 
 def test_exploratory_real_mode_uses_explicit_unreviewed_semantics(monkeypatch):
-    from src.rl import pilot_milestones as module
+    from f1rl.learning import pilot_milestones as module
     monkeypatch.setattr(module,"_git_revision",lambda root:("8"*40,False))
     recorder=module.PilotMilestoneRecorder(
         repository_root=ROOT,candidate_path=CANDIDATE,

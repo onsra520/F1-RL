@@ -4,10 +4,10 @@ from dataclasses import replace
 import pytest
 import numpy as np
 
-from src.core.simulation import Simulation
-from src.simulation.coupled_longitudinal_dynamics import LongitudinalContactPolicy
-from src.simulation.vehicle import VehicleControl
-from src.rl.action import ActionContract
+from f1rl.runtime.simulation import Simulation
+from f1rl.sandbox.coupled_longitudinal_dynamics import LongitudinalContactPolicy
+from f1rl.sandbox.vehicle import VehicleControl
+from f1rl.learning.action import ActionContract
 from tests.sandbox.test_road_relative_suspension import ramp_translation
 
 
@@ -79,8 +79,8 @@ def test_coupled_configuration_cannot_silently_fallback_or_enable_flight(changes
 
 
 def test_transition_rejects_missing_force_audit_or_shifted_time_evidence():
-    from src.core.physics import PhysicsTransitionError
-    from src.simulation.world import step_world
+    from f1rl.runtime.physics import PhysicsTransitionError
+    from f1rl.sandbox.world import step_world
     factory = coupled_factory()
     result = step_world(factory.track,factory.initial_state,VehicleControl(0.,.5,0.),factory.vehicle_parameters,
         factory.simulation_config.fixed_dt,factory.simulation_config.max_surface_distance,**factory.physics_config.world_options())
@@ -92,8 +92,8 @@ def test_transition_rejects_missing_force_audit_or_shifted_time_evidence():
 
 
 def test_coupled_proposal_cannot_allocate_trainable_ppo():
-    from src.rl.algorithms.ppo import PPOConfig, PPOModel
-    from src.validation.wp7_admission import ScientificAdmissionError
+    from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
+    from f1rl.research.wp7_admission import ScientificAdmissionError
     env = coupled_factory().create()
     try:
         with pytest.raises(ScientificAdmissionError):
@@ -103,8 +103,8 @@ def test_coupled_proposal_cannot_allocate_trainable_ppo():
 
 
 def test_coupled_transition_also_rejects_infinite_work_ledger():
-    from src.core.physics import PhysicsTransitionError
-    from src.simulation.world import step_world
+    from f1rl.runtime.physics import PhysicsTransitionError
+    from f1rl.sandbox.world import step_world
     f=coupled_factory()
     r=step_world(f.track,f.initial_state,VehicleControl(0.,.5,0.),f.vehicle_parameters,
         .1,f.simulation_config.max_surface_distance,**f.physics_config.world_options())

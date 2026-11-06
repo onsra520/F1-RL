@@ -1,20 +1,20 @@
 from math import cos, pi, sin
 
-from src.simulation.dynamics.integrator import integrate
-from src.simulation.dynamics.vehicle_dynamics import compute_motion
-from src.simulation.entities.boost_pad import BoostPad
-from src.simulation.entities.checkpoint import Checkpoint
-from src.simulation.entities.finish_line import FinishLine
-from src.simulation.entities.obstacle import Obstacle
-from src.simulation.entities.score_pickup import ScorePickup
-from src.simulation.entities.slow_zone import SlowZone
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.state import TrackState, collect_score_pickups
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
+from f1rl.sandbox.dynamics.integrator import integrate
+from f1rl.sandbox.dynamics.vehicle_dynamics import compute_motion
+from f1rl.sandbox.entities.boost_pad import BoostPad
+from f1rl.sandbox.entities.checkpoint import Checkpoint
+from f1rl.sandbox.entities.finish_line import FinishLine
+from f1rl.sandbox.entities.obstacle import Obstacle
+from f1rl.sandbox.entities.score_pickup import ScorePickup
+from f1rl.sandbox.entities.slow_zone import SlowZone
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.state import TrackState, collect_score_pickups
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
 
 
 def parameters() -> VehicleParameters:

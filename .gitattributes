@@ -1,9 +1,101 @@
-docs/research/evidence/wp3-issue51-full06-traindev-20261027/** -text
-docs/research/evidence/wp3-issue51-frozen-final-models-20261028/** -text
-docs/research/evidence/wp3-historical-admission-inputs/** -text
-docs/research/WP3-PHYSICS-V4-TECHNICAL-ACCEPTANCE-20261024.json -text
-docs/research/WP3-CRASH-TERMINAL-V1-TECHNICAL-REGISTRY-20261024.json -text
-docs/research/WP3-V4AH-PHYSICS-V4-ACCEPTANCE-REPLAY-20261024.json -text
-docs/research/WP3-V4AJ-REGISTERED-CRASH-V1-THREE-REPLAY-20261024.json -text
-docs/research/WP3-V4-PHYSICS-ENGINEERING-PYTEST-20261024.txt text eol=crlf
-docs/research/WP3-CRASH-TERMINAL-V1-REGRESSION-20261024.txt text eol=crlf
+# TRAIN-5 v2 draft: lock exactly the line endings used by the source receipt.
+# Historical CRLF inputs remain CRLF after checkout; authored LF stays LF.
+# Git blob content may normalize LF; the on-disk sha256 is checked by CI.
+/assets/tracks/manifest-five-track-paired-v2.json text eol=crlf
+/assets/tracks/manifest.json text eol=crlf
+/assets/tracks/training/left-turn-train-v2.json text eol=crlf
+/assets/tracks/training/ramp-v1.json text eol=crlf
+/assets/tracks/training/right-turn-train-v2.json text eol=crlf
+/assets/tracks/training/right-turn-v1.json text eol=crlf
+/assets/tracks/training/slalom-v1.json text eol=crlf
+/assets/tracks/training/straight-sprint-v1.json text eol=crlf
+/configs/experiments/ppo-generalization-five-track-paired-v2.yml text eol=crlf
+/configs/experiments/ppo-generalization-v1.yml text eol=crlf
+/configs/recovery/wp7-c2-candidate.yml text eol=crlf
+/configs/recovery/wp7-c2-five-track-paired-v2.yml text eol=crlf
+/configs/recovery/wp7-pilot-200k.yml text eol=crlf
+/configs/research/wp7-hard-route-outcome-v2.json text eol=crlf
+/configs/research/wp7-rotating-owner-protocol-v3.json text eol=crlf
+/configs/research/wp7-spatial-ground-protocol-v1.json text eol=lf
+/f1rl/learning/crash_terminal_registered.py text eol=crlf
+/f1rl/learning/experiments/split.py text eol=crlf
+/f1rl/learning/gym_environment.py text eol=crlf
+/f1rl/learning/pilot_preflight.py text eol=crlf
+/f1rl/learning/reconstruction.py text eol=crlf
+/f1rl/learning/training/env_factory.py text eol=crlf
+/f1rl/learning/wp7_race.py text eol=crlf
+/f1rl/research/wp3_eval_only_coordinator.py text eol=crlf
+/f1rl/research/wp7_executed_feasibility.py text eol=crlf
+/f1rl/research/wp7_protocol.py text eol=crlf
+/f1rl/research/wp7_track_feasibility.py text eol=lf
+/f1rl/research/wp7_train5_v2_protocol.py -text
+/f1rl/runtime/physics.py text eol=crlf
+/models/A-seed0/model-final.zip -text
+/models/A-seed1/model-final.zip -text
+/models/A-seed2/model-final.zip -text
+/models/B-seed0/model-final.zip -text
+/models/B-seed1/model-final.zip -text
+/models/B-seed2/model-final.zip -text
+/models/C-seed0/model-final.zip -text
+/models/C-seed1/model-final.zip -text
+/models/C-seed2/model-final.zip -text
+/models/D-seed0/model-final.zip -text
+/models/D-seed1/model-final.zip -text
+/models/D-seed2/model-final.zip -text
+/pyproject.toml text eol=crlf
+/scripts/wp7_capture_gpu.py text eol=lf
+/scripts/wp7_dual_turn_v4_feasibility.py text eol=lf
+/scripts/wp7_train5_ci_preflight.py text eol=lf
+/.github/workflows/train5-v2-engineering-preflight.yml text eol=lf
+
+# Additional historical tracked Git sources restored for regression (no HELD-OUT).
+/configs/experiments/ppo-generalization-c2-v2.yml text eol=lf
+/configs/recovery/wp7-vehicle-geometry-review.yml text eol=lf
+/configs/research/local-demo-ppo-smoke-v1.json text eol=lf
+/configs/research/simulation-only-ppo-v1.json text eol=lf
+/configs/research/simulation-validation-v1.json text eol=lf
+/configs/research/straight-demo-abcd-v1.json text eol=lf
+/configs/research/wp2-trusted-signers-v1.json text eol=lf
+/configs/research/wp3-ppo-tuning-campaign-v3.json text eol=lf
+/configs/research/wp7-core-readiness-matrix-v1.json text eol=lf
+/docs/research/WP3-CE0E55D-THREE-REPLAY-PREFLIGHT-20261024.json text eol=lf
+/docs/research/WP3-CRASH-TERMINAL-V1-REGRESSION-20261024.txt text eol=lf
+/docs/research/WP3-CRASH-TERMINAL-V1-TECHNICAL-REGISTRY-20261024.json text eol=lf
+/docs/research/WP3-EVAL-ONLY-COMPLETION-GATE-20261024.json text eol=lf
+/docs/research/WP3-V4AH-PHYSICS-V4-ACCEPTANCE-REPLAY-20261024.json text eol=lf
+/docs/research/WP3-V4AJ-REGISTERED-CRASH-V1-THREE-REPLAY-20261024.json text eol=lf
+/docs/research/WP3-V4L-RIGHT-TURN-PATCH-BRACKET-20261024.json text eol=lf
+/docs/research/WP3-V4M-SLALOM-GROUNDED-CONTACT-20261024.json text eol=lf
+/docs/research/WP3-V4N-RAMP-BUMP-TRACE-20261024.json text eol=lf
+/docs/research/WP3-V4S-THREE-REPLAY-IMPULSE-AUDIT-20261024.json text eol=lf
+/docs/research/WP3-V4V-THREE-FROZEN-REPLAY-DEV-CRASH-20261024.json text eol=lf
+/f1rl/learning/README.md text eol=lf
+/f1rl/learning/algorithms/README.md text eol=lf
+/f1rl/learning/training/README.md text eol=lf
+/scripts/benchmark_vector_envs.py text eol=lf
+/scripts/compare_driving.py text eol=lf
+/scripts/diagnose_driving.py text eol=lf
+/scripts/launch_exploratory_demo.py text eol=lf
+/scripts/wp7_certify_planar_execution.py text eol=lf
+/scripts/wp7_ppo_fixture_worker.py text eol=lf
+/scripts/wp7_train_acceptance.py text eol=lf
+/scripts/wp7_training_admission.py text eol=lf
+/scripts/wp7_verify_run_evidence.py text eol=lf
+/src/core/physics.py text eol=lf
+/src/core/simulation.py text eol=lf
+/src/evaluation/evaluator.py text eol=lf
+/src/rl/action.py text eol=lf
+/src/rl/gym_environment.py text eol=lf
+/src/rl/observation.py text eol=lf
+/src/rl/train_reset.py text eol=lf
+/src/rl/wp7_race.py text eol=lf
+/src/simulation/manifold_flight.py text eol=lf
+/src/simulation/spatial_contact_dynamics.py text eol=lf
+/src/training/runner.py text eol=lf
+/src/training/vector_env.py text eol=lf
+/src/validation/wp7_admission.py text eol=lf
+/src/validation/wp7_cell_evaluation.py text eol=lf
+/src/validation/wp7_executed_feasibility.py text eol=lf
+/src/validation/wp7_execution.py text eol=lf
+/src/validation/wp7_protocol.py text eol=lf
+/src/validation/wp7_track_feasibility.py text eol=lf

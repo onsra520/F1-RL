@@ -4,15 +4,15 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.rl import EpisodeConfig, NavigationTarget, ObservationConfig, ObservationEncoder, RewardComposer
-from src.rl.episode import RaceProgressState
-from src.rl.gym_environment import F1RLEnv
-from src.training.env_factory import F1RLEnvFactory
-from src.core.simulation import SimulationConfig
-from src.simulation.geometry.vector import Vec3
-from src.simulation.perception.sensor_suite import SensorSuite
-from src.simulation.vehicle import VehicleParameters
-from src.tracks import build_initial_world_state, load_track_asset
+from f1rl.learning import EpisodeConfig, NavigationTarget, ObservationConfig, ObservationEncoder, RewardComposer
+from f1rl.learning.episode import RaceProgressState
+from f1rl.learning.gym_environment import F1RLEnv
+from f1rl.learning.training.env_factory import F1RLEnvFactory
+from f1rl.runtime.simulation import SimulationConfig
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.perception.sensor_suite import SensorSuite
+from f1rl.sandbox.vehicle import VehicleParameters
+from f1rl.track_assets import build_initial_world_state, load_track_asset
 
 
 def _factory(track_id: str, *, guided: bool) -> F1RLEnvFactory:

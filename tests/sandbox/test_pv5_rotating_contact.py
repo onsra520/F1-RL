@@ -3,10 +3,10 @@ from math import sqrt
 
 import pytest
 
-from src.simulation.angular_landing_impulse import AngularLandingImpulsePolicy, ImpulseResolutionError
-from src.simulation.ballistic_flight import _flight_pose
-from src.simulation.multi_surface_support import _atlas
-from src.simulation.rotating_touchdown import first_rotating_wheel_touchdown
+from f1rl.sandbox.angular_landing_impulse import AngularLandingImpulsePolicy, ImpulseResolutionError
+from f1rl.sandbox.ballistic_flight import _flight_pose
+from f1rl.sandbox.multi_surface_support import _atlas
+from f1rl.sandbox.rotating_touchdown import first_rotating_wheel_touchdown
 from tests.sandbox.test_manifold_flight import CONTACT, ROAD, source
 
 

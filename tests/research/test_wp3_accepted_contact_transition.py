@@ -1,18 +1,18 @@
 """Actual accepted rigid state updates, momentum/energy and timed prefix."""
 from dataclasses import replace
 import pytest
-from src.simulation.accepted_contact_transition import (
+from f1rl.sandbox.accepted_contact_transition import (
     apply_certified_face_impulse,apply_certified_bump_stop_impulse,
     absorb_crash_center_prefix
 )
-from src.simulation.body_collision import VehicleBodyGeometry
-from src.simulation.center_trajectory import CenterSegment
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.rigid_body_impact_response import RigidBodyImpactMass
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleState
+from f1rl.sandbox.body_collision import VehicleBodyGeometry
+from f1rl.sandbox.center_trajectory import CenterSegment
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.rigid_body_impact_response import RigidBodyImpactMass
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleState
 Q=Quaternion.identity()
 Z=Vec3(0.,0.,0.)
 MASS=RigidBodyImpactMass(1000.,Vec3(500.,500.,500.))

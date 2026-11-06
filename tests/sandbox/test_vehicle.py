@@ -3,9 +3,9 @@ from math import pi
 
 import pytest
 
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
 
 
 def valid_parameters(**overrides: float) -> VehicleParameters:

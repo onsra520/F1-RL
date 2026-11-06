@@ -1,0 +1,230 @@
+{
+  "schema_version": 2,
+  "track_id": "left-turn-train-v2",
+  "spawn": {
+    "position": [
+      3,
+      0,
+      5
+    ],
+    "orientation": [
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "surfaces": [
+    {
+      "id": "road-entry",
+      "origin": [
+        3,
+        0,
+        44
+      ],
+      "forward": [
+        0,
+        0,
+        1
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "width": 16,
+      "length": 88
+    },
+    {
+      "id": "road-exit",
+      "origin": [
+        -43,
+        0,
+        75
+      ],
+      "forward": [
+        -1,
+        0,
+        0
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "width": 16,
+      "length": 92
+    }
+  ],
+  "obstacles": [],
+  "boost_pads": [],
+  "slow_zones": [
+    {
+      "id": "approach-speed-control",
+      "volume": {
+        "center": [
+          3,
+          1,
+          55
+        ],
+        "half_extents": [
+          7.5,
+          1,
+          9
+        ],
+        "orientation": [
+          1,
+          0,
+          0,
+          0
+        ]
+      },
+      "drag_multiplier": 1.8
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "checkpoint-0",
+      "volume": {
+        "center": [
+          3,
+          0,
+          38
+        ],
+        "half_extents": [
+          7.4,
+          2,
+          0.8
+        ],
+        "orientation": [
+          1,
+          0,
+          0,
+          0
+        ]
+      },
+      "order": 0
+    },
+    {
+      "id": "checkpoint-1",
+      "volume": {
+        "center": [
+          -24,
+          0,
+          75
+        ],
+        "half_extents": [
+          7.4,
+          2,
+          0.8
+        ],
+        "orientation": [
+          0.7071067811865476,
+          0,
+          -0.7071067811865476,
+          0
+        ]
+      },
+      "order": 1
+    }
+  ],
+  "finish_lines": [
+    {
+      "id": "finish",
+      "volume": {
+        "center": [
+          -80,
+          0,
+          75
+        ],
+        "half_extents": [
+          7.4,
+          2,
+          0.8
+        ],
+        "orientation": [
+          0.7071067811865476,
+          0,
+          -0.7071067811865476,
+          0
+        ]
+      }
+    }
+  ],
+  "score_pickups": [],
+  "navigation": {
+    "points": [
+      [
+        3,
+        0,
+        5
+      ],
+      [
+        3,
+        0,
+        38
+      ],
+      [
+        3,
+        0,
+        55
+      ],
+      [
+        3,
+        0,
+        65
+      ],
+      [
+        2.238795325,
+        0,
+        68.826834324
+      ],
+      [
+        0.071067812,
+        0,
+        72.071067812
+      ],
+      [
+        -3.173165676,
+        0,
+        74.238795325
+      ],
+      [
+        -7,
+        0,
+        75
+      ],
+      [
+        -24,
+        0,
+        75
+      ],
+      [
+        -55,
+        0,
+        75
+      ],
+      [
+        -80,
+        0,
+        75
+      ]
+    ],
+    "surface_ids": [
+      "road-entry",
+      "road-entry",
+      "road-entry",
+      "road-entry",
+      "road-entry",
+      "road-entry",
+      "road-exit",
+      "road-exit",
+      "road-exit",
+      "road-exit"
+    ],
+    "checkpoint_point_indices": [
+      1,
+      8
+    ]
+  }
+}

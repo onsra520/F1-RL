@@ -4,14 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from src.validation.wp7_executed_feasibility import certify_planar_execution, replay_planar_execution
+from f1rl.research.wp7_executed_feasibility import certify_planar_execution, replay_planar_execution
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture(scope='module')
 def audited():
-    from src.validation.wp7_track_feasibility import audit_train_tracks
+    from f1rl.research.wp7_track_feasibility import audit_train_tracks
     return {row['track_id']:row['executed_planar_trajectory'] for row in
             audit_train_tracks(ROOT,execute_controls=True)['tracks']}
 
@@ -47,7 +47,7 @@ def test_unresolved_real_track_is_never_promoted_by_a_control_tape(identity,audi
 
 
 def test_replay_rejects_self_rehashed_tampered_controls_without_external_digest(executed):
-    from src.validation.wp7_protocol import digest
+    from f1rl.research.wp7_protocol import digest
     changed = deepcopy(executed)
     changed['controls'][0][0]=1.
     changed['sha256']=digest({k:v for k,v in changed.items() if k!='sha256'})
@@ -67,7 +67,7 @@ def test_bad_tape_is_rejected_before_repository_access(tmp_path,controls):
 
 
 def test_self_rehashed_short_tape_cannot_claim_recorded_success(audited):
-    from src.validation.wp7_protocol import digest
+    from f1rl.research.wp7_protocol import digest
     changed = deepcopy(audited['straight-sprint-v1'])
     changed['controls']=[[0.,0.,0.]]
     changed['sha256']=digest({k:v for k,v in changed.items() if k!='sha256'})
@@ -78,11 +78,11 @@ def test_self_rehashed_short_tape_cannot_claim_recorded_success(audited):
 def test_gate_enclosure_rejects_rotation_that_endpoint_apertures_would_miss():
     from dataclasses import replace
     from math import pi
-    from src.validation.wp7_executed_feasibility import _gate_segment_clear
-    from src.simulation.geometry.rotation import Quaternion
-    from src.simulation.geometry.vector import Vec3
-    from src.simulation.track.volume import OrientedBoxVolume
-    from src.simulation.vehicle import VehicleState
+    from f1rl.research.wp7_executed_feasibility import _gate_segment_clear
+    from f1rl.sandbox.geometry.rotation import Quaternion
+    from f1rl.sandbox.geometry.vector import Vec3
+    from f1rl.sandbox.track.volume import OrientedBoxVolume
+    from f1rl.sandbox.vehicle import VehicleState
     zero = Vec3(0.,0.,0.)
     first = VehicleState(Vec3(0.,.5,0.),zero,Quaternion.from_axis_angle(Vec3(0.,1.,0.),-pi/2),zero,True)
     last = replace(first,orientation=Quaternion.from_axis_angle(Vec3(0.,1.,0.),pi/2))
@@ -96,7 +96,7 @@ def test_certificate_cannot_bind_a_different_checkout_root(tmp_path):
 
 
 def test_parent_simulation_monkeypatch_cannot_enter_execution_worker(monkeypatch):
-    import src.validation.wp7_executed_feasibility as executor
+    import f1rl.research.wp7_executed_feasibility as executor
     def forbidden(*args,**kwargs):
         raise AssertionError('parent Simulation reached')
     monkeypatch.setattr(executor,'Simulation',forbidden)
@@ -110,20 +110,22 @@ def test_loaded_wrapper_is_rejected_after_its_source_changes(tmp_path):
     import subprocess
     import sys
     copied = tmp_path/'checkout'
-    shutil.copytree(ROOT/'src',copied/'src',ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
+    shutil.copytree(ROOT/'f1rl',copied/'f1rl',ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
     program = '''
+import sys
 from pathlib import Path
-import src.validation.wp7_executed_feasibility as executor
+sys.path.insert(0,sys.argv[1])
+import f1rl.research.wp7_executed_feasibility as executor
 source = Path(executor.__file__)
 source.write_bytes(source.read_bytes()+b'\\n# changed after import\\n')
 try:
-    executor.certify_planar_execution(Path.cwd(),'straight-sprint-v1',controls=[[0.,0.,0.]])
+    executor.certify_planar_execution(Path(sys.argv[1]),'straight-sprint-v1',controls=[[0.,0.,0.]])
 except ValueError as error:
     assert 'source origin' in str(error)
     print('stale wrapper rejected')
 else:
     raise AssertionError('modified loaded wrapper was accepted')
 '''
-    completed = subprocess.run([sys.executable,'-s','-E','-B','-c',program], cwd=copied,
+    completed = subprocess.run([sys.executable,'-I','-B','-c',program,str(copied)],
                                text=True,capture_output=True,check=True,timeout=45)
     assert completed.stdout.strip()=='stale wrapper rejected'

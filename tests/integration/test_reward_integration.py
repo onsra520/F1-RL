@@ -1,28 +1,26 @@
 from __future__ import annotations
 
 import ast
-
-from tests.dependency_rules import imports_project_layers
 from pathlib import Path
 
 import pytest
 
-import src.rl as learning
-import src.rl.rewards as rewards
-from src.rl.rewards import CollisionPenalty, RewardComposer, RewardContribution, RewardResult, RewardTransition, TargetProgressReward, TimePenalty
-from src.core.simulation import Simulation, SimulationConfig
-from src.simulation.entities.obstacle import Obstacle
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
-from src.simulation.interactions.state import InteractionState
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.state import ScorePickupCollected, TrackState
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
-from src.simulation.world import WorldState
+import f1rl.learning as learning
+import f1rl.learning.rewards as rewards
+from f1rl.learning.rewards import CollisionPenalty, RewardComposer, RewardContribution, RewardResult, RewardTransition, TargetProgressReward, TimePenalty
+from f1rl.runtime.simulation import Simulation, SimulationConfig
+from f1rl.sandbox.entities.obstacle import Obstacle
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.state import ScorePickupCollected, TrackState
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from f1rl.sandbox.world import WorldState
 
 
 def road() -> PlanarSurfacePatch:
@@ -122,9 +120,8 @@ def _imports(path: Path) -> tuple[tuple[int, str], ...]:
 
 
 def test_reward_modules_have_no_forbidden_dependencies() -> None:
-    forbidden = ("runtime", "src.core", "api", "drivers", "observation", "action", "gymnasium", "numpy", "torch", "stable_baselines3", "fastapi", "websocket", "websockets")
-    for path in Path("src/rl/rewards").glob("*.py"):
-        assert not imports_project_layers(path, ("core",))
+    forbidden = ("runtime", "api", "drivers", "observation", "action", "gymnasium", "numpy", "torch", "stable_baselines3", "fastapi", "websocket", "websockets")
+    for path in Path("f1rl/learning/rewards").glob("*.py"):
         for _, module in _imports(path):
             assert not any(module == item or module.startswith(item + ".") for item in forbidden), (path, module)
         source = path.read_text(encoding="utf-8-sig").lower()
@@ -132,6 +129,11 @@ def test_reward_modules_have_no_forbidden_dependencies() -> None:
 
 
 def test_sandbox_does_not_import_learning() -> None:
-    directory = Path("src/simulation")
-    assert directory.is_dir()
-    assert not [path for path in directory.rglob("*.py") if imports_project_layers(path, ("rl", "training", "evaluation"))]
+    offenders: list[str] = []
+    for path in Path("f1rl/sandbox").rglob("*.py"):
+        for level, module in _imports(path):
+            if module == "f1rl.learning" or module.startswith("f1rl.learning."):
+                offenders.append(str(path))
+            if level > 0 and (module == "learning" or module.startswith("learning.")):
+                offenders.append(str(path))
+    assert offenders == []

@@ -3,7 +3,7 @@ from copy import deepcopy
 
 import pytest
 
-from src.validation.wp3_physics_release_gate import (
+from f1rl.research.wp3_physics_release_gate import (
     check_snapshot,demand_full_evaluation_authorization
 )
 

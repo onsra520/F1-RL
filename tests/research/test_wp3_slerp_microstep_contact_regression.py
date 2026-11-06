@@ -1,9 +1,9 @@
 """Microstep swept quaternion paths must preserve source endpoints exactly."""
 from math import pi
 
-from src.simulation.body_collision import _slerp
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
+from f1rl.sandbox.body_collision import _slerp
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
 
 
 def test_slerp_microstep_has_correct_source_endpoints_and_interior():

@@ -2,16 +2,16 @@
 from dataclasses import replace
 import pytest
 
-from src.simulation.angular_landing_impulse import (
+from f1rl.sandbox.angular_landing_impulse import (
     AngularLandingImpulsePolicy, ImpulseResolutionError,
     solve_one_wheel_normal_impulse,
 )
-from src.simulation.geometry.vector import Vec3
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.independent_suspension_dynamics import IndependentSuspensionDynamicsPolicy
-from src.simulation.multi_surface_support import MultiSurfaceSuspensionPolicy
-from src.simulation.ramp_support import WheelContactPoints
-from src.simulation.vehicle import VehicleState
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.independent_suspension_dynamics import IndependentSuspensionDynamicsPolicy
+from f1rl.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
+from f1rl.sandbox.ramp_support import WheelContactPoints
+from f1rl.sandbox.vehicle import VehicleState
 
 WHEELS=WheelContactPoints(
     Vec3(-.4,-.3,.8),Vec3(.4,-.3,.8),

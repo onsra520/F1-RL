@@ -1,0 +1,44 @@
+{
+  "audit": "F1-RL Phase 2A Root Cause Audit",
+  "scope_worktree": "D:\\Projects\\.worktrees\\F1-RL\\physics-v4-phase1-audit",
+  "evidence_directory": "D:\\Projects\\.evidence\\F1-RL\\phase2a-root-cause-audit-20261106",
+  "read_only": true,
+  "heldout_opened": false,
+  "source_files_modified": false,
+  "tests_run": false,
+  "commit_created": false,
+  "reproduction": "8/8 exact v3 failures",
+  "v4_counterfactual": "8/8 valid physical_crash terminals",
+  "files": [
+    {
+      "file": "report.md",
+      "bytes": 12275,
+      "sha256": "bfeb782caec030d717fdad28db2df9d0fd604232d3eeb9a3c16cc0f552b83d98"
+    },
+    {
+      "file": "v3-eight-case-instrumented-replay.json",
+      "bytes": 319794,
+      "sha256": "d815091669074a584d48d9575d8d62c94268b01d14f12753ed3d3c9245db2f3f"
+    },
+    {
+      "file": "v4-overlay-counterfactual.json",
+      "bytes": 240810,
+      "sha256": "67afed8ed6c27d00a149092023844d439450de905c5ec08cdd04ce69aca5c440"
+    },
+    {
+      "file": "source-history-verification.json",
+      "bytes": 5118,
+      "sha256": "4c3fecf80a372261e49134ce85869b7ed1d173cf9a8cb2e52d3ff1ce4b290213"
+    },
+    {
+      "file": "replay_v3_eight.py",
+      "bytes": 14669,
+      "sha256": "bab9d829c6178167b07dbd5ea63cfd9b581f7aa20ba58014b67d4ca14adeb572"
+    },
+    {
+      "file": "replay_v4_overlay.py",
+      "bytes": 4785,
+      "sha256": "d58e2c0b261fd725a07f55f01d7fdd71b953e71feeb157968e34c9f1949c12f3"
+    }
+  ]
+}

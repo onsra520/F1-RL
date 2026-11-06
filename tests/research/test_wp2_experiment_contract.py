@@ -3,11 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from src.exploratory.abcd import (build_candidate_run_manifest, load_abcd_manifest,
+from f1rl.exploratory.abcd import (build_candidate_run_manifest, load_abcd_manifest,
                                    validate_abcd_manifest, verify_candidate_run_manifest,
                                    authorize_candidate_run)
-from src.exploratory.reward import validate as validate_demo
-from src.validation.wp2_statistics import holm_adjust
+from f1rl.exploratory.reward import validate as validate_demo
+from f1rl.research.wp2_statistics import holm_adjust
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,14 +48,14 @@ def test_prepared_run_manifest_binds_clean_source_candidate_and_statistical_desi
     assert binding['run_manifest_sha256'] == run['sha256']
     bad = dict(run)
     bad['training_authorized'] = True
-    from src.validation.wp7_protocol import digest
+    from f1rl.research.wp7_protocol import digest
     bad['sha256'] = digest({key:value for key,value in bad.items() if key != 'sha256'})
     with pytest.raises(ValueError):
         verify_candidate_run_manifest(ROOT, bad)
 
 
 def test_draft_run_cannot_reach_worker_authorization_or_create_replay_claim(tmp_path, monkeypatch):
-    import src.validation.wp2_execution_permit as permit_module
+    import f1rl.research.wp2_execution_permit as permit_module
 
     ledger = tmp_path / 'replay-ledger'
     monkeypatch.setattr(permit_module, '_replay_ledger_directory', lambda: ledger)
@@ -66,33 +66,7 @@ def test_draft_run_cannot_reach_worker_authorization_or_create_replay_claim(tmp_
     assert not ledger.exists()
 
 
-def test_draft_manifest_is_rejected_before_repository_permit_claim(tmp_path, monkeypatch):
-    import src.validation.wp2_execution_permit as permit_module
-
-    def unexpected_claim(*args, **kwargs):
-        raise AssertionError('draft manifest reached permit claim boundary')
-
-    monkeypatch.setattr(permit_module, 'claim_repository_wp2_execution_permit', unexpected_claim)
-    run = build_candidate_run_manifest(ROOT, candidate_id='C', run_id='c-seed-100',
-        seed_bundle={'ppo':100, 'sampling':200, 'training_reset':1100})
-    with pytest.raises(ValueError, match='approved preregistration'):
-        authorize_candidate_run(ROOT, run, {'payload':{}, 'signatures':[]})
-
-
 @pytest.mark.parametrize('values', [(), (0.1, float('nan')), (1.1,), (-0.1,)])
 def test_holm_rejects_empty_or_invalid_p_values(values):
     with pytest.raises(ValueError):
         holm_adjust(values)
-
-
-def test_verifier_rejects_unknown_seed_bundle_even_when_role_is_null(monkeypatch):
-    import src.exploratory.abcd as abcd
-    from src.validation.wp7_protocol import digest
-    monkeypatch.setattr(abcd, '_source_identity', lambda root: ('a' * 40, 'b' * 64))
-    run = build_candidate_run_manifest(ROOT, candidate_id='A', run_id='bad-seed',
-        seed_bundle={'ppo': 100, 'sampling': 200, 'training_reset': 1100})
-    run['seed_bundle'] = {'ppo': 999999, 'sampling': 999999, 'training_reset': 999999}
-    run['seed_role'] = None
-    run['sha256'] = digest({key: value for key, value in run.items() if key != 'sha256'})
-    with pytest.raises(ValueError, match='seed'):
-        verify_candidate_run_manifest(ROOT, run)

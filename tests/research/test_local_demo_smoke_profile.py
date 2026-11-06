@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from src.interfaces.runner import (
+from f1rl.local_demo.runner import (
     _assert_finite_policy_weights,
     _load_smoke_profile,
     _preflight,

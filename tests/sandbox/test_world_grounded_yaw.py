@@ -1,22 +1,22 @@
 """Opt-in dynamic yaw through World -> independent suspension with full CCD."""
 import pytest
 
-from src.simulation.grounded_yaw_dynamics import GroundedYawPolicy
-from src.simulation.body_collision import VehicleBodyGeometry
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.independent_suspension_dynamics import (
+from f1rl.sandbox.grounded_yaw_dynamics import GroundedYawPolicy
+from f1rl.sandbox.body_collision import VehicleBodyGeometry
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy,SuspensionDynamicsState,
 )
-from src.simulation.multi_surface_support import MultiSurfaceSuspensionPolicy
-from src.simulation.ramp_support import WheelContactPoints
-from src.simulation.interactions.state import InteractionState
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.state import TrackState
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.vehicle import VehicleState,VehicleControl,VehicleParameters
-from src.simulation.world import WorldState,step_world
+from f1rl.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
+from f1rl.sandbox.ramp_support import WheelContactPoints
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.state import TrackState
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.vehicle import VehicleState,VehicleControl,VehicleParameters
+from f1rl.sandbox.world import WorldState,step_world
 
 W=WheelContactPoints(
     Vec3(-.4,-.3,.8),Vec3(.4,-.3,.8),
@@ -87,7 +87,7 @@ def test_invalid_yaw_mass_and_axle_geometry_block_world():
 
 
 def test_low_speed_does_not_silently_fall_back_to_legacy_yaw():
-    from src.simulation.grounded_yaw_dynamics import GroundedYawResolutionError
+    from f1rl.sandbox.grounded_yaw_dynamics import GroundedYawResolutionError
     with pytest.raises(GroundedYawResolutionError,match="low speed"):
         step(scene(speed=.1))
 

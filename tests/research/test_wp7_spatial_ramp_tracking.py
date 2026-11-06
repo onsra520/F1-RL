@@ -3,8 +3,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.validation.wp7_executed_feasibility import certify_spatial_profile_execution,replay_planar_execution
-from src.validation.wp7_protocol import load_registration,prepare_scenarios
+from f1rl.research.wp7_executed_feasibility import certify_spatial_profile_execution,replay_planar_execution
+from f1rl.research.wp7_protocol import load_registration,prepare_scenarios
 
 ROOT=Path(__file__).resolve().parents[2]
 

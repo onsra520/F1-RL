@@ -6,7 +6,7 @@ import pytest
 
 
 def test_diagnostic_controller_corrects_target_direction_without_claiming_ppo():
-    path = Path(__file__).resolve().parents[2]/'scripts/diagnostics/diagnose_driving.py'
+    path = Path(__file__).resolve().parents[2]/'scripts/diagnose_driving.py'
     spec = importlib.util.spec_from_file_location('diagnostic', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -20,7 +20,7 @@ def test_diagnostic_controller_corrects_target_direction_without_claiming_ppo():
 
 
 def test_timing_preserves_result_and_exception(monkeypatch):
-    from src.exploratory import pilot
+    from f1rl.exploratory import pilot
     moments = iter([1., 3., 4., 7.])
     monkeypatch.setattr(pilot.time, 'perf_counter', lambda: next(moments))
     totals = {}
@@ -36,7 +36,7 @@ def test_timing_preserves_result_and_exception(monkeypatch):
 @pytest.mark.parametrize('axis', [0, 1, 2])
 @pytest.mark.parametrize('invalid', [float('inf'), -float('inf'), float('nan')])
 def test_vector_finite_validation_preserved(axis, invalid):
-    from src.simulation.geometry.vector import Vec3
+    from f1rl.sandbox.geometry.vector import Vec3
     values = [0., 1., -1.]
     values[axis] = invalid
     with pytest.raises(ValueError, match='components must be finite'):
@@ -44,7 +44,7 @@ def test_vector_finite_validation_preserved(axis, invalid):
 
 
 def test_comparison_requires_progress_improvement_and_valid_samples():
-    path = Path(__file__).resolve().parents[2]/'scripts/evaluation/compare_driving.py'
+    path = Path(__file__).resolve().parents[2]/'scripts/compare_driving.py'
     spec = importlib.util.spec_from_file_location('comparison', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

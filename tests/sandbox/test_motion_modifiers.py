@@ -2,14 +2,14 @@ from math import inf, nan
 
 import pytest
 
-from src.simulation.dynamics.air_dynamics import compute_air_motion
-from src.simulation.dynamics.ground_dynamics import compute_ground_motion
-from src.simulation.dynamics.modifiers import MotionModifiers
-from src.simulation.dynamics.vehicle_dynamics import compute_motion
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.surface import SurfaceContact
-from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
+from f1rl.sandbox.dynamics.air_dynamics import compute_air_motion
+from f1rl.sandbox.dynamics.ground_dynamics import compute_ground_motion
+from f1rl.sandbox.dynamics.modifiers import MotionModifiers
+from f1rl.sandbox.dynamics.vehicle_dynamics import compute_motion
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.surface import SurfaceContact
+from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
 
 
 def state(velocity: Vec3 = Vec3(0.0, 0.0, 10.0)) -> VehicleState:

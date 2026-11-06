@@ -6,9 +6,9 @@ import sys
 
 import pytest
 
-from src.validation.wp7_execution import build_policy_execution
-from src.validation.wp7_protocol import digest
-from src.validation.wp7_run_manifest import capture_registered_run, bind_run_artifacts, verify_run_manifest
+from f1rl.research.wp7_execution import build_policy_execution
+from f1rl.research.wp7_protocol import digest
+from f1rl.research.wp7_run_manifest import capture_registered_run, bind_run_artifacts, verify_run_manifest
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -27,7 +27,7 @@ def test_actual_binding_runtime_and_checkpoint_bytes_verify_on_independent_resto
     (original/'checkpoint.zip').write_bytes(b'opaque-checkpoint-fixture')
     (restore/'checkpoint.zip').write_bytes((original/'checkpoint.zip').read_bytes())
     sealed = bind_run_artifacts(start, original)
-    import src.validation.wp7_protocol as protocol_module
+    import f1rl.research.wp7_protocol as protocol_module
     def forbidden_recapture():
         raise AssertionError('restore must not substitute verifier-host runtime')
     monkeypatch.setattr(protocol_module, '_runtime', forbidden_recapture)
@@ -36,7 +36,7 @@ def test_actual_binding_runtime_and_checkpoint_bytes_verify_on_independent_resto
     assert result['training_authorized'] is False
     manifest_path = tmp_path/'manifest.json'
     manifest_path.write_text(json.dumps(sealed), encoding='utf-8')
-    completed = subprocess.run([sys.executable, '-B', '-m', 'scripts.evidence.verify_run',
+    completed = subprocess.run([sys.executable, '-B', str(ROOT/'scripts/wp7_verify_run_evidence.py'),
         '--manifest',str(manifest_path),'--artifacts',str(restore),'--expected-sha256',sealed['sha256']],
         cwd=ROOT, capture_output=True, text=True, timeout=30, check=True)
     assert json.loads(completed.stdout)['training_authorized'] is False
@@ -68,8 +68,8 @@ def test_manifest_requires_external_digest_and_rejects_rehashed_runtime_or_recei
 
 
 def test_runner_captures_preexecution_manifest_but_denies_research_before_artifacts():
-    from src.training.runner import TrainingRunner
-    from src.validation.wp7_admission import ScientificAdmissionError
+    from f1rl.learning.training.runner import TrainingRunner
+    from f1rl.research.wp7_admission import ScientificAdmissionError
     binding = build_policy_execution(ROOT, 'multitrack-seed2')
     runner = TrainingRunner(binding.configuration)
     with pytest.raises(ScientificAdmissionError):
@@ -83,7 +83,7 @@ def test_runner_captures_preexecution_manifest_but_denies_research_before_artifa
 
 @pytest.mark.parametrize('payload', ('{"sha256":"a","sha256":"b"}', '{"value":NaN}'))
 def test_cli_rejects_ambiguous_or_nonfinite_json(tmp_path, payload):
-    from scripts.evidence.verify_run import read_json
+    from scripts.wp7_verify_run_evidence import read_json
     path = tmp_path/'invalid.json'
     path.write_text(payload)
     with pytest.raises(ValueError):

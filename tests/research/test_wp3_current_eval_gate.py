@@ -1,28 +1,17 @@
 """Current real frozen-case evidence and fail-closed scientific admission."""
 from copy import deepcopy
 import json
-import os
-from pathlib import Path
 
 import pytest
 
-from src.validation.wp3_current_eval_gate import (
+from f1rl.research.wp3_current_eval_gate import (
     CURRENT, OLD, EXPECTED, require_latest_replay_evidence,
     require_registered_full_evaluation,
 )
 
 
-OLD = Path(os.environ.get("F1RL_WP3_EVIDENCE", str(OLD)))
-
-@pytest.fixture(autouse=True)
-def configured_replay_origin(monkeypatch):
-    import src.validation.wp3_current_eval_gate as gate_module
-    original = gate_module.require_latest_replay_evidence
-    monkeypatch.setattr(gate_module, 'require_latest_replay_evidence',
-                        lambda: original(CURRENT, OLD))
-
 def test_current_three_frozen_model_seed_witnesses_remain_invalid():
-    gate=require_latest_replay_evidence(CURRENT, OLD)
+    gate=require_latest_replay_evidence()
     assert gate["status"]=="BLOCKED_UNCERTIFIED_PHYSICS"
     assert gate["frozen_model_seed_replays"]==3
     assert gate["physically_valid_replays"]==0
@@ -56,6 +45,6 @@ def test_forged_outcome_model_seed_or_eval_claim_rejected(mutation,tmp_path):
 
 
 def test_cannot_promote_unchanged_blocked_replay_document_to_full_eval():
-    result=require_latest_replay_evidence(CURRENT, OLD)
+    result=require_latest_replay_evidence()
     with pytest.raises(ValueError):
         require_registered_full_evaluation({**result,"status":"PASS"})

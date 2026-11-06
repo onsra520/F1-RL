@@ -2,9 +2,9 @@ from math import pi, sqrt
 
 import pytest
 
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.track.volume import OrientedBoxVolume
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.track.volume import OrientedBoxVolume
 
 
 def _box(*, orientation: Quaternion | None = None) -> OrientedBoxVolume:

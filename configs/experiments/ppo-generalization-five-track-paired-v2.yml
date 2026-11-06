@@ -1,0 +1,84 @@
+experiment:
+  id: ppo-generalization-five-track-paired-v2
+  protocol_version: 1
+  status: draft
+
+semantics:
+  algorithm: ppo
+  policy: MlpPolicy
+  action: steering-throttle-brake0-v1
+  observation: rangefinders-local-navigation-v1
+  reward: target-progress-collision-time-v1
+  race: single-lap-ordered-checkpoints-v1
+
+environment:
+  vehicle:
+    wheelbase: 3.0
+    ride_height: 0.5
+    max_steering_angle: 0.5
+    max_acceleration: 6.0
+    max_braking: 10.0
+    rolling_drag: 0.4
+    air_drag: 0.1
+    max_ground_speed: 15.0
+    gravity: 9.81
+  simulation:
+    fixed_dt: 0.1
+    max_surface_distance: 0.75
+  observation:
+    velocity_scale: 15.0
+    target_distance_scale: 80.0
+    rangefinders:
+      - id: left-30deg
+        local_direction: [-0.5, 0.0, 0.8660254037844386]
+        max_distance: 30.0
+      - id: left-15deg
+        local_direction: [-0.25881904510252074, 0.0, 0.9659258262890683]
+        max_distance: 30.0
+      - id: left-7p5deg
+        local_direction: [-0.13052619222005157, 0.0, 0.9914448613738104]
+        max_distance: 30.0
+      - id: front
+        local_direction: [0.0, 0.0, 1.0]
+        max_distance: 30.0
+      - id: right-7p5deg
+        local_direction: [0.13052619222005157, 0.0, 0.9914448613738104]
+        max_distance: 30.0
+      - id: right-15deg
+        local_direction: [0.25881904510252074, 0.0, 0.9659258262890683]
+        max_distance: 30.0
+      - id: right-30deg
+        local_direction: [0.5, 0.0, 0.8660254037844386]
+        max_distance: 30.0
+  reward:
+    target_progress:
+      weight_per_meter: 1.0
+    collision:
+      penalty: 5.0
+    time:
+      penalty_per_second: 0.1
+  episode:
+    max_steps: 500
+
+training:
+  runtime_config: ../../config.yml
+  protocol_status: pilot_owned
+
+seeds:
+  ppo: []
+  sampling: []
+
+tracks:
+  manifest: ../../assets/tracks/manifest-five-track-paired-v2.json
+  training_ids:
+    - straight-sprint-v1
+    - slalom-v1
+    - right-turn-train-v2
+    - ramp-v1
+    - left-turn-train-v2
+  heldout_ids:
+    - left-turn-v1
+    - offset-slalom-v1
+
+evaluation:
+  deterministic_policy: true

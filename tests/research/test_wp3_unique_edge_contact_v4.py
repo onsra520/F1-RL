@@ -2,15 +2,15 @@
 from dataclasses import replace
 import pytest
 
-from src.simulation.certified_edge_impact import (
+from f1rl.sandbox.certified_edge_impact import (
     certify_unique_linear_edge_impact,apply_certified_edge_impulse)
-from src.simulation.accepted_contact_transition import _apply_mass_impulse
-from src.simulation.body_collision import VehicleBodyGeometry
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.rigid_body_impact_response import RigidBodyImpactMass
-from src.simulation.vehicle import VehicleState
-from src.simulation.track.volume import OrientedBoxVolume
+from f1rl.sandbox.accepted_contact_transition import _apply_mass_impulse
+from f1rl.sandbox.body_collision import VehicleBodyGeometry
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.rigid_body_impact_response import RigidBodyImpactMass
+from f1rl.sandbox.vehicle import VehicleState
+from f1rl.sandbox.track.volume import OrientedBoxVolume
 
 def fixture():
     start=VehicleState(

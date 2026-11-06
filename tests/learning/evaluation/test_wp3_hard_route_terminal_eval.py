@@ -5,8 +5,8 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from src.evaluation import evaluate_episode
-from src.evaluation.evaluator import _valid_terminal_failure
+from f1rl.learning.evaluation import evaluate_episode
+from f1rl.learning.evaluation.evaluator import _valid_terminal_failure
 from tests.integration.test_hard_route_terminal_v2 import owner_factory
 from tests.learning.evaluation.mocks.policies import ConstantPolicy
 

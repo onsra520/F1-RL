@@ -4,13 +4,13 @@ from typing import get_type_hints
 
 import pytest
 
-from src.rl.rewards.core import RewardContribution, RewardResult, RewardTransition
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
-from src.simulation.track.state import ScorePickupCollected
-from src.simulation.vehicle import VehicleState
-from src.simulation.world import WorldEvent
+from f1rl.learning.rewards.core import RewardContribution, RewardResult, RewardTransition
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
+from f1rl.sandbox.track.state import ScorePickupCollected
+from f1rl.sandbox.vehicle import VehicleState
+from f1rl.sandbox.world import WorldEvent
 
 
 def vehicle(x: float = 0.0, y: float = 0.3, z: float = 0.0) -> VehicleState:

@@ -3,11 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from src.rl.experiments import (
+from f1rl.learning.experiments import (
     TrackExperimentConfig,
     resolve_track_split,
 )
-from src.tracks import load_track_asset
+from f1rl.track_assets import load_track_asset
 
 
 def _track(track_id: str, *, spawn_x: float = 0.0, surface_id: str | None = None) -> dict:

@@ -5,25 +5,25 @@ from dataclasses import replace
 
 from tests.learning.training.mocks.mock_factories import make_factory
 
-from src.core.physics import PhysicsConfig
-from src.core.simulation import Simulation, SimulationConfig
-from src.simulation.body_collision import VehicleBodyGeometry
-from src.simulation.ballistic_flight import BallisticFlightPolicy, FlightState
-from src.simulation.grounded_yaw_dynamics import GroundedYawPolicy, GroundedYawResolutionError
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.independent_suspension_dynamics import (
+from f1rl.runtime.physics import PhysicsConfig
+from f1rl.runtime.simulation import Simulation, SimulationConfig
+from f1rl.sandbox.body_collision import VehicleBodyGeometry
+from f1rl.sandbox.ballistic_flight import BallisticFlightPolicy, FlightState
+from f1rl.sandbox.grounded_yaw_dynamics import GroundedYawPolicy, GroundedYawResolutionError
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState,
 )
-from src.simulation.interactions.state import InteractionState
-from src.simulation.multi_surface_support import MultiSurfaceSuspensionPolicy
-from src.simulation.ramp_support import WheelContactPoints
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.state import TrackState
-from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
-from src.simulation.world import WorldState
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
+from f1rl.sandbox.ramp_support import WheelContactPoints
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.state import TrackState
+from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from f1rl.sandbox.world import WorldState
 
 
 BODY = VehicleBodyGeometry(1.8, 1.2, 4., Vec3(0., .3, 0.))
@@ -98,10 +98,10 @@ def test_factory_gym_exposes_registered_config_and_actual_suspension_response():
 
 @pytest.mark.parametrize("multi", [False, True])
 def test_new_physics_cannot_bypass_runner_admission(tmp_path, monkeypatch, multi):
-    from src.rl.algorithms.ppo import PPOConfig
-    from src.training.config import TrainingRunConfig, VectorEnvConfig
-    from src.training.env_factory import TrainingScenario, TrainingScenarioSet
-    from src.training.runner import TrainingRunner
+    from f1rl.learning.algorithms.ppo import PPOConfig
+    from f1rl.learning.training.config import TrainingRunConfig, VectorEnvConfig
+    from f1rl.learning.training.env_factory import TrainingScenario, TrainingScenarioSet
+    from f1rl.learning.training.runner import TrainingRunner
 
     def forbidden_run(*args, **kwargs):
         raise AssertionError("training reached before admission")
@@ -201,9 +201,9 @@ def test_owner_geometry_and_legacy_options_cannot_override_registration():
 
 
 def test_scenario_contract_and_vector_slots_preserve_physics_identity():
-    from src.training.env_factory import TrainingScenario, TrainingScenarioSet
-    from src.training.vector_env import make_multi_track_vector_env
-    from src.training.config import VectorEnvConfig
+    from f1rl.learning.training.env_factory import TrainingScenario, TrainingScenarioSet
+    from f1rl.learning.training.vector_env import make_multi_track_vector_env
+    from f1rl.learning.training.config import VectorEnvConfig
 
     config = PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION)
     a = TrainingScenario("synthetic-a", factory(config))
@@ -223,8 +223,8 @@ def test_scenario_contract_and_vector_slots_preserve_physics_identity():
 
 
 def test_research_ground_collision_rejects_unregistered_rollback_recovery():
-    from src.simulation.entities.obstacle import Obstacle
-    from src.simulation.track.volume import OrientedBoxVolume
+    from f1rl.sandbox.entities.obstacle import Obstacle
+    from f1rl.sandbox.track.volume import OrientedBoxVolume
 
     obstacle = Obstacle("wall", OrientedBoxVolume(
         Vec3(0., .8, 2.2), Vec3(.5, .8, .02), Quaternion.identity(),
@@ -253,7 +253,7 @@ def test_airborne_snapshot_can_reconstruct_with_last_grounded_suspension_state()
 @pytest.mark.parametrize("restitution", [0., .5])
 def test_gym_manifold_landing_and_rebound_preserve_event_time_and_energy(restitution):
     from math import sqrt
-    from src.simulation.contact_manifold import ContactManifoldPolicy
+    from f1rl.sandbox.contact_manifold import ContactManifoldPolicy
 
     flight = BallisticFlightPolicy(
         CONTACT, 6., .12,
@@ -293,11 +293,11 @@ def test_gym_manifold_landing_and_rebound_preserve_event_time_and_energy(restitu
 
 
 def test_registered_ode_clearance_reaches_runtime_and_never_forges_contact():
-    from src.simulation.ballistic_flight import FlightPhysicsError
-    from src.simulation.contact_manifold import ContactManifoldPolicy
-    from src.simulation.euler_ode_clearance import EulerODEEnclosurePolicy
-    from src.simulation.torque_free_rotation import TorqueFreeRotationPolicy
-    from src.simulation.torque_free_swept_ccd import TorqueFreeSweepPolicy
+    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
+    from f1rl.sandbox.contact_manifold import ContactManifoldPolicy
+    from f1rl.sandbox.euler_ode_clearance import EulerODEEnclosurePolicy
+    from f1rl.sandbox.torque_free_rotation import TorqueFreeRotationPolicy
+    from f1rl.sandbox.torque_free_swept_ccd import TorqueFreeSweepPolicy
 
     flight = BallisticFlightPolicy(
         CONTACT, 6., .12, manifold=ContactManifoldPolicy(1600.),
@@ -320,8 +320,8 @@ def test_registered_ode_clearance_reaches_runtime_and_never_forges_contact():
 
 
 def test_grounded_seam_is_supported_but_mixed_patch_landing_is_rejected():
-    from src.simulation.ballistic_flight import FlightPhysicsError
-    from src.simulation.contact_manifold import ContactManifoldPolicy
+    from f1rl.sandbox.ballistic_flight import FlightPhysicsError
+    from f1rl.sandbox.contact_manifold import ContactManifoldPolicy
 
     surfaces = (
         replace(ROAD, id="left", origin=Vec3(-5., 0., 0.), width=10.),
@@ -343,7 +343,7 @@ def test_grounded_seam_is_supported_but_mixed_patch_landing_is_rejected():
 
 
 def test_registered_automatic_edge_release_reaches_gym_without_phantom_race_events():
-    from src.simulation.partial_wheel_release import AutomaticTakeoffPolicy
+    from f1rl.sandbox.partial_wheel_release import AutomaticTakeoffPolicy
     flight = BallisticFlightPolicy(CONTACT, 6., .15)
     config = PhysicsConfig("wp7_ballistic_v1", BODY, SUSPENSION, flight,
                            automatic_takeoff_policy=AutomaticTakeoffPolicy(.6))
@@ -406,7 +406,7 @@ def test_explicit_takeoff_keeps_its_separate_authorized_upward_release_domain():
 
 @pytest.mark.parametrize("vector", [False, True])
 def test_direct_ppo_create_cannot_bypass_research_admission(monkeypatch, vector):
-    import src.rl.algorithms.ppo as ppo
+    import f1rl.learning.algorithms.ppo as ppo
     from stable_baselines3.common.vec_env import DummyVecEnv
     candidate = factory(PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION))
     env = DummyVecEnv([candidate.create]) if vector else candidate.create()
@@ -421,7 +421,7 @@ def test_direct_ppo_create_cannot_bypass_research_admission(monkeypatch, vector)
 
 
 def test_attached_research_environment_cannot_bypass_ppo_learn_admission():
-    from src.rl.algorithms.ppo import PPOModel
+    from f1rl.learning.algorithms.ppo import PPOModel
     from stable_baselines3.common.vec_env import DummyVecEnv
     candidate = factory(PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION))
     env = DummyVecEnv([candidate.create])
@@ -438,10 +438,10 @@ def test_attached_research_environment_cannot_bypass_ppo_learn_admission():
 
 
 def test_sampled_vecenv_exposes_admission_before_first_reset():
-    import src.rl.algorithms.ppo as ppo
-    from src.training.config import VectorEnvConfig
-    from src.training.env_factory import TrainingScenario, TrainingScenarioSet
-    from src.training.vector_env import make_multi_track_vector_env
+    import f1rl.learning.algorithms.ppo as ppo
+    from f1rl.learning.training.config import VectorEnvConfig
+    from f1rl.learning.training.env_factory import TrainingScenario, TrainingScenarioSet
+    from f1rl.learning.training.vector_env import make_multi_track_vector_env
     candidate = factory(PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION))
     scenarios = TrainingScenarioSet((TrainingScenario("synthetic", candidate),))
     env = make_multi_track_vector_env(scenarios, VectorEnvConfig(n_envs=1), 9)

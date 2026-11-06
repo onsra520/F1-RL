@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from src.rl.experiments import (
+from f1rl.learning.experiments import (
     EpisodeExperimentConfig,
     ExperimentDefinition,
     ExperimentSemantics,

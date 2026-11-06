@@ -1,9 +1,9 @@
 import pytest
 
-from src.simulation.dynamics.air_dynamics import compute_air_motion
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
+from f1rl.sandbox.dynamics.air_dynamics import compute_air_motion
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
 
 
 def parameters() -> VehicleParameters:

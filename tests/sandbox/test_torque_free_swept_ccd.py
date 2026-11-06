@@ -8,23 +8,23 @@ from dataclasses import replace
 from math import pi
 import pytest
 
-from src.simulation.ballistic_flight import (
+from f1rl.sandbox.ballistic_flight import (
     BallisticFlightPolicy,FlightPhysicsError,FlightState,advance_ballistic_flight,
 )
-from src.simulation.body_collision import VehicleBodyGeometry
-from src.simulation.contact_manifold import ContactManifoldPolicy
-from src.simulation.geometry.vector import Vec3
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.independent_suspension_dynamics import (
+from f1rl.sandbox.body_collision import VehicleBodyGeometry
+from f1rl.sandbox.contact_manifold import ContactManifoldPolicy
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy,SuspensionDynamicsState,
 )
-from src.simulation.multi_surface_support import MultiSurfaceSuspensionPolicy
-from src.simulation.ramp_support import WheelContactPoints
-from src.simulation.torque_free_rotation import TorqueFreeRotationPolicy
-from src.simulation.torque_free_swept_ccd import TorqueFreeSweepPolicy
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleState,VehicleControl,VehicleParameters
+from f1rl.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
+from f1rl.sandbox.ramp_support import WheelContactPoints
+from f1rl.sandbox.torque_free_rotation import TorqueFreeRotationPolicy
+from f1rl.sandbox.torque_free_swept_ccd import TorqueFreeSweepPolicy
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleState,VehicleControl,VehicleParameters
 
 BODY=VehicleBodyGeometry(1.,.4,2.,Vec3(0.,.1,0.))
 W=WheelContactPoints(
@@ -162,11 +162,11 @@ def test_invalid_ccd_config_rejected(field,value):
 
 
 def test_world_step_continues_angular_flight_without_phantom_events():
-    from src.simulation.interactions.state import InteractionState
-    from src.simulation.rules.scoring import ScoreState
-    from src.simulation.track.model import TrackWorld
-    from src.simulation.track.state import TrackState
-    from src.simulation.world import WorldState,step_world
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.world import WorldState,step_world
 
     initial=car()
     current=WorldState(

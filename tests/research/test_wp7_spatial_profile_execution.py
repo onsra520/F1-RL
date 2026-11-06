@@ -6,8 +6,8 @@ import json
 import numpy as np
 import pytest
 
-from src.validation.wp7_executed_feasibility import certify_spatial_profile_execution,replay_planar_execution
-from src.validation.wp7_protocol import load_registration,prepare_scenarios,build_protocol
+from f1rl.research.wp7_executed_feasibility import certify_spatial_profile_execution,replay_planar_execution
+from f1rl.research.wp7_protocol import load_registration,prepare_scenarios,build_protocol
 
 ROOT=Path(__file__).resolve().parents[2]
 TRACKS=('straight-sprint-v1','slalom-v1','right-turn-v1','ramp-v1')
@@ -72,9 +72,9 @@ def test_invalid_spatial_selection_rejected_before_source_access(tmp_path,select
 
 def test_perturbed_selection_records_actual_and_registered_initial_state_separately():
     from dataclasses import asdict
-    from src.rl.train_reset import sample_train_spawn
-    from src.rl.route_navigation import AuthoredRoute
-    from src.validation.wp7_protocol import digest
+    from f1rl.learning.train_reset import sample_train_spawn
+    from f1rl.learning.route_navigation import AuthoredRoute
+    from f1rl.research.wp7_protocol import digest
     f=prepare_scenarios(ROOT,load_registration(ROOT,profile='spatial_ground_v1'),seed_index=1).scenarios[0].factory
     initial,metadata=sample_train_spawn(f.reset_config,TRACKS[0],f.track,f.initial_state,f.physics_config,
                                       AuthoredRoute(f.navigation),rank=2,reset_index=7)

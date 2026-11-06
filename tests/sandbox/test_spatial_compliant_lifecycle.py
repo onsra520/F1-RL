@@ -1,10 +1,10 @@
 """Compliant onset/release, ballistic intervals and bounded phase evidence."""
 from dataclasses import replace
 import pytest
-from src.simulation.geometry.vector import Vec3
-from src.simulation.vehicle import VehicleControl
-from src.simulation.spatial_contact_dynamics import integrate_spatial_lifecycle, SpatialContactPolicy
-from src.simulation.coupled_longitudinal_dynamics import LongitudinalContactPolicy
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.vehicle import VehicleControl
+from f1rl.sandbox.spatial_contact_dynamics import integrate_spatial_lifecycle, SpatialContactPolicy
+from f1rl.sandbox.coupled_longitudinal_dynamics import LongitudinalContactPolicy
 from tests.sandbox.test_road_relative_suspension import ramp_translation
 
 
@@ -38,8 +38,8 @@ def test_actual_release_and_landing_have_bounded_phase_brackets_without_impulse(
 @pytest.mark.parametrize('phase_domain',['horizontal_v1','atlas_gradient_v2','atlas_rotating_v3'])
 def test_a_narrow_continuous_ridge_cannot_hide_contact_between_rk_stages(phase_domain):
     from math import hypot
-    from src.simulation.track.patch import PlanarSurfacePatch
-    from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
+    from f1rl.sandbox.track.patch import PlanarSurfacePatch
+    from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
     f,_,_,s=ramp_translation()
     s=replace(s,force_model='road_relative_unilateral_v3',integration_substeps=1)
     vertices=[(-10.,0.),(5.58,0.),(5.6,.1),(5.62,0.),(20.,0.)]
@@ -58,7 +58,7 @@ def test_a_narrow_continuous_ridge_cannot_hide_contact_between_rk_stages(phase_d
 
 
 def test_airborne_actions_and_ground_modifiers_cannot_create_propulsion_or_drag():
-    from src.simulation.dynamics.modifiers import MotionModifiers
+    from f1rl.sandbox.dynamics.modifiers import MotionModifiers
     f,_,_,s=ramp_translation()
     s=replace(s,force_model='road_relative_unilateral_v3')
     state=replace(f.initial_state.vehicle,position=Vec3(0.,5.,4.),velocity=Vec3(0.,0.,4.),grounded=False)
@@ -73,7 +73,7 @@ def test_airborne_actions_and_ground_modifiers_cannot_create_propulsion_or_drag(
 
 @pytest.mark.parametrize('case',['rotating','phase','droop','edge'])
 def test_unsupported_lifecycle_domains_reject_instead_of_falling_back(case):
-    from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
+    from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
     f,_,_,s=ramp_translation()
     s=replace(s,force_model='road_relative_unilateral_v3')
     state=replace(f.initial_state.vehicle,position=Vec3(0.,5.,4.),velocity=Vec3(0.,0.,4.),grounded=False)
@@ -94,8 +94,8 @@ def test_unsupported_lifecycle_domains_reject_instead_of_falling_back(case):
 @pytest.mark.parametrize('phase_domain',['horizontal_v1','atlas_gradient_v2','atlas_rotating_v3'])
 def test_simultaneous_narrow_road_valleys_cannot_hide_a_ground_to_air_transition(phase_domain):
     from math import hypot
-    from src.simulation.track.patch import PlanarSurfacePatch
-    from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
+    from f1rl.sandbox.track.patch import PlanarSurfacePatch
+    from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
     f,_,_,s=ramp_translation()
     s=replace(s,force_model='road_relative_unilateral_v3',integration_substeps=1)
     vertices=[(-10.,0.),(2.58,0.),(2.6,-.15),(2.62,0.),(5.58,0.),(5.6,-.15),(5.62,0.),(20.,0.)]

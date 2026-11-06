@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.validation.wp7_protocol import (
+from f1rl.research.wp7_protocol import (
     build_protocol,
     load_registration,
     prepare_evaluation_factory,
