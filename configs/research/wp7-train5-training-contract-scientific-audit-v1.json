@@ -1,0 +1,177 @@
+{
+  "schema": "f1rl_train5_training_contract_scientific_audit_v1",
+  "scientific_decision": "BLOCKED_NOT_ADMITTED",
+  "source_anchor_commit": "01ef1e3e75de8df60fc2159ed70b38d0ee777253",
+  "repository": "onsra520/F1-RL",
+  "branch": "handoff/physics-v4-khanh-bang-20261106",
+  "owner_requested_smoke_and_training": true,
+  "smoke_immutable_acceptance_external_sha256": "41d3ddf2a20801c442f2229ec241fb9aa1f7921f9ef518e575d1391362a58097",
+  "smoke_external_archive_sha256": "d71a8c78aa38174947c4c9de69632e3755ed7db7cfdf21188971d1cea98eff2c",
+  "smoke_source_commit": "01ef1e3e75de8df60fc2159ed70b38d0ee777253",
+  "smoke_result": "PASS_SIX_FINISH_INFERENCE_ONLY_NOT_TRAINING_VALIDATION",
+  "smoke_cases_finished": 6,
+  "smoke_total_steps": 1117,
+  "smoke_reset_seed": 20261106,
+  "smoke_training_seed_count_consumed": 0,
+  "source_lock_registration": "configs/research/wp7-train5-paired-v2-registration.json",
+  "source_lock_registration_status": "draft_not_authorized",
+  "global_seed_registry": "configs/research/wp7-train5-global-seed-registry-owner-exception-20261107.json",
+  "global_seed_registry_decision": "CLOSED_WITH_OWNER_ACCEPTED_EVIDENCE_EXCEPTION",
+  "training_track_ids": [
+    "straight-sprint-v1",
+    "slalom-v1",
+    "right-turn-train-v2",
+    "ramp-v1",
+    "left-turn-train-v2"
+  ],
+  "heldout_ids": [
+    "left-turn-v1",
+    "offset-slalom-v1"
+  ],
+  "runtime_contract": {
+    "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+    "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+    "terminal_contract": "wp3_physical_crash_terminal_v1",
+    "max_abs_tilt_rad": 0.7
+  },
+  "action_contract": {
+    "version": "steering-throttle-brake-v2",
+    "shape": [
+      3
+    ],
+    "low": [
+      -1,
+      0,
+      0
+    ],
+    "high": [
+      1,
+      1,
+      1
+    ],
+    "dtype": "float32"
+  },
+  "observation_contract": {
+    "shape": [
+      16
+    ],
+    "dtype": "float32",
+    "sensor_count": 7,
+    "rangefinder_low": 0,
+    "rangefinder_high": 1,
+    "mid_feature_count": 6,
+    "mid_feature_low": -1,
+    "mid_feature_high": 1,
+    "last_feature_count": 3,
+    "last_feature_low": 0,
+    "last_feature_high": 1
+  },
+  "reward_contract": {
+    "terms": [
+      {
+        "name": "RouteProgressReward",
+        "weight_per_meter": 1
+      },
+      {
+        "name": "CollisionPenalty",
+        "penalty": 5
+      },
+      {
+        "name": "TimePenalty",
+        "penalty_per_second": 0.1
+      }
+    ],
+    "frozen_source_reference": "f1rl/learning/rewards.py",
+    "verified_five_track_equal": true,
+    "empirical_reward_robustness_validated": false
+  },
+  "training_reset": {
+    "all_five_train_factories_reset_config_is_none": true,
+    "stochastic_train_reset_protocol_present": false,
+    "seed_variation_establishes_independent_spawn_variation": false,
+    "reset_contract_accepted": false
+  },
+  "training_planned": {
+    "from_scratch_replicates": 3,
+    "finetune_replicates": 3,
+    "policy_runs": 6,
+    "timesteps_per_run": 200000,
+    "total_timesteps": 1200000,
+    "checkpoint_every": 25000,
+    "vector_env_count": 8,
+    "backend": "dummy",
+    "ppo_hyperparameters": {
+      "learning_rate": 0.0003,
+      "n_steps": 256,
+      "batch_size": 64,
+      "n_epochs": 10,
+      "gamma": 0.99,
+      "gae_lambda": 0.95,
+      "clip_range": 0.2,
+      "ent_coef": 0,
+      "vf_coef": 0.5,
+      "max_grad_norm": 0.5,
+      "device": "cpu"
+    },
+    "cohort_policy": "from_scratch vs frozen_init",
+    "frozen_init_candidate_checkpoint_order": [
+      "C-seed0",
+      "B-seed1",
+      "A-seed2"
+    ],
+    "checkpoint_selection_method": "PREPROPOSED_NOT_SCIENTIFICALLY_AUTHORIZED",
+    "output": "external_unallocated",
+    "execution_status": "NOT_EXECUTED"
+  },
+  "seed_protocol": {
+    "source": "configs/research/wp7-train5-paired-v2-registration.json",
+    "proposed_18_unique": true,
+    "consumed": 0,
+    "seed_authorization_specific_training": false
+  },
+  "development_evaluation": {
+    "cells": 60,
+    "episodes_per_cell": 60,
+    "total_episodes": 3600,
+    "assessment_status": "NOT_EXECUTED",
+    "data_role": "TRAIN_DEVELOPMENT_ONLY",
+    "heldout_read": false,
+    "predefined_acceptance_metrics_locked": false,
+    "policy_selection_by_final_test_forbidden": true
+  },
+  "gates": {
+    "owner_general_training_request": true,
+    "owner_separate_scientific_training_protocol_signoff": false,
+    "source_and_physics_validity_software": true,
+    "physical_validation_empirical": false,
+    "train_reset_disturbance_calibration": false,
+    "pre_registered_development_metric_thresholds": false,
+    "compatible_runner_scientific_admission": false,
+    "PPO_backend_scientific_admission": false,
+    "all_required_conditions_pass": false
+  },
+  "mandatory_hard_stop_reasons": [
+    "TRAIN5 registration's require_training_admission is always CLOSED and cannot be toggled for scientific work.",
+    "TrainingRunner.run_multi and PPOModel.create/_validate_training_admission independently refuse Physics v4 research learning.",
+    "All five source-bound TRAIN5 preview factories reset_config=None: independent spawn/perturbation protocol is not activated.",
+    "Training reward weights and action/observation shapes are identified, but standalone empirical Physics v4 domain validation is not certified.",
+    "Development success/crash/safety acceptance thresholds and checkpoint selection rules are not locked.",
+    "Training-specific authenticated scientific approval has not been supplied; an owner request to run does not prove these missing measurements."
+  ],
+  "permissions": {
+    "training": false,
+    "finetune": false,
+    "smoke_rerun": false,
+    "heldout": false,
+    "full06": false,
+    "scientific_release": false
+  },
+  "required_next_scientific_work": [
+    "Pre-register independent train reset/perturbation configuration, calibration and safe handling for all five tracks; show non-HELDOUT fixture evidence.",
+    "Provide evidence-based physics calibration/validation limits and explicit action/reward/observation equivalence acceptance.",
+    "Lock objective thresholds for development training outcomes before accessing them, seed budget, checkpoint criteria and stopping rules.",
+    "Implement or approve independent scientific admission capability using test-first gates, without disabling existing checks.",
+    "Re-run scoped/full regression and same-commit GitHub CI; obtain separate owner approval of final versioned training contract.",
+    "Only then permit one-shot training with source-bound SHA256, stop-on-failure and no heldout."
+  ]
+}
