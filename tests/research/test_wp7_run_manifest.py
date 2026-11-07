@@ -36,7 +36,7 @@ def test_actual_binding_runtime_and_checkpoint_bytes_verify_on_independent_resto
     assert result['training_authorized'] is False
     manifest_path = tmp_path/'manifest.json'
     manifest_path.write_text(json.dumps(sealed), encoding='utf-8')
-    completed = subprocess.run([sys.executable, '-B', str(ROOT/'scripts/wp7_verify_run_evidence.py'),
+    completed = subprocess.run([sys.executable, '-B', str(ROOT/'devtools/legacy_f1rl_cli/wp7_verify_run_evidence.py'),
         '--manifest',str(manifest_path),'--artifacts',str(restore),'--expected-sha256',sealed['sha256']],
         cwd=ROOT, capture_output=True, text=True, timeout=30, check=True)
     assert json.loads(completed.stdout)['training_authorized'] is False
@@ -83,7 +83,7 @@ def test_runner_captures_preexecution_manifest_but_denies_research_before_artifa
 
 @pytest.mark.parametrize('payload', ('{"sha256":"a","sha256":"b"}', '{"value":NaN}'))
 def test_cli_rejects_ambiguous_or_nonfinite_json(tmp_path, payload):
-    from scripts.wp7_verify_run_evidence import read_json
+    from devtools.legacy_f1rl_cli.wp7_verify_run_evidence import read_json
     path = tmp_path/'invalid.json'
     path.write_text(payload)
     with pytest.raises(ValueError):

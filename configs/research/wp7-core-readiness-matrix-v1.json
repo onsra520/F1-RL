@@ -1,0 +1,367 @@
+{
+  "schema_version": "wp7_core_traceability_v1",
+  "scope": "software_and_compatibility_only_no_scientific_claim",
+  "target_fraction": 0.9,
+  "subsystems": [
+    {
+      "id": "simulation_runtime",
+      "capabilities": [
+        {
+          "id": "fixed_step_state",
+          "weight": 45,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/runtime/simulation.py",
+          "test": "tests/integration/test_simulation_runtime.py",
+          "blocker": null
+        },
+        {
+          "id": "transition_audit",
+          "weight": 30,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/runtime/physics.py",
+          "test": "tests/integration/test_pv5_lifecycle.py",
+          "blocker": null
+        },
+        {
+          "id": "legacy_contract",
+          "weight": 25,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/runtime/simulation.py",
+          "test": "tests/runtime/test_simulation_step.py",
+          "blocker": null
+        }
+      ],
+      "compatibility": {
+        "status": "in_progress",
+        "required": [
+          "windows_linux_exact_head_ci",
+          "historical_c2_replay",
+          "cross_module_seed_and_json_schema"
+        ]
+      }
+    },
+    {
+      "id": "vehicle_dynamics",
+      "capabilities": [
+        {
+          "id": "bounded_lifecycle",
+          "weight": 45,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/sandbox/manifold_flight.py",
+          "test": "tests/integration/test_pv5_lifecycle.py",
+          "blocker": null
+        },
+        {
+          "id": "ramp_domain",
+          "weight": 30,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/sandbox/spatial_contact_dynamics.py",
+          "test": "tests/integration/test_canonical_ramp_recovery.py",
+          "blocker": null
+        },
+        {
+          "id": "mixed_normal_recovery",
+          "weight": 25,
+          "status": "implemented",
+          "priority": "P1",
+          "source": "f1rl/sandbox/spatial_contact_dynamics.py",
+          "test": "tests/integration/test_canonical_ramp_recovery.py",
+          "blocker": null
+        }
+      ],
+      "compatibility": {
+        "status": "in_progress",
+        "required": [
+          "windows_linux_exact_head_ci",
+          "historical_c2_replay",
+          "cross_module_seed_and_json_schema"
+        ]
+      }
+    },
+    {
+      "id": "track_feasibility",
+      "capabilities": [
+        {
+          "id": "body_aware_audit",
+          "weight": 45,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/research/wp7_track_feasibility.py",
+          "test": "tests/research/test_pv5_track_feasibility.py",
+          "blocker": null
+        },
+        {
+          "id": "all_train_feasible",
+          "weight": 30,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/research/wp7_executed_feasibility.py",
+          "test": "tests/research/test_wp7_rotating_owner_execution.py",
+          "blocker": null
+        },
+        {
+          "id": "speed_trajectory_certified",
+          "weight": 25,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/research/wp7_executed_feasibility.py",
+          "test": "tests/research/test_wp7_rotating_owner_execution.py",
+          "blocker": null
+        }
+      ],
+      "compatibility": {
+        "status": "in_progress",
+        "required": [
+          "windows_linux_exact_head_ci",
+          "historical_c2_replay",
+          "cross_module_seed_and_json_schema"
+        ]
+      }
+    },
+    {
+      "id": "race_episode",
+      "capabilities": [
+        {
+          "id": "grounded_directed_gates",
+          "weight": 45,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/learning/wp7_race.py",
+          "test": "tests/integration/test_wp7_race_contract.py",
+          "blocker": null
+        },
+        {
+          "id": "airborne_gate_contract",
+          "weight": 30,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/learning/wp7_race.py",
+          "test": "tests/integration/test_wp7_lifecycle_race.py",
+          "blocker": null
+        },
+        {
+          "id": "hard_route_failure_approved",
+          "weight": 25,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/learning/wp7_race.py",
+          "test": "tests/research/test_wp7_owner_profile.py",
+          "blocker": null
+        }
+      ],
+      "compatibility": {
+        "status": "in_progress",
+        "required": [
+          "windows_linux_exact_head_ci",
+          "historical_c2_replay",
+          "cross_module_seed_and_json_schema"
+        ]
+      }
+    },
+    {
+      "id": "gym_reset",
+      "capabilities": [
+        {
+          "id": "seeded_feasible_reset",
+          "weight": 45,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/learning/train_reset.py",
+          "test": "tests/integration/test_wp7_train_reset.py",
+          "blocker": null
+        },
+        {
+          "id": "physics_to_gym",
+          "weight": 30,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/learning/gym_environment.py",
+          "test": "tests/integration/test_wp7_physics_integration.py",
+          "blocker": null
+        },
+        {
+          "id": "lifecycle_race_reset",
+          "weight": 25,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/learning/gym_environment.py",
+          "test": "tests/integration/test_wp7_lifecycle_race.py",
+          "blocker": null
+        }
+      ],
+      "compatibility": {
+        "status": "in_progress",
+        "required": [
+          "windows_linux_exact_head_ci",
+          "historical_c2_replay",
+          "cross_module_seed_and_json_schema"
+        ]
+      }
+    },
+    {
+      "id": "perception_control",
+      "capabilities": [
+        {
+          "id": "observation_encoding",
+          "weight": 45,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/learning/observation.py",
+          "test": "tests/integration/test_observation_encoding.py",
+          "blocker": null
+        },
+        {
+          "id": "steering_throttle_action",
+          "weight": 30,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/learning/action.py",
+          "test": "tests/integration/test_policy_action_integration.py",
+          "blocker": null
+        },
+        {
+          "id": "required_track_control_feasible",
+          "weight": 25,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/learning/action.py",
+          "test": "tests/research/test_wp7_rotating_owner_execution.py",
+          "blocker": null
+        }
+      ],
+      "compatibility": {
+        "status": "in_progress",
+        "required": [
+          "windows_linux_exact_head_ci",
+          "historical_c2_replay",
+          "cross_module_seed_and_json_schema"
+        ]
+      }
+    },
+    {
+      "id": "train_ppo",
+      "capabilities": [
+        {
+          "id": "multi_track_vector",
+          "weight": 45,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/learning/training/vector_env.py",
+          "test": "tests/integration/test_vectorized_ppo_integration.py",
+          "blocker": null
+        },
+        {
+          "id": "policy_seed_binding",
+          "weight": 30,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/research/wp7_execution.py",
+          "test": "tests/research/test_wp7_execution_binding.py",
+          "blocker": null
+        },
+        {
+          "id": "registered_wp7_training",
+          "weight": 25,
+          "status": "blocked",
+          "priority": "P0",
+          "source": "f1rl/learning/training/runner.py",
+          "test": "tests/research/test_wp7_execution_binding.py",
+          "blocker": "requires additional verified engineering or independent approval"
+        }
+      ],
+      "compatibility": {
+        "status": "in_progress",
+        "required": [
+          "windows_linux_exact_head_ci",
+          "historical_c2_replay",
+          "cross_module_seed_and_json_schema"
+        ]
+      }
+    },
+    {
+      "id": "evaluation",
+      "capabilities": [
+        {
+          "id": "legacy_episode_metrics",
+          "weight": 45,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/learning/evaluation/evaluator.py",
+          "test": "tests/learning/evaluation/test_evaluator.py",
+          "blocker": null
+        },
+        {
+          "id": "seeded_software_cell",
+          "weight": 30,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/research/wp7_cell_evaluation.py",
+          "test": "tests/learning/evaluation/test_stochastic_cell.py",
+          "blocker": null
+        },
+        {
+          "id": "admitted_stochastic_ppo",
+          "weight": 25,
+          "status": "blocked",
+          "priority": "P0",
+          "source": "f1rl/research/wp7_cell_evaluation.py",
+          "test": "tests/learning/evaluation/test_stochastic_cell.py",
+          "blocker": "requires additional verified engineering or independent approval"
+        }
+      ],
+      "compatibility": {
+        "status": "in_progress",
+        "required": [
+          "windows_linux_exact_head_ci",
+          "historical_c2_replay",
+          "cross_module_seed_and_json_schema"
+        ]
+      }
+    },
+    {
+      "id": "provenance_admission",
+      "capabilities": [
+        {
+          "id": "runtime_manifest",
+          "weight": 45,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/research/wp7_protocol.py",
+          "test": "tests/research/test_pv5_protocol.py",
+          "blocker": null
+        },
+        {
+          "id": "closed_guard",
+          "weight": 30,
+          "status": "implemented",
+          "priority": "P0",
+          "source": "f1rl/research/wp7_admission.py",
+          "test": "tests/research/test_pv5_admission.py",
+          "blocker": null
+        },
+        {
+          "id": "independent_approval_restore",
+          "weight": 25,
+          "status": "blocked",
+          "priority": "P0",
+          "source": "f1rl/research/wp7_admission.py",
+          "test": "tests/research/test_pv5_admission.py",
+          "blocker": "requires additional verified engineering or independent approval"
+        }
+      ],
+      "compatibility": {
+        "status": "in_progress",
+        "required": [
+          "windows_linux_exact_head_ci",
+          "historical_c2_replay",
+          "cross_module_seed_and_json_schema"
+        ]
+      }
+    }
+  ]
+}

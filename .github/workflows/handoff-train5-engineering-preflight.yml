@@ -48,6 +48,13 @@ jobs:
       - name: Run hermetic TRAIN-only tests without external witnesses
         run: |
           python -B -m pytest \
+            tests/research/test_wp7_atomic_evidence.py \
+            tests/research/test_wp7_core_readiness.py \
+            tests/research/test_wp7_execution_binding.py \
+            tests/research/test_wp7_rotating_owner_profile.py \
+            tests/research/test_wp7_run_manifest.py \
+            tests/research/test_wp7_spatial_profile.py \
+            tests/research/test_wp7_admission_resolution.py \
             tests/research/test_wp3_historical_fixture_source_portable.py \
             tests/integration/test_wp7_slalom_dynamic_route_reconstruction.py \
             tests/research/test_physics_v4_main_task_final_closeout.py \
