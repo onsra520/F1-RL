@@ -51,6 +51,7 @@ jobs:
             tests/research/test_wp7_atomic_evidence.py \
             tests/research/test_wp7_core_readiness.py \
             tests/research/test_wp7_stage1_seed_c2_compatibility_audit.py \
+            tests/research/test_wp7_train5_stage2_scientific_review.py \
             tests/learning/experiments/test_c2_protocol_v2.py \
             tests/research/test_wp7_execution_binding.py \
             tests/research/test_wp7_rotating_owner_profile.py \
