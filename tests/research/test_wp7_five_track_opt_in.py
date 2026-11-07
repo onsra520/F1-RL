@@ -9,6 +9,7 @@ import pytest
 from f1rl.learning.pilot_preflight import TRAIN_IDS
 from f1rl.research.wp7_protocol import load_registration, prepare_scenarios
 from f1rl.track_assets import load_track_asset, load_track_manifest
+from scripts.wp7_train5_handoff_preflight import audit as audit_source_lock
 
 ROOT = Path(__file__).resolve().parents[2]
 REGISTRATION = "spatial_rotating_owner_v3"
@@ -35,8 +36,14 @@ def test_historical_default_four_unchanged():
     scenarios = _build()
     assert tuple(x.track_id for x in scenarios.scenarios) == TRAIN_IDS
     assert tuple(x.track_id for x in scenarios.scenarios[0].factory.reset_config.training_registry) == TRAIN_IDS
+    # Registered Windows receipts are pinned to canonical Git blob SHAs.
+    # An Ubuntu LF checkout must not invalidate frozen content.
+    assert audit_source_lock(ROOT)["source_file_git_blob_hashes_verified"] == 44
+    registered = json.loads((
+        ROOT / "configs/research/wp7-train5-paired-v2-registration.json"
+    ).read_text(encoding="utf-8"))["source_sha256"]
     for name, digest in FROZEN.items():
-        assert sha256((ROOT / name).read_bytes()).hexdigest() == digest
+        assert registered[name] == digest
 
 
 def test_five_track_selection_fails_closed_on_exact_heldout_fingerprint():

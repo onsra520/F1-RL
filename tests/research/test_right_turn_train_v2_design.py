@@ -11,6 +11,7 @@ from f1rl.sandbox.center_trajectory import CenterSegment
 from f1rl.sandbox.directed_center_crossing import directed_center_gate_crossing
 from f1rl.sandbox.geometry.vector import Vec3
 from f1rl.track_assets import load_track_asset, load_track_manifest
+from scripts.wp7_train5_handoff_preflight import audit as audit_source_lock
 
 ROOT = Path(__file__).resolve().parents[2]
 RIGHT = ROOT / "assets/tracks/training/right-turn-train-v2.json"
@@ -129,5 +130,9 @@ def test_paired_training_factory_uses_five_train_assets_without_reading_heldout(
 def test_frozen_right_turn_remains_unchanged_and_no_training_authorization():
     assert TRAIN_IDS == ("straight-sprint-v1","slalom-v1","right-turn-v1","ramp-v1")
     path=ROOT/"assets/tracks/training/right-turn-v1.json"
-    assert sha256(path.read_bytes()).hexdigest()==FROZEN_RIGHT_SHA256
+    assert audit_source_lock(ROOT)["source_file_git_blob_hashes_verified"] == 44
+    registered = json.loads((
+        ROOT / "configs/research/wp7-train5-paired-v2-registration.json"
+    ).read_text(encoding="utf-8"))["source_sha256"]
+    assert registered["assets/tracks/training/right-turn-v1.json"] == FROZEN_RIGHT_SHA256
     assert not (RIGHT.parent/"right-turn-train-v2.json").read_text().count("training_authorized")

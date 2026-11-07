@@ -11,6 +11,7 @@ from f1rl.learning.pilot_preflight import TRAIN_IDS
 from f1rl.sandbox.geometry.vector import Vec3
 from f1rl.sandbox.center_trajectory import CenterSegment
 from f1rl.sandbox.directed_center_crossing import directed_center_gate_crossing
+from scripts.wp7_train5_handoff_preflight import audit as audit_source_lock
 
 ROOT = Path(__file__).resolve().parents[2]
 V2_ID = "left-turn-train-v2"
@@ -85,7 +86,11 @@ def test_legacy_four_train_assets_and_registry_remain_frozen():
     assert TRAIN_IDS == (
         "straight-sprint-v1", "slalom-v1", "right-turn-v1", "ramp-v1"
     )
-    assert sha256((ROOT / "assets/tracks/training/right-turn-v1.json").read_bytes()).hexdigest() == FROZEN_RIGHT
+    assert audit_source_lock(ROOT)["source_file_git_blob_hashes_verified"] == 44
+    registered = json.loads((
+        ROOT / "configs/research/wp7-train5-paired-v2-registration.json"
+    ).read_text(encoding="utf-8"))["source_sha256"]
+    assert registered["assets/tracks/training/right-turn-v1.json"] == FROZEN_RIGHT
     assert OLD_MANIFEST.read_bytes() != V2_MANIFEST.read_bytes()
 
 
