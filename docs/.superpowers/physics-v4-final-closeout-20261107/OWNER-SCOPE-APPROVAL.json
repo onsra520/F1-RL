@@ -1,0 +1,42 @@
+{
+  "authorization_channel": "IN_CHAT_OWNER_INSTRUCTION",
+  "authorization_scope": "ENGINEERING_MAIN_TASK_0_TO_6_ONLY",
+  "branch": "handoff/physics-v4-khanh-bang-20261106",
+  "changes": {
+    "task2": "Accept separately versioned paired Right/Left TRAIN v2 in place of a HELD-OUT-colliding reflected TRAIN v1. Keep v1 rejected; no HELD-OUT geometry access.",
+    "task3": "Independent v4 physical simulator control/tape acceptance applies to paired v2 only. Neither v1 feasibility nor real hardware performance is asserted.",
+    "task5": "Six frozen PPO smoke runs apply to paired v2 only; single nominal seed, no generalization claim. Per-case elapsed duration is NOT_RECORDED (a disclosed evidence gap, not an invented measurement).",
+    "task6": "Write current standalone FINAL-REPORT.md to a new immutable output directory; retain the historical file under its prior root untouched."
+  },
+  "cryptographic_owner_signature_present": false,
+  "decision": "APPROVE_PAIRED_TRAIN_V2_REPLACEMENT_FOR_MAIN_TASK_ENGINEERING_CLOSEOUT_WITH_DOCUMENTED_LIMITS",
+  "engineering_parent_source_commit": "d0e61d54232c6e4d92a7ab2484ebf7a8f1c5040d",
+  "final_acceptance_criterion": "ALL_TASK0_TO_6_ENGINEERING_DISPOSITIONS_COMPLETE_UNDER_V2_AMENDMENT_WITH_EXPLICIT_GAPS",
+  "full06_permission": false,
+  "heldout_permission": false,
+  "historical_v1_acceptance_relabelled_as_pass": false,
+  "independent_reviewer_signature_present": false,
+  "missing_duration_measured_or_backfilled": false,
+  "original_plan": "docs/.superpowers/PHYSICS-V4-LEFT-TURN-PLAN.md",
+  "original_plan_historical_status": "DRAFT_AWAITING_APPROVAL",
+  "original_plan_sha256": "98b8b9481cc4d0267c1ddaf1b085c97e809be4a210080c68db7f99ddead2569d",
+  "owner_direction": "Owner explicitly instructed on 2026-11-07: approve v2 scope change, normalize missing smoke fields, publish exact FINAL-REPORT.md and commit, seal acceptance.",
+  "preexisting_original_v1_literal_completion": false,
+  "preserved_historical_artifacts": {
+    "FINAL-REPORT-PHYSICS-V4-CURRENT-20261107.md": "05ad88d27827b920934fbedc3d82c93dc8fcfbc8cf99075d4ec3d713b226f572",
+    "FINAL-REPORT.md": "9f672ae1b061ae5478f2f5dfcc4c5793529b038b90e97cfa37fbe98ebd738217",
+    "HANDOFF-01EF1E3-TRAIN5-PPO-SMOKE-LOCKED-ACCEPTANCE-20261107.json": "41d3ddf2a20801c442f2229ec241fb9aa1f7921f9ef518e575d1391362a58097",
+    "PHYSICS-V4-D0E61D5-SECOND-DEEP-REGRESSION-VERIFIED-20261107.json": "a43f15fd56b7d109ab9808cac28aa7b53ef267e1cbae37ce3e3623c50a0d4cb1",
+    "PHYSICS-V4-LEFT-TURN-PLAN.md": "98b8b9481cc4d0267c1ddaf1b085c97e809be4a210080c68db7f99ddead2569d",
+    "PHYSICS-V4-MAIN-TASK-FINAL-VERDICT-20261107.json": "a8ec1c5f5da63c0f26364c70d11f768487f1d0f133e4d90fe1418e9784d11a91",
+    "STEP3-PHYSICS-V4-DUAL-TURN-ACCEPTANCE.json": "0bbc1636fdb330d58d0808ad83c2b0d73e7d1b686d597d87796510c6788bd5d4",
+    "wp7-train5-paired-v2-registration.json": "f90474246b7c6903ff77723388caf05f5d07babc1e95a6604305f0f5ad674b1c"
+  },
+  "recorded_at": "2026-11-07T20:22:39.208216+07:00",
+  "repository": "onsra520/F1-RL",
+  "schema": "f1rl_physics_v4_main_task_owner_chat_scope_amendment_v1",
+  "science_release_permission": false,
+  "scientific_training_admission_approved": false,
+  "scope_change_owner_approved_in_chat": true,
+  "training_permission": false
+}
