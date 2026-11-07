@@ -1,0 +1,48 @@
+{
+  "schema": "f1rl_train5_immutable_six_case_smoke_v1",
+  "status": "APPROVED_BY_OWNER_FOR_FROZEN_PPO_SMOKE_ONLY",
+  "authorization_source": "Direct user request on 2026-11-07: PPO smoke và traing đi; scope independently constrained to 6-case smoke before any training",
+  "frozen_source_base_commit": "bb2d48bc17ba1e5bef75764998977fdc0cef27f0",
+  "branch": "handoff/physics-v4-khanh-bang-20261106",
+  "seed_registry": "configs/research/wp7-train5-global-seed-registry-owner-exception-20261107.json",
+  "draft_protocol": "configs/research/wp7-train5-paired-v2-registration.json",
+  "model_ids": [
+    "C-seed0",
+    "B-seed1",
+    "A-seed2"
+  ],
+  "track_ids": [
+    "right-turn-train-v2",
+    "left-turn-train-v2"
+  ],
+  "reset_seed": 20261106,
+  "max_steps_per_case": 2500,
+  "deterministic_prediction": true,
+  "device": "cpu",
+  "runtime_profile": {
+    "physics_version": "spatial_road_edge_partial_lifecycle_v4",
+    "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+    "terminal_contract": "wp3_physical_crash_terminal_v1",
+    "max_abs_tilt_rad": 0.7
+  },
+  "required_case_count": 6,
+  "allowed_outcomes": [
+    "finished",
+    "certified_physical_crash",
+    "valid_hard_route_violation",
+    "valid_step_limit"
+  ],
+  "abort_outcomes": [
+    "invalid_physical_transition",
+    "runtime_or_contract_exception",
+    "uncertified_physical_crash",
+    "nonfinite_action_or_observation"
+  ],
+  "one_shot": true,
+  "reuse_training_seeds": false,
+  "read_heldout_geometry": false,
+  "train_ppo": false,
+  "allow_training_after_smoke": false,
+  "allowed_output_root": "D:\\F1-RL-PHYSICS-V4-EVIDENCE-20261106",
+  "separate_training_protocol_required": true
+}

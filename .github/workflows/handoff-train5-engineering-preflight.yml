@@ -48,6 +48,7 @@ jobs:
       - name: Run hermetic TRAIN-only tests without external witnesses
         run: |
           python -B -m pytest \
+            tests/research/test_wp7_train5_frozen_ppo_smoke_v1.py \
             tests/research/test_wp7_train5_registry_owner_exception.py \
             tests/research/test_wp7_train5_handoff_preflight_portable.py \
             tests/research/test_wp7_five_track_opt_in.py \
