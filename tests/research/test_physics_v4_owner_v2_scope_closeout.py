@@ -34,7 +34,11 @@ def test_owner_approval_is_scoped_to_versioned_v2_not_a_signed_science_gate():
     assert obj["historical_v1_acceptance_relabelled_as_pass"] is False
     assert obj["preexisting_original_v1_literal_completion"] is False
     assert obj["original_plan_historical_status"]=="DRAFT_AWAITING_APPROVAL"
-    assert obj["original_plan_sha256"]==sha256(P.read_bytes()).hexdigest()
+    # The archived plan is Windows-CRLF in the owner receipt, but Git checks it
+    # out as LF on Linux. Require BOTH identities, never edit the old plan.
+    canonical=P.read_bytes().replace(b"\r\n",b"\n")
+    assert sha256(canonical).hexdigest()=="7bad13b62174c5e8c632f24ee524df8ebb3277bc12e0427a3489eb5474354769"
+    assert sha256(canonical.replace(b"\n",b"\r\n")).hexdigest()==obj["original_plan_sha256"]
 
 
 def test_six_locked_smoke_entries_normalized_without_invented_duration():
