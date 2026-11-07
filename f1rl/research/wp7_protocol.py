@@ -149,7 +149,67 @@ def load_registration(root,*,profile='pv5_v1'):
     return doc
 
 
-def prepare_scenarios(root, registration, *, seed_index: int):
+FIVE_TRAIN_IDS = (*TRAIN_IDS, "left-turn-train-v1")
+
+
+def _candidate_for_scenario_selection(root, candidate_file, manifest_path, track_ids):
+    """Resolve exact opt-in paths and reject TRAIN/HELD-OUT hash collisions.
+
+    Only manifest *metadata* is inspected here; HELD-OUT geometry is never read.
+    The historical 4-track default remains unchanged. TRAIN-5 is an engineering
+    smoke selection, not a new registered training/evaluation protocol.
+    """
+    if candidate_file is None and manifest_path is None and track_ids is None:
+        return RecoveryCandidate.from_yaml(root / "configs/recovery/wp7-c2-candidate.yml"), TRAIN_IDS, (
+            root / "assets/tracks/manifest.json"
+        )
+    if any(value is None for value in (candidate_file, manifest_path, track_ids)):
+        raise ValueError("TRAIN-5 requires candidate_file, manifest_path and track_ids together")
+    if type(track_ids) is not tuple or track_ids != FIVE_TRAIN_IDS:
+        raise ValueError("TRAIN-5 requires exact ordered five-track TRAIN roster (no HELD-OUT)")
+    candidate_path = root / "configs/recovery/wp7-c2-five-track.yml"
+    manifest_expected = root / "assets/tracks/manifest-five-track.json"
+    if (Path(candidate_file).resolve() != candidate_path.resolve()
+            or Path(manifest_path).resolve() != manifest_expected.resolve()):
+        raise ValueError("TRAIN-5 requires registered opt-in candidate and manifest paths")
+    candidate = RecoveryCandidate.from_yaml(candidate_path)
+    experiment = candidate.experiment
+    if (experiment.metadata.id != "ppo-generalization-five-track-v1"
+            or experiment.metadata.protocol_version != 1
+            or experiment.tracks.training_ids != FIVE_TRAIN_IDS
+            or experiment.tracks.heldout_ids != ("left-turn-v1", "offset-slalom-v1")
+            or experiment.tracks.manifest.resolve() != manifest_expected.resolve()):
+        raise ValueError("TRAIN-5 candidate experiment, manifest and roster mismatch")
+    manifest_doc = json.loads(manifest_expected.read_text(encoding="utf-8"), object_pairs_hook=_unique)
+    original_doc = json.loads((root / "assets/tracks/manifest.json").read_text(encoding="utf-8"),
+                              object_pairs_hook=_unique)
+    if (not isinstance(manifest_doc, dict) or set(manifest_doc) != {"schema_version", "tracks"}
+            or manifest_doc["schema_version"] != 1 or type(manifest_doc["tracks"]) is not list
+            or len(manifest_doc["tracks"]) != len(original_doc["tracks"])+1
+            or manifest_doc["tracks"][:len(TRAIN_IDS)] != original_doc["tracks"][:len(TRAIN_IDS)]
+            or manifest_doc["tracks"][len(TRAIN_IDS)+1:] != original_doc["tracks"][len(TRAIN_IDS):]):
+        raise ValueError("TRAIN-5 manifest must preserve all historical identities, hashes and order")
+    proposed = manifest_doc["tracks"][len(TRAIN_IDS)]
+    if (not isinstance(proposed,dict) or set(proposed) !=
+            {"track_id", "path", "world_sha256", "content_sha256"}
+            or proposed["track_id"] != "left-turn-train-v1"
+            or proposed["path"] != "training/left-turn-train-v1.json"):
+        raise ValueError("TRAIN-5 asset identity or location inconsistent")
+    for historical in original_doc["tracks"]:
+        # Compare metadata only; never load evaluation geometry.
+        if proposed["world_sha256"] == historical["world_sha256"]:
+            raise ValueError(
+                "TRAIN-5 BLOCKED: mirrored Left Turn has the same world_sha256 as "
+                f"registered {historical['track_id']} ({historical['path']}); "
+                "independent TRAIN geometry must be approved before smoke"
+            )
+        if proposed["content_sha256"] == historical["content_sha256"]:
+            raise ValueError("TRAIN-5 BLOCKED: asset content fingerprint collides with historical track")
+    return candidate, FIVE_TRAIN_IDS, manifest_expected
+
+
+def prepare_scenarios(root, registration, *, seed_index: int,
+                      candidate_file=None, manifest_path=None, track_ids=None):
     """Build registered TRAIN scenarios for exactly one paired seed replicate.
 
     This is preparation only. A correct seed binding does not grant PPO admission.
@@ -157,11 +217,16 @@ def prepare_scenarios(root, registration, *, seed_index: int):
     seeds = registration["seed_roster"]
     if type(seed_index) is not int or not 0 <= seed_index < len(seeds):
         raise ValueError("explicit registered seed_index required for TRAIN scenarios")
-    candidate = RecoveryCandidate.from_yaml(root / "configs/recovery/wp7-c2-candidate.yml")
+    root = Path(root).resolve(strict=True)
+    candidate, selected_ids, selected_manifest = _candidate_for_scenario_selection(
+        root, candidate_file, manifest_path, track_ids
+    )
     baseline = build_training_scenarios(candidate)
+    if tuple(row.track_id for row in baseline.scenarios) != selected_ids:
+        raise ValueError("candidate scenarios differ from explicitly selected TRAIN roster")
     entries = {e.track_id: e for e in load_track_manifest(
-        root / "assets/tracks/manifest.json", validate_asset_ids=TRAIN_IDS).tracks}
-    registry = tuple(entries[identity] for identity in TRAIN_IDS)
+        selected_manifest, validate_asset_ids=selected_ids).tracks}
+    registry = tuple(entries[identity] for identity in selected_ids)
     owner = registration['schema_version'] in ('wp7_experiment_registration_v3','wp7_experiment_registration_v4')
     reset = TrainResetConfig(seeds[seed_index]["perturbation"], registry,
         **({'version':'wp7_train_reset_lifecycle_research_v1'} if owner else {}))

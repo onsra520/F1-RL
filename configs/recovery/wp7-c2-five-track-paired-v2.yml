@@ -1,0 +1,21 @@
+# Recovery-only C2 scientific candidate, NOT the final frozen experiment.
+# Inherits WP1B physical/sensor/split values from the original draft experiment;
+# this file owns the reconstructed C2 navigation, reward and failure semantics.
+schema_version: 1
+status: candidate
+base_experiment: ../experiments/ppo-generalization-five-track-paired-v2.yml
+behavior:
+  dynamics: ground-no-slip-air-ballistic-v1
+  navigation: authored-surface-polyline-endpoint-v1
+  observation: rangefinders-local-route-navigation-v1
+  reward: route-highwater-progress-collision-time-offtrack-v1
+  action: steering-throttle-brake0-v1
+  race: single-lap-ordered-checkpoints-v1
+rewards:
+  route_progress_weight_per_meter: 1.0
+  collision_penalty: 5.0
+  time_penalty_per_second: 0.1
+  offtrack_penalty: 2.0
+offtrack:
+  lateral_limit_meters: 6.0
+  max_consecutive_steps: 10

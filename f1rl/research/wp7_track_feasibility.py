@@ -140,7 +140,9 @@ def audit_train_tracks(repository_root, *, track_ids=TRAIN_IDS, search_alternati
         from ..learning.owner_acceptance import review_preregistered_contract
         review_preregistered_contract(root/'configs/recovery/wp7-owner-decisions-preregistered-v1.yml')
     manifest_path = root / "assets/tracks/manifest.json"
-    entries = {e.track_id: e for e in load_track_manifest(manifest_path).tracks}
+    # Audit exact historical TRAIN-4 assets; HELD-OUT remains metadata-only.
+    entries = {e.track_id: e for e in load_track_manifest(
+        manifest_path, validate_asset_ids=TRAIN_IDS).tracks}
     config_path = root / "configs/experiments/ppo-generalization-v1.yml"
     definition = ExperimentDefinition.from_yaml(config_path)
     rows = []
