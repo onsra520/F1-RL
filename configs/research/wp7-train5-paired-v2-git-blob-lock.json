@@ -1,0 +1,318 @@
+{
+  "claim": "Each Windows source byte snapshot matched the draft registration SHA, and replacing CRLF by LF yielded exactly Git HEAD:path bytes. CI may certify Git blob SHA and identical canonical content; it must not claim the Windows byte SHA is directly reproduced in an LF checkout.",
+  "out_of_scope": "No external Step3 witnesses or global seed histories certified. This receipt does not authorize PPO, HELD-OUT, training or release.",
+  "registration_path": "configs/research/wp7-train5-paired-v2-registration.json",
+  "registration_sha256": "f90474246b7c6903ff77723388caf05f5d07babc1e95a6604305f0f5ad674b1c",
+  "schema": "f1rl_train5_source_eol_gitblob_bridge_v1",
+  "source_blobs": {
+    "assets/tracks/manifest-five-track-paired-v2.json": {
+      "git_blob_sha256": "0402ab5e07ece2722406e7a182987cba46243fd2eba0569b588335e521f6e49e",
+      "registered_windows_worktree_sha256": "882b6df04b3145dcf154a3dc710fc63ec9312e167db7a85dec72d7626d27c371",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 47,
+      "windows_lf_only_count": 0
+    },
+    "assets/tracks/manifest.json": {
+      "git_blob_sha256": "d388f6714a643b9c8ea82a2e7f9ca6901323d2dd64c057fc880ad34f1d305240",
+      "registered_windows_worktree_sha256": "5a0ffc507fffef6fcc782d7acf4a16f543dbd89794e96df143e2dcd6e87b0dda",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 41,
+      "windows_lf_only_count": 0
+    },
+    "assets/tracks/training/left-turn-train-v2.json": {
+      "git_blob_sha256": "ab266cf53b23abf6853b950887ca5c8f607fc6d5e4d604c95685395c486aefe5",
+      "registered_windows_worktree_sha256": "4ab3d10759b8cebb8e89414e378de04249cf1de59f83fc8fb3804a8c1acabeea",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 230,
+      "windows_lf_only_count": 0
+    },
+    "assets/tracks/training/ramp-v1.json": {
+      "git_blob_sha256": "d33032812673e6136a59820f57855a6e2dcea16bc9b6c1b2b39ee5241f25e58d",
+      "registered_windows_worktree_sha256": "6c0da56966962363ed601c8fda2343006c207ee9ea6497deb72e6f6018721bd3",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 34,
+      "windows_lf_only_count": 0
+    },
+    "assets/tracks/training/right-turn-train-v2.json": {
+      "git_blob_sha256": "bc98f17ec6ed7687009bf6d21f47399ccd8f1c8f9c42d121c8cc624b7cb0233f",
+      "registered_windows_worktree_sha256": "5f285238821c869fd2e47e95576074b6a1ba1c7c618fa9c30c5b9f89e9103f30",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 230,
+      "windows_lf_only_count": 0
+    },
+    "assets/tracks/training/right-turn-v1.json": {
+      "git_blob_sha256": "aafbf1128d66784ff27fdcccb12033ec5de5d94d61cb04c3fae067d184c99b41",
+      "registered_windows_worktree_sha256": "a302f5d1d7f08d2b51ae963a5e695d8600d52a0ebf2d1f212ca0a4fbf90e303e",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 34,
+      "windows_lf_only_count": 0
+    },
+    "assets/tracks/training/slalom-v1.json": {
+      "git_blob_sha256": "64b80e5e20b5cf52673897bbdfddc6bf233a74a5031107de2bdc158bd2712736",
+      "registered_windows_worktree_sha256": "e9dd588740189f7ed857de8e8b8f5eeb99f3161fdb9b8d3fa05d18978cdefa53",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 45,
+      "windows_lf_only_count": 0
+    },
+    "assets/tracks/training/straight-sprint-v1.json": {
+      "git_blob_sha256": "e9d06da9dec5ba81f68d0a8f0cbf7e969be1ba4d728a8e6cb861b72c962846e4",
+      "registered_windows_worktree_sha256": "9efe209780cfa8358f8622d38bb5d56db30425a57dcebebc16e6e447a10b5f00",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 29,
+      "windows_lf_only_count": 0
+    },
+    "configs/experiments/ppo-generalization-five-track-paired-v2.yml": {
+      "git_blob_sha256": "35b501f9efb4cf91726600650dc2df903720de2386afc98cc5f8ca384c5a20ea",
+      "registered_windows_worktree_sha256": "834a77a867f801bd7b565c01e55443af9fdb62bbbe37125033dfadbe2f6c4349",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 84,
+      "windows_lf_only_count": 0
+    },
+    "configs/experiments/ppo-generalization-v1.yml": {
+      "git_blob_sha256": "319a161d80de40844e91292bb108190b94d130caf645c85f6ea4ace1408d6962",
+      "registered_windows_worktree_sha256": "b00257a0b4e20fd2c512f867be661aa35ea9c1427dc0b61c1302384df2b1f84f",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 83,
+      "windows_lf_only_count": 0
+    },
+    "configs/recovery/wp7-c2-candidate.yml": {
+      "git_blob_sha256": "aecb671743b2dac14a093e715dcc7cb4b51c64f9c86a40bcfa3312c89380a177",
+      "registered_windows_worktree_sha256": "370a4a6b38954683434292bf82e16403b5aa6a4119ceb5d97d147c3142e283f9",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 21,
+      "windows_lf_only_count": 0
+    },
+    "configs/recovery/wp7-c2-five-track-paired-v2.yml": {
+      "git_blob_sha256": "8752a614a0dec2c94b45fcc67864aada07d41bccde794a23556892c8c2d155f8",
+      "registered_windows_worktree_sha256": "c4c2f6cbf3e8a63bb51d4a3fcfbe9cb8cd49c264ad21c0f64f98760ba26a5558",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 21,
+      "windows_lf_only_count": 0
+    },
+    "configs/recovery/wp7-pilot-200k.yml": {
+      "git_blob_sha256": "79172c7ca71b211d23047b234d03eb5f9537b599dac982f2913a61ce03942b1f",
+      "registered_windows_worktree_sha256": "56516054bcf61426832c9b7395014ffbc0da2d1f212b0d0fb3aba78be4520142",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 25,
+      "windows_lf_only_count": 0
+    },
+    "configs/research/wp7-hard-route-outcome-v2.json": {
+      "git_blob_sha256": "4f4d2a30aa69d0a3802edb67cf0a0f9a15f784412fca1f6382ecde80f219e648",
+      "registered_windows_worktree_sha256": "7b306dc684cbc04f787bae9efaee77ab8bf97ee64ae2ee8d7665067b7e7d6954",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 18,
+      "windows_lf_only_count": 0
+    },
+    "configs/research/wp7-rotating-owner-protocol-v3.json": {
+      "git_blob_sha256": "9f5e064dd2b43734f17c8dd6994a94e6981ec5ab5a7b35ae18858742c1b2bf11",
+      "registered_windows_worktree_sha256": "942f1d469506ec709c33adf5f3b8328c9808a2447a9131b5eaf3367bc807f516",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 79,
+      "windows_lf_only_count": 0
+    },
+    "configs/research/wp7-spatial-ground-protocol-v1.json": {
+      "git_blob_sha256": "7789babeb1317926fab6ad4ed1056438ba264c9936bb8bd990f6ee844f56e469",
+      "registered_windows_worktree_sha256": "7789babeb1317926fab6ad4ed1056438ba264c9936bb8bd990f6ee844f56e469",
+      "relation": "byte_identical",
+      "windows_crlf_count": 0,
+      "windows_lf_only_count": 77
+    },
+    "f1rl/learning/crash_terminal_registered.py": {
+      "git_blob_sha256": "64d8d90b943d7df9d41bfb2eb8c50b30af648eeb1724fd0b1f0103f5e7df23e6",
+      "registered_windows_worktree_sha256": "376a6c4074a721ecd56f5805e280585a0843f075b089b837b1a01e868c9027eb",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 196,
+      "windows_lf_only_count": 0
+    },
+    "f1rl/learning/experiments/split.py": {
+      "git_blob_sha256": "894296a6eacb16638bd6b802d3b17b957110692293a39c606302a2991cfc0dfc",
+      "registered_windows_worktree_sha256": "033a967e35f502d41617627de3d3acc2ea45ed183ab3be7074d67d09872983ce",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 48,
+      "windows_lf_only_count": 0
+    },
+    "f1rl/learning/gym_environment.py": {
+      "git_blob_sha256": "96a5d7923495c320d1ef0b02a618a8df851dbb64e5d0bc5e111b0532077bd356",
+      "registered_windows_worktree_sha256": "9bf2be0531ea23297e84ccf2a63c97b4338e288dbca45251283ab7c3ff6563db",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 702,
+      "windows_lf_only_count": 0
+    },
+    "f1rl/learning/pilot_preflight.py": {
+      "git_blob_sha256": "7868dbf14a22f421cdc241dd62f45883517aedd4fb20272540faa9cc7ee68b51",
+      "registered_windows_worktree_sha256": "053bcc05b930580496fabf00d109af758221ba19527688370c255bc96925847d",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 186,
+      "windows_lf_only_count": 0
+    },
+    "f1rl/learning/reconstruction.py": {
+      "git_blob_sha256": "233f6f62085671c97ebfff228d32e1979d099c95a4995a333aad4887c6456de2",
+      "registered_windows_worktree_sha256": "dd030291e9f6a660af6a821d81695dc7352f9a73b5ea05992a78dc36cc6fe9fe",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 195,
+      "windows_lf_only_count": 0
+    },
+    "f1rl/learning/training/env_factory.py": {
+      "git_blob_sha256": "835511f04a1980689ee68049af267225f6509f28c4684aab88542c8e8766b091",
+      "registered_windows_worktree_sha256": "d439369b6a7c8153f91eb3f9e207b7e36080c0590a8783fcc0cd28b2e8bc48f1",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 216,
+      "windows_lf_only_count": 0
+    },
+    "f1rl/learning/wp7_race.py": {
+      "git_blob_sha256": "a424945c90db007cbfdb00a7dda81d7b4b91a4e3059163e912a1cb6c1d96eaab",
+      "registered_windows_worktree_sha256": "d6610b4b1fd2a55d73c1167f1bb337a7bb4bf151550277df88261b849f704b57",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 208,
+      "windows_lf_only_count": 0
+    },
+    "f1rl/research/wp3_eval_only_coordinator.py": {
+      "git_blob_sha256": "cc921ab0eed534eaa457010666cd4c3170a829b1c135535d6b1f1a603660a9fb",
+      "registered_windows_worktree_sha256": "a6e63d8d8551f9deaa00cc3672d060103f829b373b4b868e362771ae2f768864",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 422,
+      "windows_lf_only_count": 0
+    },
+    "f1rl/research/wp7_executed_feasibility.py": {
+      "git_blob_sha256": "d02b03458e8babc80382d14a65ebeff49188fd9666da1af2bbe69c4b44d671b0",
+      "registered_windows_worktree_sha256": "b826ec2f652133d9436cf32c6bcfc7e36aad7b1585d381f8d62752d210fb026e",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 521,
+      "windows_lf_only_count": 0
+    },
+    "f1rl/research/wp7_protocol.py": {
+      "git_blob_sha256": "543b9b49f7608a420b8d496a1af57d89fdddfc680fe36951d0a592b36ac8ae61",
+      "registered_windows_worktree_sha256": "546a3b45aabbb0fa144f51bbe0f6d8e5e2893f50f0eb45edbe762579ebcd76b4",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 484,
+      "windows_lf_only_count": 0
+    },
+    "f1rl/research/wp7_track_feasibility.py": {
+      "git_blob_sha256": "a0b6b53080f6e48d07993bbafb33da0e88537f40efb3afc0ea2ca8e10f5e64ab",
+      "registered_windows_worktree_sha256": "18ffc3050fe278cd62a9992ae2a62aef8876d577f4aabbfb10d9b9f5f4f55ab0",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 198,
+      "windows_lf_only_count": 2
+    },
+    "f1rl/research/wp7_train5_v2_protocol.py": {
+      "git_blob_sha256": "2a3abe43eb5ed4c18c98b5263125dd5ae95bdd6405d37da4a7ddb12d07f45707",
+      "registered_windows_worktree_sha256": "dda7d06759ef62cfb8b95b37c6b6bee3a49bbfab633bd2dfcbfb9f48f236c34e",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 352,
+      "windows_lf_only_count": 3
+    },
+    "f1rl/runtime/physics.py": {
+      "git_blob_sha256": "e20b433fc41a972ec1ba81eb30a356d963fc9b0d17ecabb65953d78d8b440723",
+      "registered_windows_worktree_sha256": "169bc11946d75f5e640cd4bd8d0263d95f2bc27d51b7705229d8df9046ecedf2",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 557,
+      "windows_lf_only_count": 0
+    },
+    "models/A-seed0/model-final.zip": {
+      "git_blob_sha256": "8cfcde6d4c88bbcc01dbf9b67dee3829c991474b0a8883a4479370f665c01c79",
+      "registered_windows_worktree_sha256": "8cfcde6d4c88bbcc01dbf9b67dee3829c991474b0a8883a4479370f665c01c79",
+      "relation": "byte_identical",
+      "windows_crlf_count": 0,
+      "windows_lf_only_count": 550
+    },
+    "models/A-seed1/model-final.zip": {
+      "git_blob_sha256": "4334c44b3370c4f0adaa345ca280d190850fda9599736cc561ed6cbb71425831",
+      "registered_windows_worktree_sha256": "4334c44b3370c4f0adaa345ca280d190850fda9599736cc561ed6cbb71425831",
+      "relation": "byte_identical",
+      "windows_crlf_count": 1,
+      "windows_lf_only_count": 577
+    },
+    "models/A-seed2/model-final.zip": {
+      "git_blob_sha256": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc",
+      "registered_windows_worktree_sha256": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc",
+      "relation": "byte_identical",
+      "windows_crlf_count": 3,
+      "windows_lf_only_count": 612
+    },
+    "models/B-seed0/model-final.zip": {
+      "git_blob_sha256": "d76719fb04c5eee1a03e1b0885989f44faad6543d3a1fea9aa24fe6ac55867d6",
+      "registered_windows_worktree_sha256": "d76719fb04c5eee1a03e1b0885989f44faad6543d3a1fea9aa24fe6ac55867d6",
+      "relation": "byte_identical",
+      "windows_crlf_count": 1,
+      "windows_lf_only_count": 595
+    },
+    "models/B-seed1/model-final.zip": {
+      "git_blob_sha256": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021",
+      "registered_windows_worktree_sha256": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021",
+      "relation": "byte_identical",
+      "windows_crlf_count": 1,
+      "windows_lf_only_count": 598
+    },
+    "models/B-seed2/model-final.zip": {
+      "git_blob_sha256": "18f17c3f07d3e62b43364f3f4c6572b3e08b3307a4ae47137b80342188ad0dae",
+      "registered_windows_worktree_sha256": "18f17c3f07d3e62b43364f3f4c6572b3e08b3307a4ae47137b80342188ad0dae",
+      "relation": "byte_identical",
+      "windows_crlf_count": 0,
+      "windows_lf_only_count": 596
+    },
+    "models/C-seed0/model-final.zip": {
+      "git_blob_sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+      "registered_windows_worktree_sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+      "relation": "byte_identical",
+      "windows_crlf_count": 2,
+      "windows_lf_only_count": 553
+    },
+    "models/C-seed1/model-final.zip": {
+      "git_blob_sha256": "1089a4ddb826d8a52a3960f2415fc920ee1b87cedda6d062d661e4f3244440e7",
+      "registered_windows_worktree_sha256": "1089a4ddb826d8a52a3960f2415fc920ee1b87cedda6d062d661e4f3244440e7",
+      "relation": "byte_identical",
+      "windows_crlf_count": 1,
+      "windows_lf_only_count": 573
+    },
+    "models/C-seed2/model-final.zip": {
+      "git_blob_sha256": "156ee0f2194f3aedb36cce3917cc4121994b53fa0f0c942c2de548b9e2ea32b7",
+      "registered_windows_worktree_sha256": "156ee0f2194f3aedb36cce3917cc4121994b53fa0f0c942c2de548b9e2ea32b7",
+      "relation": "byte_identical",
+      "windows_crlf_count": 2,
+      "windows_lf_only_count": 602
+    },
+    "models/D-seed0/model-final.zip": {
+      "git_blob_sha256": "318f76813b69f8457dc169b6b3a89dd5f3aa2f2f765170075e0e48ab9f0e0109",
+      "registered_windows_worktree_sha256": "318f76813b69f8457dc169b6b3a89dd5f3aa2f2f765170075e0e48ab9f0e0109",
+      "relation": "byte_identical",
+      "windows_crlf_count": 2,
+      "windows_lf_only_count": 583
+    },
+    "models/D-seed1/model-final.zip": {
+      "git_blob_sha256": "70892fdb0e93ffdc67c36e18e92c1ba70f7ce9f6d6dc41916370781f6f18fc0c",
+      "registered_windows_worktree_sha256": "70892fdb0e93ffdc67c36e18e92c1ba70f7ce9f6d6dc41916370781f6f18fc0c",
+      "relation": "byte_identical",
+      "windows_crlf_count": 0,
+      "windows_lf_only_count": 557
+    },
+    "models/D-seed2/model-final.zip": {
+      "git_blob_sha256": "212cca532ed1411246687821002ef55f62329ddcab18af2ff08f8e5b9b154cdc",
+      "registered_windows_worktree_sha256": "212cca532ed1411246687821002ef55f62329ddcab18af2ff08f8e5b9b154cdc",
+      "relation": "byte_identical",
+      "windows_crlf_count": 2,
+      "windows_lf_only_count": 587
+    },
+    "pyproject.toml": {
+      "git_blob_sha256": "a42d9fce5f4c3e5fb27d5f9eb8cd8d9134e32328dbc1f43bd07ab8ecdaa7761d",
+      "registered_windows_worktree_sha256": "c07651c589d26b9d1b3d2a048941e3c4f1f5de74409bac479a9f4ba18923628c",
+      "relation": "CRLF_to_LF_only",
+      "windows_crlf_count": 33,
+      "windows_lf_only_count": 0
+    },
+    "scripts/wp7_capture_gpu.py": {
+      "git_blob_sha256": "487b7e6616f6b33608a78b43055e785638e4aadfb45847c77ed76401d0f8a11f",
+      "registered_windows_worktree_sha256": "487b7e6616f6b33608a78b43055e785638e4aadfb45847c77ed76401d0f8a11f",
+      "relation": "byte_identical",
+      "windows_crlf_count": 0,
+      "windows_lf_only_count": 14
+    },
+    "scripts/wp7_dual_turn_v4_feasibility.py": {
+      "git_blob_sha256": "24673e467d89321eca0063fbeb734f6edf669737980652f1c62aec3dd06a418b",
+      "registered_windows_worktree_sha256": "24673e467d89321eca0063fbeb734f6edf669737980652f1c62aec3dd06a418b",
+      "relation": "byte_identical",
+      "windows_crlf_count": 0,
+      "windows_lf_only_count": 246
+    }
+  },
+  "source_commit": "74690534949c657bde9fa18b7cf4c895862739b7"
+}

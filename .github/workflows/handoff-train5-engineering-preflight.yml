@@ -1,0 +1,71 @@
+name: F1-RL Physics v4 handoff TRAIN-5 source-only engineering check
+
+on:
+  push:
+    branches:
+      - handoff/physics-v4-khanh-bang-20261106
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: handoff-train5-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  source-lock-and-safe-regression:
+    name: Verify source hashes + TRAIN-only tests (no training)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact source and ancestry
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Enforce candidate branch and refuse forbidden run flags
+        shell: bash
+        run: |
+          test "${GITHUB_REF_NAME}" = "handoff/physics-v4-khanh-bang-20261106"
+          git merge-base --is-ancestor 2417570f32f6879c2651bce37d88fd6ac83a2ea4 HEAD
+          git merge-base --is-ancestor 74690534949c657bde9fa18b7cf4c895862739b7 HEAD
+          test -z "$(git status --porcelain)"
+
+      - name: Verify 44 pinned Git blobs and fail-closed draft permissions
+        run: |
+          python -B scripts/wp7_train5_handoff_preflight.py --root .
+
+      - name: Install testing dependencies only
+        run: |
+          python -m pip install --disable-pip-version-check "numpy>=2,<3" "gymnasium>=1.3,<2" "pytest>=8,<10" "stable-baselines3>=2.9,<2.10" "PyYAML>=6,<7"
+
+      - name: Run hermetic TRAIN-only tests without external witnesses
+        run: |
+          python -B -m pytest \
+            tests/research/test_wp7_train5_handoff_preflight_portable.py \
+            tests/research/test_wp7_five_track_opt_in.py \
+            tests/research/test_wp7_train_only_audit_no_heldout.py \
+            tests/research/test_wp7_train_turn_gate_audit.py \
+            tests/research/test_left_turn_train_v2_design.py \
+            tests/research/test_right_turn_train_v2_design.py \
+            -q -p no:cacheprovider --tb=short \
+            --junitxml=handoff-train5-engineering-junit.xml
+
+      - name: Publish safe test JUnit only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: handoff-train5-engineering-junit
+          path: handoff-train5-engineering-junit.xml
+          if-no-files-found: ignore
+
+# This workflow MUST NOT execute PPO smoke, retrain, HELD-OUT geometry or
+# policy evaluation, FULL-06 scientific evaluation or change gate approvals.
+# External Step-3 evidence is not present on GitHub runners: source-only pass
+# does not mean the four original external witnesses were checked.
