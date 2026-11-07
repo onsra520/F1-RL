@@ -1,0 +1,98 @@
+{
+  "schema": "f1rl_train5_v3_nontraining_fixture_and_proposed_development_criteria_v1",
+  "source_anchor": "8ba236f4ba1f568ad5d6e3f44e9561f47756da74",
+  "scope": "SIMULATOR_NUMERICAL_TRAIN_ONLY_NOT_PHYSICAL_EMPIRICAL_CALIBRATION",
+  "track_ids": [
+    "straight-sprint-v1",
+    "slalom-v1",
+    "right-turn-train-v2",
+    "ramp-v1",
+    "left-turn-train-v2"
+  ],
+  "heldout_ids_not_read": [
+    "left-turn-v1",
+    "offset-slalom-v1"
+  ],
+  "fixture_reset_seeds": [
+    20261107,
+    20261108,
+    20261109
+  ],
+  "reset_indices": [
+    0,
+    1
+  ],
+  "reset_rank": 0,
+  "reset_lateral_range_m": [
+    -0.5,
+    0.5
+  ],
+  "reset_heading_range_deg": [
+    -5,
+    5
+  ],
+  "reset_max_draw_attempts": 32,
+  "expected_fixture_reset_count": 30,
+  "scripted_control_profile": {
+    "steering": 0,
+    "throttle": 0.5,
+    "brake": 0,
+    "steps_per_reset": 12
+  },
+  "predeclared_numerical_acceptance": {
+    "required_reset_count": 30,
+    "valid_reset_fraction_min": 1,
+    "valid_observation_fraction_min": 1,
+    "valid_action_fraction_min": 1,
+    "finite_reward_fraction_min": 1,
+    "physics_frame_version": "spatial_road_edge_partial_lifecycle_v4",
+    "linear_impulse_residual_ns_max": 1e-7,
+    "angular_impulse_residual_nms_max": 1e-7,
+    "energy_residual_over_tolerance_max": 1,
+    "min_dissipation_j": 0,
+    "invalid_transition_count_max": 0,
+    "missing_contact_substeps_max": 0,
+    "reserved_train_seed_consumption_max": 0
+  },
+  "scientific_quality_criteria_proposal": {
+    "decision": "PROPOSED_NOT_APPROVED",
+    "preexisting_dev_design": {
+      "cells": 60,
+      "episodes_per_cell": 60,
+      "total": 3600
+    },
+    "evaluation_seeds": "sha256(policy_sha256, track_id, development_stratum, episode_index) AFTER protocol and benchmark registration",
+    "training_cohorts": [
+      "scratch",
+      "frozen_initialization"
+    ],
+    "comparison_rule": "Paired episode identities over same five TRAIN tracks; do not choose checkpoint with HELD-OUT",
+    "checkpoint_rule": "Only predeclared final model at 200000 PPO timesteps per policy; no validation-driven checkpoint switching",
+    "metrics": [
+      "finish_rate",
+      "hard_route_violation_rate",
+      "certified_physical_crash_rate",
+      "uncertified_crash_or_invalid_physics_count",
+      "mean_return",
+      "checkpoint_coverage"
+    ],
+    "preproposal_thresholds": {
+      "uncertified_crash_or_invalid_physics_count_max": 0,
+      "nominal_finish_rate_min": 0.9,
+      "per_track_finish_rate_min": 0.8,
+      "hard_route_violation_rate_max": 0.02,
+      "certified_physical_crash_rate_max": 0.01
+    },
+    "thresholds_are_exploratory_not_owner_signed": true,
+    "release_criteria": "A new owner-signed training-specific protocol must accept thresholds before any training; never revise after observing development."
+  },
+  "permissions": {
+    "one_shot_engineering_fixture": true,
+    "ppo_smoke_rerun": false,
+    "ppo_training": false,
+    "heldout": false,
+    "scientific_release": false
+  },
+  "empirical_physical_calibration_approved": false,
+  "scientific_admission_approved": false
+}
