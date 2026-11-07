@@ -135,8 +135,25 @@ def audit(root: Path, evidence_root: Path | None = None) -> dict:
              "portable Git blob bridge schema mismatch")
     _require(bridge.get("source_commit") == "74690534949c657bde9fa18b7cf4c895862739b7",
              "portable Git blob bridge source anchor drift")
-    _require(bridge.get("registration_sha256") == _sha(regfile),
-             "portable Git blob bridge registration SHA drift")
+    registration_git = subprocess.run(
+        ["git", "-C", str(root), "show", "HEAD:" + REG],
+        capture_output=True, check=False,
+    )
+    _require(registration_git.returncode == 0, "tracked registration missing")
+    _require(
+        sha256(registration_git.stdout).hexdigest()
+        == bridge.get("registration_git_blob_sha256"),
+        "portable Git blob bridge registration canonical SHA drift",
+    )
+    registration_bytes = regfile.read_bytes()
+    _require(
+        sha256(registration_bytes).hexdigest()
+        in (bridge.get("registration_sha256"),
+            bridge.get("registration_git_blob_sha256"))
+        and (registration_bytes == registration_git.stdout
+             or registration_bytes.replace(b"\r\n", b"\n") == registration_git.stdout),
+        "portable Git blob bridge registration SHA drift",
+    )
     entries = bridge.get("source_blobs")
     _require(type(entries) is dict and set(entries) == set(sources),
              "portable Git blob bridge file roster drift")

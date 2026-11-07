@@ -1,6 +1,7 @@
 {
   "claim": "Each Windows source byte snapshot matched the draft registration SHA, and replacing CRLF by LF yielded exactly Git HEAD:path bytes. CI may certify Git blob SHA and identical canonical content; it must not claim the Windows byte SHA is directly reproduced in an LF checkout.",
   "out_of_scope": "No external Step3 witnesses or global seed histories certified. This receipt does not authorize PPO, HELD-OUT, training or release.",
+  "registration_git_blob_sha256": "3dd9ca9776b229e9e20bdc018cc1b67e93229d93a9754d53211197e8db60a576",
   "registration_path": "configs/research/wp7-train5-paired-v2-registration.json",
   "registration_sha256": "f90474246b7c6903ff77723388caf05f5d07babc1e95a6604305f0f5ad674b1c",
   "schema": "f1rl_train5_source_eol_gitblob_bridge_v1",
