@@ -1,0 +1,91 @@
+{
+  "accepted_at": "2026-11-07T16:24:15.496321+07:00",
+  "branch": "handoff/physics-v4-khanh-bang-20261106",
+  "candidate_seeds": [
+    2026111001,
+    2026111002,
+    2026111003,
+    2026111101,
+    2026111102,
+    2026111103,
+    2026111201,
+    2026111202,
+    2026111203,
+    2026112001,
+    2026112002,
+    2026112003,
+    2026112101,
+    2026112102,
+    2026112103,
+    2026112201,
+    2026112202,
+    2026112203
+  ],
+  "change_control": "Append-only acceptance; no change to candidate seeds, frozen source registration or heldout data.",
+  "evidence_sha256": {
+    "CI_scoped_verification": "32c366231fd28f683ada65a8f6c3bd98b7b2b06a2a07204ecb277851574ea4f0",
+    "final_18_seed_owner": "391ee360963642b1d60e64f20f7f02d35b139e47f82cf1e90e6c5faafd03ce81",
+    "final_seed_verification": "0b40c98f8922c07c510c4c798f7a38a647c2ba9f72f0a683a794c58e93aa3b99",
+    "historical_GHA_source_audit": "42c15e2022df0bb145ca79c058b2143e8ece1e8d6d01102d4db7c54e07ce00ba",
+    "offmachine_owner": "b657beb8b8f8447fc817771b90f2d82cc331ce6ee1703c3ad5d56818e7e27ab3",
+    "offmachine_verification": "9a1ac3284aea154cead2c7f1982eb55b6820cdb41ae64fc254b1ab9961f28ed0",
+    "registration": "f90474246b7c6903ff77723388caf05f5d07babc1e95a6604305f0f5ad674b1c",
+    "risk_review": "e7b950029514b7b61ede3f76041e8c83f099830683062c8edc66d30045c05540",
+    "scoped_audit": "dea206a83bd4d2ecf1cb229a652e323fa760ef98c16627fee0cb52e370d93dbb"
+  },
+  "exception": {
+    "affected_run_count": 15,
+    "all_15_runs_are_accepted_as_PASS": false,
+    "archived_workflow_sources_verified_count": 15,
+    "id": "F1RL-TRAIN5-GSR-EX-001",
+    "job_logs_not_recovered": true,
+    "limitations": [
+      "GitHub historical job logs cannot be reconstructed from workflow definitions.",
+      "Passing or failing CI tests is not proof of non-consumption of seeds inside a test.",
+      "The owner decision accepts bounded uncertainty, it is not absolute cryptographic proof of universal non-use."
+    ],
+    "risk_disposition": "ACCEPTED_WITH_TRANSPARENT_EXCEPTION_NOT_A_CLAIM_OF_RECOVERED_LOGS",
+    "risk_owner": "PROJECT_OWNER",
+    "type": "UNRECOVERABLE_GITHUB_JOB_LOGS",
+    "workflow_commits_date_range_local": [
+      "2026-10-18",
+      "2026-10-19"
+    ],
+    "workflow_definitions_unique_hashes": 2,
+    "workflow_source_unique_commit_count": 8,
+    "workflows_containing_any_proposed_seed_literal": 0
+  },
+  "full06_scientific_evaluation_permission": false,
+  "global_seed_registry_accepted_with_exception": true,
+  "heldout_policy_evaluation_permission": false,
+  "owner_approval": {
+    "decision": "ACCEPT_15_UNAVAILABLE_HISTORICAL_GITHUB_ACTIONS_LOGS_AS_DISCLOSED_EVIDENCE_EXCEPTION",
+    "decision_separately_SSH_signed": false,
+    "owner_no_offmachine_facts_SSH_signed_and_verified": true,
+    "owner_seed_facts_SSH_signed_and_verified": true,
+    "source": "EXPLICIT_OWNER_APPROVAL_IN_CURRENT_CHAT_2026-11-07",
+    "verbatim_text": "Tôi chấp nhận ngoại lệ bằng chứng đối với 15 log GitHub Actions lịch sử không còn truy cập được của dự án F1-RL.\n\nTôi xác nhận đã xem xét kết quả kiểm toán 18 seed, chữ ký owner và bằng chứng mã nguồn workflow. Tôi chấp nhận rủi ro còn lại trong phạm vi đã công bố và cho phép hoàn thiện hồ sơ nghiệm thu Global Seed Registry với ngoại lệ này.\n\nQuyết định không đồng nghĩa với việc xác nhận các log thất lạc đã PASS. Giữ nguyên khóa PPO smoke, training, HELD-OUT và scientific release. Các hoạt động đó phải được phê duyệt riêng.",
+    "verbatim_utf8_sha256": "220d5eb2c122ee1a7698004f57796fbbf8230dd66ef9219822256184d9f4af9d"
+  },
+  "owner_signatures_sha256": {
+    "no_offmachine_F1RL": "ce90cb75cdc7bff612e4be294661ab0c88140521fce83d95d706aa248da82ad5",
+    "nonuse_18_seeds": "941b48e7bc2a935f1002501db9cb0074b080d16e86344fde1549a4b4e841b1ea"
+  },
+  "ppo_smoke_permission": false,
+  "ppo_training_permission": false,
+  "registry_gate_scientific_scope": "SOURCE_BOUND_18_PROPOSED_SEEDS_OWNER_SIGNED_FACTS_AND_DISCLOSED_HISTORICAL_LOG_LIMITATION",
+  "registry_gate_status": "CLOSED_WITH_OWNER_ACCEPTED_EVIDENCE_EXCEPTION",
+  "repo": "onsra520/F1-RL",
+  "schema": "f1rl_train5_global_seed_registry_owner_exception_acceptance_v1",
+  "scientific_release_permission": false,
+  "seed_count": 18,
+  "source_anchor_commit": "e8c15965431465e8c97b73bfe2be30fd261875ff",
+  "source_provenance": {
+    "global_seed_registry_acceptance_file_is_separate_from_frozen_registration": true,
+    "registration_sha256": "f90474246b7c6903ff77723388caf05f5d07babc1e95a6604305f0f5ad674b1c",
+    "registration_status_at_acceptance": "draft_not_authorized",
+    "source_checkout_clean_at_acceptance": true
+  },
+  "training_scenario_and_protocol_owner_approval": "NOT_GRANTED_SEPARATE_REVIEW_REQUIRED",
+  "universal_global_seed_nonuse_independently_proven": false
+}
