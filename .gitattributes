@@ -135,3 +135,19 @@
 
 # Preserve original signed WP3 technical JSON SHA across Windows checkout.
 /docs/research/WP3-PHYSICS-V4-TECHNICAL-ACCEPTANCE-20261024.json text eol=lf
+
+# Keep 2026-10-28 WP3 sealed training evidence JSON bytes LF on Windows.
+/docs/research/evidence/wp3-historical-admission-inputs/WP3-EVAL-SOURCE-PROVENANCE.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/evaluation/evaluation-roster.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed0/engineering-validation.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed1/engineering-validation.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/runs/A-seed2/engineering-validation.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed0/engineering-validation.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed1/engineering-validation.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/runs/B-seed2/engineering-validation.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed0/engineering-validation.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed1/engineering-validation.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/runs/C-seed2/engineering-validation.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed0/engineering-validation.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed1/engineering-validation.json text eol=lf
+/docs/research/evidence/wp3-historical-admission-inputs/runs/D-seed2/engineering-validation.json text eol=lf
