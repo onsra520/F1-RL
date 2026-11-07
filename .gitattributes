@@ -123,3 +123,12 @@
 /docs/.superpowers/handoff/evidence/wp7-historical-gpu-probe.py.txt -text
 /f1rl/research/wp7_cell_evaluation.py text eol=lf
 /f1rl/research/wp7_train5_v2_protocol.py text eol=lf
+
+# Step 1-2 TRAIN-only selected metadata caller source EOL lock.
+/f1rl/learning/provenance.py text eol=crlf
+/tests/learning/provenance/test_capture.py text eol=crlf
+/tests/integration/test_run_provenance.py text eol=crlf
+/tests/integration/test_wp7_slalom_dynamic_route_reconstruction.py text eol=crlf
+/tests/research/test_train_only_manifest_callsites.py text eol=lf
+/tests/research/test_wp7_train5_v2_protocol.py text eol=lf
+/f1rl/research/wp7_protocol.py text eol=lf

@@ -121,7 +121,10 @@ def build_pilot_preflight(
     ]
     audits: list[dict[str, object]] = []
     blockers: list[str] = []
-    train_manifest = {entry.track_id: entry for entry in load_track_manifest(experiment.tracks.manifest).tracks}
+    # Pilot audits TRAIN-4 assets; preserve HELD-OUT metadata without opening geometry.
+    train_manifest = {entry.track_id: entry for entry in load_track_manifest(
+        experiment.tracks.manifest, validate_asset_ids=TRAIN_IDS
+    ).tracks}
     minimum_turn_radius = float(scenarios.scenarios[0].factory.vehicle_parameters.wheelbase) / tan(
         float(scenarios.scenarios[0].factory.vehicle_parameters.max_steering_angle)
     )

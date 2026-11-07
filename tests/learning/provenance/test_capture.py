@@ -140,7 +140,9 @@ def test_capture_records_current_experiment_lifecycle_honestly() -> None:
 def test_capture_resolves_selected_tracks_in_caller_order_from_verified_manifest() -> None:
     definition = _definition()
     requested = tuple(reversed(definition.tracks.training_ids))
-    manifest = load_track_manifest(definition.tracks.manifest)
+    manifest = load_track_manifest(
+        definition.tracks.manifest, validate_asset_ids=requested
+    )
     by_id = {entry.track_id: entry for entry in manifest.tracks}
 
     value = capture_run_provenance(

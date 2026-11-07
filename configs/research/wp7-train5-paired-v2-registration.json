@@ -40,7 +40,8 @@
     "configs/research/wp7-rotating-owner-protocol-v3.json": "942f1d469506ec709c33adf5f3b8328c9808a2447a9131b5eaf3367bc807f516",
     "configs/research/wp7-hard-route-outcome-v2.json": "7b306dc684cbc04f787bae9efaee77ab8bf97ee64ae2ee8d7665067b7e7d6954",
     "configs/recovery/wp7-pilot-200k.yml": "56516054bcf61426832c9b7395014ffbc0da2d1f212b0d0fb3aba78be4520142",
-    "f1rl/learning/pilot_preflight.py": "053bcc05b930580496fabf00d109af758221ba19527688370c255bc96925847d",
+    "f1rl/learning/pilot_preflight.py": "96a45206b26530584fc35b89598d5f3f12d317d00851963d0c963af2abac2139",
+    "f1rl/learning/provenance.py": "74e55c22fac0832a1650118ef344b1fdb5242a7a0a8e27edbf32787db0074c6c",
     "f1rl/learning/reconstruction.py": "dd030291e9f6a660af6a821d81695dc7352f9a73b5ea05992a78dc36cc6fe9fe",
     "f1rl/learning/experiments/split.py": "033a967e35f502d41617627de3d3acc2ea45ed183ab3be7074d67d09872983ce",
     "f1rl/learning/training/env_factory.py": "d439369b6a7c8153f91eb3f9e207b7e36080c0590a8783fcc0cd28b2e8bc48f1",
@@ -66,7 +67,7 @@
     "docs/.superpowers/handoff/evidence/step3-original-wp7-protocol.py.txt": "546a3b45aabbb0fa144f51bbe0f6d8e5e2893f50f0eb45edbe762579ebcd76b4",
     "f1rl/research/wp3_eval_only_coordinator.py": "a6e63d8d8551f9deaa00cc3672d060103f829b373b4b868e362771ae2f768864",
     "f1rl/research/wp7_executed_feasibility.py": "b826ec2f652133d9436cf32c6bcfc7e36aad7b1585d381f8d62752d210fb026e",
-    "f1rl/research/wp7_train5_v2_protocol.py": "991602078a59bbd134d86f1c2a070ad205e63ba67fab02a4172ceedcc2ad7b35",
+    "f1rl/research/wp7_train5_v2_protocol.py": "339488b86d1331c956f0c495f930813979df980d3cefe6aa8d2ed8d76212a30e",
     "docs/.superpowers/handoff/evidence/step3-original-dual-turn-runner.py.txt": "24673e467d89321eca0063fbeb734f6edf669737980652f1c62aec3dd06a418b",
     "f1rl/cli/evidence/wp7_dual_turn_v4_feasibility.py": "8fa055bc33e8fe33a0b41c33b666505b61700c5f93f8f68a06ce5eda2f1b43b9",
     "docs/.superpowers/handoff/evidence/wp7-historical-gpu-probe.py.txt": "487b7e6616f6b33608a78b43055e785638e4aadfb45847c77ed76401d0f8a11f",
@@ -151,5 +152,5 @@
     "full06_and_heldout": "not_part_of_training_registration",
     "status": "proposal_only_no_episodes_executed"
   },
-  "preflight_digest": "74a6251749151cde3b236e3555d44273e118b41851e2abc3830cd051c111c660"
+  "preflight_digest": "147a147067faf5f500fb4bd81214e2be14c77e3d4f11cef8b08e5f945adc0e4c"
 }

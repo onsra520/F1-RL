@@ -444,7 +444,25 @@ def capture_run_provenance(
         track_manifest=manifest_path,
     )
 
-    manifest = load_track_manifest(manifest_path)
+    # Validate exact selected assets; unrelated split remains manifest metadata only.
+    try:
+        manifest = load_track_manifest(
+            manifest_path, validate_asset_ids=selected_track_ids
+        )
+    except ValueError as error:
+        if str(error) != "requested asset IDs are missing from manifest":
+            raise
+        # Preserve the legacy error naming the bad ID, using only the
+        # manifest metadata after this request has already been rejected.
+        declared = {entry.track_id for entry in load_track_manifest(
+            manifest_path, validate_asset_ids=()
+        ).tracks}
+        for missing_id in selected_track_ids:
+            if missing_id not in declared:
+                raise ValueError(
+                    f"selected track ID is absent from manifest: {missing_id}"
+                ) from error
+        raise
     by_id = {entry.track_id: entry for entry in manifest.tracks}
     tracks: list[TrackProvenance] = []
     for track_id in selected_track_ids:

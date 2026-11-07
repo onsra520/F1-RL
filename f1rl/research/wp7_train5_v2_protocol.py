@@ -62,6 +62,7 @@ SOURCE_FILES=(
  "configs/research/wp7-hard-route-outcome-v2.json",
  "configs/recovery/wp7-pilot-200k.yml",
  "f1rl/learning/pilot_preflight.py",
+ "f1rl/learning/provenance.py",
  "f1rl/learning/reconstruction.py",
  "f1rl/learning/experiments/split.py",
  "f1rl/learning/training/env_factory.py",

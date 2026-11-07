@@ -63,7 +63,9 @@ def test_canonical_training_provenance_binds_real_project_identity(
         "right-turn-v1",
         "ramp-v1",
     )
-    manifest = load_track_manifest(definition.tracks.manifest)
+    manifest = load_track_manifest(
+        definition.tracks.manifest, validate_asset_ids=selected
+    )
     by_id = {entry.track_id: entry for entry in manifest.tracks}
     assert tuple(
         (item.world_sha256, item.content_sha256)
