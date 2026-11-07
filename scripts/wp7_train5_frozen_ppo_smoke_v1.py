@@ -17,6 +17,8 @@ import sys
 import traceback
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 PROTOCOL = ROOT / "configs/research/wp7-train5-frozen-ppo-smoke-v1.json"
 ANCHOR = "bb2d48bc17ba1e5bef75764998977fdc0cef27f0"
 BRANCH = "handoff/physics-v4-khanh-bang-20261106"
