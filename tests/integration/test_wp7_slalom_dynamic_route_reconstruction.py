@@ -67,7 +67,11 @@ def test_slalom_reaches_all_checkpoints_and_finishes_without_offtrack(
 
 def test_slalom_route_corner_reconstruction_preserves_world_geometry() -> None:
     from f1rl.track_assets import load_track_asset, load_track_manifest
-    manifest=load_track_manifest(Path("assets/tracks/manifest.json"))
+    # This is a TRAIN-only Slalom invariant: validate its registered asset,
+    # not the separate unavailable HELD-OUT assets in the shared manifest.
+    manifest=load_track_manifest(
+        Path("assets/tracks/manifest.json"), validate_asset_ids=("slalom-v1",)
+    )
     entry=next(e for e in manifest.tracks if e.track_id=="slalom-v1")
     asset=load_track_asset(Path("assets/tracks")/entry.path)
     assert asset.navigation is not None
