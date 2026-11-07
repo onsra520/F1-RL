@@ -132,3 +132,6 @@
 /tests/research/test_train_only_manifest_callsites.py text eol=lf
 /tests/research/test_wp7_train5_v2_protocol.py text eol=lf
 /f1rl/research/wp7_protocol.py text eol=lf
+
+# Preserve original signed WP3 technical JSON SHA across Windows checkout.
+/docs/research/WP3-PHYSICS-V4-TECHNICAL-ACCEPTANCE-20261024.json text eol=lf
