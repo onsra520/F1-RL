@@ -4,11 +4,11 @@
 
 This is a source-only engineering preview, not a training permit or scientific acceptance. `scripts/wp7_train5_v4_factory_preview.py` validates the committed v4 protocol and the cross-platform 44-source/four-witness preflight, reconstructs the registered five TRAIN factories, and attaches the proposed perturbation seed without calling reset or step. It constructs and closes Gym environments when `TrainingScenarioSet` checks space compatibility; it does not load a model or execute an episode. Factory comparison rebuilds an independent reference and rejects differences in geometry, Physics, action, observation, reward, reset and other factory fields. Both the separate factory-admission boundary and the registered runner remain fail-closed.
 
-The preview script is a new working-tree source file and is not included in the 221-file lock of the previously committed v4 protocol. This comparison is therefore engineering evidence, not an authenticated source-bound training permit. Before admission, a new reviewed protocol must lock the adapter and tests, bind real scenario objects and runtime/environment identities to the signed run manifest, and connect a separately authenticated permit through every training guard. Existing v2, runner and PPO guards remain unchanged.
+The preview script is committed separately but is not included in the 221-file lock of the v4 protocol. The separate unsigned review manifest binds the adapter and tests for engineering review. This comparison is engineering evidence, not an authenticated source-bound training permit. Before admission, a new reviewed protocol must lock the adapter and tests, bind real scenario objects and runtime/environment identities to the signed run manifest, and connect a separately authenticated permit through every training guard. Existing v2, runner and PPO guards remain unchanged.
 
 On the local machine, the five factory preview and comparison completed with all four external historical Step-3 witness hashes verified. A separate valid-factory check and the registered-runner boundary both denied training before model creation. No reset, physics step, PPO training, HELD-OUT geometry, or evaluation was executed. Portable tests mock the external witness receipt; they are not a substitute for the local four-witness verification.
 
-The updated engineering-preflight test selection passed locally on Windows: 469 tests on the working tree. This does not constitute Windows/Linux CI for a new commit. The reviewed protocol file SHA-256 is `2df3b500df5e50f6153655492f064d9823c6334f2462079bb5d6b5a21ea2531d`; the uncommitted preview and its test had SHA-256 `57867fe5554b3837030abee7edbf206b8b07f0b18d05b262ffd037f97ad3ab3e` and `917e837bab87f9cf518a97766e8073d8b32e82898bdfed3343fc752be2f2a5e1` respectively at test time. These hashes identify the material for review, not an approval.
+The updated engineering-preflight test selection passed locally on Windows: 469 tests at that time. The draft protocol file SHA-256 is `2df3b500df5e50f6153655492f064d9823c6334f2462079bb5d6b5a21ea2531d`; the preview and its test had SHA-256 `57867fe5554b3837030abee7edbf206b8b07f0b18d05b262ffd037f97ad3ab3e` and `917e837bab87f9cf518a97766e8073d8b32e82898bdfed3343fc752be2f2a5e1` respectively at test time. These hashes identify the material for review, not an approval.
 
 ## Seed-history follow-up
 
@@ -39,16 +39,16 @@ The GitHub default-branch `configs/research/wp7-trusted-reviewers-v1.json` has a
 
 The user identified themself as the prospective reviewer and confirmed direct participation in designing or implementing the TRAIN-5 protocol/runner. The user subsequently confirmed no independent reviewer is currently available. An independent reviewer separate from that work remains necessary; the user's statement is not an independent review signature or admission. A local SSH Ed25519 public key labelled `uav-t3-owner` was found at `C:\Users\KHANH BANG\.ssh\uav_t3_owner.pub`, with OpenSSH SHA-256 fingerprint `SHA256:6S0rHCQyWkbb/aV+GyxpAm4nSjDPbtdmD7Eh9CYZrVY`. Its ownership and authorization for this research have not been independently established; its name alone does not establish either, and it has not been added to the trust registry or used for signing.
 
-GitHub Actions run `42503157205` passed 440 tests on Windows and 440 on Ubuntu for commit `484c306dd0a9d82907cfba8e11c31674be66dfe5`. It did not include this new working-tree preview and is not complete nine-gate acceptance. The following gates all remain `IN_PROGRESS`:
+GitHub Actions run `42503157205` passed 440 tests on Windows and 440 on Ubuntu for commit `484c306dd0a9d82907cfba8e11c31674be66dfe5`; it did not include the preview. Run `42507231870` subsequently passed Windows and Ubuntu on commit `f2cc663ccd7c54be697b68d530eee0ec4db616c9`, including the preview. Neither run establishes complete nine-gate acceptance; check CI separately for later candidate commits. The following gates all remain `IN_PROGRESS`:
 
 | Gate | Evidence and remaining requirement |
 | --- | --- |
 | simulation_runtime | Exact-commit CI subset; historical C2 and per-gate cross-module evidence open. |
 | vehicle_dynamics | Exact-commit CI subset; historical C2 and per-gate evidence open. |
-| track_feasibility | Exact-commit CI subset; factory preview is new and uncommitted; historical C2 open. |
+| track_feasibility | Exact-commit CI subset; factory preview is engineering-only; historical C2 open. |
 | race_episode | Exact-commit CI subset; historical C2 and per-gate evidence open. |
 | gym_reset | Exact-commit CI subset; new adapter is preparation only; validated actual reset evidence open. |
-| perception_control | Exact-commit CI subset; new factory comparison is uncommitted; per-gate evidence open. |
+| perception_control | Exact-commit CI subset; factory comparison is engineering-only; per-gate evidence open. |
 | train_ppo | Exact-commit source-only tests; source-bound execution permit and admitted runner integration absent. |
 | evaluation | Exact-commit software tests; authenticated run/evaluation evidence and stochastic admission absent. |
 | provenance_admission | Exact-commit software tests; trusted reviewer bootstrap, authentic run manifest and permit absent. |
