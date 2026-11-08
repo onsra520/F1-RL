@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from src.validation.simulation_only_protocol import confirmation_seed_bundles, load_simulation_only_manifest
-from src.validation.simulation_only_statistics import (
+from f1rl.research.simulation_only_protocol import confirmation_seed_bundles, load_simulation_only_manifest
+from f1rl.research.simulation_only_statistics import (
     CellSummary,
     analyze_factorial_seed_blocks,
     estimate_paired_t_power,

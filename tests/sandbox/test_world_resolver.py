@@ -1,15 +1,15 @@
-from src.simulation.dynamics.modifiers import MotionModifiers
-from src.simulation.entities.boost_pad import BoostPad
-from src.simulation.entities.obstacle import Obstacle
-from src.simulation.entities.slow_zone import SlowZone
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.events import ObstacleHit
-from src.simulation.interactions.resolver import resolve_motion_modifiers, resolve_obstacle_block
-from src.simulation.surface import SurfaceContact
-from src.simulation.track.query import TrackQuery
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleState
+from f1rl.sandbox.dynamics.modifiers import MotionModifiers
+from f1rl.sandbox.entities.boost_pad import BoostPad
+from f1rl.sandbox.entities.obstacle import Obstacle
+from f1rl.sandbox.entities.slow_zone import SlowZone
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.events import ObstacleHit
+from f1rl.sandbox.interactions.resolver import resolve_motion_modifiers, resolve_obstacle_block
+from f1rl.sandbox.surface import SurfaceContact
+from f1rl.sandbox.track.query import TrackQuery
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleState
 
 
 def volume() -> OrientedBoxVolume:

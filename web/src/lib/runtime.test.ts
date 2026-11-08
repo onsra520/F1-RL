@@ -100,20 +100,53 @@ describe('Python runtime HTTP client', () => {
     })));
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ models }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ tracks: [track] }), { status: 200 }));
+      .mockResolvedValueOnce(new Response(JSON.stringify({ tracks: [track] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ models: [{ model_id: 'wp7-confirmation', sha256: 'c5daa4cb8dfde0f2a1eb94f0e83f6a2f8f7bdc47ecf7870e799c5f16640d64f6', bytes: 100 }], warnings: [] }), { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
     const result = await new RuntimeClient().catalog();
     expect(result.models).toHaveLength(12);
+    expect(result.exploratoryModels[0].model_id).toBe('wp7-confirmation');
     expect(result.tracks[0].track_id).toBe('straight-sprint-v1');
   });
 
-  it('sends only model ID, track ID, and explicit seed when creating a session', async () => {
+  it('keeps frozen models usable when the optional exploratory catalog is invalid', async () => {
+    const models = ['A', 'B', 'C', 'D'].flatMap((candidate) => [0, 1, 2].map((seed) => ({
+      model_id: `${candidate}-seed${seed}`, sha256: 'b'.repeat(64), bytes: 100,
+    })));
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ models }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ tracks: [track] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ models: [{ model_id: 'wp7-confirmation', sha256: 'a'.repeat(64), bytes: 100 }], warnings: [] }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await new RuntimeClient().catalog();
+    expect(result.models).toHaveLength(12);
+    expect(result.exploratoryModels).toEqual([]);
+    expect(result.exploratoryWarnings).toEqual(['Exploratory PPO catalog failed validation.']);
+  });
+
+  it.each([{ model_id: 'bogus', bytes: 100 }, { bytes: 100 }, { model_id: 'wp7-calibration', bytes: 100 }])(
+    'rejects an exploratory catalog entry with a missing or unknown identity: %o', async (invalid) => {
+      const models = ['A', 'B', 'C', 'D'].flatMap((candidate) => [0, 1, 2].map((seed) => ({
+        model_id: `${candidate}-seed${seed}`, sha256: 'b'.repeat(64), bytes: 100,
+      })));
+      vi.stubGlobal('fetch', vi.fn()
+        .mockResolvedValueOnce(new Response(JSON.stringify({ models }), { status: 200 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify({ tracks: [track] }), { status: 200 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify({ models: [invalid], warnings: [] }), { status: 200 })));
+      const result = await new RuntimeClient().catalog();
+      expect(result.models).toHaveLength(12);
+      expect(result.exploratoryModels).toEqual([]);
+      expect(result.exploratoryWarnings).toEqual(['Exploratory PPO catalog failed validation.']);
+    },
+  );
+
+  it('sends PPO mode with model ID, track ID, and explicit seed', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ session_id: 's1' }), { status: 201 }));
     vi.stubGlobal('fetch', fetchMock);
     await new RuntimeClient().createPpoSession('A-seed0', 'straight-sprint-v1', 412);
     const [url, options] = fetchMock.mock.calls[0] as [URL, RequestInit];
     expect(url.pathname).toBe('/api/v1/sessions');
-    expect(JSON.parse(String(options.body))).toEqual({ model_id: 'A-seed0', track_id: 'straight-sprint-v1', seed: 412 });
+    expect(JSON.parse(String(options.body))).toEqual({ mode: 'ppo', model_id: 'A-seed0', track_id: 'straight-sprint-v1', seed: 412 });
     expect(JSON.stringify(options.body)).not.toContain('model_path');
   });
 

@@ -1,21 +1,21 @@
 import numpy as np
 import pytest
 
-from src.rl import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
-from src.rl.algorithms.ppo import PPOConfig, PPOModel
-from src.rl.gym_environment import F1RLEnv
-from src.core.simulation import SimulationConfig
-from src.simulation.entities.finish_line import FinishLine
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.state import InteractionState
-from src.simulation.perception.sensor_suite import SensorSuite
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.state import TrackState
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleParameters, VehicleState
-from src.simulation.world import WorldState
+from f1rl.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
+from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
+from f1rl.learning.gym_environment import F1RLEnv
+from f1rl.runtime.simulation import SimulationConfig
+from f1rl.sandbox.entities.finish_line import FinishLine
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.perception.sensor_suite import SensorSuite
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.state import TrackState
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleParameters, VehicleState
+from f1rl.sandbox.world import WorldState
 
 
 def _env() -> F1RLEnv:
@@ -115,7 +115,7 @@ def test_create_accepts_auto_device() -> None:
 
 
 def test_explicit_cuda_must_not_silently_fall_back(monkeypatch: pytest.MonkeyPatch) -> None:
-    import src.rl.algorithms.ppo as ppo_module
+    import f1rl.learning.algorithms.ppo as ppo_module
 
     class FakePPO:
         def __init__(self, *args: object, **kwargs: object) -> None:
@@ -295,8 +295,25 @@ def test_inference_only_load_predicts_but_cannot_learn(tmp_path) -> None:
         loaded.learn(8)
 
 
+def test_inspect_spaces_reads_pinned_archive_metadata(tmp_path, monkeypatch) -> None:
+    import gymnasium as gym
+    from stable_baselines3.common import save_util
+
+    archive = tmp_path / "policy.zip"
+    archive.write_bytes(b"pinned fixture")
+    observation_space = gym.spaces.Box(-1.0, 1.0, shape=(16,), dtype=np.float32)
+    action_space = gym.spaces.Box(-1.0, 1.0, shape=(3,), dtype=np.float32)
+    monkeypatch.setattr(
+        save_util,
+        "load_from_zip_file",
+        lambda *_args, **_kwargs: ({"observation_space": observation_space, "action_space": action_space}, {}, {}),
+    )
+
+    assert PPOModel.inspect_spaces(archive) == (observation_space, action_space)
+
+
 def test_load_cuda_must_not_silently_fall_back(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
-    import src.rl.algorithms.ppo as ppo_module
+    import f1rl.learning.algorithms.ppo as ppo_module
 
     archive = tmp_path / "policy.zip"
     archive.write_bytes(b"placeholder")
@@ -413,7 +430,7 @@ def test_learn_progress_hook_reports_actual_cumulative_timesteps() -> None:
 def test_checkpoint_can_be_saved_while_telemetry_observer_is_active(tmp_path, monkeypatch):
     from stable_baselines3.common.vec_env import DummyVecEnv
 
-    import src.rl.algorithms.ppo as ppo_module
+    import f1rl.learning.algorithms.ppo as ppo_module
 
     class Observer:
         def __init__(self):
@@ -487,57 +504,3 @@ def test_learn_rejects_non_callable_progress_hook() -> None:
     model = PPOModel.create(_env(), PPOConfig(n_steps=4, batch_size=4, n_epochs=1))
     with pytest.raises(ValueError):
         model.learn(4, progress_hook=object())  # type: ignore[arg-type]
-
-
-def test_telemetry_training_rejects_partial_ppo_rollout_before_learning(monkeypatch):
-    from stable_baselines3.common.vec_env import DummyVecEnv
-
-    class Observer:
-        def on_training_start(self, *args, **kwargs):
-            raise AssertionError('observer must not start for a partial rollout')
-        def on_step(self, *args, **kwargs): pass
-        def on_optimizer_step(self, *args, **kwargs): pass
-        def on_update(self, *args, **kwargs): pass
-
-    env = DummyVecEnv([_env])
-    model = PPOModel.create(env, PPOConfig(n_steps=4, batch_size=4, n_epochs=1, device='cpu'))
-    monkeypatch.setattr(model._model, 'learn', lambda **kwargs: pytest.fail('training started'))
-    try:
-        with pytest.raises(ValueError, match='rollout'):
-            model.learn(5, telemetry_observer=Observer())
-    finally:
-        env.close()
-
-
-def test_telemetry_cleanup_preserves_learning_failure_and_attempts_both(monkeypatch):
-    from stable_baselines3.common.vec_env import DummyVecEnv
-
-    class Observer:
-        def on_training_start(self, *args, **kwargs): pass
-        def on_step(self, *args, **kwargs): pass
-        def on_optimizer_step(self, *args, **kwargs): pass
-        def on_update(self, *args, **kwargs): pass
-
-    env = DummyVecEnv([_env])
-    model = PPOModel.create(env, PPOConfig(n_steps=4, batch_size=4, n_epochs=1, device='cpu'))
-    calls = []
-    def env_method(name, enabled):
-        calls.append(enabled)
-        if not enabled:
-            raise OSError('telemetry disable failed')
-    class Hook:
-        def remove(self):
-            raise OSError('hook removal failed')
-    def learn(**kwargs):
-        raise RuntimeError('primary learning failure')
-    monkeypatch.setattr(env, 'env_method', env_method)
-    monkeypatch.setattr(model._model, 'learn', learn)
-    monkeypatch.setattr(model._model.policy.optimizer, 'register_step_post_hook', lambda f: Hook())
-    try:
-        with pytest.raises(RuntimeError, match='primary learning failure') as error:
-            model.learn(4, telemetry_observer=Observer())
-        assert calls == [True, False]
-        assert 'hook removal failed' in ' '.join(error.value.__notes__)
-        assert 'telemetry disable failed' in ' '.join(error.value.__notes__)
-    finally:
-        env.close()

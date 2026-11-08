@@ -2,12 +2,12 @@ import math
 
 import pytest
 
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.tracks import SpawnPose, build_initial_world_state
-from src.tracks.canonical import _build_track_asset
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.track_assets import SpawnPose, build_initial_world_state
+from f1rl.track_assets.canonical import _build_track_asset
 
 
 def _surface():

@@ -2,16 +2,16 @@
 from dataclasses import replace
 import pytest
 
-from src.simulation.body_collision import VehicleBodyGeometry
-from src.simulation.geometry.vector import Vec3
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
-from src.simulation.multi_surface_support import _atlas
-from src.simulation.swept_surface_clearance import (
+from f1rl.sandbox.body_collision import VehicleBodyGeometry
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
+from f1rl.sandbox.multi_surface_support import _atlas
+from f1rl.sandbox.swept_surface_clearance import (
     certify_swept_chassis_clearance,certify_swept_chassis_patch_intersection_free,
 )
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.vehicle import VehicleState
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.vehicle import VehicleState
 
 BODY=VehicleBodyGeometry(2.,.2,2.,Vec3(0.,0.,0.))
 ROAD=PlanarSurfacePatch("finite",Vec3(0.,0.,0.),Vec3(0.,0.,1.),Vec3(0.,1.,0.),1.,20.)
@@ -58,7 +58,7 @@ def test_certification_rejects_ambiguous_refinement_budget():
 
 
 def test_bounded_road_first_contact_time_is_witnessed_not_inferred_from_corner():
-    from src.simulation.swept_surface_clearance import certify_first_bounded_road_contact
+    from f1rl.sandbox.swept_surface_clearance import certify_first_bounded_road_contact
     first=state(0.,.30,0.)
     after=state(0.,.05,0.)
     event=certify_first_bounded_road_contact(first,after,BODY,ATLAS,
@@ -72,6 +72,6 @@ def test_bounded_road_first_contact_time_is_witnessed_not_inferred_from_corner()
 
 
 def test_bounded_road_first_contact_ignores_low_overhang_off_patch():
-    from src.simulation.swept_surface_clearance import certify_first_bounded_road_contact
+    from f1rl.sandbox.swept_surface_clearance import certify_first_bounded_road_contact
     p=state(1.2,.35,-.7)
     assert certify_first_bounded_road_contact(p,p,BODY,ATLAS,duration_s=.1) is None

@@ -1,6 +1,6 @@
 import pytest
 
-from src.evaluation import EpisodeMetrics, summarize_track
+from f1rl.learning.evaluation import EpisodeMetrics, summarize_track
 
 
 def _episode(

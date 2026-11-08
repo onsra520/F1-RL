@@ -1,9 +1,0 @@
-{
-  "episodes_started": 0,
-  "run_id": "WP3-OWNER-TRAINDEV-20261027-FULL-06",
-  "scientific_gate_still_blocked": true,
-  "scientific_registered": false,
-  "source_head": "6c479540134d98d7d27331879c926c8ba82c2965",
-  "source_manifest_sha256": "4c62ee924951f8b61d85f86c98090f95b77026bb2bdedb23958ad7c80b895701",
-  "status": "OWNER_AUTHORIZED_TRAIN_DEVELOPMENT"
-}

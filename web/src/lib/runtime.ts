@@ -1,6 +1,8 @@
 import type { AutoDriveConfig } from './autoDriveConfig';
 import { parseReplay, type Replay } from './replay';
 import type { TrackDocument } from './track';
+import { resolveRuntimeUrl } from './runtimeUrl';
+import { EXPLORATORY_DIGESTS } from './exploratoryModels';
 
 export type RuntimeModel = { model_id: string; sha256: string; bytes: number };
 export type RuntimeTrack = {
@@ -11,7 +13,7 @@ export type RuntimeTrack = {
   preview: TrackDocument;
   road_samples: { x: number; y: number; z: number; t: number; heading: number; nx: number; nz: number }[];
 };
-export type RuntimeCatalog = { models: RuntimeModel[]; tracks: RuntimeTrack[] };
+export type RuntimeCatalog = { models: RuntimeModel[]; exploratoryModels: RuntimeModel[]; exploratoryWarnings: string[]; tracks: RuntimeTrack[] };
 export type RuntimeCustomTrack = {
   schema_version: 'f1rl_custom_track_conversion_v1';
   development_only: true;
@@ -41,11 +43,11 @@ export function isCurrentCustomTrackValidation(requestRevision: number, currentR
 export function resolveRuntimeTrackRequest(
   selection: RuntimeTrackSelection,
   trackId: string,
-  mode: 'auto' | 'ppo' | 'manual' | 'replay',
+  mode: 'auto' | 'ppo' | 'manual' | 'hybrid' | 'replay',
 ): RuntimeTrackRequest | null {
   if (mode === 'replay') return null;
   if (selection.kind === 'train') return { kind: 'train', trackId };
-  if (!selection.validated || (mode === 'ppo' && !selection.validated.ppo_compatible)) return null;
+  if (!selection.validated || ((mode === 'ppo' || mode === 'hybrid') && !selection.validated.ppo_compatible)) return null;
   return { kind: 'custom' };
 }
 
@@ -65,7 +67,7 @@ export function shouldValidateCustomTrackOnDrive(
 
 export function shouldKeepReplayOnDrive(
   previousMode: 'sketch' | 'build' | 'drive',
-  driveMode: 'auto' | 'manual' | 'ppo' | 'replay',
+  driveMode: 'auto' | 'manual' | 'ppo' | 'hybrid' | 'replay',
   hasReplay: boolean,
 ): boolean {
   return previousMode === 'drive' && driveMode === 'replay' && hasReplay;
@@ -74,7 +76,7 @@ export function shouldKeepReplayOnDrive(
 export type RuntimeSessionStatus = {
   protocol_version: 'f1rl_runtime_v1';
   session_id: string;
-  mode: 'auto' | 'ppo' | 'manual';
+  mode: 'auto' | 'ppo' | 'manual' | 'hybrid';
   model_id: string | null;
   track_id: string;
   seed: number;
@@ -86,12 +88,15 @@ export type RuntimeSessionStatus = {
   episode_result: Record<string, unknown> | null;
   error: string | null;
   collision_terminal?: import('./replay').DevelopmentCollisionTerminal;
-  provenance: 'TRAIN-development' | 'manual-development' | 'auto-development' | 'custom-development';
+  provenance: 'TRAIN-development' | 'manual-development' | 'auto-development' | 'custom-development' | 'exploratory-development' | 'hybrid-development';
+  hybrid?: { ppo_steering_weight: number; steps: number; steering_interventions: number; obstacle_takeover_steps?: number; obstacle_takeover_active?: boolean };
   speed_multiplier?: number;
   physics?: { mode: string; ground_motion_version: string; sha256: string };
   race_contract?: { version: string } | null;
   auto_drive_config?: AutoDriveConfig;
   effective_max_speed_kmh?: number;
+  auto_drive_guidance?: 'directed_gate_crossing';
+  guidance_max_speed_kmh?: number;
   track_preview?: RuntimeCustomTrack;
 };
 export type RuntimeFrame = {
@@ -128,8 +133,7 @@ export type RuntimeSocketEvent = {
 
 // A local E2E backend may use another port; never accept a non-loopback endpoint.
 const configuredRuntimeUrl: string = import.meta.env.VITE_RUNTIME_URL || '';
-export const DEFAULT_RUNTIME_URL = /^http:\/\/(?:127\.0\.0\.1|localhost):\d+$/.test(configuredRuntimeUrl)
-  ? configuredRuntimeUrl : 'http://127.0.0.1:8000';
+export const DEFAULT_RUNTIME_URL = resolveRuntimeUrl(configuredRuntimeUrl);
 const EXPECTED_MODEL_IDS = ['A', 'B', 'C', 'D'].flatMap((candidate) => [0, 1, 2].map((seed) => `${candidate}-seed${seed}`));
 
 export class RuntimeApiError extends Error {
@@ -173,13 +177,29 @@ export class RuntimeClient {
           track.road_samples.some((point) => ![point.x, point.y, point.z, point.t, point.heading, point.nx, point.nz].every(Number.isFinite)))) {
       throw new RuntimeApiError('Runtime catalog is outside the development-only contract', 'invalid_catalog', 502);
     }
-    return { models: models.models, tracks: tracks.tracks };
+    let exploratory: { models: RuntimeModel[]; warnings: string[] };
+    try {
+      exploratory = await request(this.baseUrl, '/api/v1/exploratory-models');
+    } catch (error) {
+      exploratory = { models: [], warnings: error instanceof RuntimeApiError && error.status === 404
+        ? ['Exploratory PPO is unavailable on this runtime.'] : ['Exploratory PPO catalog could not be loaded.'] };
+    }
+    if (!exploratory || typeof exploratory !== 'object' || !Array.isArray(exploratory.models) || !Array.isArray(exploratory.warnings) ||
+        exploratory.models.length > 2 || exploratory.warnings.some((warning) => typeof warning !== 'string') ||
+        exploratory.models.some((model) => !model || typeof model !== 'object' || typeof model.model_id !== 'string' ||
+          !Object.prototype.hasOwnProperty.call(EXPLORATORY_DIGESTS, model.model_id) || typeof model.sha256 !== 'string' ||
+          EXPLORATORY_DIGESTS[model.model_id] !== model.sha256 ||
+          !Number.isInteger(model.bytes) || model.bytes <= 0) ||
+        new Set(exploratory.models.map((model) => model.model_id)).size !== exploratory.models.length) {
+      exploratory = { models: [], warnings: ['Exploratory PPO catalog failed validation.'] };
+    }
+    return { models: models.models, exploratoryModels: exploratory.models, exploratoryWarnings: exploratory.warnings, tracks: tracks.tracks };
   }
 
   createPpoSession(modelId: string, trackId: string, seed: number): Promise<RuntimeSessionStatus> {
     return request(this.baseUrl, '/api/v1/sessions', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ model_id: modelId, track_id: trackId, seed }),
+      body: JSON.stringify({ mode: 'ppo', model_id: modelId, track_id: trackId, seed }),
     });
   }
   createManualSession(trackId: string, seed: number): Promise<RuntimeSessionStatus> {
@@ -194,10 +214,16 @@ export class RuntimeClient {
       body: JSON.stringify({ mode: 'auto', track_id: trackId, seed, ...(config ? { auto_drive_config: config } : {}) }),
     });
   }
-  createCustomSession(track: unknown, mode: 'auto' | 'manual' | 'ppo', seed: number, modelId?: string, traceId?: string, config?: AutoDriveConfig, experimentalV4 = false): Promise<RuntimeSessionStatus> {
+  createHybridSession(modelId: string, trackId: string, seed: number, config?: AutoDriveConfig): Promise<RuntimeSessionStatus> {
+    return request(this.baseUrl, '/api/v1/sessions', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mode: 'hybrid', model_id: modelId, track_id: trackId, seed, ...(config ? { auto_drive_config: config } : {}) }),
+    });
+  }
+  createCustomSession(track: unknown, mode: 'auto' | 'manual' | 'ppo' | 'hybrid', seed: number, modelId?: string, traceId?: string, config?: AutoDriveConfig, experimentalV4 = false): Promise<RuntimeSessionStatus> {
     const body: Record<string, unknown> = { mode, seed, custom_track: track };
     if (modelId) body.model_id = modelId;
-    if (mode === 'auto' && config) body.auto_drive_config = config;
+    if ((mode === 'auto' || mode === 'hybrid') && config) body.auto_drive_config = config;
     if (mode === 'auto' && experimentalV4) body.physics_profile = 'experimental_v4';
     return request(this.baseUrl, '/api/v1/sessions', {
       method: 'POST', headers: { 'content-type': 'application/json', ...(traceId ? { 'x-trace-id': traceId } : {}) }, body: JSON.stringify(body),

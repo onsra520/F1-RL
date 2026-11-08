@@ -1,10 +1,10 @@
 """No training: blocked paths must reject before entering SB3 learn."""
 import pytest
 
-from src.rl.algorithms.ppo import PPO, PPOConfig, PPOModel
+from f1rl.learning.algorithms.ppo import PPO, PPOConfig, PPOModel
 from tests.learning.training.mocks.mock_factories import make_factory
 from tests.integration.test_wp7_physics_integration import factory, BODY, SUSPENSION
-from src.core.physics import PhysicsConfig
+from f1rl.runtime.physics import PhysicsConfig
 
 
 def research_env():
@@ -56,8 +56,8 @@ def test_prediction_only_load_cannot_later_train_research_env(tmp_path, monkeypa
 @pytest.mark.parametrize("entrypoint", ["create", "backend_create", "raw_learn"])
 def test_real_vector_backend_cannot_bypass_any_project_learning_entrypoint(backend, entrypoint, monkeypatch):
     from stable_baselines3 import PPO as SB3PPO
-    from src.training.config import VectorEnvConfig
-    from src.training.vector_env import make_vector_env
+    from f1rl.learning.training.config import VectorEnvConfig
+    from f1rl.learning.training.vector_env import make_vector_env
     candidate = factory(PhysicsConfig("wp7_suspension_v1", BODY, SUSPENSION))
     vector = make_vector_env(candidate, VectorEnvConfig(n_envs=1, backend=backend))
     baseline = make_factory().create()

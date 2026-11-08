@@ -1,20 +1,20 @@
 from __future__ import annotations
 
-from src.rl import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
-from src.training.env_factory import F1RLEnvFactory, TrainingScenario, TrainingScenarioSet
-from src.core.simulation import SimulationConfig
-from src.simulation.entities.finish_line import FinishLine
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.state import InteractionState
-from src.simulation.perception.sensor_suite import SensorSuite
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.state import TrackState
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleParameters, VehicleState
-from src.simulation.world import WorldState
+from f1rl.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
+from f1rl.learning.training.env_factory import F1RLEnvFactory, TrainingScenario, TrainingScenarioSet
+from f1rl.runtime.simulation import SimulationConfig
+from f1rl.sandbox.entities.finish_line import FinishLine
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.perception.sensor_suite import SensorSuite
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.state import TrackState
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleParameters, VehicleState
+from f1rl.sandbox.world import WorldState
 
 
 def make_factory(*, finish_z: float = 100.0, max_steps: int = 100) -> F1RLEnvFactory:

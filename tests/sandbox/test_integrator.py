@@ -2,12 +2,12 @@ from math import pi, sqrt
 
 import pytest
 
-from src.simulation.dynamics.integrator import integrate
-from src.simulation.dynamics.vehicle_dynamics import MotionDerivatives
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.surface import SurfaceContact
-from src.simulation.vehicle import VehicleParameters, VehicleState
+from f1rl.sandbox.dynamics.integrator import integrate
+from f1rl.sandbox.dynamics.vehicle_dynamics import MotionDerivatives
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.surface import SurfaceContact
+from f1rl.sandbox.vehicle import VehicleParameters, VehicleState
 
 
 def parameters(max_ground_speed: float = 50.0) -> VehicleParameters:

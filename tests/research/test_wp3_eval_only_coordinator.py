@@ -6,8 +6,8 @@ from pathlib import Path
 import json
 import pytest
 
-from src.validation import wp3_eval_only_coordinator as co
-from src.validation.wp3_eval_only_admission import MODELS, STRATA, TRACKS
+from f1rl.research import wp3_eval_only_coordinator as co
+from f1rl.research.wp3_eval_only_admission import MODELS, STRATA, TRACKS
 
 
 def roster():
@@ -98,6 +98,11 @@ def test_engineering_run_writes_append_only_evidence(monkeypatch,tmp_path):
     assert doc["scientific_evidence"] is False
     assert (out/"episodes.csv").is_file()
     assert (out/"REPORT.md").is_file()
+    assert all(x["runtime_profile"] == {
+        "requested_profile": co.FULL06_RUNTIME_PROFILE,
+        "effective": None,
+        "validation": "not_available_from_injected_evaluator",
+    } for x in doc["episodes"])
     assert co._json(out/"WP3-ENGINEERING-EVALUATION.json")["sha256"] == co.digest({
         k:v for k,v in doc.items() if k != "sha256"})
     with pytest.raises(FileExistsError):
@@ -149,12 +154,12 @@ def test_full_eval_hard_gate_propagates(monkeypatch,tmp_path):
 
 
 def test_cli_entrypoint_parses_as_python():
-    script = Path(__file__).resolve().parents[2] / "scripts/evaluation/eval_only_coordinator.py"
+    script = Path(__file__).resolve().parents[2] / "scripts/wp3_eval_only_coordinator.py"
     compile(script.read_text(encoding="utf8"), str(script), "exec")
 
 
 def test_real_admission_gate_checksum_survives_bound_source_head(monkeypatch, tmp_path):
-    from src.validation.wp3_eval_only_admission import refuse_full_eval as original_gate
+    from f1rl.research.wp3_eval_only_admission import refuse_full_eval as original_gate
     root, history = tmp_path / "root", tmp_path / "history"
     root.mkdir()
     history.mkdir()

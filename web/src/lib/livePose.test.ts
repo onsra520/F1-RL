@@ -59,6 +59,13 @@ describe('LivePoseInterpolator', () => {
     expect(poses.sample(1200)).toEqual({ x: 2, y: 0, z: 0, heading: 0, speed: 2 });
   });
 
+  it('accepts increasing ticks received at the same clock instant', () => {
+    const poses = new LivePoseInterpolator();
+    expect(poses.push(frame(0, 0, 0), 1000)).toBe(true);
+    expect(poses.push(frame(1, .1, 1), 1000)).toBe(true);
+    expect(poses.sample(2000)?.x).toBe(1);
+  });
+
   it('holds on pause and resumes from the held pose', () => {
     const poses = new LivePoseInterpolator();
     poses.push(frame(1, 0, 0), 1000);
@@ -145,6 +152,32 @@ describe('3D quaternion and bounded WebSocket jitter interpolation', () => {
 
 
 describe('live WebSocket position continuity', () => {
+  it('keeps blending after a short packet gap when recent frame cadence is slower than Physics', () => {
+    const pose = new LivePoseInterpolator();
+    pose.push(frame(0, 0, 0), 1000);
+    pose.push(frame(1, .1, 1), 1167);
+    pose.push(frame(2, .2, 2), 1257);
+    expect(pose.sample(1450)!.x).toBeGreaterThan(pose.sample(1400)!.x);
+    expect(pose.sample(1450)!.x).toBeLessThanOrEqual(2);
+  });
+
+  it('discards old cadence when playback speed changes', () => {
+    const pose = new LivePoseInterpolator();
+    pose.push(frame(0, 0, 0), 1000);
+    pose.push(frame(1, .1, 1), 1167);
+    pose.setPlaybackMultiplier(16);
+    pose.push(frame(2, .2, 2), 1174);
+    expect(pose.sample(1184)!.x).toBe(2);
+  });
+
+  it('keeps displayed lag bounded during consistently slow frame delivery', () => {
+    const pose = new LivePoseInterpolator();
+    pose.setPlaybackMultiplier(16);
+    pose.push(frame(0, 0, 0), 1000);
+    for (let tick = 1; tick <= 100; tick++) pose.push(frame(tick, tick * .1, tick * .5), 1000 + tick * 300);
+    expect(pose.sample(31000)!.x).toBeGreaterThan(49.3);
+    expect(pose.sample(31000)!.x).toBeLessThanOrEqual(50);
+  });
   it('preserves the exact visible pose at each incoming frame when the previous blend is incomplete', () => {
     const pose = new LivePoseInterpolator();
     pose.push(frame(0, 0, 0), 1000);
@@ -228,6 +261,68 @@ describe('configured speed limit for displayed pose', () => {
 });
 
 describe('simulation playback multiplier visual cap', () => {
+  it('keeps moving between regularly paced frames at quarter speed', () => {
+    const pose = new LivePoseInterpolator(3.75);
+    pose.setPlaybackMultiplier(.25);
+    pose.push(frame(0, 0, 0), 1000);
+    pose.push(frame(1, .1, .5), 1400);
+    expect(pose.sample(1700)!.x).toBeGreaterThan(pose.sample(1650)!.x);
+    expect(pose.sample(1750)!.x).toBeLessThanOrEqual(.5);
+  });
+  it('tracks regularly paced frames at accelerated speed without accumulating excessive lag', () => {
+    const pose = new LivePoseInterpolator(240);
+    pose.setPlaybackMultiplier(16);
+    pose.push(frame(0, 0, 0), 1000);
+    for (let tick = 1; tick <= 20; tick++) pose.push(frame(tick, tick * .1, tick * .05), 1000 + tick * 6.25);
+    expect(pose.sample(1125)!.x).toBeGreaterThan(.85);
+    expect(pose.sample(1125)!.x).toBeLessThanOrEqual(1);
+  });
+  it('follows actual cadence when the backend cannot reach the requested speed', () => {
+    const pose = new LivePoseInterpolator(240);
+    pose.setPlaybackMultiplier(16);
+    pose.push(frame(0, 0, 0), 1000);
+    pose.push(frame(1, .1, .5), 1100);
+    expect(pose.sample(1150)!.x).toBeCloseTo(.25);
+    expect(pose.sample(1195)!.x).toBeGreaterThan(pose.sample(1150)!.x);
+  });
+  it('keeps interpolating when simulation frames arrive every half second', () => {
+    const pose = new LivePoseInterpolator(240);
+    pose.setPlaybackMultiplier(16);
+    pose.push(frame(0, 0, 0), 1000);
+    pose.push(frame(1, .1, 2), 1500);
+    expect(pose.sample(1900)!.x).toBeGreaterThan(pose.sample(1800)!.x);
+    expect(pose.sample(1990)!.x).toBeLessThanOrEqual(2);
+  });
+  it('respects a lower visual speed when the playback rate changes during a blend', () => {
+    const pose = new LivePoseInterpolator(240);
+    pose.setPlaybackMultiplier(16);
+    pose.push(frame(0, 0, 0), 1000);
+    pose.push(frame(1, .1, 1), 1006.25);
+    const visible = pose.sample(1008)!.x;
+    pose.setMaxVisualSpeedMps(3.75, 1008);
+    pose.setPlaybackMultiplier(.25);
+    expect(pose.sample(1008)!.x).toBeCloseTo(visible);
+    expect(pose.sample(1010)!.x - visible).toBeLessThanOrEqual(3.75 * .002 + 1e-8);
+  });
+  it('does not exceed the visual speed limit when finishing a slow blend', () => {
+    const pose = new LivePoseInterpolator(3.75);
+    pose.setPlaybackMultiplier(.25);
+    pose.push(frame(0, 0, 0), 1000);
+    pose.push(frame(1, .1, 1.5), 1400);
+    pose.finish(1400);
+    expect(pose.sample(1500)!.x).toBeLessThanOrEqual(.375 + 1e-8);
+    expect(pose.sample(1800)!.x).toBeCloseTo(1.5);
+  });
+  it('respects the visual speed limit when finishing long after a pause', () => {
+    const pose = new LivePoseInterpolator(15);
+    pose.push(frame(0, 0, 0), 1000);
+    pose.push(frame(1, .1, 1), 1100);
+    pose.pause(1150);
+    pose.finish(5000);
+    expect(pose.sample(5000)!.x).toBeCloseTo(.5);
+    expect(pose.sample(5010)!.x).toBeLessThanOrEqual(.65 + 1e-8);
+    expect(pose.sample(5100)!.x).toBeCloseTo(1);
+  });
   it('allows realtime and accelerated play without packet teleports', () => {
     const pose = new LivePoseInterpolator(15);
     pose.push(frame(0, 0, 0), 1000);

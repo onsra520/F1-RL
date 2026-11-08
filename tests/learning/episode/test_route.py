@@ -2,13 +2,13 @@ from dataclasses import FrozenInstanceError, dataclass
 
 import pytest
 
-from src.rl.episode import RaceCheckpoint, RaceFinish, RaceProgressState, RaceRoute
-from src.simulation.entities.checkpoint import Checkpoint
-from src.simulation.entities.finish_line import FinishLine
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.volume import OrientedBoxVolume
+from f1rl.learning.episode import RaceCheckpoint, RaceFinish, RaceProgressState, RaceRoute
+from f1rl.sandbox.entities.checkpoint import Checkpoint
+from f1rl.sandbox.entities.finish_line import FinishLine
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.volume import OrientedBoxVolume
 
 
 @dataclass(frozen=True)

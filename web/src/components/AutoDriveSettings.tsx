@@ -66,7 +66,7 @@ export default function AutoDriveSettings({ config, onChange, onValidityChange, 
       <small>km/h</small>
     </span></label>
     {!speedValid && <small role="alert">Enter a speed above 0 and at most 300 km/h.</small>}
-    <small className="auto-drive-cap">Target {config.target_max_speed_kmh} km/h · Physical limit {physicalCapKmh == null
+    <small className="auto-drive-cap">Target {config.target_max_speed_kmh} km/h · Effective limit {physicalCapKmh == null
       ? 'determined by track vehicle' : physicalCapKmh.toFixed(1) + ' km/h'} · no synthetic velocity</small>
     <details className="auto-advanced"><summary>Advanced settings</summary>
       {advanced.map(field => <label key={field.key}>{field.label}

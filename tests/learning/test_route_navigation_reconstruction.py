@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from src.rl.route_navigation import AuthoredRoute
-from src.simulation.geometry.vector import Vec3
-from src.tracks import load_track_asset
+from f1rl.learning.route_navigation import AuthoredRoute
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.track_assets import load_track_asset
 
 
 def _route(track_id="straight-sprint-v1"):

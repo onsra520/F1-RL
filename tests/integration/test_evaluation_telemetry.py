@@ -2,26 +2,26 @@ from pathlib import Path
 
 import numpy as np
 
-from src.rl.episode import EpisodeConfig
-from src.rl.experiments import ExperimentDefinition
-from src.rl.gym_environment import F1RLEnv
-from src.rl.observation import ObservationConfig, ObservationEncoder
-from src.rl.rewards import (
+from f1rl.learning.episode import EpisodeConfig
+from f1rl.learning.experiments import ExperimentDefinition
+from f1rl.learning.gym_environment import F1RLEnv
+from f1rl.learning.observation import ObservationConfig, ObservationEncoder
+from f1rl.learning.rewards import (
     CollisionPenalty,
     RewardComposer,
     TargetProgressReward,
     TimePenalty,
 )
-from src.core.simulation import SimulationConfig
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.state import InteractionState
-from src.simulation.perception import RangefinderSpec, SensorSuite
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.state import TrackState
-from src.simulation.vehicle import VehicleParameters, VehicleState
-from src.simulation.world import WorldState
-from src.tracks import load_track_asset
+from f1rl.runtime.simulation import SimulationConfig
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.perception import RangefinderSpec, SensorSuite
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.state import TrackState
+from f1rl.sandbox.vehicle import VehicleParameters, VehicleState
+from f1rl.sandbox.world import WorldState
+from f1rl.track_assets import load_track_asset
 
 
 PROFILE = Path("configs/experiments/ppo-generalization-v1.yml")

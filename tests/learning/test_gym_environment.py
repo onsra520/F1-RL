@@ -1,26 +1,26 @@
 import numpy as np
 import pytest
 
-from src.rl import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
-from src.rl.gym_environment import F1RLEnv
-from src.rl.algorithms.ppo import PPOConfig, PPOModel
-from src.core.simulation import SimulationConfig
-from src.simulation.entities.boost_pad import BoostPad
-from src.simulation.entities.finish_line import FinishLine
-from src.simulation.entities.obstacle import Obstacle
-from src.simulation.entities.slow_zone import SlowZone
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.state import InteractionState
-from src.simulation.perception.rangefinder import RangefinderSpec
-from src.simulation.perception.sensor_suite import SensorSuite
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.state import TrackState
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleParameters, VehicleState
-from src.simulation.world import WorldState
+from f1rl.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
+from f1rl.learning.gym_environment import F1RLEnv
+from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
+from f1rl.runtime.simulation import SimulationConfig
+from f1rl.sandbox.entities.boost_pad import BoostPad
+from f1rl.sandbox.entities.finish_line import FinishLine
+from f1rl.sandbox.entities.obstacle import Obstacle
+from f1rl.sandbox.entities.slow_zone import SlowZone
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.perception.rangefinder import RangefinderSpec
+from f1rl.sandbox.perception.sensor_suite import SensorSuite
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.state import TrackState
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleParameters, VehicleState
+from f1rl.sandbox.world import WorldState
 
 
 def _volume(center: Vec3) -> OrientedBoxVolume:
@@ -138,7 +138,6 @@ def test_learning_observer_enables_training_info_only_during_learn(monkeypatch) 
 
     backend = SimpleNamespace(
         num_timesteps=0,
-        n_steps=1,
         get_env=lambda: env,
         policy=SimpleNamespace(optimizer=SimpleNamespace(register_step_post_hook=register_step_post_hook)),
     )
@@ -486,7 +485,7 @@ def test_modifier_telemetry_ids_are_deterministically_ordered() -> None:
 def test_simulation_step_failure_leaves_episode_active_and_progress_unchanged(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from src.core.simulation import Simulation
+    from f1rl.runtime.simulation import Simulation
 
     env = _env()
     env.reset()
@@ -550,8 +549,8 @@ def test_bad_post_step_observation_requires_reset(monkeypatch: pytest.MonkeyPatc
 
 
 def test_learning_package_reexports_f1rl_env_without_regressing_existing_exports() -> None:
-    import src.rl as learning
-    from src.rl.gym_environment import F1RLEnv as DirectF1RLEnv
+    import f1rl.learning as learning
+    from f1rl.learning.gym_environment import F1RLEnv as DirectF1RLEnv
 
     assert learning.F1RLEnv is DirectF1RLEnv
     for name in (
@@ -573,8 +572,8 @@ def test_framework_dependency_boundaries_remain_one_way() -> None:
 
     root = Path(__file__).parents[2]
     lower_sources = [
-        *(root / "src" / "simulation").rglob("*.py"),
-        *(root / "src" / "core").rglob("*.py"),
+        *(root / "f1rl" / "sandbox").rglob("*.py"),
+        *(root / "f1rl" / "runtime").rglob("*.py"),
     ]
     lower_text = "\n".join(path.read_text(encoding="utf-8") for path in lower_sources)
     assert "import gymnasium" not in lower_text
@@ -587,7 +586,7 @@ def test_gym_adapter_has_no_model_registration_or_rendering_dependencies() -> No
     from pathlib import Path
 
     root = Path(__file__).parents[2]
-    source = (root / "src" / "rl" / "gym_environment.py").read_text(encoding="utf-8").lower()
+    source = (root / "f1rl" / "learning" / "gym_environment.py").read_text(encoding="utf-8").lower()
 
     for forbidden in (
         "stable_baselines3",

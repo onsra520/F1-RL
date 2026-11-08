@@ -4,11 +4,11 @@ from math import cos, sin
 
 import pytest
 
-from src.simulation.coupled_longitudinal_dynamics import (
+from f1rl.sandbox.coupled_longitudinal_dynamics import (
     LongitudinalContactPolicy, integrate_coupled_longitudinal,
 )
-from src.simulation.geometry.vector import Vec3
-from src.simulation.vehicle import VehicleControl
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.vehicle import VehicleControl
 from tests.sandbox.test_road_relative_suspension import ramp_translation
 
 
@@ -99,8 +99,8 @@ def test_actuator_power_cap_and_dissipative_braking(brake,power):
 
 
 def test_force_jump_at_actual_incline_seam_refines_without_relaxing_work_tolerance():
-    from src.simulation.geometry.rotation import Quaternion
-    from src.simulation.independent_suspension_dynamics import SuspensionDynamicsState, SuspensionResolutionError
+    from f1rl.sandbox.geometry.rotation import Quaternion
+    from f1rl.sandbox.independent_suspension_dynamics import SuspensionDynamicsState, SuspensionResolutionError
 
     factory, _, _, suspension = ramp_translation()
     dynamic = SuspensionDynamicsState(.49999747118574095,0.,-.0031804505282522146)
@@ -164,13 +164,13 @@ def test_unregistered_contact_policy_is_rejected(field,value):
 
 @pytest.mark.parametrize('change', ['lateral','yaw','yaw_orientation','roll','airborne','inconsistent_heave','speed','travel'])
 def test_kernel_rejects_unsupported_or_inconsistent_physical_state(change):
-    from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
+    from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
     factory, _, _, suspension = ramp_translation()
     vehicle,dynamic = factory.initial_state.vehicle,factory.initial_state.suspension
     if change=='lateral': vehicle=replace(vehicle,velocity=Vec3(.1,0.,0.))
     if change=='yaw': vehicle=replace(vehicle,angular_velocity=Vec3(0.,.1,0.))
     if change=='yaw_orientation':
-        from src.simulation.geometry.rotation import Quaternion
+        from f1rl.sandbox.geometry.rotation import Quaternion
         vehicle=replace(vehicle,orientation=Quaternion.from_axis_angle(Vec3(0.,1.,0.),2e-5))
     if change=='roll': dynamic=replace(dynamic,roll_z_rad=.01)
     if change=='airborne': vehicle=replace(vehicle,grounded=False)

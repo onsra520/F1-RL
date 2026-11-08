@@ -1,13 +1,13 @@
 """Face-impact certificate: geometry -> TOI -> normal impulse -> energy."""
 from dataclasses import replace
 import pytest
-from src.simulation.certified_face_impact import certify_linear_face_impact
-from src.simulation.body_collision import VehicleBodyGeometry
-from src.simulation.geometry.vector import Vec3
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.rigid_body_impact_response import RigidBodyImpactMass
-from src.simulation.vehicle import VehicleState
+from f1rl.sandbox.certified_face_impact import certify_linear_face_impact
+from f1rl.sandbox.body_collision import VehicleBodyGeometry
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.rigid_body_impact_response import RigidBodyImpactMass
+from f1rl.sandbox.vehicle import VehicleState
 
 Q=Quaternion.identity()
 Z=Vec3(0.,0.,0.)

@@ -5,9 +5,9 @@ import yaml
 import numpy as np
 import pytest
 
-from src.rl.reconstruction import RecoveryCandidate, build_training_scenarios
-from src.rl.offtrack import OffTrackConfig
-from src.rl.rewards import RouteProgressReward, OffTrackPenalty
+from f1rl.learning.reconstruction import RecoveryCandidate, build_training_scenarios
+from f1rl.learning.offtrack import OffTrackConfig
+from f1rl.learning.rewards import RouteProgressReward, OffTrackPenalty
 
 CANDIDATE=Path("configs/recovery/wp7-c2-candidate.yml")
 TRAIN=("straight-sprint-v1","slalom-v1","right-turn-v1","ramp-v1")
@@ -36,8 +36,8 @@ def test_builder_instantiates_only_4_training_factories_with_identical_contract(
         assert factory.offtrack_config==OffTrackConfig(6.0,10)
         assert tuple(type(term) for term in factory.reward_composer.terms)==(
             RouteProgressReward,
-            __import__("src.rl.rewards",fromlist=["CollisionPenalty"]).CollisionPenalty,
-            __import__("src.rl.rewards",fromlist=["TimePenalty"]).TimePenalty,
+            __import__("f1rl.learning.rewards",fromlist=["CollisionPenalty"]).CollisionPenalty,
+            __import__("f1rl.learning.rewards",fromlist=["TimePenalty"]).TimePenalty,
             OffTrackPenalty,
         )
         env=factory.create()

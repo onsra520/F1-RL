@@ -6,10 +6,10 @@ from types import SimpleNamespace
 
 import pytest
 
-import src.training.runner as runner_module
-from src.rl.algorithms.ppo import PPOConfig
-from src.training.config import TrainingRunConfig, VectorEnvConfig
-from src.training.runner import (
+import f1rl.learning.training.runner as runner_module
+from f1rl.learning.algorithms.ppo import PPOConfig
+from f1rl.learning.training.config import TrainingRunConfig, VectorEnvConfig
+from f1rl.learning.training.runner import (
     TrainingRunResult,
     TrainingRunner,
     _advance_checkpoint_schedule,
@@ -397,6 +397,44 @@ def test_run_multi_coalesces_crossed_thresholds_at_actual_step(
     state = json.loads((result.run_directory / "state.json").read_text(encoding="utf-8"))
     assert state["latest_checkpoint"] == "checkpoints/ppo-multitrack-seed42-sample123-step51200.zip"
     assert state["actual_total_timesteps"] == 61_440
+
+
+def test_run_single_records_actual_200704_final_step_without_live_ppo(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    MockPPOModel.reset()
+    MockPPOModel.progress_points = (200_704,)
+    vector = MockVecEnv()
+    monkeypatch.setattr(runner_module, "make_vector_env", lambda factory, config: vector)
+    monkeypatch.setattr(runner_module, "PPOModel", MockPPOModel)
+    monkeypatch.setattr(runner_module, "_now", _started_at)
+
+    config = _config(
+        tmp_path / "runs",
+        total_timesteps=200_000,
+        checkpoint_every_steps=None,
+    )
+    config = TrainingRunConfig(
+        ppo=config.ppo,
+        vector_env=VectorEnvConfig(n_envs=8),
+        total_timesteps=config.total_timesteps,
+        checkpoint_every_steps=config.checkpoint_every_steps,
+        sampling_seed=config.sampling_seed,
+        artifacts_root=config.artifacts_root,
+    )
+    result = TrainingRunner(config).run_single(make_factory())
+
+    assert result.requested_total_timesteps == 200_000
+    assert result.actual_total_timesteps == 200_704
+    assert result.checkpoint_paths == ()
+    assert result.final_model_path.is_file()
+    assert MockPPOModel.instances[-1].learn_calls == [200_000]
+    state = json.loads((result.run_directory / "state.json").read_text(encoding="utf-8"))
+    assert state["requested_total_timesteps"] == 200_000
+    assert state["actual_total_timesteps"] == 200_704
+    assert state["final_model"] == "ppo-singletrack-seed42-final-model.zip"
+    assert vector.closed is True
 
 def test_run_failure_marks_state_failed_and_closes_env(
     tmp_path: Path,

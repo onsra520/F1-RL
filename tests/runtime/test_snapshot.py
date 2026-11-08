@@ -3,13 +3,16 @@ from pathlib import Path
 
 import numpy as np
 
-from src.runtime.catalog import RuntimeCatalog
+from f1rl.local_demo.runtime.catalog import RuntimeCatalog
+from f1rl.local_demo.runtime.adapter import RuntimeEnvironmentAdapter
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_gym_environment_exposes_read_only_authoritative_runtime_snapshot():
-    env = RuntimeCatalog(ROOT).create_environment("straight-sprint-v1", seed=412)
+    env = RuntimeEnvironmentAdapter(
+        RuntimeCatalog(ROOT).create_environment("straight-sprint-v1", seed=412, mode="manual")
+    )
     try:
         env.reset(seed=412)
         before = env.runtime_snapshot()

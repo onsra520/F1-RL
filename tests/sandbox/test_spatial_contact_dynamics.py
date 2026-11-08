@@ -4,11 +4,11 @@ from math import cos, sin, tan
 
 import pytest
 
-from src.simulation.spatial_contact_dynamics import SpatialContactPolicy, integrate_spatial_contact
-from src.simulation.coupled_longitudinal_dynamics import LongitudinalContactPolicy, integrate_coupled_longitudinal
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.vehicle import VehicleControl
+from f1rl.sandbox.spatial_contact_dynamics import SpatialContactPolicy, integrate_spatial_contact
+from f1rl.sandbox.coupled_longitudinal_dynamics import LongitudinalContactPolicy, integrate_coupled_longitudinal
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.vehicle import VehicleControl
 from tests.sandbox.test_road_relative_suspension import ramp_translation
 
 
@@ -93,7 +93,7 @@ def test_friction_circle_power_and_lateral_dissipation_remain_bounded():
 
 
 def test_two_continuous_patches_with_mixed_normals_have_actual_lateral_impulse():
-    from src.simulation.track.patch import PlanarSurfacePatch
+    from f1rl.sandbox.track.patch import PlanarSurfacePatch
     f,_,_,s=ramp_translation()
     angle=.05
     surfaces=(PlanarSurfacePatch('left',Vec3(-3.,0.,25.),Vec3(0.,0.,1.),Vec3(0.,1.,0.),6.,50.),
@@ -114,7 +114,7 @@ def test_two_continuous_patches_with_mixed_normals_have_actual_lateral_impulse()
 
 @pytest.mark.parametrize('change',['airborne','missing_support','overspeed'])
 def test_spatial_kernel_rejects_states_outside_registered_domain(change):
-    from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
+    from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
     f,_,_,s=ramp_translation()
     vehicle=f.initial_state.vehicle
     if change=='airborne': vehicle=replace(vehicle,grounded=False)
@@ -127,8 +127,8 @@ def test_spatial_kernel_rejects_states_outside_registered_domain(change):
 
 def test_spatial_kernel_classifies_only_the_registered_outside_support_verdict(monkeypatch):
     from types import SimpleNamespace
-    from src.simulation import spatial_contact_dynamics
-    from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
+    from f1rl.sandbox import spatial_contact_dynamics
+    from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
 
     f,_,_,s=ramp_translation()
     monkeypatch.setattr(spatial_contact_dynamics, "certify_multisurface_support",
@@ -142,8 +142,8 @@ def test_spatial_kernel_classifies_only_the_registered_outside_support_verdict(m
 
 def test_spatial_kernel_classifies_witnessed_swept_outside_as_unsupported_contact(monkeypatch):
     from types import SimpleNamespace
-    from src.simulation import spatial_contact_dynamics
-    from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
+    from f1rl.sandbox import spatial_contact_dynamics
+    from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
 
     f,_,_,s=ramp_translation()
     monkeypatch.setattr(spatial_contact_dynamics, "certify_multisurface_support",
@@ -183,7 +183,7 @@ def test_nonplanar_spin_acceleration_matches_independent_euler_equations():
 
 
 def test_work_refinement_exhaustion_rejects_then_refines_same_tolerance():
-    from src.simulation.independent_suspension_dynamics import SuspensionResolutionError
+    from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionError
     f,_,_,s=ramp_translation()
     s=replace(s,integration_substeps=1)
     v=replace(f.initial_state.vehicle,position=f.initial_state.vehicle.position+Vec3(0.,.01,0.))

@@ -1,0 +1,8 @@
+# Original WP3 archived fixtures: preserve *exact* historical Git blob bytes.
+# Do not normalize EOL on Windows or Linux; SHA-256 is part of the evidence.
+WP3-V4AJ-REGISTERED-CRASH-V1-THREE-REPLAY-20261024.json -text
+WP3-CRASH-TERMINAL-V1-REGRESSION-20261024.txt -text
+WP3-CRASH-TERMINAL-V1-TECHNICAL-REGISTRY-20261024.json -text
+WP3-V4L-RIGHT-TURN-PATCH-BRACKET-20261024.json -text
+WP3-V4N-RAMP-BUMP-TRACE-20261024.json -text
+WP3-V4M-SLALOM-GROUNDED-CONTACT-20261024.json -text

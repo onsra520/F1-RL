@@ -1,0 +1,138 @@
+{
+  "current_closeout_parent_source_commit": "d0e61d54232c6e4d92a7ab2484ebf7a8f1c5040d",
+  "deterministic_cpu": true,
+  "duration_from_simulated_steps_inferred": false,
+  "duration_values_invented": false,
+  "episodes": [
+    {
+      "checkpoint_order": [
+        "checkpoint-0",
+        "checkpoint-1",
+        "finish"
+      ],
+      "duration_explanation": "No per-episode elapsed wall-clock start/end timestamps or duration were recorded in the locked source log. Cannot infer from steps.",
+      "duration_is_measured": false,
+      "duration_seconds": null,
+      "duration_status": "NOT_RECORDED",
+      "model": "A-seed2",
+      "reset_seed": 20261106,
+      "result": "FINISH",
+      "source_log": "A-seed2__left-turn-train-v2.jsonl",
+      "source_log_sha256": "ff8d29e87c455d08fd811f268bd4db1bd894a1373f8d2bf3425f36c46e1e605b",
+      "steps": 176,
+      "track": "left-turn-train-v2"
+    },
+    {
+      "checkpoint_order": [
+        "checkpoint-0",
+        "checkpoint-1",
+        "finish"
+      ],
+      "duration_explanation": "No per-episode elapsed wall-clock start/end timestamps or duration were recorded in the locked source log. Cannot infer from steps.",
+      "duration_is_measured": false,
+      "duration_seconds": null,
+      "duration_status": "NOT_RECORDED",
+      "model": "A-seed2",
+      "reset_seed": 20261106,
+      "result": "FINISH",
+      "source_log": "A-seed2__right-turn-train-v2.jsonl",
+      "source_log_sha256": "d799436dd189f5066d318136f334a5b90b5df4fb3fbbbb9d40b0e7d3d8e6d789",
+      "steps": 179,
+      "track": "right-turn-train-v2"
+    },
+    {
+      "checkpoint_order": [
+        "checkpoint-0",
+        "checkpoint-1",
+        "finish"
+      ],
+      "duration_explanation": "No per-episode elapsed wall-clock start/end timestamps or duration were recorded in the locked source log. Cannot infer from steps.",
+      "duration_is_measured": false,
+      "duration_seconds": null,
+      "duration_status": "NOT_RECORDED",
+      "model": "B-seed1",
+      "reset_seed": 20261106,
+      "result": "FINISH",
+      "source_log": "B-seed1__left-turn-train-v2.jsonl",
+      "source_log_sha256": "bb45a0a905ffa1d5577531cfc2cb6f40d9c22b6f377b37a78e563621c81d623d",
+      "steps": 177,
+      "track": "left-turn-train-v2"
+    },
+    {
+      "checkpoint_order": [
+        "checkpoint-0",
+        "checkpoint-1",
+        "finish"
+      ],
+      "duration_explanation": "No per-episode elapsed wall-clock start/end timestamps or duration were recorded in the locked source log. Cannot infer from steps.",
+      "duration_is_measured": false,
+      "duration_seconds": null,
+      "duration_status": "NOT_RECORDED",
+      "model": "B-seed1",
+      "reset_seed": 20261106,
+      "result": "FINISH",
+      "source_log": "B-seed1__right-turn-train-v2.jsonl",
+      "source_log_sha256": "c70565a81ce60ba3763145623077cac7154b993e02113a08237a221bd00f3f4c",
+      "steps": 177,
+      "track": "right-turn-train-v2"
+    },
+    {
+      "checkpoint_order": [
+        "checkpoint-0",
+        "checkpoint-1",
+        "finish"
+      ],
+      "duration_explanation": "No per-episode elapsed wall-clock start/end timestamps or duration were recorded in the locked source log. Cannot infer from steps.",
+      "duration_is_measured": false,
+      "duration_seconds": null,
+      "duration_status": "NOT_RECORDED",
+      "model": "C-seed0",
+      "reset_seed": 20261106,
+      "result": "FINISH",
+      "source_log": "C-seed0__left-turn-train-v2.jsonl",
+      "source_log_sha256": "d83eb6a276f65c74b225c22bfa8359a4f5b2acc854f649e1f461ea6b8ac52ebf",
+      "steps": 205,
+      "track": "left-turn-train-v2"
+    },
+    {
+      "checkpoint_order": [
+        "checkpoint-0",
+        "checkpoint-1",
+        "finish"
+      ],
+      "duration_explanation": "No per-episode elapsed wall-clock start/end timestamps or duration were recorded in the locked source log. Cannot infer from steps.",
+      "duration_is_measured": false,
+      "duration_seconds": null,
+      "duration_status": "NOT_RECORDED",
+      "model": "C-seed0",
+      "reset_seed": 20261106,
+      "result": "FINISH",
+      "source_log": "C-seed0__right-turn-train-v2.jsonl",
+      "source_log_sha256": "75e1c16a7cb4f1a9e8b187517d7a881e6b8805ffc2fcc27d482e590545f33500",
+      "steps": 203,
+      "track": "right-turn-train-v2"
+    }
+  ],
+  "finished": 6,
+  "heldout_geometry_read": false,
+  "models": [
+    "C-seed0",
+    "B-seed1",
+    "A-seed2"
+  ],
+  "original_one_shot_source_commit": "01ef1e3e75de8df60fc2159ed70b38d0ee777253",
+  "original_smoke_receipt_sha256": "41d3ddf2a20801c442f2229ec241fb9aa1f7921f9ef518e575d1391362a58097",
+  "original_smoke_source_logs_directory": "D:\\F1-RL-PHYSICS-V4-EVIDENCE-20261106\\HANDOFF-TRAIN5-PPO-SMOKE-V1-01EF1E3E75-20261107",
+  "per_episode_step_limit": 2500,
+  "ppo_training": false,
+  "reset_seed": 20261106,
+  "schema": "f1rl_physics_v4_frozen_ppo_smoke_duration_disclosure_v1",
+  "single_reset_is_not_generalization": true,
+  "smoke_rerun": false,
+  "time_measurement": "NOT_RECORDED_FOR_ALL_SIX_EPISODES",
+  "total_steps": 1117,
+  "tracks": [
+    "right-turn-train-v2",
+    "left-turn-train-v2"
+  ]
+}

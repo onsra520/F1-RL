@@ -1,20 +1,20 @@
-from src.simulation.entities.boost_pad import BoostPad
-from src.simulation.entities.checkpoint import Checkpoint
-from src.simulation.entities.finish_line import FinishLine
-from src.simulation.entities.obstacle import Obstacle
-from src.simulation.entities.score_pickup import ScorePickup
-from src.simulation.entities.slow_zone import SlowZone
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
-from src.simulation.interactions.state import InteractionState
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.state import ScorePickupCollected, TrackState
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
-from src.simulation.world import WorldState, step_world
+from f1rl.sandbox.entities.boost_pad import BoostPad
+from f1rl.sandbox.entities.checkpoint import Checkpoint
+from f1rl.sandbox.entities.finish_line import FinishLine
+from f1rl.sandbox.entities.obstacle import Obstacle
+from f1rl.sandbox.entities.score_pickup import ScorePickup
+from f1rl.sandbox.entities.slow_zone import SlowZone
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.events import CheckpointEntered, FinishLineEntered, ObstacleHit
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.state import ScorePickupCollected, TrackState
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from f1rl.sandbox.world import WorldState, step_world
 
 
 def road() -> PlanarSurfacePatch:

@@ -4,9 +4,9 @@ from math import cos,sin
 
 import pytest
 
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.torque_free_rotation import (
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.torque_free_rotation import (
     AngularRigidBodyState, TorqueFreeRotationPolicy,
     RigidBodyIntegrationError, advance_torque_free_rotation,
 )

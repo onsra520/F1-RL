@@ -1,12 +1,12 @@
 """Bounded hard wheel-travel stop impulse and fail-closed crossing tests."""
 from dataclasses import replace
 import pytest
-from src.simulation.wheel_bump_stop_impact import certify_wheel_bump_stop
-from src.simulation.rigid_body_impact_response import RigidBodyImpactMass
-from src.simulation.geometry.vector import Vec3
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.vehicle import VehicleState
-from src.simulation.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.wheel_bump_stop_impact import certify_wheel_bump_stop
+from f1rl.sandbox.rigid_body_impact_response import RigidBodyImpactMass
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.vehicle import VehicleState
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
 
 Q=Quaternion.identity()
 Z=Vec3(0.,0.,0.)

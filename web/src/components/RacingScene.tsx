@@ -255,7 +255,9 @@ export default function RacingScene({ track, mode, selectedId, armed, pose, road
   const containerRef = useRef<HTMLDivElement>(null);
   const livePose = useRef(new LivePoseInterpolator(15)).current;
   useEffect(() => {
-    livePose.setMaxVisualSpeedMps(15 * Math.max(0.25, Math.min(16, simulationSpeed)));
+    const multiplier = Math.max(0.25, Math.min(16, simulationSpeed));
+    livePose.setMaxVisualSpeedMps(15 * multiplier, performance.now());
+    livePose.setPlaybackMultiplier(multiplier);
   }, [livePose, simulationSpeed]);
   const [dragging, setDragging] = useState<string | null>(null);
   const onCamera = (camera: Camera) => { cameraRef.current = camera; };

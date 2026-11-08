@@ -2,11 +2,11 @@
 from dataclasses import replace
 import pytest
 
-from src.simulation.body_collision import VehicleBodyGeometry
-from src.simulation.geometry.vector import Vec3
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.rigid_body_impact_response import RigidBodyImpactMass,rigid_body_normal_impact
-from src.simulation.vehicle import VehicleState
+from f1rl.sandbox.body_collision import VehicleBodyGeometry
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.rigid_body_impact_response import RigidBodyImpactMass,rigid_body_normal_impact
+from f1rl.sandbox.vehicle import VehicleState
 
 ZERO=Vec3(0.,0.,0.)
 BODY=VehicleBodyGeometry(2.,2.,2.,ZERO)

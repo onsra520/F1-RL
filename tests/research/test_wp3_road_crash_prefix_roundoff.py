@@ -1,10 +1,10 @@
 """Source-bound micro-roundoff road-crash prefix regression."""
 from dataclasses import replace
 
-from src.core.road_crash_validation import same_reconstructed_road_pose
-from src.simulation.vehicle import VehicleState
-from src.simulation.geometry.vector import Vec3
-from src.simulation.geometry.rotation import Quaternion
+from f1rl.runtime.road_crash_validation import same_reconstructed_road_pose
+from f1rl.sandbox.vehicle import VehicleState
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.geometry.rotation import Quaternion
 
 def sample():
     return VehicleState(Vec3(.2,.4,2.),Vec3(2.,-.1,8.),

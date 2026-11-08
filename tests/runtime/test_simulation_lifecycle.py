@@ -1,15 +1,15 @@
 import pytest
 
-from src.core.simulation import Simulation, SimulationConfig
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.state import InteractionState
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.state import TrackState
-from src.simulation.vehicle import VehicleParameters, VehicleState
-from src.simulation.world import WorldState
+from f1rl.runtime.simulation import Simulation, SimulationConfig
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.state import TrackState
+from f1rl.sandbox.vehicle import VehicleParameters, VehicleState
+from f1rl.sandbox.world import WorldState
 
 
 def _track() -> TrackWorld:

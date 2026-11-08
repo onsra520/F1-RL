@@ -1,18 +1,18 @@
 import pytest
 
-import src.core.simulation as runtime_simulation
-from src.core.simulation import Simulation, SimulationConfig
-from src.simulation.entities.score_pickup import ScorePickup
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.state import InteractionState
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.state import TrackState
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
-from src.simulation.world import WorldState, WorldStepResult, step_world
+import f1rl.runtime.simulation as runtime_simulation
+from f1rl.runtime.simulation import Simulation, SimulationConfig
+from f1rl.sandbox.entities.score_pickup import ScorePickup
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.state import TrackState
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from f1rl.sandbox.world import WorldState, WorldStepResult, step_world
 
 
 def _road() -> PlanarSurfacePatch:

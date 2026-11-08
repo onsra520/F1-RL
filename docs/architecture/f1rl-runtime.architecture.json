@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "F1-RL Canonical Runtime",
+    "subtitle": "Browser controls flow through the runtime adapter into the f1rl engine.",
+    "output": "docs/architecture/f1rl-runtime.architecture.html",
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/onsra520/F1-RL.git",
+      "link_mode": "local-only",
+      "revision": "99c5313c8bf98c164518b880e626383ad7f1c6f5"
+    },
+    "views": [
+      {
+        "id": "drive-session",
+        "label": "Drive session",
+        "focus": ["browser", "api", "session", "engine", "assets"],
+        "note": "Follow browser input into the canonical physics runtime."
+      },
+      {
+        "id": "inference",
+        "label": "Model inference",
+        "focus": ["session", "engine", "learning", "models"],
+        "note": "Frozen policies provide actions to the same runtime environment."
+      },
+      {
+        "id": "training-admission",
+        "label": "Training admission",
+        "focus": ["training", "learning", "engine"],
+        "note": "Training is gated by the learning and release admission checks."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "browser",
+      "type": "frontend",
+      "label": "Web UI",
+      "sublabel": "editor + replay",
+      "pos": [43, 258],
+      "size": [142, 66],
+      "sources": [{ "path": "web/src/App.tsx" }]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Local API",
+      "sublabel": "FastAPI + WebSocket",
+      "pos": [232, 258],
+      "size": [154, 66],
+      "sources": [{ "path": "run.py" }, { "path": "f1rl/local_demo/runtime/api.py" }]
+    },
+    {
+      "id": "session",
+      "type": "backend",
+      "label": "Session adapter",
+      "sublabel": "input + state",
+      "pos": [436, 258],
+      "size": [154, 66],
+      "sources": [{ "path": "f1rl/local_demo/runtime/adapter.py" }]
+    },
+    {
+      "id": "engine",
+      "type": "backend",
+      "label": "F1-RL engine",
+      "sublabel": "Physics v4 + dynamics",
+      "pos": [652, 258],
+      "size": [176, 66],
+      "sources": [{ "path": "f1rl/runtime/physics.py" }, { "path": "f1rl/runtime/simulation.py" }]
+    },
+    {
+      "id": "assets",
+      "type": "database",
+      "label": "Track assets",
+      "sublabel": "geometry + metadata",
+      "pos": [666, 430],
+      "size": [152, 64],
+      "sources": [{ "path": "assets/tracks/manifest-five-track-paired-v2.json" }]
+    },
+    {
+      "id": "learning",
+      "type": "backend",
+      "label": "Learning + gates",
+      "sublabel": "PPO + admission",
+      "pos": [909, 258],
+      "size": [172, 66],
+      "sources": [{ "path": "f1rl/learning/algorithms/ppo.py" }, { "path": "f1rl/research/wp7_admission.py" }]
+    },
+    {
+      "id": "models",
+      "type": "database",
+      "label": "Frozen models",
+      "sublabel": "inference artifacts",
+      "pos": [929, 430],
+      "size": [154, 64],
+      "sources": [{ "path": "models/D-seed0/model-final.zip" }]
+    },
+    {
+      "id": "training",
+      "type": "security",
+      "label": "Training runner",
+      "sublabel": "admission guarded",
+      "pos": [1139, 258],
+      "size": [164, 66],
+      "sources": [{ "path": "f1rl/research/wp7_admission.py" }]
+    }
+  ],
+  "connections": [
+    { "from": "browser", "to": "api", "label": "controls + session", "variant": "emphasis", "labelAt": [202, 338] },
+    { "from": "api", "to": "session", "label": "request + stream", "variant": "emphasis", "labelAt": [407, 338] },
+    { "from": "session", "to": "engine", "label": "step + state", "variant": "emphasis", "labelAt": [621, 338] },
+    { "from": "assets", "to": "engine", "label": "track geometry", "route": "orthogonal-v" },
+    { "from": "engine", "to": "learning", "label": "environment contract", "variant": "emphasis", "labelAt": [869, 250] },
+    { "from": "models", "to": "learning", "label": "load frozen policy", "route": "orthogonal-v" },
+    { "from": "learning", "to": "session", "label": "inference action", "variant": "dashed", "fromSide": "top", "toSide": "top", "via": [[995, 205], [513, 205]], "labelAt": [746, 197] },
+    { "from": "learning", "to": "training", "label": "admission checks", "variant": "security", "labelAt": [1110, 250] }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Canonical engine",
+      "items": ["Physics v4 lives under f1rl/sandbox and f1rl/runtime", "The session adapter calls the canonical environment", "Track assets supply runtime geometry"]
+    },
+    {
+      "dot": "amber",
+      "title": "Runtime and inference",
+      "items": ["The web UI uses the local API and WebSocket session", "Frozen models are loaded for inference", "Runtime controls do not imply scientific release admission"]
+    },
+    {
+      "dot": "rose",
+      "title": "Training boundary",
+      "items": ["Training is an explicit runner path", "Admission checks remain in the learning layer", "Evaluation-track access stays guarded during consolidation"]
+    }
+  ]
+}

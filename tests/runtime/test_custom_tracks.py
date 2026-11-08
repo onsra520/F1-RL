@@ -3,8 +3,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.runtime.catalog import RuntimeCatalog
-from src.runtime.custom_tracks import TrackValidationError, convert_custom_track
+from f1rl.local_demo.runtime.catalog import RuntimeCatalog
+from f1rl.local_demo.runtime.adapter import RuntimeEnvironmentAdapter
+from f1rl.local_demo.runtime.custom_tracks import TrackValidationError, convert_custom_track
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -29,6 +30,15 @@ def prop(kind, t, *, offset=0, rotation=0, identity=None):
     return {"id": identity or f"{kind}-{t}", "kind": kind, "t": t, "offset": offset, "rotation": rotation}
 
 
+@pytest.mark.parametrize(("kind", "distance", "warns"), [
+    ("cone", 7.2, True), ("barrier", 10.0, True),
+    ("cone", 10.1, False), ("booster", 7.2, False),
+])
+def test_warns_about_obstacles_near_spawn_without_rejecting_track(catalog, kind, distance, warns):
+    converted = convert_custom_track(draft([(0, 0), (0, 100)], [prop(kind, distance / 100)]), catalog)
+    assert any("near the start" in warning for warning in converted.warnings) is warns
+
+
 def test_custom_track_converts_to_authoritative_world_and_manual_gym_environment(catalog):
     document = draft([(0, 0), (0, 40), (20, 60)], [prop("checkpoint", 0.55)])
     converted = convert_custom_track(document, catalog)
@@ -40,7 +50,7 @@ def test_custom_track_converts_to_authoritative_world_and_manual_gym_environment
     assert len(converted.factory.track.checkpoints) == 1
     assert len(converted.road_samples) >= len(converted.factory.navigation.points)
 
-    env = converted.factory.create()
+    env = RuntimeEnvironmentAdapter(converted.factory.create())
     try:
         observation, _ = env.reset(seed=73)
         assert np.isfinite(observation).all()
@@ -53,23 +63,24 @@ def test_custom_track_converts_to_authoritative_world_and_manual_gym_environment
         env.close()
 
 
-def test_custom_track_adapts_ramps_and_converts_separated_overpass_decks(catalog):
+def test_custom_track_adapts_ramps_and_rejects_stacked_overpass_decks(catalog):
     ramped = convert_custom_track(draft([(0, 0), (0, 80)], [prop("ramp", 0.5)]), catalog)
     assert max(sample["y"] for sample in ramped.road_samples) >= 2.7
     assert any(abs(surface.normal.y - 1.0) > 1e-4 for surface in ramped.factory.track.surfaces)
 
-    crossing = convert_custom_track(draft([(0, 0), (100, 100), (0, 100), (100, 0), (160, 0)]), catalog)
-    assert crossing.auto_bridge_count == 1
-    assert max(sample["y"] for sample in crossing.road_samples) >= 1.8
-    assert all(surface.route_index is not None for surface in crossing.factory.track.surfaces)
+    crossing = draft([(0, 0), (100, 100), (0, 100), (100, 0), (160, 0)])
+    with pytest.raises(TrackValidationError) as error:
+        convert_custom_track(crossing, catalog)
+    assert error.value.code == "unsupported_surface_intersection"
 
 
-def test_custom_track_converts_elevated_turn_and_reports_short_approach(catalog):
-    elevated = convert_custom_track(draft([(0, 0), (0, 60), (40, 100), (80, 60), (80, 0)], [
+def test_custom_track_rejects_stacked_elevated_turn_and_short_approach(catalog):
+    elevated = draft([(0, 0), (0, 60), (40, 100), (80, 60), (80, 0)], [
         prop("bridge", 0.5),
-    ]), catalog)
-    assert max(sample["y"] for sample in elevated.road_samples) >= 4.9
-    assert max(abs(surface.normal.x) + abs(surface.normal.z) for surface in elevated.factory.track.surfaces) > 0.1
+    ])
+    with pytest.raises(TrackValidationError) as error:
+        convert_custom_track(elevated, catalog)
+    assert error.value.code == "unsupported_surface_intersection"
 
     with pytest.raises(TrackValidationError, match="lengthen the map") as error:
         convert_custom_track(draft([(0, 0), (0, 40)], [prop("bridge", 0.03)]), catalog)
@@ -129,38 +140,19 @@ def test_unsupported_three_pass_multideck_never_falls_back_to_another_road_surfa
                               "unsupported_surface_intersection"}
 
 
-def test_certified_three_tier_crossing_has_three_distinct_decks(catalog):
-    # Three independent crossings of (0,0) with separated route visits and
-    # long ramps. The fourth crossover near x=73 is also clearance checked.
+def test_three_tier_crossing_is_rejected_by_the_height_consistent_atlas(catalog):
     coordinates = [
         (-65, -65), (-35, -35), (0, 0), (35, 35), (65, 65),
         (65, -65), (35, -35), (0, 0), (-35, 35), (-65, 65),
         (-75, -15), (-35, 0), (0, 0), (35, 0), (75, 0), (145, -25),
     ]
-    converted = convert_custom_track(draft(coordinates, width=10), catalog)
-    decks = sorted(sample['y'] for sample in converted.road_samples
-                   if abs(sample['x']) < 0.6 and abs(sample['z']) < 0.6)
-    # Many samples near the crossing; group by height and require exactly
-    # three separated road levels with independently certified geometry.
-    heights = []
-    for height in decks:
-        if not heights or height - heights[-1] > 1:
-            heights.append(height)
-    assert len(heights) >= 3, heights
-    assert heights[1] - heights[0] > 1.8
-    assert heights[2] - heights[1] > 1.8
-    assert converted.auto_bridge_count >= 2
-    env = converted.factory.create()
-    try:
-        obs, _ = env.reset(seed=412)
-        assert np.isfinite(obs).all()
-        assert env.runtime_snapshot()['grounded'] is True
-    finally:
-        env.close()
+    with pytest.raises(TrackValidationError) as error:
+        convert_custom_track(draft(coordinates, width=10), catalog)
+    assert error.value.code == "unsupported_surface_intersection"
 
 def test_v4_gap_is_authoritative_empty_road_support_with_hash_bound_geometry(catalog):
     """A certified gap is missing asphalt in Physics, not a cosmetic prop."""
-    from src.simulation.geometry.vector import Vec3
+    from f1rl.sandbox.geometry.vector import Vec3
 
     doc = draft([(0, 0), (0, 120)], [prop("gap", 0.5, offset=4.0)])
     converted = convert_custom_track(doc, catalog)
@@ -193,8 +185,8 @@ def test_gap_length_rejects_nonfinite_or_non_numeric_json_types(catalog, value):
 
 def test_custom_booster_volume_includes_physical_vehicle_center(catalog):
     """Boost modifier is a source-bound force, not a decorative unreachable zone."""
-    from src.simulation.geometry.vector import Vec3
-    from src.simulation.interactions.resolver import resolve_motion_modifiers
+    from f1rl.sandbox.geometry.vector import Vec3
+    from f1rl.sandbox.interactions.resolver import resolve_motion_modifiers
     converted = convert_custom_track(
         draft([(0, 0), (0, 86)], [prop("booster", 0.3)]), catalog,
     )
@@ -213,9 +205,9 @@ def test_t3_versioned_jump_geometry_matches_c1_launch_and_receiving_trough(catal
     import json
     from math import isclose
 
-    from src.runtime.custom_tracks import JUMP_LAUNCH_CONTRACT, _jump_height
-    from src.simulation.geometry.vector import Vec3
-    from src.simulation.multi_surface_support import _atlas
+    from f1rl.local_demo.runtime.custom_tracks import JUMP_LAUNCH_CONTRACT, _jump_height
+    from f1rl.sandbox.geometry.vector import Vec3
+    from f1rl.sandbox.multi_surface_support import _atlas
 
     doc = json.loads((ROOT / "examples/t3-v4-launch-landing-map.json").read_text(
         encoding="utf-8"))

@@ -18,6 +18,14 @@ describe('Backend-authoritative runtime result rendering', () => {
     expect(html).toContain('Successful Finish');
     expect(html).toContain('data-outcome="success"');
   });
+  it('labels a Hybrid development finish as unvalidated', () => {
+    const html = view({ mode: 'hybrid', provenance: 'hybrid-development', episode_result: {
+      valid_sample: false, successful_finish: true, reason: 'finish',
+    } });
+    expect(html).toContain('Development Finish · Not Validated');
+    expect(html).toContain('data-outcome="uncertified"');
+    expect(html).not.toContain('Successful Finish');
+  });
   it('renders valid PPO step limit without INVALID', () => {
     const html = view({});
     expect(html).toContain('Valid · Step Limit / Non-finish');
@@ -43,6 +51,26 @@ describe('Backend-authoritative runtime result rendering', () => {
     expect(html).toContain('A wheel left the road. Start a new run to try again.');
     expect(html).not.toContain('Physics/Simulator Error');
     expect(runtimeOutcome(status)?.kind).toBe('driving_failure');
+  });
+  it('identifies an unaccepted obstacle collision as a driving failure', () => {
+    const status: RuntimeSessionStatus = {
+      ...base, mode: 'auto', provenance: 'custom-development', status: 'failed',
+      episode_result: { status: 'failed', valid_sample: false, successful_finish: false, reason: 'collision' },
+    };
+    const html = view(status);
+    expect(html).toContain('Driving Failure · Obstacle Contact');
+    expect(html).toContain('transition was not accepted');
+    expect(html).not.toContain('Physics/Simulator Error');
+    expect(runtimeOutcome(status)?.kind).toBe('driving_failure');
+  });
+  it.each([
+    'ValueError: Auto Drive cannot certify a road-width-safe corridor around barrier; move the obstacle in Build Editor',
+    'RuntimeFault: Hybrid centerline does not avoid obstacles; choose another driving style or remove obstacles',
+  ])('explains an unsupported obstacle configuration: %s', (reason) => {
+    const html = view({ mode: 'hybrid', provenance: 'hybrid-development', status: 'failed',
+      episode_result: { status: 'failed', valid_sample: false, successful_finish: false, reason } });
+    expect(html).toContain('Unsupported · Obstacle Configuration');
+    expect(html).not.toContain('Physics/Simulator Error');
   });
   it.each(['cancelled', 'stopped'] as const)('renders %s without implying invalidity', (status) => {
     expect(view({ status, episode_result: null })).toContain('Cancelled / Stopped');

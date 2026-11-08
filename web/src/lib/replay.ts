@@ -1,5 +1,6 @@
 import { parseTrack, type RoadSample, type TrackDocument } from './track';
 import { slerpWxyz } from './orientation';
+import { EXPLORATORY_DIGESTS } from './exploratoryModels';
 import { validateAutoConfig, type AutoDriveConfig } from './autoDriveConfig';
 
 export type ReplayFrame = {
@@ -58,6 +59,7 @@ export type ReplayV2 = {
   };
   track_preview?: ReplayTrackPreview;
   auto_drive_config?: AutoDriveConfig;
+  hybrid?: { ppo_steering_weight: number; steps: number; steering_interventions: number; obstacle_takeover_steps?: number; obstacle_takeover_active?: boolean };
   collision_terminal?: DevelopmentCollisionTerminal;
   result: {
     status: 'finished' | 'failed' | 'cancelled' | 'stopped';
@@ -202,7 +204,9 @@ export function parseReplay(raw: unknown): Replay {
     const result = d.result as ReplayV2['result'] | undefined;
     if (!provenance || !['TRAIN', 'DEVELOPMENT'].includes(provenance.dataset_split) ||
         provenance.runtime_mode !== 'development' || !digest(provenance.source_sha256) ||
-        typeof provenance.model_id !== 'string' || !(provenance.model_id === 'manual' || provenance.model_id === 'auto-drive' || /^[A-D]-seed[0-2]$/.test(provenance.model_id)) ||
+        typeof provenance.model_id !== 'string' || !(provenance.model_id === 'manual' || provenance.model_id === 'auto-drive' || /^[A-D]-seed[0-2]$/.test(provenance.model_id) ||
+          (['wp7-calibration', 'wp7-confirmation'].includes(provenance.model_id) && provenance.dataset_split === 'DEVELOPMENT' &&
+            provenance.model_sha256 === EXPLORATORY_DIGESTS[provenance.model_id] && result?.valid_sample === false)) ||
         (provenance.model_sha256 !== null && !digest(provenance.model_sha256)) ||
         typeof provenance.track_id !== 'string' || !provenance.track_id || !digest(provenance.track_sha256) ||
         !Number.isInteger(provenance.seed) || provenance.seed < 0 || provenance.seed > 0xffffffff ||
@@ -217,12 +221,24 @@ export function parseReplay(raw: unknown): Replay {
       throw new Error('Runtime collision must be a failed, invalid sample');
     }
     const trackPreview = validateTrackPreview(d.track_preview, provenance.track_id, provenance.track_sha256);
-    if (d.auto_drive_config !== undefined && provenance.model_id !== 'auto-drive') throw new Error('Config belongs to Auto Drive only');
+    const hybrid = d.hybrid as ReplayV2['hybrid'];
+    if (hybrid && (!['wp7-calibration', 'wp7-confirmation'].includes(provenance.model_id) ||
+        provenance.dataset_split !== 'DEVELOPMENT' || result.valid_sample ||
+        ![0.2, 0.5].includes(hybrid.ppo_steering_weight) || !Number.isInteger(hybrid.steps) || hybrid.steps < 0 ||
+        !Number.isInteger(hybrid.steering_interventions) || hybrid.steering_interventions < 0 || hybrid.steering_interventions > hybrid.steps ||
+        ((hybrid.obstacle_takeover_steps === undefined) !== (hybrid.obstacle_takeover_active === undefined)) ||
+        (hybrid.obstacle_takeover_steps !== undefined && (!Number.isInteger(hybrid.obstacle_takeover_steps) || hybrid.obstacle_takeover_steps < 0 || hybrid.obstacle_takeover_steps > hybrid.steps)) ||
+        (hybrid.obstacle_takeover_active !== undefined && typeof hybrid.obstacle_takeover_active !== 'boolean'))) {
+      throw new Error('Invalid hybrid development provenance');
+    }
+    if (d.hybrid !== undefined && (!hybrid || typeof hybrid !== 'object')) throw new Error('Invalid hybrid metadata');
+    if (d.auto_drive_config !== undefined && provenance.model_id !== 'auto-drive' && !hybrid) throw new Error('Config belongs to Auto Drive or Hybrid only');
     const autoConfig = d.auto_drive_config === undefined ? undefined : validateAutoConfig(d.auto_drive_config);
     return {
       schema: d.schema, label: d.label, provenance: { ...provenance }, result: { ...result }, frames,
       ...(trackPreview ? { track_preview: trackPreview } : {}),
       ...(autoConfig ? { auto_drive_config: autoConfig } : {}),
+      ...(hybrid ? { hybrid: { ...hybrid } } : {}),
       ...(collisionTerminal ? { collision_terminal: collisionTerminal } : {}),
     };
   }

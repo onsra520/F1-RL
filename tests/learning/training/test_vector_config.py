@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from src.rl.algorithms.ppo import PPOConfig
-from src.training.config import VectorEnvConfig, VectorTrainingConfig
+from f1rl.learning.algorithms.ppo import PPOConfig
+from f1rl.learning.training.config import VectorEnvConfig, VectorTrainingConfig
 
 
 def test_vector_env_config_defaults_are_exact() -> None:

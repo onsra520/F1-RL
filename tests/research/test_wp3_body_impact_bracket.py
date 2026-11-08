@@ -4,12 +4,12 @@ from dataclasses import replace
 
 import pytest
 
-from src.simulation.body_collision import SweptCollisionResult, VehicleBodyGeometry
-from src.simulation.body_impact import first_body_impact_bracket
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleState
+from f1rl.sandbox.body_collision import SweptCollisionResult, VehicleBodyGeometry
+from f1rl.sandbox.body_impact import first_body_impact_bracket
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleState
 
 
 def pose(x: float, z: float = 0) -> VehicleState:
@@ -64,7 +64,7 @@ def test_invalid_refinements_are_rejected(count):
 
 
 def test_uncertain_sweep_cannot_be_forged_into_impact(monkeypatch):
-    import src.simulation.body_impact as module
+    import f1rl.sandbox.body_impact as module
     monkeypatch.setattr(module, "sweep_body_against_obstacle", lambda *args: SweptCollisionResult(False, True, 1))
     with pytest.raises(ValueError, match="cannot be certified"):
         first_body_impact_bracket(pose(-5), pose(5), BODY, OBSTACLE, duration_s=0.1)

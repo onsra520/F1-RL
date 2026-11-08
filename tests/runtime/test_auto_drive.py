@@ -6,16 +6,16 @@ import numpy as np
 import pytest
 from pydantic import ValidationError
 
-from src.runtime.auto_drive import AutoDriveController
-from src.runtime.drive_config import AutoDriveConfig
-from src.simulation.geometry.vector import Vec3
-from src.simulation.vehicle import VehicleParameters
-from src.tracks.model import AuthoredNavigation
+from f1rl.local_demo.runtime.auto_drive import AutoDriveController
+from f1rl.local_demo.runtime.drive_config import AutoDriveConfig
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.vehicle import VehicleParameters
+from f1rl.track_assets.model import AuthoredNavigation
 
 VEHICLE = VehicleParameters(3.0, 0.5, 0.5, 6.0, 10.0, 0.4, 0.1, 15.0, 9.81)
 
 
-def controller(points, position, *, heading=0.0, speed=0.0, config=None, obstacles=(), body_geometry=None, road_width=12.0):
+def controller(points, position, *, heading=0.0, speed=0.0, config=None, obstacles=(), body_geometry=None, road_width=12.0, route_limit_m=None, allow_compact_corridor=False, allow_centerline_avoidance=False):
     navigation = AuthoredNavigation(tuple(Vec3(*point) for point in points),
                                     tuple(f"road-{index}" for index in range(len(points) - 1)), ())
     env = SimpleNamespace(
@@ -26,9 +26,11 @@ def controller(points, position, *, heading=0.0, speed=0.0, config=None, obstacl
             "heading_rad": heading,
             "speed_mps": speed,
             "next_checkpoint_index": 0,
+            "dt_s": 0.1,
+            "tick": 0,
         },
     )
-    return AutoDriveController(env, navigation, VEHICLE, road_width, config or AutoDriveConfig(driving_style="centerline", target_max_speed_kmh=43.2), obstacles=obstacles, body_geometry=body_geometry)
+    return AutoDriveController(env, navigation, VEHICLE, road_width, config or AutoDriveConfig(driving_style="centerline", target_max_speed_kmh=43.2), obstacles=obstacles, body_geometry=body_geometry, route_limit_m=route_limit_m, allow_compact_corridor=allow_compact_corridor, allow_centerline_avoidance=allow_centerline_avoidance)
 
 
 def test_auto_drive_accelerates_and_keeps_straight_centerline():
@@ -54,6 +56,19 @@ def test_auto_drive_recovers_toward_route_at_reduced_speed():
     assert action[0] < 0.0
     assert action[1] == 0.0
     assert action[2] > 0.0
+
+
+def test_steering_changes_are_bounded_between_physics_steps():
+    drive = controller([(0, 0, 0), (0, 0, 50)], (0, .5, 5))
+    before = drive.predict(None)
+    drive.env.runtime_snapshot = lambda: {"position": (-4, .5, 5), "heading_rad": 0,
+                                          "speed_mps": 0, "next_checkpoint_index": 0, "dt_s": 0.1, "tick": 1}
+    after = drive.predict(None)
+    assert abs(after[0] - before[0]) <= 0.250001
+    assert drive.predict(None)[0] == after[0]
+    drive.env.runtime_snapshot = lambda: {"position": (-4, .5, 5), "heading_rad": 0,
+                                          "speed_mps": 0, "next_checkpoint_index": 0, "dt_s": 0.1, "tick": 0}
+    assert drive.predict(None)[0] == after[0]
 
 
 def test_auto_drive_plans_speed_before_an_uphill_ramp():
@@ -124,10 +139,27 @@ def test_racing_line_uses_opposite_corner_side_for_left_and_right_turns():
     assert left._offset_at(9) > 0
     assert right._offset_at(9) < 0
 
-from src.simulation.body_collision import VehicleBodyGeometry
-from src.simulation.entities.obstacle import Obstacle
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.track.volume import OrientedBoxVolume
+
+def test_racing_line_corner_target_enters_and_exits_continuously():
+    drive = controller([(0, 0, 0), (0, 0, 60), (20, 0, 60)],
+                       (0, .5, 5), config=AutoDriveConfig(driving_style="racing"))
+    offsets = [drive._offset_at(i * 0.1) for i in range(701)]
+    assert max(abs(b - a) for a, b in pairwise(offsets)) < 0.1
+    assert min(offsets) < -1.0
+
+
+def test_racing_line_blends_overlapping_opposite_corners():
+    drive = controller([(0, 0, 0), (0, 0, 60), (10, 0, 60), (10, 0, 100)],
+                       (0, .5, 5), config=AutoDriveConfig(driving_style="racing"))
+    offsets = [drive._offset_at(i * 0.1) for i in range(901)]
+    assert max(abs(b - a) for a, b in pairwise(offsets)) < 0.1
+    assert min(offsets) < 0 < max(offsets)
+
+from f1rl.sandbox.body_collision import VehicleBodyGeometry
+from f1rl.sandbox.entities.obstacle import Obstacle
+from f1rl.sandbox.entities.checkpoint import Checkpoint
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.track.volume import OrientedBoxVolume
 
 
 def _physics_obstacle(x=2.8, y=0.66, z=50.0):
@@ -138,6 +170,87 @@ def _physics_obstacle(x=2.8, y=0.66, z=50.0):
 
 def _body_hitbox():
     return VehicleBodyGeometry(1.8, 1.2, 4.0, Vec3(0, 0.3, 0))
+
+
+def test_centerline_obstacle_avoidance_is_opt_in_and_ignores_distant_obstacles():
+    route = [(0, 0, 0), (0, 0, 100)]
+    config = AutoDriveConfig(driving_style="centerline")
+    standard = controller(route, (0, .5, 0), config=config, obstacles=(_physics_obstacle(x=0),), body_geometry=_body_hitbox())
+    assisted = controller(route, (0, .5, 0), config=config, obstacles=(_physics_obstacle(x=0),), body_geometry=_body_hitbox(), allow_centerline_avoidance=True)
+    distant = controller(route, (0, .5, 0), config=config, obstacles=(_physics_obstacle(x=15),), body_geometry=_body_hitbox(), allow_centerline_avoidance=True)
+    assert standard._offset_at(50) == 0
+    assert abs(assisted._offset_at(50)) > 0
+    assert distant._offset_at(50) == 0
+    assert not distant._hazards
+
+
+def test_compact_corridor_respects_configured_vehicle_width():
+    barrier = Obstacle("barrier", OrientedBoxVolume(
+        Vec3(0, .93, 50), Vec3(2, .75, .35), Quaternion(1, 0, 0, 0),
+    ))
+    route = [(0, 0, 0), (0, 0, 100)]
+    narrow = controller(route, (0, .5, 0), config=AutoDriveConfig(), obstacles=(barrier,),
+                        body_geometry=_body_hitbox(), route_limit_m=4.0, allow_compact_corridor=True)
+    assert abs(narrow._hazards[0].safe_lateral_m) == pytest.approx(3.4)
+    with pytest.raises(ValueError, match="cannot certify"):
+        controller(route, (0, .5, 0), config=AutoDriveConfig(), obstacles=(barrier,),
+                   body_geometry=_body_hitbox(), route_limit_m=4.0)
+    with pytest.raises(ValueError, match="cannot certify"):
+        controller(route, (0, .5, 0), config=AutoDriveConfig(vehicle_width_m=3.2), obstacles=(barrier,),
+                   body_geometry=_body_hitbox(), route_limit_m=4.0, allow_compact_corridor=True)
+
+
+def test_obstacle_assistance_covers_both_ends_of_a_long_group():
+    drive = controller([(0, 0, 0), (0, 0, 120)], (0, .5, 0), config=AutoDriveConfig())
+    drive._hazards = (SimpleNamespace(progress_m=60.0, half_length_m=30.0),)
+    for distance in (24.0, 35.0, 75.0, 100.0):
+        assert drive.requires_obstacle_assist({"position": (0, .5, distance), "next_checkpoint_index": 0})
+    assert not drive.requires_obstacle_assist({"position": (0, .5, 110.0), "next_checkpoint_index": 0})
+
+
+def test_compact_corridor_refuses_overlapping_obstacles_and_nearby_turns():
+    barrier = Obstacle("barrier", OrientedBoxVolume(
+        Vec3(0, .93, 50), Vec3(2.4, .75, .35), Quaternion(1, 0, 0, 0),
+    ))
+    second = Obstacle("barrier-two", OrientedBoxVolume(
+        Vec3(0, .93, 52), Vec3(2, .75, .35), Quaternion(1, 0, 0, 0),
+    ))
+    for points, obstacles in [([(0, 0, 0), (0, 0, 100)], (barrier, second)),
+                              ([(0, 0, 0), (0, 0, 50), (50, 0, 50)], (barrier,))]:
+        with pytest.raises(ValueError, match="cannot certify"):
+            controller(points, (0, .5, 0), config=AutoDriveConfig(), obstacles=obstacles,
+                       body_geometry=_body_hitbox(), route_limit_m=4.0, allow_compact_corridor=True)
+
+
+def test_near_spawn_obstacle_group_slows_even_when_its_center_is_behind_spawn():
+    drive = controller([(0, 0, 0), (0, 0, 100)], (0, .5, 10), speed=2,
+                       config=AutoDriveConfig(), body_geometry=_body_hitbox(),
+                       obstacles=tuple(_physics_obstacle(z=z) for z in (2, 8, 14)))
+    action = drive.predict(None)
+    assert action[1] == 0
+    assert action[2] > 0
+
+
+def test_obstacle_entirely_behind_spawn_does_not_trigger_near_spawn_slowdown():
+    drive = controller([(0, 0, 0), (0, 0, 100)], (0, .5, 20), speed=2,
+                       config=AutoDriveConfig(), body_geometry=_body_hitbox(),
+                       obstacles=(_physics_obstacle(z=3),))
+    action = drive.predict(None)
+    assert action[1] > 0
+    assert action[2] == 0
+
+
+def test_near_spawn_slowdown_recalculates_after_reset():
+    drive = controller([(0, 0, 0), (0, 0, 100)], (0, .5, 20), speed=2,
+                       config=AutoDriveConfig(), body_geometry=_body_hitbox(),
+                       obstacles=(_physics_obstacle(z=8.4),))
+    assert drive.predict(None)[1] > 0
+    drive.env.runtime_snapshot = lambda: {"position": (0, .5, 20), "heading_rad": 0,
+                                          "speed_mps": 2, "next_checkpoint_index": 0, "dt_s": .1, "tick": 1}
+    drive.predict(None)
+    drive.env.runtime_snapshot = lambda: {"position": (0, .5, 2.6), "heading_rad": 0,
+                                          "speed_mps": 2, "next_checkpoint_index": 0, "dt_s": .1, "tick": 0}
+    assert drive.predict(None)[2] > 0
 
 
 def test_racing_obstacle_planner_uses_physics_hitbox_and_anticipates_without_jump():
@@ -172,13 +285,69 @@ def test_different_elevation_obstacle_does_not_force_unneeded_swerve():
     assert a._offset_at(50) == 0.0
 
 
-def test_right_hand_controller_does_not_change_with_racing_obstacle_planner():
+def test_right_hand_controller_avoids_obstacle_in_its_lane():
     cfg = AutoDriveConfig()
     route = [(0, 0, 0), (0, 0, 100)]
     a = controller(route, (0, 0.5, 5), config=cfg)
     b = controller(route, (0, 0.5, 5), config=cfg,
                    obstacles=(_physics_obstacle(),),body_geometry=_body_hitbox())
-    assert all(a._target_point(i) == b._target_point(i) for i in range(0, 100, 5))
+    assert b._target_point(5) == a._target_point(5)
+    assert b._target_point(50).x < a._target_point(50).x - 2.0
+    assert b._target_speed(45) <= 5.0
+    assert b._target_point(80) == a._target_point(80)
+
+
+def test_right_hand_recovers_when_near_road_edge():
+    drive = controller([(0, 0, 0), (0, 0, 100)], (5.8, .5, 40), speed=6, config=AutoDriveConfig())
+    action = drive.predict(None)
+    assert action[1] == 0.0
+    assert action[2] > 0.0
+
+
+def test_right_lane_clearance_uses_physics_body_width():
+    config = AutoDriveConfig(vehicle_width_m=0.5, edge_margin_m=0.2, lane_offset_m=5.0)
+    drive = controller([(0, 0, 0), (0, 0, 100)], (0, .5, 5), config=config,
+                       road_width=4.0, body_geometry=_body_hitbox())
+    assert drive._target_point(50).x == pytest.approx(0.9)
+
+
+def test_right_hand_avoids_both_nearby_obstacles():
+    drive = controller([(0, 0, 0), (0, 0, 100)], (0, .5, 5), config=AutoDriveConfig(),
+                       obstacles=(_physics_obstacle(x=3), _physics_obstacle(x=-1)), body_geometry=_body_hitbox())
+    lateral = drive._target_point(50).x
+    assert abs(lateral - 3) >= 2.85
+    assert abs(lateral + 1) >= 2.85
+
+
+def test_right_hand_obstacle_targets_remain_continuous():
+    drive = controller([(0, 0, 0), (0, 0, 100)], (0, .5, 5), config=AutoDriveConfig(),
+                       obstacles=(_physics_obstacle(x=3, z=50), _physics_obstacle(x=4, z=60)),
+                       body_geometry=_body_hitbox())
+    assert abs(drive._offset_at(58.001) - drive._offset_at(58.0)) < 0.01
+
+
+def test_racing_obstacle_targets_remain_continuous():
+    drive = controller([(0, 0, 0), (0, 0, 100)], (0, .5, 5), config=AutoDriveConfig(driving_style="racing"),
+                       obstacles=(_physics_obstacle(x=2.8, z=50), _physics_obstacle(x=0.5, z=60)),
+                       body_geometry=_body_hitbox())
+    assert abs(drive._offset_at(58.001) - drive._offset_at(58.0)) < 0.01
+
+
+def test_long_obstacle_merges_all_overlapping_corridors():
+    long_cone = Obstacle("long", OrientedBoxVolume(Vec3(-1, .66, 60), Vec3(.65, .6, 30), Quaternion(1, 0, 0, 0)))
+    drive = controller([(0, 0, 0), (0, 0, 120)], (0, .5, 5), config=AutoDriveConfig(),
+                       obstacles=(_physics_obstacle(x=3, z=30), _physics_obstacle(x=3, z=50), long_cone),
+                       body_geometry=_body_hitbox())
+    assert abs(drive._offset_at(33.401) - drive._offset_at(33.4)) < 0.01
+    assert abs(drive._offset_at(30) + 1) >= 2.85
+
+
+def test_speed_limit_covers_the_full_obstacle_cluster():
+    obstacles = tuple(_physics_obstacle(x=3, z=10 + 6 * i) for i in range(15))
+    drive = controller([(0, 0, 0), (0, 0, 120)], (0, .5, 5), config=AutoDriveConfig(),
+                       obstacles=obstacles, body_geometry=_body_hitbox())
+    assert drive._target_speed(10) <= 5.0
+    assert drive._target_speed(90) <= 5.0
 
 
 def test_speed_envelope_satisfies_lateral_acceleration_and_braking_distance():
@@ -230,3 +399,68 @@ def test_speed_presets_change_actual_throttle_without_changing_physics_or_vehicl
         assert c.max_speed == VEHICLE.max_ground_speed
     assert 0 < actions["normal"][1] < actions["racing"][1] < actions["hyper"][1] <= 1.0
     assert all(action[2] == 0 for action in actions.values())
+
+
+def test_default_right_lane_targets_lane_center_without_triggering_recovery():
+    drive = controller([(0, 0, 0), (0, 0, 80)], (3, 0.5, 20), speed=7, config=AutoDriveConfig())
+
+    assert drive._target_point(30).x == pytest.approx(3.0)
+    action = drive.predict(None)
+    assert action[1] > 0.0
+    assert action[2] == 0.0
+
+
+def test_right_lane_reduces_offset_smoothly_near_a_turn():
+    drive = controller([(0, 0, 0), (0, 0, 100), (30, 0, 100), (100, 0, 100)],
+                       (0, 0.5, 2), config=AutoDriveConfig())
+    offsets = [drive._offset_at(i * 0.5) for i in range(280)]
+
+    assert offsets[0] == pytest.approx(1.1)
+    assert offsets[100] == pytest.approx(3.0)
+    assert offsets[200] <= 1.1
+    assert max(abs(b - a) for a, b in pairwise(offsets)) < 0.15
+
+
+@pytest.mark.parametrize("lane_offset", [0.0, 2.5])
+def test_right_lane_targets_center_of_a_narrow_checkpoint(lane_offset):
+    base = controller([(0, 0, 0), (0, 0, 50), (0, 0, 100)], (0, .5, 5), config=AutoDriveConfig())
+    navigation = AuthoredNavigation(base.route.points, ("road-0", "road-1"), (1,))
+    gate = Checkpoint("gate", OrientedBoxVolume(Vec3(0, 0, 50), Vec3(2, 2, 1), Quaternion(1, 0, 0, 0)), 0)
+    drive = AutoDriveController(base.env, navigation, VEHICLE, 12, AutoDriveConfig(lane_offset_m=lane_offset), checkpoints=(gate,))
+
+    assert drive._target_point(50).x == pytest.approx(0.0)
+
+
+def test_saved_lane_offset_still_respects_checkpoint_aperture():
+    base = controller([(0, 0, 0), (0, 0, 50), (0, 0, 100)], (0, .5, 5))
+    navigation = AuthoredNavigation(base.route.points, ("road-0", "road-1"), (1,))
+    gate = Checkpoint("gate", OrientedBoxVolume(Vec3(0, 0, 50), Vec3(4.5, 2, 1), Quaternion(1, 0, 0, 0)), 0)
+    drive = AutoDriveController(base.env, navigation, VEHICLE, 12, AutoDriveConfig(lane_offset_m=5.0), checkpoints=(gate,))
+    assert abs(drive._target_point(50).x) < 4.5
+
+
+@pytest.mark.parametrize("lane_offset", [0.0, 0.1])
+def test_racing_line_targets_center_of_a_narrow_checkpoint_before_corner(lane_offset):
+    base = controller([(0, 0, 0), (0, 0, 45), (0, 0, 60), (20, 0, 60)], (0, .5, 5))
+    navigation = AuthoredNavigation(base.route.points, ("road-0", "road-1", "road-2"), (1,))
+    gate = Checkpoint("gate", OrientedBoxVolume(Vec3(0, 0, 45), Vec3(2, 2, 1), Quaternion(1, 0, 0, 0)), 0)
+    drive = AutoDriveController(base.env, navigation, VEHICLE, 12, AutoDriveConfig(driving_style="racing", lane_offset_m=lane_offset), checkpoints=(gate,))
+    assert drive._target_point(45).x == pytest.approx(0.0)
+
+
+def test_checkpoint_obstacle_conflict_fails_closed():
+    base = controller([(0, 0, 0), (0, 0, 50), (0, 0, 100)], (0, .5, 5))
+    navigation = AuthoredNavigation(base.route.points, ("road-0", "road-1"), (1,))
+    gate = Checkpoint("gate", OrientedBoxVolume(Vec3(0, 0, 50), Vec3(2, 2, 1), Quaternion(1, 0, 0, 0)), 0)
+    with pytest.raises(ValueError, match="road-width-safe corridor"):
+        AutoDriveController(base.env, navigation, VEHICLE, 12, AutoDriveConfig(), checkpoints=(gate,),
+                            obstacles=(_physics_obstacle(x=0),), body_geometry=_body_hitbox())
+
+
+def test_obstacle_transition_cannot_miss_a_nearby_checkpoint():
+    base = controller([(0, 0, 0), (0, 0, 55), (0, 0, 100)], (0, .5, 5))
+    navigation = AuthoredNavigation(base.route.points, ("road-0", "road-1"), (1,))
+    gate = Checkpoint("gate", OrientedBoxVolume(Vec3(0, 0, 55), Vec3(2, 2, 1), Quaternion(1, 0, 0, 0)), 0)
+    with pytest.raises(ValueError, match="checkpoint"):
+        AutoDriveController(base.env, navigation, VEHICLE, 12, AutoDriveConfig(), checkpoints=(gate,),
+                            obstacles=(_physics_obstacle(x=0),), body_geometry=_body_hitbox())

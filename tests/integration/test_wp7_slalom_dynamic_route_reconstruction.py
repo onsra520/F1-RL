@@ -10,8 +10,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.rl.reconstruction import RecoveryCandidate, build_training_scenarios
-from src.simulation.geometry.vector import Vec3
+from f1rl.learning.reconstruction import RecoveryCandidate, build_training_scenarios
+from f1rl.sandbox.geometry.vector import Vec3
 
 
 @pytest.mark.parametrize(("gain", "throttle"), [
@@ -66,8 +66,12 @@ def test_slalom_reaches_all_checkpoints_and_finishes_without_offtrack(
 
 
 def test_slalom_route_corner_reconstruction_preserves_world_geometry() -> None:
-    from src.tracks import load_track_asset, load_track_manifest
-    manifest=load_track_manifest(Path("assets/tracks/manifest.json"))
+    from f1rl.track_assets import load_track_asset, load_track_manifest
+    # This is a TRAIN-only Slalom invariant: validate its registered asset,
+    # not the separate unavailable HELD-OUT assets in the shared manifest.
+    manifest=load_track_manifest(
+        Path("assets/tracks/manifest.json"), validate_asset_ids=("slalom-v1",)
+    )
     entry=next(e for e in manifest.tracks if e.track_id=="slalom-v1")
     asset=load_track_asset(Path("assets/tracks")/entry.path)
     assert asset.navigation is not None

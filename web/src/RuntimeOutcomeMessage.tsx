@@ -11,6 +11,17 @@ export function runtimeOutcome(status: RuntimeSessionStatus): OutcomeView | null
     return { kind: 'stopped', label: 'Cancelled / Stopped', detail: reason ?? status.status };
   }
   if (status.status === 'failed') {
+    if (reason?.includes('Auto Drive cannot certify a road-width-safe corridor') ||
+        reason?.includes('Hybrid centerline does not avoid obstacles')) {
+      return { kind: 'invalid', label: 'Unsupported · Obstacle Configuration', detail: reason };
+    }
+    if (reason === 'collision') {
+      return {
+        kind: 'driving_failure',
+        label: 'Driving Failure · Obstacle Contact',
+        detail: 'The collision transition was not accepted. Move the obstacle or try a different route.',
+      };
+    }
     if (reason?.includes('track_boundary_exit:')) {
       return {
         kind: 'driving_failure',
@@ -26,6 +37,9 @@ export function runtimeOutcome(status: RuntimeSessionStatus): OutcomeView | null
     return { kind: 'invalid', label: 'Invalid · Physics/Simulator Error', detail: reason ?? 'uncertified PPO episode' };
   }
   if (terminal.successful_finish === true) {
+    if (terminal.valid_sample !== true || status.provenance !== 'TRAIN-development') {
+      return { kind: 'uncertified', label: 'Development Finish · Not Validated', detail: reason ?? 'finish reached' };
+    }
     return { kind: 'success', label: 'Successful Finish', detail: reason ?? 'finish reached' };
   }
   if (status.mode === 'ppo' && terminal.valid_sample === true) {

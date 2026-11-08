@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from src.exploratory.config import resolve
-from src.training.config import TrainingRunConfig
+from f1rl.exploratory.config import resolve
+from f1rl.learning.training.config import TrainingRunConfig
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -47,7 +47,7 @@ def test_exploratory_ppo_is_isolated_from_legacy_training(tmp_path):
 
 
 def test_auto_and_explicit_cpu_resources(tmp_path, monkeypatch):
-    monkeypatch.setattr("src.exploratory.config.os.cpu_count", lambda: 12)
+    monkeypatch.setattr("f1rl.exploratory.config.os.cpu_count", lambda: 12)
     def automatic(data):
         data['exploratory']['resources']['cpu']['threads'] = 'auto'
         data['exploratory']['resources']['cpu']['blas_threads'] = 'auto'
@@ -100,7 +100,7 @@ def test_unsafe_or_unsupported_scope_denied(tmp_path, section, key, value):
 
 
 def test_unavailable_cpu_budget_denied(tmp_path, monkeypatch):
-    monkeypatch.setattr("src.exploratory.config.os.cpu_count", lambda: 8)
+    monkeypatch.setattr("f1rl.exploratory.config.os.cpu_count", lambda: 8)
     with pytest.raises(ValueError):
         resolve(_write(tmp_path, lambda d: d["exploratory"]["resources"]["cpu"].update(threads=16)))
 

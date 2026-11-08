@@ -2,13 +2,13 @@ from math import isfinite, pi
 
 import pytest
 
-from src.rl.observation import NavigationTarget, ObservationConfig, ObservationEncoder
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.perception.rangefinder import RangefinderSpec
-from src.simulation.perception.sensor_suite import SensorSuite
-from src.simulation.track.model import TrackWorld
-from src.simulation.vehicle import VehicleState
+from f1rl.learning.observation import NavigationTarget, ObservationConfig, ObservationEncoder
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.perception.rangefinder import RangefinderSpec
+from f1rl.sandbox.perception.sensor_suite import SensorSuite
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.vehicle import VehicleState
 
 
 def _vehicle(

@@ -3,10 +3,10 @@ import json
 
 import pytest
 
-from src.validation.wp7_protocol import build_protocol, validate_protocol, evaluation_seed
-from src.validation.wp7_protocol import capture_runtime_manifest, validate_runtime_manifest
-from src.validation.wp7_protocol import prepare_evaluation_factory
-from src.validation.wp7_protocol import load_registration
+from f1rl.research.wp7_protocol import build_protocol, validate_protocol, evaluation_seed
+from f1rl.research.wp7_protocol import capture_runtime_manifest, validate_runtime_manifest
+from f1rl.research.wp7_protocol import prepare_evaluation_factory
+from f1rl.research.wp7_protocol import load_registration
 
 ROOT = Path(__file__).resolve().parents[2]
 

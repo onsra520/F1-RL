@@ -3,15 +3,15 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from src.validation.wp7_protocol import build_protocol, prepare_evaluation_factory
-from src.simulation.body_collision import sweep_body_against_obstacle
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.multi_surface_support import (
+from f1rl.research.wp7_protocol import build_protocol, prepare_evaluation_factory
+from f1rl.sandbox.body_collision import sweep_body_against_obstacle
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.multi_surface_support import (
     _atlas, _contacts, _uncovered_area, certify_multisurface_support,
 )
-from src.simulation.road_footprint import body_xz_polygon
-from src.simulation.vehicle import VehicleState
+from f1rl.sandbox.road_footprint import body_xz_polygon
+from f1rl.sandbox.vehicle import VehicleState
 
 
 ROOT = Path(__file__).resolve().parents[2]

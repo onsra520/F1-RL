@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from src.runtime.protocol import WS_COMMAND_ADAPTER
+from f1rl.local_demo.runtime.protocol import WS_COMMAND_ADAPTER
 
 
 def test_versioned_ws_protocol_accepts_controls_and_validated_actions():

@@ -4,19 +4,19 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from src.evaluation import evaluate_episode
-from src.evaluation.evaluator import _step_evidence,_valid_terminal_failure
-from src.evaluation.crash_contract import validate_crash_terminal_info
-from src.rl.rewards import RewardComposer,TimePenalty
-from src.rl.wp7_race import WP7RaceConfig
-from src.core.physics import PhysicsTransitionError
-from src.core.simulation import Simulation
-from src.simulation.ballistic_flight import FlightState
-from src.simulation.entities.obstacle import Obstacle
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.geometry.vector import Vec3
-from src.simulation.spatial_contact_dynamics import _suspension_state
-from src.simulation.vehicle import VehicleControl
+from f1rl.learning.evaluation import evaluate_episode
+from f1rl.learning.evaluation.evaluator import _step_evidence,_valid_terminal_failure
+from f1rl.learning.evaluation.crash_contract import validate_crash_terminal_info
+from f1rl.learning.rewards import RewardComposer,TimePenalty
+from f1rl.learning.wp7_race import WP7RaceConfig
+from f1rl.runtime.physics import PhysicsTransitionError
+from f1rl.runtime.simulation import Simulation
+from f1rl.sandbox.ballistic_flight import FlightState
+from f1rl.sandbox.entities.obstacle import Obstacle
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.spatial_contact_dynamics import _suspension_state
+from f1rl.sandbox.vehicle import VehicleControl
 from tests.integration.test_spatial_ground_motion import spatial_factory
 from tests.learning.evaluation.mocks.policies import ConstantPolicy
 
@@ -130,8 +130,8 @@ def test_real_simulation_is_absorbing_after_accepted_crash():
 
 @pytest.mark.parametrize("forgery",["post_velocity","impulse","energy","event_time","prefix","unscored_event"])
 def test_physics_transition_independently_rejects_tampered_applied_impact(forgery):
-    from src.simulation.world import step_world
-    from src.simulation.geometry.vector import Vec3
+    from f1rl.sandbox.world import step_world
+    from f1rl.sandbox.geometry.vector import Vec3
     f=crash_factory()
     result=step_world(f.track,f.initial_state,VehicleControl(0.,0.,0.),
          f.vehicle_parameters,f.simulation_config.fixed_dt,
@@ -154,7 +154,7 @@ def test_physics_transition_independently_rejects_tampered_applied_impact(forger
     elif forgery=="prefix":
         result=replace(result,center_segments=result.precrash_result.center_segments)
     elif forgery=="unscored_event":
-        from src.simulation.interactions.events import ObstacleHit
+        from f1rl.sandbox.interactions.events import ObstacleHit
         result=replace(result,events=(ObstacleHit('crash-1'),))
     with pytest.raises(PhysicsTransitionError):
         f.physics_config.validate_transition(result,

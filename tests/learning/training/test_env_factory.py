@@ -1,21 +1,23 @@
+from dataclasses import replace
+
 import numpy as np
 import pytest
 
-from src.rl import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
-from src.rl.gym_environment import F1RLEnv
-from src.training.env_factory import F1RLEnvFactory
-from src.core.simulation import SimulationConfig
-from src.simulation.entities.finish_line import FinishLine
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.state import InteractionState
-from src.simulation.perception.sensor_suite import SensorSuite
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.state import TrackState
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleParameters, VehicleState
-from src.simulation.world import WorldState
+from f1rl.learning import EpisodeConfig, ObservationConfig, ObservationEncoder, RewardComposer
+from f1rl.learning.gym_environment import F1RLEnv
+from f1rl.learning.training.env_factory import F1RLEnvFactory
+from f1rl.runtime.simulation import SimulationConfig
+from f1rl.sandbox.entities.finish_line import FinishLine
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.perception.sensor_suite import SensorSuite
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.state import TrackState
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleParameters, VehicleState
+from f1rl.sandbox.world import WorldState
 
 
 def _factory() -> F1RLEnvFactory:
@@ -89,6 +91,12 @@ def test_factory_envs_own_independent_runtime_state() -> None:
     assert second._simulation.snapshot.world == _factory().initial_state
 
 
+def test_research_admission_marker_reaches_created_environment() -> None:
+    environment = replace(_factory(), research_admission_required=True).create()
+
+    assert environment.requires_scientific_admission is True
+
+
 @pytest.mark.parametrize(
     ("field", "bad_value"),
     [
@@ -99,6 +107,7 @@ def test_factory_envs_own_independent_runtime_state() -> None:
         ("observation_encoder", object()),
         ("reward_composer", object()),
         ("episode_config", object()),
+        ("research_admission_required", "yes"),
     ],
 )
 def test_factory_rejects_wrong_constructor_field_types(

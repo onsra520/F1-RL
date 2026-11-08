@@ -12,6 +12,7 @@ import sys
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 import webbrowser
@@ -51,6 +52,21 @@ def _read_text(url: str) -> str:
         return response.read().decode("utf-8")
 
 
+def _read_bytes(url: str) -> bytes:
+    with urllib.request.urlopen(url, timeout=HTTP_TIMEOUT) as response:
+        return response.read()
+
+
+def _local_runtime_source_sha256() -> str:
+    from f1rl.local_demo.runtime.catalog import runtime_source_sha256
+    return runtime_source_sha256(ROOT)
+
+
+def _local_runtime_inputs_sha256() -> str:
+    from f1rl.local_demo.runtime.catalog import runtime_inputs_sha256
+    return runtime_inputs_sha256(ROOT)
+
+
 def backend_compatibility() -> tuple[bool, str]:
     try:
         health = json.loads(_read_text(f"{BACKEND_URL}/api/v1/health"))
@@ -61,18 +77,58 @@ def backend_compatibility() -> tuple[bool, str]:
                 len(health["source_sha256"]) != 64 or
                 any(char not in "0123456789abcdef" for char in health["source_sha256"])):
             return False, "health response does not match the development runtime protocol"
+        if health["source_sha256"] != _local_runtime_source_sha256():
+            return False, "runtime source does not match the local checkout"
+        if health.get("runtime_inputs_sha256") != _local_runtime_inputs_sha256():
+            return False, "runtime input files do not match the local checkout"
         spec = json.loads(_read_text(f"{BACKEND_URL}/openapi.json"))
         info = spec.get("info", {})
         if info.get("title") != "F1-RL Development Runtime" or info.get("version") != "1.0.0":
             return False, "OpenAPI title or version does not match F1-RL Runtime 1.0.0"
         return True, "compatible F1-RL Runtime 1.0.0"
-    except (OSError, urllib.error.URLError, json.JSONDecodeError, UnicodeDecodeError) as error:
+    except (OSError, ImportError, ValueError, urllib.error.URLError, json.JSONDecodeError, UnicodeDecodeError) as error:
         return False, f"runtime health/version check failed: {error}"
 
 
 def frontend_compatibility() -> tuple[bool, str]:
     try:
         page = _read_text(FRONTEND_URL)
+        production_index = WEB_ROOT / "dist" / "index.html"
+        if production_index.is_file():
+            if page != production_index.read_bytes().decode("utf-8") or "<title>Racing Sandbox · F1-RL</title>" not in page:
+                return False, "page does not match the local production build"
+            runtime_url = re.search(r'<meta name="f1rl-runtime-url" content="([^"]+)">', page)
+            if not runtime_url or runtime_url.group(1) not in ("http://127.0.0.1:8000", "http://localhost:8000"):
+                return False, "production frontend Runtime URL does not use the default backend on port 8000"
+            assets = re.findall(r'''(?:src|href)=["'](/assets/[A-Za-z0-9._-]+\.(?:js|css))["']''', page)
+            if not any(asset.endswith(".js") for asset in assets):
+                return False, "production build has no entry script"
+            manifest = json.loads((production_index.parent / ".vite" / "manifest.json").read_text(encoding="utf-8"))
+            if not isinstance(manifest, dict) or not manifest:
+                return False, "production build manifest is invalid"
+            files = set()
+            for entry in manifest.values():
+                if not isinstance(entry, dict) or not isinstance(entry.get("file"), str):
+                    return False, "production build manifest is invalid"
+                files.add(entry["file"])
+                for key in ("css", "assets"):
+                    values = entry.get(key, [])
+                    if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
+                        return False, "production build manifest is invalid"
+                    files.update(values)
+                for key in ("imports", "dynamicImports"):
+                    values = entry.get(key, [])
+                    if not isinstance(values, list) or not all(isinstance(value, str) and value in manifest for value in values):
+                        return False, "production build manifest is missing an imported chunk"
+            if not {asset.lstrip("/") for asset in assets}.issubset(files):
+                return False, "production build manifest does not identify the entry assets"
+            for asset in sorted(files):
+                path = (production_index.parent / asset).resolve()
+                if not path.is_relative_to(production_index.parent.resolve()) or not path.is_file():
+                    return False, "production build is missing a manifest asset"
+                if _read_bytes(f"{FRONTEND_URL}/{urllib.parse.quote(asset, safe='/')}") != path.read_bytes():
+                    return False, "served frontend asset does not match the local production build"
+            return True, "compatible F1-RL production frontend"
         if "<title>Racing Sandbox · F1-RL</title>" not in page or "/src/main.tsx" not in page:
             return False, "page is not the F1-RL Vite development frontend"
         _read_text(f"{FRONTEND_URL}/@vite/client")
@@ -106,7 +162,10 @@ def _stream_output(name: str, stream) -> None:
 
 def _process_command(name: str) -> list[str]:
     if name == "BACKEND":
-        return [sys.executable, "-m", "src.runtime"]
+        return [sys.executable, "-m", "f1rl.local_demo.runtime"]
+    dist = WEB_ROOT / "dist"
+    if (dist / "index.html").is_file():
+        return [sys.executable, "-m", "http.server", str(FRONTEND_PORT), "--bind", "127.0.0.1", "--directory", str(dist)]
     if IS_WINDOWS:
         command = f"npm run dev -- --port {FRONTEND_PORT} --strictPort"
         return [os.environ.get("COMSPEC", "cmd.exe"), "/d", "/s", "/c", command]
@@ -153,7 +212,9 @@ class Launcher:
         print(f"[{name}] {message}", flush=True)
 
     def _start(self, name: str) -> ManagedProcess:
-        if name == "FRONTEND" and shutil.which("npm") is None:
+        if name == "FRONTEND" and (WEB_ROOT / "dist" / "index.html").is_file() and not (WEB_ROOT / "dist" / ".vite" / "manifest.json").is_file():
+            raise LaunchError("build_incomplete", "start_frontend", "Production build manifest is missing; rebuild the frontend")
+        if name == "FRONTEND" and not (WEB_ROOT / "dist" / "index.html").is_file() and shutil.which("npm") is None:
             raise LaunchError("npm_missing", "start_frontend", "npm was not found; install Node.js/npm and ensure npm is on PATH")
         options = {
             "cwd": ROOT if name == "BACKEND" else WEB_ROOT,

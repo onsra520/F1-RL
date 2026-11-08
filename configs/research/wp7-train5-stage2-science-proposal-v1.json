@@ -1,0 +1,255 @@
+{
+  "admission_requirements": {
+    "compatibility_subsystems_open": 9,
+    "current_source_v2_admission_guard_unconditionally_closed": true,
+    "owner_scientific_protocol_signature": false,
+    "ppo_backend_verified_for_admitted_new_science": false,
+    "registered_training_runner_verified": false,
+    "scientific_capabilities_blocked": [
+      "registered_wp7_training",
+      "admitted_stochastic_ppo",
+      "independent_approval_restore"
+    ],
+    "scientific_training_permission": false,
+    "stage3_execution_admission": "NOT_GRANTED"
+  },
+  "created_at": "2026-11-07T23:31:02.751275+07:00",
+  "development_design": {
+    "cell_count": 60,
+    "checkpoint_model_selection": "FINAL_ONLY_NO_DEV_TUNING",
+    "conditions": [
+      "nominal",
+      "perturbation"
+    ],
+    "dev_episode_execution": "NOT_EXECUTED",
+    "episodes_per_cell": 60,
+    "eval_seed_collision_check": "REQUIRED_BEFORE_ADMISSION",
+    "evaluation_seed_formula": "sha256(versioned_protocol,policy,track,stratum,episode) -- proposed, not yet source-registered",
+    "heldout_ids_metadata_only": [
+      "left-turn-v1",
+      "offset-slalom-v1"
+    ],
+    "integer_counts_for_exact_3600": [
+      {
+        "denominator": 1800,
+        "metric": "nominal_finish_min",
+        "minimum_successes": 1620
+      },
+      {
+        "denominator": 720,
+        "metric": "per_track_finish_min",
+        "minimum_successes": 576
+      },
+      {
+        "denominator": 3600,
+        "maximum_events": 72,
+        "metric": "hard_route_violations_max"
+      },
+      {
+        "denominator": 3600,
+        "maximum_events": 36,
+        "metric": "certified_physical_crashes_max"
+      },
+      {
+        "denominator": 3600,
+        "maximum_events": 0,
+        "metric": "invalid_or_uncertified_physics_max"
+      }
+    ],
+    "nominal_episodes": 1800,
+    "per_cohort_episodes": 1800,
+    "per_track_episodes": 720,
+    "policy_count": 6,
+    "power_justification": "MISSING_BEFORE_OWNER_ACCEPTANCE",
+    "preproposal_thresholds_unmodified": {
+      "certified_physical_crash_rate_max": 0.01,
+      "hard_route_violation_rate_max": 0.02,
+      "nominal_finish_rate_min": 0.9,
+      "per_track_finish_rate_min": 0.8,
+      "uncertified_crash_or_invalid_physics_count_max": 0
+    },
+    "required_preregistered_statistics": [
+      "per_cohort",
+      "per_policy",
+      "per_track",
+      "per_stratum",
+      "per_60_episode_cell",
+      "cluster_aware_uncertainty_intervals",
+      "rare_crash_detection_power_and_precision"
+    ],
+    "threshold_status": "EXPLORATORY_PROPOSAL_NOT_OWNER_SIGNED",
+    "total_episodes": 3600,
+    "track_ids": [
+      "straight-sprint-v1",
+      "slalom-v1",
+      "right-turn-train-v2",
+      "ramp-v1",
+      "left-turn-train-v2"
+    ],
+    "uncertainty_assessment": "NO_INDEPENDENCE_ASSUMPTION_FOR_ALL_3600;EPISODES_NESTED_IN_SIX_POLICIES_AND_SHARED_TRACKS"
+  },
+  "fixture_provenance": {
+    "completed_resets": 30,
+    "evidence_receipt_sha256": "cdc0ce69da1a0c3b2af37af5f7da99317b74237862d2598d2bcabb3b8cd661d5",
+    "external_empirical_calibration_passed": false,
+    "heldout_accessed": false,
+    "one_shot_commit": "9122c3dde74e7466ea0f7cc937486ac87789c078",
+    "physics_substeps": 5760,
+    "reserved_training_seeds_consumed": 0,
+    "simulation_steps": 360
+  },
+  "heldout_permission": false,
+  "independent_scientific_reviewer_signed": false,
+  "next_stage": "STAGE2_OWNER_DECISION_ON_VERSIONED_PROTOCOL_BEFORE_STAGE3_ADMISSION",
+  "owner_protocol_signed": false,
+  "permissions": {
+    "create_review_docs": true,
+    "full06": false,
+    "heldout": false,
+    "ppo_finetuning": false,
+    "ppo_smoke_replay": false,
+    "ppo_training": false,
+    "run_synthetic_fixture_tests": true,
+    "scientific_release": false,
+    "write_source_only_tests": true
+  },
+  "preparation_permission": "STAGE2_DOCUMENT_AND_TEST_REVIEW_ONLY",
+  "review_verdict": "PASS_DOCUMENT_COMPLETENESS_FAIL_SCIENTIFIC_TRAINING_ADMISSION",
+  "risk_register": [
+    {
+      "id": "R1",
+      "issue": "200k/PPO rollout quantum and final checkpoint mismatch",
+      "required_action": "Versioned budget+metric contract reconciliation and owner approval",
+      "severity": "BLOCKING"
+    },
+    {
+      "id": "R2",
+      "issue": "Developer metrics threshold power and correlated episodes insufficiently justified",
+      "required_action": "Preregister cluster-aware analysis and baseline/risk rationale without changing limits opportunistically",
+      "severity": "BLOCKING"
+    },
+    {
+      "id": "R3",
+      "issue": "Simulation-only domain claims not yet explicitly owner-approved",
+      "required_action": "Approve simulation-only claims with no real-world generalization",
+      "severity": "BLOCKING"
+    },
+    {
+      "id": "R4",
+      "issue": "Separate authenticated training admission not implemented/approved across three guards",
+      "required_action": "Stage3 test-first authorized admission; no bypass",
+      "severity": "BLOCKING"
+    },
+    {
+      "id": "R5",
+      "issue": "TRAIN reset perturbation distribution is synthetic rather than empirically calibrated",
+      "required_action": "Explicitly accept simulation-only perturbation assumptions or provide physical measurement",
+      "severity": "BLOCKING"
+    },
+    {
+      "id": "R6",
+      "issue": "15 unavailable historical GitHub job logs; global seed non-use not absolutely proven",
+      "required_action": "Owner-accepted exception stays attached, do not claim recovered logs",
+      "severity": "OPEN_DISCLOSED_EXCEPTION"
+    },
+    {
+      "id": "R7",
+      "issue": "Nine WP7 compatibility gates marked in_progress, three science capabilities blocked",
+      "required_action": "Scoped compatibility certification and Stage3 owner admission before any run",
+      "severity": "OPEN"
+    },
+    {
+      "id": "R8",
+      "issue": "Heterogeneous frozen checkpoints confound causal fine-tune-vs-scratch attribution",
+      "required_action": "Restrict interpretation or pre-register sensitivity and across-policy analysis",
+      "severity": "METHODOLOGICAL"
+    }
+  ],
+  "schema": "f1rl_wp7_train5_stage2_scientific_protocol_draft_and_critical_review_v1",
+  "scientific_release_permission": false,
+  "scientific_status": "DRAFT_CRITICAL_REVIEW_COMPLETE_NOT_OWNER_APPROVED",
+  "simulation_scope": {
+    "empirical_calibration_measurements_available": false,
+    "excluded_claims": [
+      "real_vehicle_safety",
+      "sim_to_real_accuracy",
+      "general_physical_validation",
+      "heldout_generalization"
+    ],
+    "owner_approved": false,
+    "preferred_claim": "SIMULATION_ONLY_PERFORMANCE_ON_FIVE_REGISTERED_TRAIN_TRACKS",
+    "review_decision": "RECOMMEND_SCOPED_SIMULATION_ONLY_PENDING_SEPARATE_OWNER_ACCEPTANCE"
+  },
+  "source_anchor_commit": "64b22bcf90d684836da30d2237ad1cefc94150ce",
+  "source_bindings": {
+    "configs/recovery/wp7-pilot-200k.yml": "79172c7ca71b211d23047b234d03eb5f9537b599dac982f2913a61ce03942b1f",
+    "configs/research/wp7-core-readiness-matrix-v1.json": "2d7c126715f95e13ce93682c9fb70ea958d547fae605d736cbbbbac1e2ae9549",
+    "configs/research/wp7-train5-global-seed-registry-owner-exception-20261107.json": "6a5099fd5860892d53b9f6b3ef6b49e1df4e7ccce318931a2f60f3dd5bfc344c",
+    "configs/research/wp7-train5-paired-v2-registration.json": "3dd9ca9776b229e9e20bdc018cc1b67e93229d93a9754d53211197e8db60a576",
+    "configs/research/wp7-train5-training-contract-scientific-audit-v1.json": "35f8e031a23ff9a61ea92104d10ba72b056eeb0dd984e6685a3b6d969a430ce9",
+    "configs/research/wp7-train5-v3-fixture-and-development-criteria.json": "5968a74877e4d96040ad4172b3d1b955811d01c2d301ba14348dadd8136767eb",
+    "f1rl/learning/algorithms/ppo.py": "d17b6edd30068673d5cf156cbf601a63a7e43e43726ad118981b05aafe84c4e6",
+    "f1rl/learning/training/runner.py": "a8b2be162fa352dc79b4c533a9eb07dd2c55321846da6985eb2482c3732b6a4f",
+    "f1rl/research/wp7_train5_reset_perturbation_v3.py": "26677c0ce4bdab41f7f1693203231b1364cc346ea9badee59c70e1666630a40c",
+    "f1rl/research/wp7_train5_v3_dev_metrics.py": "9040711902059f62cb260bdba3d4b2e0b348b9552f914f4ad65ff6cbf5ed5ade"
+  },
+  "source_hash_contract": "SHA256_OF_LOCKED_GIT_BLOB_BYTES_CANONICAL_LF_CROSS_PLATFORM",
+  "target_branch": "handoff/physics-v4-khanh-bang-20261106",
+  "training_design": {
+    "actual_training_run_status": "NOT_EXECUTED",
+    "checkpoint_schedule_requested_every_steps": 25000,
+    "checkpoint_schedule_requires_reconciliation": true,
+    "checkpoint_strategy": "final_checkpoint_only_no_development_checkpoint_search",
+    "cohorts": [
+      "train5_from_scratch",
+      "train5_from_frozen_checkpoint"
+    ],
+    "comparison_caveat": "Three heterogeneous pretrained initializations do not isolate the causal effect of finetuning; interpret cohort contrast as descriptive.",
+    "current_dev_metric_code_final_checkpoint_step": 200000,
+    "expected_realized_steps_if_full_rollouts": 200704,
+    "frozen_initialization_candidates": [
+      "C-seed0",
+      "B-seed1",
+      "A-seed2"
+    ],
+    "global_nonuse_absolute_proof": false,
+    "global_seed_registry_status": "CLOSED_WITH_OWNER_ACCEPTED_EVIDENCE_EXCEPTION",
+    "hardware_device": "cpu",
+    "missing_historical_GHA_logs": 15,
+    "overshoot_all_six": 4224,
+    "overshoot_per_policy": 704,
+    "proposed_training_timesteps_per_policy": 200000,
+    "proposed_training_timesteps_total": 1200000,
+    "replicates_each": 3,
+    "reserved_seeds_consumed": 0,
+    "reserved_training_seed_count": 18,
+    "resolution_options": [
+      "Versioned protocol and metric contract explicitly accept actual 200704 final checkpoint and register the actual save-step schedule before execution.",
+      "Versioned protocol adopts exactly achievable 200000 steps with revised rollout configuration and independently tested compatible PPO batch settings, then re-audits hyperparameter changes."
+    ],
+    "resolution_status": "OWNER_DECISION_AND_FUTURE_VERSIONED_IMPLEMENTATION_REQUIRED",
+    "rollout_length_steps_per_env": 256,
+    "rollout_quantum_steps": 2048,
+    "rollouts_for_at_least_proposed_budget": 98,
+    "step_budget_consistency": "BLOCKER_PROPOSED_200000_NOT_DIVISIBLE_BY_2048",
+    "total_policy_runs": 6,
+    "vector_envs": 8
+  },
+  "training_permission": false,
+  "training_reset": {
+    "activation_status": "REQUIRES_NEW_SOURCE_BOUND_APPROVED_ADAPTER",
+    "engineering_fixture_range_heading_deg": [
+      -5,
+      5
+    ],
+    "engineering_fixture_range_lateral_m": [
+      -0.5,
+      0.5
+    ],
+    "engineering_fixture_seed_count": 3,
+    "max_rejection_draws": 32,
+    "scenario_perturbation_source": "f1rl/research/wp7_train5_reset_perturbation_v3.py",
+    "training_distribution_empirically_calibrated": false,
+    "training_ready_factory_activated": false
+  }
+}

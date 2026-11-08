@@ -24,7 +24,7 @@ import {
 } from './lib/runtime';
 
 type Mode = 'sketch' | 'build' | 'drive';
-type DriveMode = 'auto' | 'manual' | 'ppo' | 'replay';
+type DriveMode = 'auto' | 'manual' | 'ppo' | 'hybrid' | 'replay';
 const STORAGE_KEY = 'f1rl.racing-sandbox.draft.v1';
 const REPLAY_TRACK_UNAVAILABLE: TrackDocument = {
   schema: 'f1rl_racing_sandbox_draft_v1', id: 'replay-track-unavailable', name: 'Track unavailable',
@@ -83,12 +83,19 @@ export default function App() {
   const [runtimeCatalog, setRuntimeCatalog] = useState<RuntimeCatalog | null>(null);
   const [catalogError, setCatalogError] = useState('');
   const [modelId, setModelId] = useState('A-seed0');
+  const [hybridModelId, setHybridModelId] = useState('wp7-calibration');
   const [runtimeTrackId, setRuntimeTrackId] = useState('straight-sprint-v1');
   const [runtimeSeed, setRuntimeSeed] = useState(412);
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeSessionStatus | null>(null);
   const [runtimeError, setRuntimeError] = useState('');
   const [runtimeReplay, setRuntimeReplay] = useState<Replay | null>(null);
   const [runtimeBusy, setRuntimeBusy] = useState(false);
+  useEffect(() => {
+    if (!runtimeCatalog || runtimeBusy) return;
+    setHybridModelId((current) => runtimeCatalog.exploratoryModels.some((model) => model.model_id === current)
+      ? current : runtimeCatalog.exploratoryModels[0]?.model_id ?? '');
+  }, [runtimeCatalog, runtimeBusy]);
+  const [runtimeConnected, setRuntimeConnected] = useState(false);
   const [runtimeTrackSelection, setRuntimeTrackSelection] = useState<RuntimeTrackSelection>({ kind: 'train' });
   const trackValidationRevision = useRef(0);
   const [trackValidationBusy, setTrackValidationBusy] = useState(false);
@@ -101,6 +108,9 @@ export default function App() {
   const runtimeSocketRef = useRef<RuntimeSocketClient | null>(null);
   const latestRuntimeFrame = useRef<RuntimeSessionStatus['latest_frame']>(null);
   const runtimeResetPending = useRef(false);
+  const runtimeTerminalPending = useRef(false);
+  const autoStartPending = useRef(false);
+  const runtimeStartEpoch = useRef(0);
   const runtimeClient = useMemo(() => new RuntimeClient(), []);
   const trackRef = useRef(track);
   const history = useRef<TrackDocument[]>([]);
@@ -164,19 +174,27 @@ export default function App() {
     return () => { active = false; };
   }, [mode, runtimeCatalog, catalogError, runtimeClient, runtimeTrackId]);
 
+  const cancelRuntime = useCallback(() => {
+    runtimeStartEpoch.current += 1;
+    setRuntimeConnected(false);
+    const sessionId = sessionRef.current;
+    sessionRef.current = null;
+    runtimeSocketRef.current?.disconnect();
+    runtimeSocketRef.current = null;
+    if (sessionId) void runtimeClient.close(sessionId).catch(() => undefined);
+    setRuntimeBusy(false);
+  }, [runtimeClient]);
+
   const invalidateCustomTrackValidation = useCallback(() => {
     trackValidationRevision.current += 1;
     setTrackValidationBusy(false);
     setRuntimeTrackSelection(customTrackSelectionAfterMapEdit());
-    sessionRef.current = null;
+    cancelRuntime();
     latestRuntimeFrame.current = null;
-    runtimeSocketRef.current?.disconnect();
-    runtimeSocketRef.current = null;
-    setRuntimeBusy(false);
     setRuntimeStatus(null);
     setPose(spawnPose(trackRef.current));
     setRuntimeError('');
-  }, []);
+  }, [cancelRuntime]);
   const changeTrack = useCallback((update: (prev: TrackDocument) => TrackDocument) => {
     const prev = trackRef.current;
     const next = update(prev);
@@ -263,6 +281,8 @@ export default function App() {
     if (!file) return;
     try {
       const next = parseReplay(JSON.parse(await file.text()));
+      autoStartPending.current = false;
+      cancelRuntime();
       setReplay(next);
       setRuntimeReplay(null);
       setReplayTime(next.frames[0].time_s);
@@ -274,22 +294,31 @@ export default function App() {
   const runRuntimeSession = async () => {
     const trackRequest = runtimeTrackRequest;
     const validatedCustomTrack = runtimeTrackSelection.kind === 'custom' ? runtimeTrackSelection.validated : null;
-    if (!runtimeCatalog || (driveMode === 'auto' && !autoConfigValid) || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !trackRequest) return;
+    if (!runtimeCatalog || ((driveMode === 'auto' || driveMode === 'hybrid') && !autoConfigValid) || (driveMode === 'hybrid' && !runtimeCatalog.exploratoryModels.some((model) => model.model_id === hybridModelId)) || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !trackRequest) return;
+    const startEpoch = ++runtimeStartEpoch.current;
     const traceId = crypto.randomUUID();
     setRuntimeBusy(true);
+    setRuntimeConnected(false);
     setRuntimeError(''); setReplay(null); setRuntimeReplay(null); setPlaying(false); setRuntimeStatus(null);
     latestRuntimeFrame.current = null;
     runtimeResetPending.current = false;
+    runtimeTerminalPending.current = false;
     let createdSessionId: string | null = null;
     try {
       const created = trackRequest.kind === 'custom'
-        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : driveMode === 'auto' ? 'auto' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : undefined, traceId, driveMode === 'auto' ? autoConfig : undefined, driveMode === 'auto' && experimentalPhysicsV4)
+        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : driveMode === 'auto' ? 'auto' : driveMode === 'hybrid' ? 'hybrid' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : driveMode === 'hybrid' ? hybridModelId : undefined, traceId, driveMode === 'auto' || driveMode === 'hybrid' ? autoConfig : undefined, driveMode === 'auto' && experimentalPhysicsV4)
         : driveMode === 'manual'
           ? await runtimeClient.createManualSession(trackRequest.trackId, runtimeSeed)
           : driveMode === 'auto'
             ? await runtimeClient.createAutoSession(trackRequest.trackId, runtimeSeed, autoConfig)
+            : driveMode === 'hybrid'
+              ? await runtimeClient.createHybridSession(hybridModelId, trackRequest.trackId, runtimeSeed, autoConfig)
             : await runtimeClient.createPpoSession(modelId, trackRequest.trackId, runtimeSeed);
       createdSessionId = created.session_id;
+      if (runtimeStartEpoch.current !== startEpoch) {
+        void runtimeClient.close(created.session_id).catch(() => undefined);
+        return;
+      }
       if (trackRequest.kind === 'custom' &&
           (!validatedCustomTrack || !matchesValidatedCustomTrack(validatedCustomTrack, created.track_preview))) {
         throw new RuntimeApiError('Python session track does not match the validated map', 'track_mismatch', 409, traceId);
@@ -298,6 +327,7 @@ export default function App() {
       latestRuntimeFrame.current = created.latest_frame;
       setRuntimeStatus(created);
       const socket = await runtimeClient.connect(created.session_id, (event) => {
+        if (runtimeStartEpoch.current !== startEpoch) return;
         if (event.type === 'ready') {
           const status = event.data as unknown as RuntimeSessionStatus;
           latestRuntimeFrame.current = status.latest_frame;
@@ -312,10 +342,11 @@ export default function App() {
           setRuntimeStatus((current) => current ? { ...current, status: current.status === 'ready' ? 'running' : current.status, latest_frame: frame, steps: frame.tick } : current);
         }
         if (event.type === 'progress') {
-          const progress = event.data as { steps?: number; max_steps?: number; step_progress?: number };
+          const progress = event.data as { steps?: number; max_steps?: number; step_progress?: number; hybrid?: RuntimeSessionStatus['hybrid'] };
           setRuntimeStatus((current) => current ? { ...current,
             steps: progress.steps ?? current.steps, max_steps: progress.max_steps ?? current.max_steps,
             step_progress: progress.step_progress ?? current.step_progress,
+            hybrid: progress.hybrid ?? current.hybrid,
             status: current.status === 'ready' ? 'running' : current.status,
           } : current);
         }
@@ -328,16 +359,17 @@ export default function App() {
           }
           setRuntimeStatus((current) => current ? {
             ...current, status,
-            ...(reset ? { steps: 0, step_progress: 0, latest_frame: null, episode_result: null } : {}),
+            ...(reset ? { steps: 0, step_progress: 0, latest_frame: null, episode_result: null, collision_terminal: undefined } : {}),
           } : current);
         }
         if (event.type === 'terminal') {
+          runtimeTerminalPending.current = true;
           runtimeResetPending.current = false;
           const result = event.data as unknown as NonNullable<RuntimeSessionStatus['episode_result']>;
           const state = String(result.status) as RuntimeSessionStatus['status'];
           setRuntimeStatus((current) => current ? { ...current, status: state, episode_result: result } : current);
           void runtimeClient.replay(created.session_id).then((completedReplay) => {
-            if (sessionRef.current !== created.session_id) return;
+            if (runtimeStartEpoch.current !== startEpoch || sessionRef.current !== created.session_id) return;
             const replayWithTrack = completedReplay.schema === 'f1rl_racing_sandbox_replay_v2' && created.track_preview
               ? { ...completedReplay, track_preview: {
                   track_id: created.track_preview.track_id,
@@ -347,6 +379,9 @@ export default function App() {
                 } }
               : completedReplay;
             setRuntimeReplay(replayWithTrack);
+            if (completedReplay.schema === 'f1rl_racing_sandbox_replay_v2' && completedReplay.collision_terminal) {
+              setRuntimeStatus((current) => current ? { ...current, collision_terminal: completedReplay.collision_terminal } : current);
+            }
             setReplayTime(completedReplay.frames[0].time_s);
             // Keep the authoritative terminal result visible; Replay is available on demand.
             setPlaying(false);
@@ -355,7 +390,12 @@ export default function App() {
             runtimeSocketRef.current = null;
             setRuntimeBusy(false);
           }).catch((error: unknown) => {
-            if (error instanceof Error) setRuntimeError(error.message);
+            if (runtimeStartEpoch.current !== startEpoch || sessionRef.current !== created.session_id) return;
+            const expectedPreflight = error instanceof RuntimeApiError && error.code === 'replay_unavailable' &&
+              result.steps === 0 && typeof result.reason === 'string' &&
+              (result.reason.includes('Auto Drive cannot certify a road-width-safe corridor') ||
+               result.reason.includes('Hybrid centerline does not avoid obstacles'));
+            if (error instanceof Error && !expectedPreflight) setRuntimeError(error.message);
             sessionRef.current = null;
             runtimeSocketRef.current?.disconnect();
             runtimeSocketRef.current = null;
@@ -364,7 +404,7 @@ export default function App() {
         }
         if (event.type === 'error') setRuntimeError(String(event.data.message ?? event.data.code ?? 'Runtime protocol error'));
       }, (error) => {
-        if (sessionRef.current !== created.session_id) return;
+        if (runtimeStartEpoch.current !== startEpoch || sessionRef.current !== created.session_id) return;
         runtimeResetPending.current = false;
         setRuntimeError(error.message);
         setRuntimeBusy(false);
@@ -373,9 +413,17 @@ export default function App() {
         runtimeSocketRef.current = null;
         void runtimeClient.close(created.session_id).catch(() => undefined);
       });
+      if (runtimeStartEpoch.current !== startEpoch) {
+        socket.disconnect();
+        return;
+      }
       runtimeSocketRef.current = socket;
       socket.start();
+      setRuntimeConnected(true);
     } catch (error) {
+      if (runtimeStartEpoch.current !== startEpoch) {
+        return;
+      }
       if (error instanceof RuntimeApiError && error.code === 'track_mismatch' && error.traceId) {
         console.error('runtime session invariant failed', {
           trace_id: error.traceId, module: 'runtime', operation: 'run_session',
@@ -392,6 +440,15 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    if (!autoStartPending.current || mode !== 'drive' || driveMode !== 'auto' ||
+        !runtimeCatalog || trackValidationBusy || runtimeBusy || !runtimeTrackRequest ||
+        !autoConfigValid || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff) return;
+    autoStartPending.current = false;
+    void runRuntimeSession();
+  }, [mode, driveMode, runtimeCatalog, trackValidationBusy, runtimeBusy,
+      runtimeTrackSelection, runtimeTrackId, autoConfigValid, runtimeSeed]);
+
   const validateCurrentTrack = async () => {
     const requestRevision = ++trackValidationRevision.current;
     setRuntimeTrackSelection({ kind: 'custom', validated: null });
@@ -403,6 +460,7 @@ export default function App() {
       setToast(`Python validated ${converted.surface_count} road surfaces · development track`);
     } catch (error) {
       if (isCurrentCustomTrackValidation(requestRevision, trackValidationRevision.current)) {
+        autoStartPending.current = false;
         setRuntimeTrackSelection({ kind: 'custom', validated: null });
         setRuntimeError(error instanceof RuntimeApiError ? `${error.code}: ${error.message}` : error instanceof Error ? error.message : 'Track validation failed');
       }
@@ -429,15 +487,24 @@ export default function App() {
   const changeMode = (target: Mode) => {
     if (target === 'drive') {
       const keepReplay = shouldKeepReplayOnDrive(mode, driveMode, Boolean(activeReplay));
+      autoStartPending.current = mode !== 'drive' && !keepReplay;
       startDrive(keepReplay);
       if (shouldValidateCustomTrackOnDrive(mode, keepReplay)) void validateCurrentTrack();
       return;
     }
+    autoStartPending.current = false;
+    if (mode === 'drive') cancelRuntime();
     setMode(target); setArmed(null); setSelected(null); setPlaying(false);
   };
 
   const stopRuntimeSession = async () => {
     setPlaying(false);
+    if (!runtimeSocketRef.current) {
+      autoStartPending.current = false;
+      cancelRuntime();
+      setRuntimeStatus(null);
+      return;
+    }
     try {
       if (driveMode === 'manual') runtimeSocketRef.current?.action(0, 0, 0);
       runtimeSocketRef.current?.stop();
@@ -446,6 +513,7 @@ export default function App() {
   };
 
   const controlRuntime = (command: 'pause' | 'resume' | 'reset') => {
+    if (runtimeTerminalPending.current) return;
     try {
       runtimeSocketRef.current?.[command]();
       if (command === 'reset') {
@@ -587,9 +655,10 @@ export default function App() {
           {mode === 'drive' && <div className="drive-overlay">
             <div className="drive-mode-switch">
               <button className={driveMode === 'auto' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'auto'} onClick={() => {setDriveMode('auto'); setPlaying(false);}}>Auto Drive</button>
-              <button className={driveMode === 'manual' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'manual'} onClick={() => {setDriveMode('manual'); setPlaying(false);}}>Manual</button>
-              <button className={driveMode === 'ppo' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'ppo'} onClick={() => {setDriveMode('ppo'); setPlaying(false);}}>PPO</button>
-              <button className={driveMode === 'replay' ? 'selected' : ''} disabled={!activeReplay || runtimeBusy} onClick={() => {setDriveMode('replay'); setPlaying(false);}}>Replay</button>
+              <button className={driveMode === 'manual' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'manual'} onClick={() => {autoStartPending.current = false; setDriveMode('manual'); setPlaying(false);}}>Manual</button>
+              <button className={driveMode === 'ppo' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'ppo'} onClick={() => {autoStartPending.current = false; setDriveMode('ppo'); setPlaying(false);}}>PPO · development</button>
+              <button className={driveMode === 'hybrid' ? 'selected' : ''} disabled={(runtimeBusy && driveMode !== 'hybrid') || !runtimeCatalog?.exploratoryModels.length} title={!runtimeCatalog?.exploratoryModels.length ? 'Archived exploratory checkpoints are unavailable on this runtime' : 'Hybrid output is development only'} onClick={() => {autoStartPending.current = false; setDriveMode('hybrid'); setPlaying(false);}}>Hybrid · development</button>
+              <button className={driveMode === 'replay' ? 'selected' : ''} disabled={!activeReplay || runtimeBusy} onClick={() => {autoStartPending.current = false; setDriveMode('replay'); setPlaying(false);}}>Replay</button>
             </div>
             <div className="speed-readout"><span>SPEED</span><strong>{Math.round(activePose.speed * 3.6)}</strong><small>KM/H</small></div>
             {currentReplayFrame?.grounded !== undefined && <div className="replay-ground-state" aria-label="Replay Physics ground state">
@@ -599,21 +668,39 @@ export default function App() {
               ? `Auto Drive · Python Physics · ${runtimeTrackSelection.kind === 'custom' ? 'custom' : 'TRAIN'} development`
               : driveMode === 'manual'
               ? `Manual Python physics · ${runtimeTrackSelection.kind === 'custom' ? 'custom' : 'TRAIN'} development only`
+              : driveMode === 'hybrid'
+              ? runtimeStatus?.hybrid?.obstacle_takeover_steps !== undefined
+                ? 'Hybrid PPO + Auto steering and braking · Auto sets the rate-limited steering target near obstacles · development only'
+                : 'Hybrid PPO + Auto · obstacle steering target pending or not reported · development only'
               : driveMode === 'ppo'
-                ? `Frozen PPO · ${runtimeTrackSelection.kind === 'custom' ? 'custom' : 'TRAIN'} development · scientific admission disabled`
+                ? modelId.startsWith('wp7-')
+                  ? 'Exploratory PPO · brake zero · reliable completion not validated · development only'
+                  : `Frozen PPO · ${runtimeTrackSelection.kind === 'custom' ? 'custom' : 'TRAIN'} development · scientific admission disabled`
                 : replay
                   ? 'Imported replay: recorded frames are not independently verified'
                   : 'Local Python Runtime replay: recorded development frames, scientific admission disabled'}</div>
+            <div className="drive-warning">Frozen checkpoints are catalogued read-only. PPO and Hybrid runs produce development output only; scientific admission and training remain disabled.</div>
+            {driveMode === 'replay' && activeReplay && <div className="replay-guidance">{activeReplay.label}
+              {activeReplay.schema === 'f1rl_racing_sandbox_replay_v2' && activeReplay.hybrid?.obstacle_takeover_steps !== undefined &&
+                ` · Auto obstacle steering target ${activeReplay.hybrid.obstacle_takeover_steps}/${activeReplay.hybrid.steps} steps (rate-limited)`}
+            </div>}
             {driveMode !== 'replay' ? <>
               <div className="runtime-panel">
-                {driveMode === 'ppo' && <label>FROZEN MODEL<select aria-label="Frozen PPO model" value={modelId} onChange={(event) => setModelId(event.target.value)} disabled={!runtimeCatalog || runtimeBusy}>
-                    {(runtimeCatalog?.models ?? []).map((model) => <option key={model.model_id} value={model.model_id}>{model.model_id}</option>)}
-                  </select></label>}
+                {driveMode === 'hybrid' && <><label>EXPLORATORY PPO MODEL<select aria-label="Hybrid PPO model" value={hybridModelId} onChange={(event) => setHybridModelId(event.target.value)} disabled={!runtimeCatalog || runtimeBusy}>
+                  {(runtimeCatalog?.exploratoryModels ?? []).map((model) => <option key={model.model_id} value={model.model_id}>{model.model_id}</option>)}
+                </select></label>
+                  <small>Auto assists steering and controls braking. This is not pure PPO or scientific acceptance.</small>
+                  {runtimeCatalog?.exploratoryWarnings.map((warning) => <p className="runtime-error" key={warning}>{warning}</p>)}</>}
+                {driveMode === 'ppo' && <><label>PPO MODEL<select aria-label="PPO model" value={modelId} onChange={(event) => setModelId(event.target.value)} disabled={!runtimeCatalog || runtimeBusy}>
+                    <optgroup label="Frozen WP3">{(runtimeCatalog?.models ?? []).map((model) => <option key={model.model_id} value={model.model_id}>{model.model_id}</option>)}</optgroup>
+                  </select></label>
+                  {runtimeCatalog?.exploratoryWarnings.map((warning) => <p className="runtime-error" key={warning}>{warning}</p>)}</>}
                 {runtimeTrackSelection.kind === 'custom' ? <div className="custom-track-selection">
                   {runtimeTrackSelection.validated ? <>
                     <span>PYTHON VALIDATED CUSTOM TRACK</span><strong>{runtimeTrackSelection.validated.preview.name}</strong>
                     <small>{runtimeTrackSelection.validated.surface_count} road surfaces · {runtimeTrackSelection.validated.checkpoint_count} checkpoints · {runtimeTrackSelection.validated.auto_bridge_count} auto overpasses</small>
-                    {driveMode === 'ppo' && !runtimeTrackSelection.validated.ppo_compatible && <small className="runtime-error">Frozen PPO observation/action contract is incompatible.</small>}
+                    {runtimeTrackSelection.validated.warnings.map((warning) => <small key={warning}>{warning}</small>)}
+                    {(driveMode === 'ppo' || driveMode === 'hybrid') && !runtimeTrackSelection.validated.ppo_compatible && <small className="runtime-error">PPO observation/action contract is incompatible.</small>}
                   </> : <>
                     <span>CUSTOM TRACK SELECTED</span>
                     <small className="runtime-error">{trackValidationBusy ? 'Validating current map…' : 'Validate the current map before running.'}</small>
@@ -630,7 +717,7 @@ export default function App() {
                     {trackValidationBusy ? <><LoaderCircle size={14}/> VALIDATING IN PYTHON…</> : <><Check size={14}/> VALIDATE & USE CURRENT MAP</>}
                   </button>
                 </>}
-                {driveMode === 'auto' && <AutoDriveSettings config={autoConfig} onChange={setAutoConfig} onValidityChange={setAutoConfigValid}
+                {(driveMode === 'auto' || driveMode === 'hybrid') && <AutoDriveSettings config={autoConfig} onChange={setAutoConfig} onValidityChange={setAutoConfigValid}
                   disabled={runtimeBusy} physicalCapKmh={runtimeStatus?.mode === 'auto'
                     ? runtimeStatus.effective_max_speed_kmh : undefined}/>}
                 {driveMode === 'auto' && runtimeTrackSelection.kind === 'custom' && <label>
@@ -644,6 +731,10 @@ export default function App() {
                   <p className="runtime-loading"><LoaderCircle size={15}/> Connecting to local Python runtime…</p> : null}
                 {runtimeError && <p className="runtime-error"><TriangleAlert size={15}/>{runtimeError}</p>}
                 {runtimeStatus && <>
+                  {runtimeStatus.hybrid && <div className="runtime-physics-profile">HYBRID · BASE PPO STEERING {runtimeStatus.hybrid.ppo_steering_weight * 100}% · {runtimeStatus.hybrid.obstacle_takeover_steps === undefined ? 'OBSTACLE TARGET NOT REPORTED' : `AUTO OBSTACLE TARGET ${runtimeStatus.hybrid.obstacle_takeover_steps}/${runtimeStatus.hybrid.steps}${runtimeStatus.hybrid.obstacle_takeover_active ? ' · ACTIVE' : ''} · RATE-LIMITED`} · AUTO INTERVENTIONS (Δ PPO &gt; 0.05) {runtimeStatus.hybrid.steering_interventions}/{runtimeStatus.hybrid.steps}</div>}
+                  {runtimeStatus.auto_drive_guidance === 'directed_gate_crossing' && <div className="runtime-physics-profile">
+                    RIGHT TURN GATES · LOCAL CENTERLINE CROSSING · AUTO TARGET MAX {runtimeStatus.guidance_max_speed_kmh} KM/H
+                  </div>}
                   <div className="runtime-physics-profile" aria-label="Authoritative Physics profile">
                     PHYSICS {runtimeStatus.physics?.ground_motion_version ?? 'not reported'}
                     {runtimeStatus.physics && ` | SHA ${runtimeStatus.physics.sha256.slice(0, 12)}`}
@@ -658,22 +749,23 @@ export default function App() {
                     <span>THROTTLE <b>{runtimeStatus.latest_frame.action.throttle.toFixed(2)}</b></span>
                     <span>BRAKE <b>{runtimeStatus.latest_frame.action.brake.toFixed(2)}</b></span>
                     <span>CHECKPOINTS <b>{runtimeStatus.latest_frame.completed_checkpoint_ids.length}/{runtimeStatus.latest_frame.checkpoint_count}</b></span>
-                    <span>COLLISIONS <b>{runtimeStatus.latest_frame.collision_count + (runtimeStatus.collision_terminal?.obstacle_ids.length ?? 0)}</b></span>
+                    <span>ACCEPTED COLLISIONS <b>{runtimeStatus.latest_frame.collision_count}</b></span>
+                    {runtimeStatus.collision_terminal && <span>UNACCEPTED CONTACTS <b>{runtimeStatus.collision_terminal.obstacle_ids.length}</b></span>}
                     <span>{runtimeStatus.latest_frame.grounded ? 'GROUNDED' : 'AIRBORNE'}</span>
                   </div>}
                   <RuntimeOutcomeMessage status={runtimeStatus} />
                 </>}
                 <div className="runtime-actions">
-                  <button className="runtime-run" onClick={() => void runRuntimeSession()} disabled={!runtimeCatalog || runtimeBusy || (driveMode === 'auto' && !autoConfigValid) || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !runtimeTrackRequest}>
-                    {runtimeBusy ? <><LoaderCircle size={16}/> {runtimeStatus?.status === 'paused' ? 'PAUSED' : driveMode === 'manual' ? 'MANUAL PYTHON SIMULATION' : driveMode === 'auto' ? 'AUTO DRIVE · PYTHON PHYSICS' : 'RUNNING PPO INFERENCE'}</> : <><Play size={16}/> {driveMode === 'manual' ? 'START MANUAL DRIVE' : driveMode === 'auto' ? 'RUN AUTO DRIVE' : 'RUN EPISODE'}</>}
+                  <button className="runtime-run" onClick={() => void runRuntimeSession()} disabled={!runtimeCatalog || runtimeBusy || ((driveMode === 'auto' || driveMode === 'hybrid') && !autoConfigValid) || (driveMode === 'hybrid' && !runtimeCatalog.exploratoryModels.some((model) => model.model_id === hybridModelId)) || !Number.isInteger(runtimeSeed) || runtimeSeed < 0 || runtimeSeed > 0xffffffff || !runtimeTrackRequest}>
+                    {runtimeBusy ? <><LoaderCircle size={16}/> {runtimeStatus?.status === 'paused' ? 'PAUSED' : driveMode === 'manual' ? 'MANUAL PYTHON SIMULATION' : driveMode === 'auto' ? 'AUTO DRIVE · PYTHON PHYSICS' : driveMode === 'hybrid' ? 'HYBRID PPO + AUTO' : 'RUNNING PPO INFERENCE'}</> : <><Play size={16}/> {driveMode === 'manual' ? 'START MANUAL DRIVE' : driveMode === 'auto' ? 'RUN AUTO DRIVE' : driveMode === 'hybrid' ? 'RUN HYBRID' : 'RUN EPISODE'}</>}
                   </button>
                   {runtimeBusy && <button className="runtime-stop" onClick={() => void stopRuntimeSession()}>Stop</button>}
                   <button className="runtime-import" onClick={() => replayInput.current?.click()}><Upload size={15}/> Import replay</button>
                 </div>
                 {runtimeBusy && <div className="runtime-live-controls">
-                  <button onClick={() => controlRuntime(runtimeStatus?.status === 'paused' ? 'resume' : 'pause')}>{runtimeStatus?.status === 'paused' ? <Play size={14}/> : <Pause size={14}/>} {runtimeStatus?.status === 'paused' ? 'Resume' : 'Pause'}</button>
-                  <button onClick={() => controlRuntime('reset')}><RotateCcw size={14}/> Reset</button>
-                  <label>SIM SPEED<select aria-label="Simulation speed" value={runtimeStatus?.speed_multiplier ?? 1} onChange={(event) => {
+                  <button disabled={!runtimeConnected || runtimeTerminalPending.current} onClick={() => controlRuntime(runtimeStatus?.status === 'paused' ? 'resume' : 'pause')}>{runtimeStatus?.status === 'paused' ? <Play size={14}/> : <Pause size={14}/>} {runtimeStatus?.status === 'paused' ? 'Resume' : 'Pause'}</button>
+                  <button disabled={!runtimeConnected || runtimeTerminalPending.current} onClick={() => controlRuntime('reset')}><RotateCcw size={14}/> Reset</button>
+                  <label>SIM SPEED<select disabled={!runtimeConnected || runtimeTerminalPending.current} aria-label="Simulation speed" value={runtimeStatus?.speed_multiplier ?? 1} onChange={(event) => {
                     const multiplier = Number(event.target.value);
                     try { runtimeSocketRef.current?.speed(multiplier); setRuntimeStatus((current) => current ? { ...current, speed_multiplier: multiplier } : current); }
                     catch (error) { setRuntimeError(error instanceof Error ? error.message : 'Unable to set simulation speed'); }
@@ -691,7 +783,7 @@ export default function App() {
               <button aria-label="Export replay JSON" onClick={() => downloadJSON('f1rl-runtime-replay.json', activeReplay)}><Download size={16}/></button>
               </div>
             </> : <div className="replay-empty"><span>No replay loaded</span><button onClick={() => replayInput.current?.click()}><Upload size={16}/> Import replay</button></div>}
-            <div className="drive-bottom"><button disabled={!runtimeBusy && driveMode === 'auto' && !autoConfigValid} onClick={() => {
+            <div className="drive-bottom"><button disabled={runtimeBusy ? !runtimeConnected || runtimeTerminalPending.current : driveMode === 'auto' && !autoConfigValid} onClick={() => {
               if (runtimeBusy) controlRuntime('reset');
               else if (driveMode === 'replay') {setPlaying(false);setReplayTime(activeReplay?.frames[0]?.time_s ?? 0);}
               else void runRuntimeSession();

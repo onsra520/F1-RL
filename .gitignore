@@ -59,3 +59,6 @@ Desktop.ini
 
 # Git worktrees
 .worktrees/
+
+# Local source and evidence archives
+.archives/

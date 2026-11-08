@@ -9,7 +9,7 @@ type RuntimePoseStatus = RuntimeSessionStatus['status'] | 'resetting';
 type BufferedPose = { tick: number; time_s: number; receivedAt: number; pose: LivePose };
 type TerminalInterpolation = { from: LivePose; startedAt: number; durationMs: number };
 
-const MAX_FRAME_GAP_MS = 250;
+const MAX_FRAME_GAP_MS = 1000;
 
 export function isLivePoseFrameInOrder(previous: OrderedFrame | null, next: OrderedFrame, resetPending = false): boolean {
   if (resetPending && next.tick !== 0) return false;
@@ -44,14 +44,33 @@ function interpolatePose(from: LivePose, to: LivePose, amount: number): LivePose
 export class LivePoseInterpolator {
   constructor(private maxVisualSpeedMps: number = Number.POSITIVE_INFINITY) {}
 
-  setMaxVisualSpeedMps(limit: number): void {
+  private playbackMultiplier = 1;
+
+  setPlaybackMultiplier(multiplier: number): void {
+    if (!Number.isFinite(multiplier) || multiplier <= 0) throw new Error('Invalid playback multiplier');
+    if (multiplier !== this.playbackMultiplier) this.previousArrivalGapMs = 0;
+    this.playbackMultiplier = multiplier;
+  }
+
+  setMaxVisualSpeedMps(limit: number, now?: number): void {
     if (!Number.isFinite(limit) || limit <= 0) throw new Error('Invalid visual speed limit');
+    if (now !== undefined && Number.isFinite(now) && this.previous && this.latest && !this.heldPose && !this.terminal) {
+      const visible = this.sample(now)!;
+      const remainingMs = Math.max(0, this.interpolationStartedAt + this.interpolationMs - now);
+      const distance = Math.hypot(this.latest.pose.x - visible.x, this.latest.pose.y - visible.y,
+                                  this.latest.pose.z - visible.z);
+      this.previous = { ...this.previous, pose: visible };
+      this.interpolationStartedAt = now;
+      this.interpolationMs = Math.max(remainingMs, distance / limit * 1000);
+    }
     this.maxVisualSpeedMps = limit;
   }
   private previous: BufferedPose | null = null;
   private latest: BufferedPose | null = null;
   private heldPose: LivePose | null = null;
   private interpolationMs = 0;
+  private interpolationStartedAt = 0;
+  private previousArrivalGapMs = 0;
   private resumeFromHeldPose = false;
   private terminal = false;
   private terminalInterpolation: TerminalInterpolation | null = null;
@@ -74,7 +93,7 @@ export class LivePoseInterpolator {
       return true;
     }
 
-    const expectedMs = frame.dt_s * 1000;
+    const expectedMs = frame.dt_s * 1000 / this.playbackMultiplier;
     const arrivalGap = origin ? receivedAt - origin.receivedAt : expectedMs;
     // Never extrapolate beyond the newest authoritative packet. A delayed
     // packet is blended from the held visible pose, not teleported into place.
@@ -85,16 +104,21 @@ export class LivePoseInterpolator {
     // An explicitly configured visual speed budget bounds packet-burst catch-up.
     // Physics remains authoritative and the optional default preserves generic unit uses.
     const minimumMs = distance / this.maxVisualSpeedMps * 1000;
-    const nominalMs = this.resumeFromHeldPose ? expectedMs
-      : Math.max(expectedMs * 0.75, Math.min(arrivalGap, expectedMs * 1.5));
+    let nominalMs = this.resumeFromHeldPose ? expectedMs
+      : Math.max(expectedMs * 0.75, Math.min(arrivalGap, Math.max(expectedMs * 1.5, MAX_FRAME_GAP_MS)));
+    if (!this.resumeFromHeldPose && this.previousArrivalGapMs > expectedMs * 1.2) {
+      nominalMs = Math.max(nominalMs, Math.min(MAX_FRAME_GAP_MS, this.previousArrivalGapMs * 1.25));
+    }
     const duration = Math.max(1, nominalMs, minimumMs);
-    if (!Number.isFinite(duration) || !Number.isFinite(arrivalGap) || arrivalGap <= 0) {
+    if (!Number.isFinite(duration) || !Number.isFinite(arrivalGap) || arrivalGap < 0) {
       return false;
     }
 
     this.previous = { ...(origin ?? next), pose: visiblePose };
     this.latest = next;
     this.interpolationMs = duration;
+    this.interpolationStartedAt = receivedAt;
+    this.previousArrivalGapMs = this.resumeFromHeldPose ? 0 : arrivalGap;
     this.heldPose = null;
     this.resumeFromHeldPose = false;
     return true;
@@ -113,7 +137,7 @@ export class LivePoseInterpolator {
     if (this.heldPose) return this.heldPose;
     if (!this.latest) return null;
     if (!this.previous || this.interpolationMs <= 0) return this.latest.pose;
-    const amount = Math.min(1, Math.max(0, (now - this.latest.receivedAt) / this.interpolationMs));
+    const amount = Math.min(1, Math.max(0, (now - this.interpolationStartedAt) / this.interpolationMs));
     if (amount === 0) return this.previous.pose;
     if (amount === 1) return this.latest.pose;
     return interpolatePose(this.previous.pose, this.latest.pose, amount);
@@ -135,11 +159,13 @@ export class LivePoseInterpolator {
     if (!this.latest) { this.terminal = true; return; }
     const finalPose = this.latest.pose;
     const from = this.heldPose ?? this.sample(now) ?? finalPose;
-    const remainingMs = this.interpolationMs > 0
-      ? Math.max(0, this.latest.receivedAt + this.interpolationMs - now)
+    const pendingMs = this.interpolationMs > 0
+      ? Math.max(0, this.interpolationStartedAt + this.interpolationMs - now)
       : 0;
+    const distance = Math.hypot(finalPose.x - from.x, finalPose.y - from.y, finalPose.z - from.z);
+    const remainingMs = Math.max(pendingMs, distance / this.maxVisualSpeedMps * 1000);
     this.terminalInterpolation = remainingMs > 0
-      ? { from, startedAt: now, durationMs: Math.min(remainingMs, MAX_FRAME_GAP_MS) }
+      ? { from, startedAt: now, durationMs: remainingMs }
       : null;
     this.heldPose = null;
     this.previous = null;
@@ -166,6 +192,8 @@ export class LivePoseInterpolator {
     this.latest = null;
     this.heldPose = null;
     this.interpolationMs = 0;
+    this.interpolationStartedAt = 0;
+    this.previousArrivalGapMs = 0;
     this.resumeFromHeldPose = false;
     this.terminal = false;
     this.terminalInterpolation = null;

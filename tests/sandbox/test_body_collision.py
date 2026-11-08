@@ -4,21 +4,21 @@ from math import pi
 
 import pytest
 
-from src.simulation.body_collision import (
+from f1rl.sandbox.body_collision import (
     VehicleBodyGeometry, obb_separation_lower_bound, sweep_body_against_obstacle,
 )
-from src.simulation.entities.obstacle import Obstacle
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.interactions.events import ObstacleHit
-from src.simulation.interactions.state import InteractionState
-from src.simulation.rules.scoring import ScoreState
-from src.simulation.track.model import TrackWorld
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.track.state import TrackState
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.vehicle import VehicleControl, VehicleParameters, VehicleState
-from src.simulation.world import WorldState, step_world
+from f1rl.sandbox.entities.obstacle import Obstacle
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.interactions.events import ObstacleHit
+from f1rl.sandbox.interactions.state import InteractionState
+from f1rl.sandbox.rules.scoring import ScoreState
+from f1rl.sandbox.track.model import TrackWorld
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.track.state import TrackState
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters, VehicleState
+from f1rl.sandbox.world import WorldState, step_world
 
 
 IDENTITY = Quaternion.identity()
@@ -160,8 +160,8 @@ def test_world_rejects_invalid_optin_type() -> None:
 
 
 def test_unresolved_world_sweep_invalidates_rollout_without_fake_hit(monkeypatch) -> None:
-    import src.simulation.world as world_module
-    from src.simulation.body_collision import SweptCollisionResult
+    import f1rl.sandbox.world as world_module
+    from f1rl.sandbox.body_collision import SweptCollisionResult
 
     road=PlanarSurfacePatch(
         "road",Vec3(0.,0.,0.),Vec3(0.,0.,1.),

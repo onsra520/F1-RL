@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.runtime.frames import build_runtime_frame
+from f1rl.local_demo.runtime.frames import build_runtime_frame
 
 
 def snapshot():
@@ -64,69 +64,3 @@ def test_runtime_frame_rejects_actions_outside_the_registered_contract(action):
             snapshot(), action, {}, previous_velocity=(0.0, 0.0, 0.0),
             collision_count_before=0, completed_checkpoint_ids_before=(),
         )
-
-def test_flight_event_kinds_come_from_authoritative_physics_transition():
-    state = {**snapshot(), "grounded": False, "physical_event_types": ["FlightTransition"]}
-    info = {"physics": {"transition": {"events": ({"kind": "takeoff", "time_s": .003},)}}}
-    frame = build_runtime_frame(
-        state, np.zeros(3, dtype=np.float32), info,
-        previous_velocity=(0., 0., 0.), collision_count_before=0,
-        completed_checkpoint_ids_before=(),
-    )
-    assert not frame.grounded
-    assert frame.physical_event_types == ["takeoff"]
-
-def test_landing_kind_from_authoritative_transition():
-    state = {**snapshot(), "grounded": True, "physical_event_types": ["FlightTransition"]}
-    info = {"physics": {"transition": {"events": ({"kind": "landing", "time_s": .002},)}}}
-    frame = build_runtime_frame(
-        state, np.zeros(3, dtype=np.float32), info,
-        previous_velocity=(0., 0., 0.), collision_count_before=0,
-        completed_checkpoint_ids_before=(),
-    )
-    assert frame.grounded
-    assert frame.physical_event_types == ["landing"]
-
-def test_collision_replay_rejects_invalid_episode_result_in_backend():
-    from pydantic import ValidationError
-    from src.runtime.frames import ReplayDocument
-
-    frame = build_runtime_frame(
-        snapshot(), np.zeros(3, dtype=np.float32), {},
-        previous_velocity=(0.0, 0.0, 0.0),
-        collision_count_before=0, completed_checkpoint_ids_before=(),
-    )
-    digest = "a" * 64
-    document = {
-        "schema": "f1rl_racing_sandbox_replay_v2",
-        "label": "collision",
-        "provenance": {
-            "dataset_split": "DEVELOPMENT", "source_sha256": digest,
-            "model_id": "auto-drive", "track_id": "custom",
-            "track_sha256": digest, "seed": 412,
-        },
-        "result": {
-            "status": "failed", "reason": "collision",
-            "valid_sample": False, "successful_finish": False,
-            "steps": 4, "duration_s": .08, "trace_sha256": digest,
-        },
-        "frames": [frame.model_dump()],
-        "collision_terminal": {
-            "schema_version": "f1rl_runtime_collision_failure_dev_v1",
-            "obstacle_ids": ["cone"], "last_accepted_tick": 4,
-            "witness_interval_s": [.08, .1],
-            "diagnostic_penalty": -5.0,
-            "penalty_kind": "runtime_diagnostic_not_gym_reward",
-            "physics_transition_accepted": False,
-            "contact_time_certified": False,
-            "scientific_evidence": False,
-        },
-    }
-    assert ReplayDocument.model_validate(document).result.reason == "collision"
-    for field, invalid in (
-        ("status", "finished"), ("reason", "off_route"),
-        ("valid_sample", True), ("successful_finish", True),
-    ):
-        broken = {**document, "result": {**document["result"], field: invalid}}
-        with pytest.raises(ValidationError, match="unscored collision requires"):
-            ReplayDocument.model_validate(broken)

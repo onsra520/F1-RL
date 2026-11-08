@@ -1,11 +1,11 @@
 """Exact finite OBB closest feature witnesses for source-bounded road edges."""
 from math import pi
 import pytest
-from src.simulation.geometry.vector import Vec3
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.track.volume import OrientedBoxVolume
-from src.simulation.obb_feature_contact import closest_obb_features,closest_point
-from src.simulation.body_collision import obb_separation_lower_bound
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.track.volume import OrientedBoxVolume
+from f1rl.sandbox.obb_feature_contact import closest_obb_features,closest_point
+from f1rl.sandbox.body_collision import obb_separation_lower_bound
 Q=Quaternion.identity()
 
 def box(x,y,z,hx=.5,hy=.5,hz=.5,q=Q):

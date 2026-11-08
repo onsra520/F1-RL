@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from src.runtime.catalog import RuntimeCatalog
-from src.runtime.custom_tracks import convert_custom_track
-from src.runtime.drive_config import AutoDriveConfig
-from src.runtime.session import RuntimeSessionManager
-from src.simulation.body_collision import obb_separation_lower_bound
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
+from f1rl.local_demo.runtime.catalog import RuntimeCatalog
+from f1rl.local_demo.runtime.custom_tracks import convert_custom_track
+from f1rl.local_demo.runtime.drive_config import AutoDriveConfig
+from f1rl.local_demo.runtime.session import RuntimeSessionManager
+from f1rl.sandbox.body_collision import obb_separation_lower_bound
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
 
 ROOT = Path(__file__).resolve().parents[2]
 ORIGINAL = Path(__file__).parent / "fixtures" / "t05-original-obstacle-track.json"

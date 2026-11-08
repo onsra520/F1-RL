@@ -43,6 +43,43 @@ describe('read-only replay', () => {
     expect(replayAt(replay, 0.05).position[2]).toBe(0.5);
   });
 
+  it('accepts exploratory PPO replay only as a non-scientific development result', () => {
+    const hash = 'a'.repeat(64);
+    const document = {
+      schema: 'f1rl_racing_sandbox_replay_v2', label: 'exploratory PPO',
+      provenance: { dataset_split: 'DEVELOPMENT', runtime_mode: 'development', source_sha256: hash,
+        model_id: 'wp7-confirmation', model_sha256: 'c5daa4cb8dfde0f2a1eb94f0e83f6a2f8f7bdc47ecf7870e799c5f16640d64f6', track_id: 'straight-sprint-v1', track_sha256: hash, seed: 412 },
+      result: { status: 'finished', valid_sample: false, successful_finish: true, reason: 'finish',
+        steps: 1, duration_s: 2, trace_sha256: hash }, frames: fixture.frames,
+    };
+    expect(replayModelId(parseReplay(document))).toBe('wp7-confirmation');
+    expect(() => parseReplay({ ...document, provenance: { ...document.provenance, dataset_split: 'TRAIN' } })).toThrow();
+    expect(() => parseReplay({ ...document, result: { ...document.result, valid_sample: true } })).toThrow();
+    expect(() => parseReplay({ ...document, provenance: { ...document.provenance, model_sha256: hash } })).toThrow();
+  });
+
+  it('preserves hybrid counters only for invalid exploratory development results', () => {
+    const hash = 'a'.repeat(64);
+    const document = {
+      schema: 'f1rl_racing_sandbox_replay_v2', label: 'Hybrid PPO+Auto',
+      provenance: { dataset_split: 'DEVELOPMENT', runtime_mode: 'development', source_sha256: hash,
+        model_id: 'wp7-confirmation', model_sha256: 'c5daa4cb8dfde0f2a1eb94f0e83f6a2f8f7bdc47ecf7870e799c5f16640d64f6', track_id: 'right-turn-v1', track_sha256: hash, seed: 0 },
+      result: { status: 'finished', valid_sample: false, successful_finish: true, reason: 'finish', steps: 2, duration_s: 2, trace_sha256: hash },
+      frames: fixture.frames, auto_drive_config: DEFAULT_AUTO_CONFIG,
+      hybrid: { ppo_steering_weight: 0.2, steps: 2, steering_interventions: 1 },
+    };
+    const parsed = parseReplay(document);
+    expect(parsed.schema === 'f1rl_racing_sandbox_replay_v2' && parsed.hybrid?.steering_interventions).toBe(1);
+    expect(() => parseReplay({ ...document, hybrid: { ...document.hybrid, steering_interventions: 3 } })).toThrow();
+    expect(() => parseReplay({ ...document, hybrid: { ...document.hybrid, ppo_steering_weight: 1 } })).toThrow();
+    const assisted = parseReplay({ ...document, hybrid: { ...document.hybrid, obstacle_takeover_steps: 2, obstacle_takeover_active: false } });
+    expect(assisted.schema === 'f1rl_racing_sandbox_replay_v2' && assisted.hybrid?.obstacle_takeover_steps).toBe(2);
+    expect(() => parseReplay({ ...document, hybrid: { ...document.hybrid, obstacle_takeover_steps: 3, obstacle_takeover_active: false } })).toThrow();
+    expect(() => parseReplay({ ...document, hybrid: { ...document.hybrid, obstacle_takeover_steps: 1 } })).toThrow();
+    expect(() => parseReplay({ ...document, result: { ...document.result, valid_sample: true } })).toThrow();
+    expect(() => parseReplay({ ...document, provenance: { ...document.provenance, dataset_split: 'TRAIN' } })).toThrow();
+  });
+
   it('accepts backend Auto Drive configuration with a fractional speed', () => {
     const hash = 'a'.repeat(64);
     const replay = parseReplay({ schema: 'f1rl_racing_sandbox_replay_v2', label: 'auto',
@@ -52,6 +89,19 @@ describe('read-only replay', () => {
         steps: 1, duration_s: 2, trace_sha256: hash }, frames: fixture.frames,
       auto_drive_config: { ...DEFAULT_AUTO_CONFIG, target_max_speed_kmh: 0.5 } });
     expect(replay.schema === 'f1rl_racing_sandbox_replay_v2' && replay.auto_drive_config?.target_max_speed_kmh).toBe(0.5);
+  });
+
+  it('preserves the directed-gate guidance label and effective config on replay import', () => {
+    const hash = 'a'.repeat(64);
+    const label = 'Auto Drive · right-turn-v1 · seed 412 · directed gates · target 25 km/h · requested 45 km/h';
+    const replay = parseReplay({ schema: 'f1rl_racing_sandbox_replay_v2', label,
+      provenance: { dataset_split: 'DEVELOPMENT', runtime_mode: 'development', source_sha256: hash,
+        model_id: 'auto-drive', model_sha256: null, track_id: 'right-turn-v1', track_sha256: hash, seed: 412 },
+      result: { status: 'finished', valid_sample: false, successful_finish: true, reason: 'finish',
+        steps: 1, duration_s: 2, trace_sha256: hash }, frames: fixture.frames,
+      auto_drive_config: { ...DEFAULT_AUTO_CONFIG, target_max_speed_kmh: 25 } });
+    expect(replay.label).toBe(label);
+    expect(replay.schema === 'f1rl_racing_sandbox_replay_v2' && replay.auto_drive_config?.target_max_speed_kmh).toBe(25);
   });
 
   it('rejects malformed and zero-length orientations at parsing', () => {

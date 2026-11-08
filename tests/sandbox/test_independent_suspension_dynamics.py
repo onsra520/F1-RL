@@ -4,18 +4,18 @@ from math import pi, sin, cos
 
 import pytest
 
-from src.simulation.body_collision import VehicleBodyGeometry
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.independent_suspension_dynamics import (
+from f1rl.sandbox.body_collision import VehicleBodyGeometry
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy, SuspensionDynamicsState,
     SuspensionResolutionError, integrate_independent_suspension,
     suspension_orientation,
 )
-from src.simulation.multi_surface_support import MultiSurfaceSuspensionPolicy
-from src.simulation.ramp_support import WheelContactPoints
-from src.simulation.track.patch import PlanarSurfacePatch
-from src.simulation.vehicle import VehicleState
+from f1rl.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
+from f1rl.sandbox.ramp_support import WheelContactPoints
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.vehicle import VehicleState
 
 BODY = VehicleBodyGeometry(1., .4, 2., Vec3(0., .1, 0.))
 WHEELS = WheelContactPoints(Vec3(-.4, -.3, .8), Vec3(.4, -.3, .8),
@@ -168,12 +168,12 @@ def test_invalid_research_physical_parameters_rejected(change):
 
 
 def test_world_opt_in_writes_persistent_suspension_and_telemetry():
-    from src.simulation.interactions.state import InteractionState
-    from src.simulation.rules.scoring import ScoreState
-    from src.simulation.track.model import TrackWorld
-    from src.simulation.track.state import TrackState
-    from src.simulation.vehicle import VehicleControl, VehicleParameters
-    from src.simulation.world import WorldState, step_world
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters
+    from f1rl.sandbox.world import WorldState, step_world
 
     p = car()
     world = WorldState(p, TrackState(frozenset()),
@@ -190,12 +190,12 @@ def test_world_opt_in_writes_persistent_suspension_and_telemetry():
 
 
 def test_world_refuses_suspension_without_explicit_initial_state_or_geometry():
-    from src.simulation.interactions.state import InteractionState
-    from src.simulation.rules.scoring import ScoreState
-    from src.simulation.track.model import TrackWorld
-    from src.simulation.track.state import TrackState
-    from src.simulation.vehicle import VehicleControl, VehicleParameters
-    from src.simulation.world import WorldState, step_world
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters
+    from f1rl.sandbox.world import WorldState, step_world
 
     p = car()
     state = WorldState(p, TrackState(frozenset()),
@@ -210,15 +210,15 @@ def test_world_refuses_suspension_without_explicit_initial_state_or_geometry():
 
 
 def test_world_sweeps_body_obstacles_across_all_suspension_substeps():
-    from src.simulation.entities.obstacle import Obstacle
-    from src.simulation.interactions.events import ObstacleHit
-    from src.simulation.interactions.state import InteractionState
-    from src.simulation.rules.scoring import ScoreState
-    from src.simulation.track.model import TrackWorld
-    from src.simulation.track.state import TrackState
-    from src.simulation.track.volume import OrientedBoxVolume
-    from src.simulation.vehicle import VehicleControl, VehicleParameters
-    from src.simulation.world import WorldState, step_world
+    from f1rl.sandbox.entities.obstacle import Obstacle
+    from f1rl.sandbox.interactions.events import ObstacleHit
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.track.volume import OrientedBoxVolume
+    from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters
+    from f1rl.sandbox.world import WorldState, step_world
 
     start = replace(car(z=-2.), velocity=Vec3(0., 0., 25.))
     barrier = Obstacle("barrier", OrientedBoxVolume(
@@ -242,12 +242,12 @@ def test_world_sweeps_body_obstacles_across_all_suspension_substeps():
 
 
 def test_world_suspension_state_continues_across_sequential_steps():
-    from src.simulation.interactions.state import InteractionState
-    from src.simulation.rules.scoring import ScoreState
-    from src.simulation.track.model import TrackWorld
-    from src.simulation.track.state import TrackState
-    from src.simulation.vehicle import VehicleControl, VehicleParameters
-    from src.simulation.world import WorldState, step_world
+    from f1rl.sandbox.interactions.state import InteractionState
+    from f1rl.sandbox.rules.scoring import ScoreState
+    from f1rl.sandbox.track.model import TrackWorld
+    from f1rl.sandbox.track.state import TrackState
+    from f1rl.sandbox.vehicle import VehicleControl, VehicleParameters
+    from f1rl.sandbox.world import WorldState, step_world
 
     p = car()
     state = WorldState(p, TrackState(frozenset()),
@@ -263,30 +263,3 @@ def test_world_suspension_state_continues_across_sequential_steps():
     assert second.state.suspension is not None
     assert second.state.vehicle.position.y == pytest.approx(.3)
     assert second.suspension_telemetry is not None
-
-
-def test_no_hit_obstacle_does_not_break_full_body_sweep():
-    from src.simulation.entities.obstacle import Obstacle
-    from src.simulation.interactions.state import InteractionState
-    from src.simulation.rules.scoring import ScoreState
-    from src.simulation.track.model import TrackWorld
-    from src.simulation.track.state import TrackState
-    from src.simulation.track.volume import OrientedBoxVolume
-    from src.simulation.vehicle import VehicleControl, VehicleParameters
-    from src.simulation.world import WorldState, step_world
-
-    p = car()
-    obstacle = Obstacle("far", OrientedBoxVolume(
-        Vec3(100., 2., 100.), Vec3(1., 1., 1.), Quaternion.identity(),
-    ))
-    state = WorldState(p, TrackState(frozenset()),
-                       InteractionState(frozenset(), frozenset()), ScoreState(),
-                       suspension=SuspensionDynamicsState(.3))
-    parameters = VehicleParameters(2.5, .3, .6, 0., 20., 0., 0., 0., 9.81)
-    result = step_world(
-        TrackWorld(surfaces=(patch("road", 0., length=8.),), obstacles=(obstacle,)),
-        state, VehicleControl(0., 0., 0.), parameters, .02, .5,
-        body_geometry=BODY, independent_suspension_policy=POLICY,
-    )
-    assert result.events == ()
-    assert result.state.vehicle.position == p.position

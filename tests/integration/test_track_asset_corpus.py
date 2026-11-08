@@ -2,12 +2,12 @@ import json
 import math
 from pathlib import Path
 
-from src.rl.episode.route import RaceRoute
-from src.rl.experiments import ExperimentDefinition, resolve_track_split
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.geometry.vector import Vec3
-from src.simulation.track.state import TrackState
-from src.tracks import load_track_asset, load_track_manifest
+from f1rl.learning.episode.route import RaceRoute
+from f1rl.learning.experiments import ExperimentDefinition, resolve_track_split
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.track.state import TrackState
+from f1rl.track_assets import load_track_asset, load_track_manifest
 
 
 TRACK_ROOT = Path("assets/tracks")

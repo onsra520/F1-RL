@@ -1,12 +1,13 @@
 import re
 import time
+from unittest.mock import patch
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
-from src.rl.pilot_preflight import TRAIN_IDS
-from src.runtime.api import create_app
+from f1rl.research.wp7_train5_v2_protocol import TRAIN5_IDS
+from f1rl.local_demo.runtime.api import create_app
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -33,7 +34,7 @@ def test_runtime_http_catalog_is_development_only_and_train_only():
     assert health.json()["scientific_admission"] == "disabled"
     assert len(models.json()["models"]) == 12
     assert all(re.fullmatch(r"[0-9a-f]{64}", model["sha256"]) for model in models.json()["models"])
-    assert tuple(track["track_id"] for track in tracks.json()["tracks"]) == TRAIN_IDS
+    assert tuple(track["track_id"] for track in tracks.json()["tracks"]) == TRAIN5_IDS
     assert all(track["split"] == "TRAIN" and track["purpose"] == "development" for track in tracks.json()["tracks"])
     preview = tracks.json()["tracks"][0]["preview"]
     assert preview["schema"] == "f1rl_racing_sandbox_draft_v1"
@@ -44,21 +45,34 @@ def test_runtime_http_catalog_is_development_only_and_train_only():
     assert (samples[-1]["x"], samples[-1]["z"]) == (preview["points"][-1]["x"], preview["points"][-1]["z"])
 
 
+def test_runtime_source_identity_is_pinned_at_startup():
+    with (patch("f1rl.local_demo.runtime.catalog.runtime_source_sha256", return_value="a" * 64) as fingerprint,
+          patch("f1rl.local_demo.runtime.catalog.runtime_inputs_sha256", return_value="c" * 64) as inputs):
+        with TestClient(create_app(repository_root=ROOT)) as client:
+            fingerprint.return_value = "b" * 64
+            inputs.return_value = "d" * 64
+            health = client.get("/api/v1/health").json()
+            assert health["source_sha256"] == "a" * 64
+            assert health["runtime_inputs_sha256"] == "c" * 64
+
+
 def test_runtime_http_validates_session_ids_and_has_structured_errors():
     with TestClient(create_app(repository_root=ROOT)) as client:
         invalid = client.post("/api/v1/sessions", json={
+            "mode": "ppo",
             "model_id": "../models/other.zip",
             "track_id": "straight-sprint-v1",
             "seed": 0,
         })
         extra = client.post("/api/v1/sessions", json={
+            "mode": "ppo",
             "model_id": "A-seed0",
             "track_id": "straight-sprint-v1",
             "seed": 0,
             "model_path": "C:/anything.zip",
         })
         created = client.post("/api/v1/sessions", json={
-            "model_id": "A-seed0",
+            "mode": "ppo", "model_id": "A-seed0",
             "track_id": "straight-sprint-v1",
             "seed": 412,
         })
@@ -80,7 +94,7 @@ def test_runtime_http_validates_session_ids_and_has_structured_errors():
 def test_runtime_websocket_v1_rejects_manual_action_on_ppo_and_disconnect_cleans_session():
     with TestClient(create_app(repository_root=ROOT)) as client:
         created = client.post("/api/v1/sessions", json={
-            "model_id": "A-seed0", "track_id": "straight-sprint-v1", "seed": 412,
+            "mode": "ppo", "model_id": "A-seed0", "track_id": "straight-sprint-v1", "seed": 412,
         })
         session_id = created.json()["session_id"]
         with client.websocket_connect(f"/api/v1/sessions/{session_id}/ws") as socket:
@@ -108,7 +122,7 @@ def test_runtime_websocket_v1_rejects_manual_action_on_ppo_and_disconnect_cleans
 def test_live_ppo_websocket_streams_frames_and_supports_pause_resume_stop():
     with TestClient(create_app(repository_root=ROOT)) as client:
         created = client.post("/api/v1/sessions", json={
-            "model_id": "A-seed0", "track_id": "straight-sprint-v1", "seed": 412,
+            "mode": "ppo", "model_id": "A-seed0", "track_id": "straight-sprint-v1", "seed": 412,
         })
         session_id = created.json()["session_id"]
         with client.websocket_connect(f"/api/v1/sessions/{session_id}/ws") as socket:
@@ -327,7 +341,7 @@ def test_runtime_cors_allows_only_local_editor_ports():
 
 
 def test_auto_drive_config_api_is_validated_and_snapshot_is_immutable():
-    from src.runtime.drive_config import AutoDriveConfig
+    from f1rl.local_demo.runtime.drive_config import AutoDriveConfig
     with TestClient(create_app(repository_root=ROOT)) as client:
         payload = {"mode": "auto", "track_id": "straight-sprint-v1", "seed": 412,
                    "auto_drive_config": {"driving_style": "racing", "speed_profile": "hyper",
@@ -353,7 +367,7 @@ def test_auto_drive_config_api_is_validated_and_snapshot_is_immutable():
         assert AutoDriveConfig().driving_style == "right"
 
 def test_auto_drive_ws_ready_reports_applied_physics_version_and_source_hash():
-    """The live socket must disclose V3 instead of being labeled V4."""
+    """The live socket must disclose the applied V4 physics version."""
     with TestClient(create_app(repository_root=ROOT)) as client:
         created = client.post("/api/v1/sessions", json={
             "mode": "auto", "track_id": "straight-sprint-v1", "seed": 412,
@@ -361,7 +375,7 @@ def test_auto_drive_ws_ready_reports_applied_physics_version_and_source_hash():
         assert created.status_code == 201
         status = created.json()
         assert status["physics"]["mode"] == "wp7_lifecycle_v1"
-        assert status["physics"]["ground_motion_version"] == "spatial_rotating_compliant_lifecycle_v3"
+        assert status["physics"]["ground_motion_version"] == "spatial_road_edge_partial_lifecycle_v4"
         assert re.fullmatch(r"[a-f0-9]{64}", status["physics"]["sha256"])
         with client.websocket_connect(f"/api/v1/sessions/{status['session_id']}/ws") as socket:
             ready = socket.receive_json()
@@ -373,8 +387,8 @@ def test_auto_drive_ws_ready_reports_applied_physics_version_and_source_hash():
         if fetched.status_code == 200:
             assert fetched.json()["physics"] == status["physics"]
 
-def test_explicit_custom_auto_v4_is_version_bound_and_never_affects_frozen_train():
-    from src.rl.crash_terminal_registered import RACE_V4
+def test_custom_auto_reports_registered_v4_and_keeps_gap_opt_in():
+    from f1rl.learning.crash_terminal_registered import RACE_V4
     with TestClient(create_app(repository_root=ROOT)) as client:
         request = {"mode": "auto", "custom_track": _custom_track(),
                    "seed": 412, "physics_profile": "experimental_v4"}
@@ -391,8 +405,8 @@ def test_explicit_custom_auto_v4_is_version_bound_and_never_affects_frozen_train
         default = client.post("/api/v1/sessions", json={
             "mode": "auto", "custom_track": _custom_track(), "seed": 412})
         assert default.status_code == 201, default.text
-        assert default.json()["physics"]["ground_motion_version"] == "spatial_rotating_compliant_lifecycle_v3"
-        assert default.json()["race_contract"]["version"] != RACE_V4
+        assert default.json()["physics"]["ground_motion_version"] == "spatial_road_edge_partial_lifecycle_v4"
+        assert default.json()["race_contract"]["version"] == RACE_V4
         for invalid in (
             {"mode": "auto", "track_id": "straight-sprint-v1", "seed": 412,
              "physics_profile": "experimental_v4"},
@@ -406,7 +420,7 @@ def test_explicit_custom_auto_v4_is_version_bound_and_never_affects_frozen_train
             rejected=client.post("/api/v1/sessions", json=invalid)
             assert rejected.status_code == 422, rejected.text
 
-def test_gap_map_refuses_legacy_v3_and_non_auto_controller():
+def test_gap_map_requires_the_explicit_development_profile():
     doc = {"schema": "f1rl_racing_sandbox_draft_v1",
            "id": "v4-road-void", "name": "T3 4m gap", "width": 12.,
            "points": [{"x": 0., "z": 0.}, {"x": 0., "z": 86.}],
@@ -428,7 +442,7 @@ def test_gap_map_refuses_legacy_v3_and_non_auto_controller():
         assert v4.status_code == 201, v4.text
         assert v4.json()["physics"]["ground_motion_version"] == "spatial_road_edge_partial_lifecycle_v4"
 
-def test_gap_requires_explicit_v4_auto_and_never_uses_legacy_v3_or_ppo():
+def test_gap_requires_explicit_v4_auto_and_never_uses_ppo():
     gap_track = {
         "schema": "f1rl_racing_sandbox_draft_v1", "id": "t3-gap-gate",
         "name": "T3 map with actual void", "width": 12.0,
@@ -448,7 +462,7 @@ def test_gap_requires_explicit_v4_auto_and_never_uses_legacy_v3_or_ppo():
         assert allowed.status_code == 201, allowed.text
         assert allowed.json()["physics"]["ground_motion_version"] == "spatial_road_edge_partial_lifecycle_v4"
 
-def test_t4_versioned_jump_refuses_legacy_v3_manual_and_ppo():
+def test_t4_versioned_jump_refuses_default_manual_and_ppo_profiles():
     """The certified jump cannot accidentally fall back to v3 in the UI."""
     import json
 

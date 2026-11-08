@@ -1,0 +1,5407 @@
+{
+  "schema": "f1rl_phase2b_eight_case_profile_replay_v1",
+  "source_baseline": "6c479540134d98d7d27331879c926c8ba82c2965",
+  "phase2b_source_head": "6c479540134d98d7d27331879c926c8ba82c2965",
+  "runtime": {
+    "python": "3.12.15",
+    "torch_threads": 1,
+    "device": "cpu"
+  },
+  "profile": "wp3_full06_physics_v4",
+  "phase1_replay_identity": {
+    "source_commit": "6c479540134d98d7d27331879c926c8ba82c2965",
+    "reset_seed": 20261106,
+    "step_limit": 2500,
+    "inference_mode": "deterministic",
+    "invalid_cases": [
+      {
+        "model_id": "C-seed0",
+        "track_id": "slalom-v1",
+        "failed_attempt_step": 91
+      },
+      {
+        "model_id": "C-seed0",
+        "track_id": "right-turn-v1",
+        "failed_attempt_step": 90
+      },
+      {
+        "model_id": "B-seed1",
+        "track_id": "slalom-v1",
+        "failed_attempt_step": 121
+      },
+      {
+        "model_id": "B-seed1",
+        "track_id": "right-turn-v1",
+        "failed_attempt_step": 78
+      },
+      {
+        "model_id": "B-seed1",
+        "track_id": "ramp-v1",
+        "failed_attempt_step": 55
+      },
+      {
+        "model_id": "A-seed2",
+        "track_id": "slalom-v1",
+        "failed_attempt_step": 82
+      },
+      {
+        "model_id": "A-seed2",
+        "track_id": "right-turn-v1",
+        "failed_attempt_step": 82
+      },
+      {
+        "model_id": "A-seed2",
+        "track_id": "ramp-v1",
+        "failed_attempt_step": 55
+      }
+    ]
+  },
+  "integrity_before": {
+    "assets_sha256": {
+      "straight-sprint-v1": "9efe209780cfa8358f8622d38bb5d56db30425a57dcebebc16e6e447a10b5f00",
+      "slalom-v1": "e9dd588740189f7ed857de8e8b8f5eeb99f3161fdb9b8d3fa05d18978cdefa53",
+      "right-turn-v1": "a302f5d1d7f08d2b51ae963a5e695d8600d52a0ebf2d1f212ca0a4fbf90e303e",
+      "ramp-v1": "6c0da56966962363ed601c8fda2343006c207ee9ea6497deb72e6f6018721bd3"
+    },
+    "models_sha256": {
+      "C-seed0": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+      "B-seed1": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021",
+      "A-seed2": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc"
+    }
+  },
+  "integrity_after": {
+    "assets_sha256": {
+      "straight-sprint-v1": "9efe209780cfa8358f8622d38bb5d56db30425a57dcebebc16e6e447a10b5f00",
+      "slalom-v1": "e9dd588740189f7ed857de8e8b8f5eeb99f3161fdb9b8d3fa05d18978cdefa53",
+      "right-turn-v1": "a302f5d1d7f08d2b51ae963a5e695d8600d52a0ebf2d1f212ca0a4fbf90e303e",
+      "ramp-v1": "6c0da56966962363ed601c8fda2343006c207ee9ea6497deb72e6f6018721bd3"
+    },
+    "models_sha256": {
+      "C-seed0": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+      "B-seed1": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021",
+      "A-seed2": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc"
+    }
+  },
+  "summary": {
+    "case_count": 8,
+    "terminal_physical_crash_valid_count": 8,
+    "invalid_or_exception_count": 0,
+    "episode_equivalence_count": 8,
+    "transition_substep_equivalence_claimed": false,
+    "all_requested_profiles_equal_effective": true,
+    "asset_model_integrity_unchanged": true,
+    "rows": [
+      {
+        "model_id": "C-seed0",
+        "track_id": "slalom-v1",
+        "phase1_failed_attempt_step": 91,
+        "phase2b_terminal_step": 150,
+        "outcome": "terminal",
+        "terminal_reason": "physical_crash",
+        "valid_physical_crash_contract": true,
+        "episode_equivalent_to_phase2a_v4": true,
+        "exception": null
+      },
+      {
+        "model_id": "C-seed0",
+        "track_id": "right-turn-v1",
+        "phase1_failed_attempt_step": 90,
+        "phase2b_terminal_step": 93,
+        "outcome": "terminal",
+        "terminal_reason": "physical_crash",
+        "valid_physical_crash_contract": true,
+        "episode_equivalent_to_phase2a_v4": true,
+        "exception": null
+      },
+      {
+        "model_id": "B-seed1",
+        "track_id": "slalom-v1",
+        "phase1_failed_attempt_step": 121,
+        "phase2b_terminal_step": 125,
+        "outcome": "terminal",
+        "terminal_reason": "physical_crash",
+        "valid_physical_crash_contract": true,
+        "episode_equivalent_to_phase2a_v4": true,
+        "exception": null
+      },
+      {
+        "model_id": "B-seed1",
+        "track_id": "right-turn-v1",
+        "phase1_failed_attempt_step": 78,
+        "phase2b_terminal_step": 81,
+        "outcome": "terminal",
+        "terminal_reason": "physical_crash",
+        "valid_physical_crash_contract": true,
+        "episode_equivalent_to_phase2a_v4": true,
+        "exception": null
+      },
+      {
+        "model_id": "B-seed1",
+        "track_id": "ramp-v1",
+        "phase1_failed_attempt_step": 55,
+        "phase2b_terminal_step": 55,
+        "outcome": "terminal",
+        "terminal_reason": "physical_crash",
+        "valid_physical_crash_contract": true,
+        "episode_equivalent_to_phase2a_v4": true,
+        "exception": null
+      },
+      {
+        "model_id": "A-seed2",
+        "track_id": "slalom-v1",
+        "phase1_failed_attempt_step": 82,
+        "phase2b_terminal_step": 86,
+        "outcome": "terminal",
+        "terminal_reason": "physical_crash",
+        "valid_physical_crash_contract": true,
+        "episode_equivalent_to_phase2a_v4": true,
+        "exception": null
+      },
+      {
+        "model_id": "A-seed2",
+        "track_id": "right-turn-v1",
+        "phase1_failed_attempt_step": 82,
+        "phase2b_terminal_step": 84,
+        "outcome": "terminal",
+        "terminal_reason": "physical_crash",
+        "valid_physical_crash_contract": true,
+        "episode_equivalent_to_phase2a_v4": true,
+        "exception": null
+      },
+      {
+        "model_id": "A-seed2",
+        "track_id": "ramp-v1",
+        "phase1_failed_attempt_step": 55,
+        "phase2b_terminal_step": 55,
+        "outcome": "terminal",
+        "terminal_reason": "physical_crash",
+        "valid_physical_crash_contract": true,
+        "episode_equivalent_to_phase2a_v4": true,
+        "exception": null
+      }
+    ]
+  },
+  "cases": [
+    {
+      "model_id": "C-seed0",
+      "track_id": "slalom-v1",
+      "reset_seed": 20261106,
+      "inference_mode": "deterministic",
+      "requested_runtime_profile": "wp3_full06_physics_v4",
+      "effective_runtime_profile": {
+        "physics_version": "spatial_road_edge_partial_lifecycle_v4",
+        "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+        "terminal_contract": "wp3_physical_crash_terminal_v1",
+        "max_abs_tilt_rad": 0.7
+      },
+      "phase1_failed_attempt_step": 91,
+      "track_asset_sha256": "e9dd588740189f7ed857de8e8b8f5eeb99f3161fdb9b8d3fa05d18978cdefa53",
+      "model_sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+      "outcome": "terminal",
+      "reset_runtime_telemetry": {
+        "physics": {
+          "schema_version": 9,
+          "validation_scope": "software_research_only",
+          "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+          "mode": "wp7_lifecycle_v1",
+          "body_geometry": {
+            "width_m": 1.8,
+            "height_m": 1.2,
+            "length_m": 4.0,
+            "local_center": {
+              "x": 0.0,
+              "y": 0.3,
+              "z": 0.0
+            }
+          },
+          "independent_suspension_policy": {
+            "contact": {
+              "wheels": {
+                "front_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "front_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "rear_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                },
+                "rear_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                }
+              },
+              "max_bump_m": 0.12,
+              "max_droop_m": 0.12,
+              "max_subdivisions": 12,
+              "seam_height_tolerance_m": 1e-06
+            },
+            "mass_kg": 1200.0,
+            "pitch_inertia_kg_m2": 1800.0,
+            "roll_inertia_kg_m2": 600.0,
+            "spring_stiffness_npm": 30000.0,
+            "damper_nspm": 2000.0,
+            "angular_damping_nmsprad": 150.0,
+            "integration_substeps": 16,
+            "max_abs_tilt_rad": 0.7,
+            "angular_rate_mapping": "yaw_rx_rz_v1",
+            "force_model": "road_relative_unilateral_v3"
+          },
+          "ballistic_flight_policy": null,
+          "automatic_takeoff_policy": null,
+          "grounded_yaw_policy": null,
+          "contact_geometry": "suspension_reference_points_v1",
+          "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+          "spawn_reference": "authored_horizontal_road_v1",
+          "spatial_contact_policy": {
+            "traction": {
+              "traction_mu": 0.8,
+              "max_drive_power_w": 100000.0,
+              "brake_speed_scale_mps": 0.05,
+              "energy_relative_tolerance": 1e-08,
+              "energy_absolute_tolerance_j": 1e-07,
+              "max_refinements": 20
+            },
+            "yaw_inertia_kg_m2": 1800.0,
+            "lateral_damping_nspm": 12000.0,
+            "max_angular_speed_radps": 10.0
+          },
+          "body_clearance_version": "bounded_patch_planes_v2"
+        },
+        "race": {
+          "version": "wp7_directed_lifecycle_crash_contract_v4",
+          "soft_corridor_m": 2.0,
+          "hard_corridor_m": 4.0,
+          "hard_violation": "terminate_valid_failure",
+          "gate_orientation": "authored_local_positive_z_v1"
+        },
+        "physical_crash_contract": {
+          "schema_version": "wp3_physical_crash_terminal_v1",
+          "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+          "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+          "terminal_kind": "valid_terminal_failure",
+          "terminal_reason": "physical_crash",
+          "terminal_is_finish": false,
+          "terminal_is_truncation": false,
+          "failure_scoring": "preimpact_reward_and_event_prefix_only",
+          "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+          "impulse": "world_linear_and_angular_applied_and_audited",
+          "energy": "nonincreasing_rigid_kinetic_energy",
+          "source_versions": [
+            "wp3_airborne_applied_road_crash_v4_dev",
+            "wp3_grounded_applied_crash_v4_dev",
+            "wp3_grounded_applied_edge_crash_v4_dev",
+            "wp3_grounded_applied_road_crash_v4_dev",
+            "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+            "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+          ],
+          "owner_scientific_signoff": false,
+          "independent_physics_reviewer_signature": null,
+          "scientific_evidence_allowed": false,
+          "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+        }
+      },
+      "step": 150,
+      "terminated": true,
+      "truncated": false,
+      "terminal_reason": "physical_crash",
+      "terminal_info": {
+        "tick": 150,
+        "elapsed_time": 15.0,
+        "next_checkpoint_index": 2,
+        "finished": false,
+        "completed_checkpoint_id": null,
+        "finished_now": false,
+        "game_score": 0,
+        "physics": {
+          "configuration": {
+            "schema_version": 9,
+            "validation_scope": "software_research_only",
+            "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+            "mode": "wp7_lifecycle_v1",
+            "body_geometry": {
+              "width_m": 1.8,
+              "height_m": 1.2,
+              "length_m": 4.0,
+              "local_center": {
+                "x": 0.0,
+                "y": 0.3,
+                "z": 0.0
+              }
+            },
+            "independent_suspension_policy": {
+              "contact": {
+                "wheels": {
+                  "front_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "front_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "rear_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  },
+                  "rear_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  }
+                },
+                "max_bump_m": 0.12,
+                "max_droop_m": 0.12,
+                "max_subdivisions": 12,
+                "seam_height_tolerance_m": 1e-06
+              },
+              "mass_kg": 1200.0,
+              "pitch_inertia_kg_m2": 1800.0,
+              "roll_inertia_kg_m2": 600.0,
+              "spring_stiffness_npm": 30000.0,
+              "damper_nspm": 2000.0,
+              "angular_damping_nmsprad": 150.0,
+              "integration_substeps": 16,
+              "max_abs_tilt_rad": 0.7,
+              "angular_rate_mapping": "yaw_rx_rz_v1",
+              "force_model": "road_relative_unilateral_v3"
+            },
+            "ballistic_flight_policy": null,
+            "automatic_takeoff_policy": null,
+            "grounded_yaw_policy": null,
+            "contact_geometry": "suspension_reference_points_v1",
+            "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+            "spawn_reference": "authored_horizontal_road_v1",
+            "spatial_contact_policy": {
+              "traction": {
+                "traction_mu": 0.8,
+                "max_drive_power_w": 100000.0,
+                "brake_speed_scale_mps": 0.05,
+                "energy_relative_tolerance": 1e-08,
+                "energy_absolute_tolerance_j": 1e-07,
+                "max_refinements": 20
+              },
+              "yaw_inertia_kg_m2": 1800.0,
+              "lateral_damping_nspm": 12000.0,
+              "max_angular_speed_radps": 10.0
+            },
+            "body_clearance_version": "bounded_patch_planes_v2"
+          },
+          "sha256": "c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37",
+          "suspension": null,
+          "flight": null,
+          "partial_support": null,
+          "grounded_yaw": null,
+          "transition": {
+            "version": "wp7_transition_audit_v1",
+            "physical_mode": "wp7_lifecycle_v1",
+            "initial_phase": "grounded",
+            "final_phase": "grounded",
+            "start_time_s": 14.9,
+            "end_time_s": 15.0,
+            "solvers": [
+              "spatial_road_edge_partial_lifecycle_rk4_v4",
+              "grounded_wheel_hard_stop_absorbing_v4_development"
+            ],
+            "events": []
+          }
+        },
+        "train_reset": {
+          "version": "wp7_train_reset_lifecycle_research_v1",
+          "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+          "seed": 1000,
+          "rank": 0,
+          "track_id": "slalom-v1",
+          "reset_index": 0,
+          "draw_seed": 31006427280302681747391895173684907054264048297823625074610567356187424273798,
+          "world_sha256": "6071829f2eb790ada04c5e59b22efb205e3a20d59fbe670e68fb78ed3eb304e0",
+          "lateral_offset_m": 0.14768679378612504,
+          "heading_jitter_deg": -0.3091885845510518,
+          "attempt": 0,
+          "rejected_draws": [],
+          "scientific_evidence": false
+        },
+        "reward_components": {
+          "route_progress": 0.003981454953574826,
+          "collision": 0.0,
+          "time": -6.932860240340233e-05
+        },
+        "telemetry": {
+          "vehicle_position": [
+            -5.950931456930698,
+            0.4634228238659771,
+            85.39367301023678
+          ],
+          "vehicle_velocity": [
+            -0.9187896454693372,
+            -0.028987328479485236,
+            5.742872370913399
+          ],
+          "vehicle_speed": 5.815977797966093,
+          "grounded": true,
+          "obstacle_hit_ids": [
+            "wheel-hard-stop:road-main"
+          ],
+          "applied_boost_pad_ids": [],
+          "applied_slow_zone_ids": []
+        },
+        "training_telemetry": {
+          "schema_version": "f1rl_training_state_v1",
+          "track_id": "slalom-v1",
+          "seed_identity": {
+            "version": "wp7_train_reset_lifecycle_research_v1",
+            "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+            "seed": 1000,
+            "rank": 0,
+            "track_id": "slalom-v1",
+            "reset_index": 0,
+            "draw_seed": 31006427280302681747391895173684907054264048297823625074610567356187424273798,
+            "world_sha256": "6071829f2eb790ada04c5e59b22efb205e3a20d59fbe670e68fb78ed3eb304e0",
+            "lateral_offset_m": 0.14768679378612504,
+            "heading_jitter_deg": -0.3091885845510518,
+            "attempt": 0,
+            "rejected_draws": [],
+            "scientific_evidence": false
+          },
+          "observation_schema": {
+            "version": "f1rl_observation_features_v1",
+            "feature_names": [
+              "rangefinder:left-30deg",
+              "rangefinder:left-15deg",
+              "rangefinder:left-7p5deg",
+              "rangefinder:front",
+              "rangefinder:right-7p5deg",
+              "rangefinder:right-15deg",
+              "rangefinder:right-30deg",
+              "velocity_local_x",
+              "velocity_local_y",
+              "velocity_local_z",
+              "target_direction_local_x",
+              "target_direction_local_y",
+              "target_direction_local_z",
+              "target_distance",
+              "target_available",
+              "grounded"
+            ]
+          },
+          "position": [
+            -5.950931456930698,
+            0.4634228238659771,
+            85.39367301023678
+          ],
+          "velocity": [
+            -0.9187896454693372,
+            -0.028987328479485236,
+            5.742872370913399
+          ],
+          "speed": 5.815977797966093,
+          "grounded": true,
+          "heading_rad": -0.2825877159971335,
+          "yaw_rate_radps": 0.6457379531064684,
+          "lateral_route_deviation_m": 2.9870984545513477,
+          "route_progress_m": 84.90336194934541,
+          "route_highwater_m": 84.90336194934541,
+          "action_contract_version": "steering-throttle-brake-v2"
+        },
+        "race": {
+          "configuration": {
+            "version": "wp7_directed_lifecycle_crash_contract_v4",
+            "soft_corridor_m": 2.0,
+            "hard_corridor_m": 4.0,
+            "hard_violation": "terminate_valid_failure",
+            "gate_orientation": "authored_local_positive_z_v1"
+          },
+          "course": {
+            "navigation": {
+              "points": [
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 4.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 18.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 30.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 43.0
+                },
+                {
+                  "x": 3.0,
+                  "y": 0.0,
+                  "z": 54.0
+                },
+                {
+                  "x": 3.0,
+                  "y": 0.0,
+                  "z": 70.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 80.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 92.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 96.0
+                },
+                {
+                  "x": 1.5,
+                  "y": 0.0,
+                  "z": 102.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 110.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 124.0
+                }
+              ],
+              "surface_ids": [
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main"
+              ],
+              "checkpoint_point_indices": [
+                2,
+                5,
+                10
+              ]
+            },
+            "checkpoints": [
+              {
+                "id": "checkpoint-0",
+                "volume": {
+                  "center": {
+                    "x": -3.0,
+                    "y": 0.0,
+                    "z": 30.0
+                  },
+                  "half_extents": {
+                    "x": 2.0,
+                    "y": 2.0,
+                    "z": 1.5
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 0
+              },
+              {
+                "id": "checkpoint-1",
+                "volume": {
+                  "center": {
+                    "x": 3.0,
+                    "y": 0.0,
+                    "z": 70.0
+                  },
+                  "half_extents": {
+                    "x": 2.0,
+                    "y": 2.0,
+                    "z": 1.5
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 1
+              },
+              {
+                "id": "checkpoint-2",
+                "volume": {
+                  "center": {
+                    "x": -3.0,
+                    "y": 0.0,
+                    "z": 110.0
+                  },
+                  "half_extents": {
+                    "x": 2.0,
+                    "y": 2.0,
+                    "z": 1.5
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 2
+              }
+            ],
+            "finish": {
+              "id": "finish",
+              "volume": {
+                "center": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 124.0
+                },
+                "half_extents": {
+                  "x": 7.0,
+                  "y": 2.0,
+                  "z": 1.0
+                },
+                "orientation": {
+                  "w": 1.0,
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                }
+              }
+            }
+          },
+          "outcome_contract": {
+            "configuration": {
+              "schema_version": "wp7_hard_route_owner_outcome_v2",
+              "version": "wp7_hard_route_terminal_failure_v2",
+              "owner_decision_date": "2026-10-17",
+              "parent_owner_contract_sha256": "d9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1",
+              "soft_corridor_m": 2.0,
+              "hard_corridor_m": 4.0,
+              "violation_comparison": "strict_greater_than",
+              "outcome": "valid_terminal_failure",
+              "reward_policy": "registered_terms_valid_prefix_no_terminal_adjustment",
+              "terminal_penalty": 0.0,
+              "new_success_credit": false,
+              "new_reward_shaping": false,
+              "training_permitted": false,
+              "heldout_permitted": false,
+              "scientific_freeze_permitted": false,
+              "wp8_permitted": false
+            },
+            "source_sha256": "7b306dc684cbc04f787bae9efaee77ab8bf97ee64ae2ee8d7665067b7e7d6954",
+            "sha256": "5bd036067ba901d2b4513530000d32924597e95e64ae46f8809a88263f6dd3a9"
+          },
+          "physical_crash_contract": {
+            "schema_version": "wp3_physical_crash_terminal_v1",
+            "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+            "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+            "terminal_kind": "valid_terminal_failure",
+            "terminal_reason": "physical_crash",
+            "terminal_is_finish": false,
+            "terminal_is_truncation": false,
+            "failure_scoring": "preimpact_reward_and_event_prefix_only",
+            "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+            "impulse": "world_linear_and_angular_applied_and_audited",
+            "energy": "nonincreasing_rigid_kinetic_energy",
+            "source_versions": [
+              "wp3_airborne_applied_road_crash_v4_dev",
+              "wp3_grounded_applied_crash_v4_dev",
+              "wp3_grounded_applied_edge_crash_v4_dev",
+              "wp3_grounded_applied_road_crash_v4_dev",
+              "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+              "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+            ],
+            "owner_scientific_signoff": false,
+            "independent_physics_reviewer_signature": null,
+            "scientific_evidence_allowed": false,
+            "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+          },
+          "sha256": "acef9d444f99b11d7e026adfa00f4e4cac664c81fd226862e5254caab07db9b2",
+          "completed_checkpoint_ids": [],
+          "directed_crossings": [],
+          "max_sampled_deviation_m": 2.9509314569306984,
+          "soft_zone_encountered": true,
+          "terminal_failure": true,
+          "terminal_time_s": 0.0006932860240340233,
+          "reward_valid_prefix_s": 0.0006932860240340233,
+          "reward_prefix_position": [
+            -5.950931456930698,
+            0.4634228238659771,
+            85.39367301023678
+          ],
+          "physical_tick_end_time_s": 0.1,
+          "terminal_reason": "physical_crash",
+          "tick_local_crossing_times_s": [],
+          "crossing_time_origin_s": 14.9
+        },
+        "physical_crash_terminal": {
+          "version": "wp3_physical_crash_terminal_v1",
+          "obstacle_id": "wheel-hard-stop:road-main",
+          "last_proven_clear_s": 0.0006932859309017659,
+          "impact_time_s": 0.0006932860240340233,
+          "first_overlap_s": 0.0006932860240340233,
+          "linear_impulse_n_s": [
+            0.0,
+            211.170559911576,
+            0.0
+          ],
+          "angular_impulse_nms": [
+            -259.7340716814469,
+            0.0,
+            -232.21891831341566
+          ],
+          "kinetic_before_j": 20735.227002862815,
+          "kinetic_after_j": 20670.336175209704,
+          "energy_lost_j": 64.89082765311105,
+          "accepted_velocity_mps": [
+            -0.9187896454693372,
+            -0.028987328479485236,
+            5.742872370913399
+          ],
+          "accepted_angular_velocity_radps": [
+            0.0007408807229052489,
+            0.6457379531064684,
+            -0.027188578768689187
+          ],
+          "scientific_evidence": false,
+          "contract_sha256": "0b8dc47120892179a326ab735873d2f08ee7ca9c0bdece41c5135369f5119b35",
+          "source_version": "wp3_grounded_wheel_hard_stop_crash_v4_dev",
+          "contact_kind": "wheel_hard_stop",
+          "contact_position_world": [
+            -5.950931456930698,
+            0.4634228238659771,
+            85.39367301023678
+          ],
+          "contact_orientation_wxyz": [
+            0.9893151382833478,
+            0.005675461487464448,
+            -0.1411020808366965,
+            0.036242917706212595
+          ],
+          "preimpact_velocity_mps": [
+            -0.9187896454693372,
+            -0.20496279507246523,
+            5.742872370913399
+          ],
+          "preimpact_angular_velocity_radps": [
+            0.09840459506277836,
+            0.6421486048177277,
+            0.2624270296516604
+          ],
+          "science_review_approved": false
+        },
+        "route_highwater_meters": 84.90336194934541,
+        "research_outcome": {
+          "version": "wp7_episode_outcome_v1",
+          "kind": "valid_terminal_failure",
+          "valid_sample": true,
+          "reason": "physical_crash"
+        }
+      },
+      "physical_crash_contract_valid": true,
+      "final_vehicle": {
+        "position_m": [
+          -5.950931456930698,
+          0.4634228238659771,
+          85.39367301023678
+        ],
+        "velocity_mps": [
+          -0.9187896454693372,
+          -0.028987328479485236,
+          5.742872370913399
+        ],
+        "speed_mps": 5.815977797966093,
+        "orientation_wxyz": [
+          0.9893151382833478,
+          0.005675461487464448,
+          -0.1411020808366965,
+          0.036242917706212595
+        ],
+        "angular_velocity_radps": [
+          0.0007408807229052489,
+          0.6457379531064684,
+          -0.027188578768689187
+        ],
+        "grounded": true
+      },
+      "research_outcome": {
+        "version": "wp7_episode_outcome_v1",
+        "kind": "valid_terminal_failure",
+        "valid_sample": true,
+        "reason": "physical_crash"
+      },
+      "phase2a_v4_counterfactual": {
+        "outcome": "terminal",
+        "step": 150,
+        "terminated": true,
+        "truncated": false,
+        "reason": "physical_crash",
+        "physical_crash_contract_valid": true
+      },
+      "episode_equivalence": {
+        "same_model_track_reset_seed_and_deterministic_mode": true,
+        "same_terminal_outcome_and_step_as_phase2a_v4": true,
+        "transition_substep_equivalence_claimed": false,
+        "note": "v4 dynamics differ from v3 from the first transition; v3 failed-attempt substep is not a same-state replay target."
+      }
+    },
+    {
+      "model_id": "C-seed0",
+      "track_id": "right-turn-v1",
+      "reset_seed": 20261106,
+      "inference_mode": "deterministic",
+      "requested_runtime_profile": "wp3_full06_physics_v4",
+      "effective_runtime_profile": {
+        "physics_version": "spatial_road_edge_partial_lifecycle_v4",
+        "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+        "terminal_contract": "wp3_physical_crash_terminal_v1",
+        "max_abs_tilt_rad": 0.7
+      },
+      "phase1_failed_attempt_step": 90,
+      "track_asset_sha256": "a302f5d1d7f08d2b51ae963a5e695d8600d52a0ebf2d1f212ca0a4fbf90e303e",
+      "model_sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+      "outcome": "terminal",
+      "reset_runtime_telemetry": {
+        "physics": {
+          "schema_version": 9,
+          "validation_scope": "software_research_only",
+          "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+          "mode": "wp7_lifecycle_v1",
+          "body_geometry": {
+            "width_m": 1.8,
+            "height_m": 1.2,
+            "length_m": 4.0,
+            "local_center": {
+              "x": 0.0,
+              "y": 0.3,
+              "z": 0.0
+            }
+          },
+          "independent_suspension_policy": {
+            "contact": {
+              "wheels": {
+                "front_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "front_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "rear_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                },
+                "rear_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                }
+              },
+              "max_bump_m": 0.12,
+              "max_droop_m": 0.12,
+              "max_subdivisions": 12,
+              "seam_height_tolerance_m": 1e-06
+            },
+            "mass_kg": 1200.0,
+            "pitch_inertia_kg_m2": 1800.0,
+            "roll_inertia_kg_m2": 600.0,
+            "spring_stiffness_npm": 30000.0,
+            "damper_nspm": 2000.0,
+            "angular_damping_nmsprad": 150.0,
+            "integration_substeps": 16,
+            "max_abs_tilt_rad": 0.7,
+            "angular_rate_mapping": "yaw_rx_rz_v1",
+            "force_model": "road_relative_unilateral_v3"
+          },
+          "ballistic_flight_policy": null,
+          "automatic_takeoff_policy": null,
+          "grounded_yaw_policy": null,
+          "contact_geometry": "suspension_reference_points_v1",
+          "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+          "spawn_reference": "authored_horizontal_road_v1",
+          "spatial_contact_policy": {
+            "traction": {
+              "traction_mu": 0.8,
+              "max_drive_power_w": 100000.0,
+              "brake_speed_scale_mps": 0.05,
+              "energy_relative_tolerance": 1e-08,
+              "energy_absolute_tolerance_j": 1e-07,
+              "max_refinements": 20
+            },
+            "yaw_inertia_kg_m2": 1800.0,
+            "lateral_damping_nspm": 12000.0,
+            "max_angular_speed_radps": 10.0
+          },
+          "body_clearance_version": "bounded_patch_planes_v2"
+        },
+        "race": {
+          "version": "wp7_directed_lifecycle_crash_contract_v4",
+          "soft_corridor_m": 2.0,
+          "hard_corridor_m": 4.0,
+          "hard_violation": "terminate_valid_failure",
+          "gate_orientation": "authored_local_positive_z_v1"
+        },
+        "physical_crash_contract": {
+          "schema_version": "wp3_physical_crash_terminal_v1",
+          "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+          "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+          "terminal_kind": "valid_terminal_failure",
+          "terminal_reason": "physical_crash",
+          "terminal_is_finish": false,
+          "terminal_is_truncation": false,
+          "failure_scoring": "preimpact_reward_and_event_prefix_only",
+          "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+          "impulse": "world_linear_and_angular_applied_and_audited",
+          "energy": "nonincreasing_rigid_kinetic_energy",
+          "source_versions": [
+            "wp3_airborne_applied_road_crash_v4_dev",
+            "wp3_grounded_applied_crash_v4_dev",
+            "wp3_grounded_applied_edge_crash_v4_dev",
+            "wp3_grounded_applied_road_crash_v4_dev",
+            "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+            "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+          ],
+          "owner_scientific_signoff": false,
+          "independent_physics_reviewer_signature": null,
+          "scientific_evidence_allowed": false,
+          "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+        }
+      },
+      "step": 93,
+      "terminated": true,
+      "truncated": false,
+      "terminal_reason": "physical_crash",
+      "terminal_info": {
+        "tick": 93,
+        "elapsed_time": 9.3,
+        "next_checkpoint_index": 1,
+        "finished": false,
+        "completed_checkpoint_id": null,
+        "finished_now": false,
+        "game_score": 0,
+        "physics": {
+          "configuration": {
+            "schema_version": 9,
+            "validation_scope": "software_research_only",
+            "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+            "mode": "wp7_lifecycle_v1",
+            "body_geometry": {
+              "width_m": 1.8,
+              "height_m": 1.2,
+              "length_m": 4.0,
+              "local_center": {
+                "x": 0.0,
+                "y": 0.3,
+                "z": 0.0
+              }
+            },
+            "independent_suspension_policy": {
+              "contact": {
+                "wheels": {
+                  "front_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "front_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "rear_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  },
+                  "rear_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  }
+                },
+                "max_bump_m": 0.12,
+                "max_droop_m": 0.12,
+                "max_subdivisions": 12,
+                "seam_height_tolerance_m": 1e-06
+              },
+              "mass_kg": 1200.0,
+              "pitch_inertia_kg_m2": 1800.0,
+              "roll_inertia_kg_m2": 600.0,
+              "spring_stiffness_npm": 30000.0,
+              "damper_nspm": 2000.0,
+              "angular_damping_nmsprad": 150.0,
+              "integration_substeps": 16,
+              "max_abs_tilt_rad": 0.7,
+              "angular_rate_mapping": "yaw_rx_rz_v1",
+              "force_model": "road_relative_unilateral_v3"
+            },
+            "ballistic_flight_policy": null,
+            "automatic_takeoff_policy": null,
+            "grounded_yaw_policy": null,
+            "contact_geometry": "suspension_reference_points_v1",
+            "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+            "spawn_reference": "authored_horizontal_road_v1",
+            "spatial_contact_policy": {
+              "traction": {
+                "traction_mu": 0.8,
+                "max_drive_power_w": 100000.0,
+                "brake_speed_scale_mps": 0.05,
+                "energy_relative_tolerance": 1e-08,
+                "energy_absolute_tolerance_j": 1e-07,
+                "max_refinements": 20
+              },
+              "yaw_inertia_kg_m2": 1800.0,
+              "lateral_damping_nspm": 12000.0,
+              "max_angular_speed_radps": 10.0
+            },
+            "body_clearance_version": "bounded_patch_planes_v2"
+          },
+          "sha256": "c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37",
+          "suspension": null,
+          "flight": null,
+          "partial_support": null,
+          "grounded_yaw": null,
+          "transition": {
+            "version": "wp7_transition_audit_v1",
+            "physical_mode": "wp7_lifecycle_v1",
+            "initial_phase": "grounded",
+            "final_phase": "grounded",
+            "start_time_s": 9.200000000000001,
+            "end_time_s": 9.3,
+            "solvers": [
+              "spatial_road_edge_partial_lifecycle_rk4_v4",
+              "grounded_road_obb_impulse_absorbing_v4_development"
+            ],
+            "events": []
+          }
+        },
+        "train_reset": {
+          "version": "wp7_train_reset_lifecycle_research_v1",
+          "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+          "seed": 1000,
+          "rank": 0,
+          "track_id": "right-turn-v1",
+          "reset_index": 0,
+          "draw_seed": 13316071062180048504291852760339709890985924980489973590830306488362885655708,
+          "world_sha256": "d79133bc9a0599f9b056c7eb78658446631f564f038bc4afa91f3325fd4f9fd2",
+          "lateral_offset_m": -0.10049681926992604,
+          "heading_jitter_deg": -1.6892219923641036,
+          "attempt": 0,
+          "rejected_draws": [],
+          "scientific_evidence": false
+        },
+        "reward_components": {
+          "route_progress": 0.31042177654441616,
+          "collision": 0.0,
+          "time": -0.005205612182617187
+        },
+        "telemetry": {
+          "vehicle_position": [
+            0.1201278177545896,
+            0.4374783741785209,
+            69.77457918361716
+          ],
+          "vehicle_velocity": [
+            1.4488483724122412,
+            -0.03250470611002493,
+            5.933326278065077
+          ],
+          "vehicle_speed": 6.1077474476388165,
+          "grounded": true,
+          "obstacle_hit_ids": [
+            "road-patch:road-exit"
+          ],
+          "applied_boost_pad_ids": [],
+          "applied_slow_zone_ids": []
+        },
+        "training_telemetry": {
+          "schema_version": "f1rl_training_state_v1",
+          "track_id": "right-turn-v1",
+          "seed_identity": {
+            "version": "wp7_train_reset_lifecycle_research_v1",
+            "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+            "seed": 1000,
+            "rank": 0,
+            "track_id": "right-turn-v1",
+            "reset_index": 0,
+            "draw_seed": 13316071062180048504291852760339709890985924980489973590830306488362885655708,
+            "world_sha256": "d79133bc9a0599f9b056c7eb78658446631f564f038bc4afa91f3325fd4f9fd2",
+            "lateral_offset_m": -0.10049681926992604,
+            "heading_jitter_deg": -1.6892219923641036,
+            "attempt": 0,
+            "rejected_draws": [],
+            "scientific_evidence": false
+          },
+          "observation_schema": {
+            "version": "f1rl_observation_features_v1",
+            "feature_names": [
+              "rangefinder:left-30deg",
+              "rangefinder:left-15deg",
+              "rangefinder:left-7p5deg",
+              "rangefinder:front",
+              "rangefinder:right-7p5deg",
+              "rangefinder:right-15deg",
+              "rangefinder:right-30deg",
+              "velocity_local_x",
+              "velocity_local_y",
+              "velocity_local_z",
+              "target_direction_local_x",
+              "target_direction_local_y",
+              "target_direction_local_z",
+              "target_distance",
+              "target_available",
+              "grounded"
+            ]
+          },
+          "position": [
+            0.1201278177545896,
+            0.4374783741785209,
+            69.77457918361716
+          ],
+          "velocity": [
+            1.4488483724122412,
+            -0.03250470611002493,
+            5.933326278065077
+          ],
+          "speed": 6.1077474476388165,
+          "grounded": true,
+          "heading_rad": 0.18028579795458696,
+          "yaw_rate_radps": 0.38811989769737776,
+          "lateral_route_deviation_m": 0.45367171001987977,
+          "route_progress_m": 65.77457918361716,
+          "route_highwater_m": 65.77457918361716,
+          "action_contract_version": "steering-throttle-brake-v2"
+        },
+        "race": {
+          "configuration": {
+            "version": "wp7_directed_lifecycle_crash_contract_v4",
+            "soft_corridor_m": 2.0,
+            "hard_corridor_m": 4.0,
+            "hard_violation": "terminate_valid_failure",
+            "gate_orientation": "authored_local_positive_z_v1"
+          },
+          "course": {
+            "navigation": {
+              "points": [
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 4.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 35.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 64.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 70.0
+                },
+                {
+                  "x": 20.0,
+                  "y": 0.0,
+                  "z": 70.0
+                },
+                {
+                  "x": 64.0,
+                  "y": 0.0,
+                  "z": 70.0
+                }
+              ],
+              "surface_ids": [
+                "road-entry",
+                "road-entry",
+                "road-entry",
+                "road-exit",
+                "road-exit"
+              ],
+              "checkpoint_point_indices": [
+                1,
+                4
+              ]
+            },
+            "checkpoints": [
+              {
+                "id": "checkpoint-0",
+                "volume": {
+                  "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 35.0
+                  },
+                  "half_extents": {
+                    "x": 6.0,
+                    "y": 2.0,
+                    "z": 1.0
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 0
+              },
+              {
+                "id": "checkpoint-1",
+                "volume": {
+                  "center": {
+                    "x": 20.0,
+                    "y": 0.0,
+                    "z": 70.0
+                  },
+                  "half_extents": {
+                    "x": 1.0,
+                    "y": 2.0,
+                    "z": 6.0
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 1
+              }
+            ],
+            "finish": {
+              "id": "finish",
+              "volume": {
+                "center": {
+                  "x": 64.0,
+                  "y": 0.0,
+                  "z": 70.0
+                },
+                "half_extents": {
+                  "x": 1.0,
+                  "y": 2.0,
+                  "z": 6.0
+                },
+                "orientation": {
+                  "w": 1.0,
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                }
+              }
+            }
+          },
+          "outcome_contract": {
+            "configuration": {
+              "schema_version": "wp7_hard_route_owner_outcome_v2",
+              "version": "wp7_hard_route_terminal_failure_v2",
+              "owner_decision_date": "2026-10-17",
+              "parent_owner_contract_sha256": "d9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1",
+              "soft_corridor_m": 2.0,
+              "hard_corridor_m": 4.0,
+              "violation_comparison": "strict_greater_than",
+              "outcome": "valid_terminal_failure",
+              "reward_policy": "registered_terms_valid_prefix_no_terminal_adjustment",
+              "terminal_penalty": 0.0,
+              "new_success_credit": false,
+              "new_reward_shaping": false,
+              "training_permitted": false,
+              "heldout_permitted": false,
+              "scientific_freeze_permitted": false,
+              "wp8_permitted": false
+            },
+            "source_sha256": "7b306dc684cbc04f787bae9efaee77ab8bf97ee64ae2ee8d7665067b7e7d6954",
+            "sha256": "5bd036067ba901d2b4513530000d32924597e95e64ae46f8809a88263f6dd3a9"
+          },
+          "physical_crash_contract": {
+            "schema_version": "wp3_physical_crash_terminal_v1",
+            "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+            "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+            "terminal_kind": "valid_terminal_failure",
+            "terminal_reason": "physical_crash",
+            "terminal_is_finish": false,
+            "terminal_is_truncation": false,
+            "failure_scoring": "preimpact_reward_and_event_prefix_only",
+            "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+            "impulse": "world_linear_and_angular_applied_and_audited",
+            "energy": "nonincreasing_rigid_kinetic_energy",
+            "source_versions": [
+              "wp3_airborne_applied_road_crash_v4_dev",
+              "wp3_grounded_applied_crash_v4_dev",
+              "wp3_grounded_applied_edge_crash_v4_dev",
+              "wp3_grounded_applied_road_crash_v4_dev",
+              "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+              "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+            ],
+            "owner_scientific_signoff": false,
+            "independent_physics_reviewer_signature": null,
+            "scientific_evidence_allowed": false,
+            "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+          },
+          "sha256": "bbb91441268bc1e9fd23c453bcc120ffaaccdf089fd687b9c7a5ba7318ff6a8e",
+          "completed_checkpoint_ids": [],
+          "directed_crossings": [],
+          "max_sampled_deviation_m": 0.1201278177545896,
+          "soft_zone_encountered": false,
+          "terminal_failure": true,
+          "terminal_time_s": 0.05205612182617187,
+          "reward_valid_prefix_s": 0.05205612182617187,
+          "reward_prefix_position": [
+            0.1201278177545896,
+            0.4374783741785209,
+            69.77457918361716
+          ],
+          "physical_tick_end_time_s": 0.1,
+          "terminal_reason": "physical_crash",
+          "tick_local_crossing_times_s": [],
+          "crossing_time_origin_s": 9.200000000000001
+        },
+        "physical_crash_terminal": {
+          "version": "wp3_physical_crash_terminal_v1",
+          "obstacle_id": "road-patch:road-exit",
+          "last_proven_clear_s": 0.05205535888671874,
+          "impact_time_s": 0.05205612182617187,
+          "first_overlap_s": 0.05205612182617187,
+          "linear_impulse_n_s": [
+            -43.16213409566252,
+            405.5249860934033,
+            0.0
+          ],
+          "angular_impulse_nms": [
+            -826.3334974939067,
+            -87.9509733053906,
+            -67.5966051229361
+          ],
+          "kinetic_before_j": 22822.671655930386,
+          "kinetic_after_j": 22535.61426752637,
+          "energy_lost_j": 287.0573884040168,
+          "accepted_velocity_mps": [
+            1.4488483724122412,
+            -0.03250470611002493,
+            5.933326278065077
+          ],
+          "accepted_angular_velocity_radps": [
+            -0.13545219272876913,
+            0.38811989769737776,
+            0.030716086521738906
+          ],
+          "scientific_evidence": false,
+          "contract_sha256": "0b8dc47120892179a326ab735873d2f08ee7ca9c0bdece41c5135369f5119b35",
+          "source_version": "wp3_grounded_applied_road_crash_v4_dev",
+          "contact_kind": "bounded_road_body",
+          "contact_position_world": [
+            0.1201278177545896,
+            0.4374783741785209,
+            69.77457918361716
+          ],
+          "contact_orientation_wxyz": [
+            0.9944539164240574,
+            0.02594823522965782,
+            0.08876618564030943,
+            0.050086539950274386
+          ],
+          "preimpact_velocity_mps": [
+            1.48481681749196,
+            -0.37044219452119437,
+            5.933326278065077
+          ],
+          "preimpact_angular_velocity_radps": [
+            0.36556599403734774,
+            0.4269802210441858,
+            0.298396583156056
+          ],
+          "science_review_approved": false
+        },
+        "route_highwater_meters": 65.77457918361716,
+        "research_outcome": {
+          "version": "wp7_episode_outcome_v1",
+          "kind": "valid_terminal_failure",
+          "valid_sample": true,
+          "reason": "physical_crash"
+        }
+      },
+      "physical_crash_contract_valid": true,
+      "final_vehicle": {
+        "position_m": [
+          0.1201278177545896,
+          0.4374783741785209,
+          69.77457918361716
+        ],
+        "velocity_mps": [
+          1.4488483724122412,
+          -0.03250470611002493,
+          5.933326278065077
+        ],
+        "speed_mps": 6.1077474476388165,
+        "orientation_wxyz": [
+          0.9944539164240574,
+          0.02594823522965782,
+          0.08876618564030943,
+          0.050086539950274386
+        ],
+        "angular_velocity_radps": [
+          -0.13545219272876913,
+          0.38811989769737776,
+          0.030716086521738906
+        ],
+        "grounded": true
+      },
+      "research_outcome": {
+        "version": "wp7_episode_outcome_v1",
+        "kind": "valid_terminal_failure",
+        "valid_sample": true,
+        "reason": "physical_crash"
+      },
+      "phase2a_v4_counterfactual": {
+        "outcome": "terminal",
+        "step": 93,
+        "terminated": true,
+        "truncated": false,
+        "reason": "physical_crash",
+        "physical_crash_contract_valid": true
+      },
+      "episode_equivalence": {
+        "same_model_track_reset_seed_and_deterministic_mode": true,
+        "same_terminal_outcome_and_step_as_phase2a_v4": true,
+        "transition_substep_equivalence_claimed": false,
+        "note": "v4 dynamics differ from v3 from the first transition; v3 failed-attempt substep is not a same-state replay target."
+      }
+    },
+    {
+      "model_id": "B-seed1",
+      "track_id": "slalom-v1",
+      "reset_seed": 20261106,
+      "inference_mode": "deterministic",
+      "requested_runtime_profile": "wp3_full06_physics_v4",
+      "effective_runtime_profile": {
+        "physics_version": "spatial_road_edge_partial_lifecycle_v4",
+        "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+        "terminal_contract": "wp3_physical_crash_terminal_v1",
+        "max_abs_tilt_rad": 0.7
+      },
+      "phase1_failed_attempt_step": 121,
+      "track_asset_sha256": "e9dd588740189f7ed857de8e8b8f5eeb99f3161fdb9b8d3fa05d18978cdefa53",
+      "model_sha256": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021",
+      "outcome": "terminal",
+      "reset_runtime_telemetry": {
+        "physics": {
+          "schema_version": 9,
+          "validation_scope": "software_research_only",
+          "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+          "mode": "wp7_lifecycle_v1",
+          "body_geometry": {
+            "width_m": 1.8,
+            "height_m": 1.2,
+            "length_m": 4.0,
+            "local_center": {
+              "x": 0.0,
+              "y": 0.3,
+              "z": 0.0
+            }
+          },
+          "independent_suspension_policy": {
+            "contact": {
+              "wheels": {
+                "front_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "front_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "rear_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                },
+                "rear_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                }
+              },
+              "max_bump_m": 0.12,
+              "max_droop_m": 0.12,
+              "max_subdivisions": 12,
+              "seam_height_tolerance_m": 1e-06
+            },
+            "mass_kg": 1200.0,
+            "pitch_inertia_kg_m2": 1800.0,
+            "roll_inertia_kg_m2": 600.0,
+            "spring_stiffness_npm": 30000.0,
+            "damper_nspm": 2000.0,
+            "angular_damping_nmsprad": 150.0,
+            "integration_substeps": 16,
+            "max_abs_tilt_rad": 0.7,
+            "angular_rate_mapping": "yaw_rx_rz_v1",
+            "force_model": "road_relative_unilateral_v3"
+          },
+          "ballistic_flight_policy": null,
+          "automatic_takeoff_policy": null,
+          "grounded_yaw_policy": null,
+          "contact_geometry": "suspension_reference_points_v1",
+          "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+          "spawn_reference": "authored_horizontal_road_v1",
+          "spatial_contact_policy": {
+            "traction": {
+              "traction_mu": 0.8,
+              "max_drive_power_w": 100000.0,
+              "brake_speed_scale_mps": 0.05,
+              "energy_relative_tolerance": 1e-08,
+              "energy_absolute_tolerance_j": 1e-07,
+              "max_refinements": 20
+            },
+            "yaw_inertia_kg_m2": 1800.0,
+            "lateral_damping_nspm": 12000.0,
+            "max_angular_speed_radps": 10.0
+          },
+          "body_clearance_version": "bounded_patch_planes_v2"
+        },
+        "race": {
+          "version": "wp7_directed_lifecycle_crash_contract_v4",
+          "soft_corridor_m": 2.0,
+          "hard_corridor_m": 4.0,
+          "hard_violation": "terminate_valid_failure",
+          "gate_orientation": "authored_local_positive_z_v1"
+        },
+        "physical_crash_contract": {
+          "schema_version": "wp3_physical_crash_terminal_v1",
+          "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+          "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+          "terminal_kind": "valid_terminal_failure",
+          "terminal_reason": "physical_crash",
+          "terminal_is_finish": false,
+          "terminal_is_truncation": false,
+          "failure_scoring": "preimpact_reward_and_event_prefix_only",
+          "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+          "impulse": "world_linear_and_angular_applied_and_audited",
+          "energy": "nonincreasing_rigid_kinetic_energy",
+          "source_versions": [
+            "wp3_airborne_applied_road_crash_v4_dev",
+            "wp3_grounded_applied_crash_v4_dev",
+            "wp3_grounded_applied_edge_crash_v4_dev",
+            "wp3_grounded_applied_road_crash_v4_dev",
+            "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+            "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+          ],
+          "owner_scientific_signoff": false,
+          "independent_physics_reviewer_signature": null,
+          "scientific_evidence_allowed": false,
+          "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+        }
+      },
+      "step": 125,
+      "terminated": true,
+      "truncated": false,
+      "terminal_reason": "physical_crash",
+      "terminal_info": {
+        "tick": 125,
+        "elapsed_time": 12.5,
+        "next_checkpoint_index": 2,
+        "finished": false,
+        "completed_checkpoint_id": null,
+        "finished_now": false,
+        "game_score": 0,
+        "physics": {
+          "configuration": {
+            "schema_version": 9,
+            "validation_scope": "software_research_only",
+            "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+            "mode": "wp7_lifecycle_v1",
+            "body_geometry": {
+              "width_m": 1.8,
+              "height_m": 1.2,
+              "length_m": 4.0,
+              "local_center": {
+                "x": 0.0,
+                "y": 0.3,
+                "z": 0.0
+              }
+            },
+            "independent_suspension_policy": {
+              "contact": {
+                "wheels": {
+                  "front_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "front_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "rear_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  },
+                  "rear_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  }
+                },
+                "max_bump_m": 0.12,
+                "max_droop_m": 0.12,
+                "max_subdivisions": 12,
+                "seam_height_tolerance_m": 1e-06
+              },
+              "mass_kg": 1200.0,
+              "pitch_inertia_kg_m2": 1800.0,
+              "roll_inertia_kg_m2": 600.0,
+              "spring_stiffness_npm": 30000.0,
+              "damper_nspm": 2000.0,
+              "angular_damping_nmsprad": 150.0,
+              "integration_substeps": 16,
+              "max_abs_tilt_rad": 0.7,
+              "angular_rate_mapping": "yaw_rx_rz_v1",
+              "force_model": "road_relative_unilateral_v3"
+            },
+            "ballistic_flight_policy": null,
+            "automatic_takeoff_policy": null,
+            "grounded_yaw_policy": null,
+            "contact_geometry": "suspension_reference_points_v1",
+            "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+            "spawn_reference": "authored_horizontal_road_v1",
+            "spatial_contact_policy": {
+              "traction": {
+                "traction_mu": 0.8,
+                "max_drive_power_w": 100000.0,
+                "brake_speed_scale_mps": 0.05,
+                "energy_relative_tolerance": 1e-08,
+                "energy_absolute_tolerance_j": 1e-07,
+                "max_refinements": 20
+              },
+              "yaw_inertia_kg_m2": 1800.0,
+              "lateral_damping_nspm": 12000.0,
+              "max_angular_speed_radps": 10.0
+            },
+            "body_clearance_version": "bounded_patch_planes_v2"
+          },
+          "sha256": "c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37",
+          "suspension": null,
+          "flight": null,
+          "partial_support": null,
+          "grounded_yaw": null,
+          "transition": {
+            "version": "wp7_transition_audit_v1",
+            "physical_mode": "wp7_lifecycle_v1",
+            "initial_phase": "grounded",
+            "final_phase": "grounded",
+            "start_time_s": 12.4,
+            "end_time_s": 12.5,
+            "solvers": [
+              "spatial_road_edge_partial_lifecycle_rk4_v4",
+              "grounded_road_obb_impulse_absorbing_v4_development"
+            ],
+            "events": []
+          }
+        },
+        "train_reset": {
+          "version": "wp7_train_reset_lifecycle_research_v1",
+          "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+          "seed": 1000,
+          "rank": 0,
+          "track_id": "slalom-v1",
+          "reset_index": 0,
+          "draw_seed": 31006427280302681747391895173684907054264048297823625074610567356187424273798,
+          "world_sha256": "6071829f2eb790ada04c5e59b22efb205e3a20d59fbe670e68fb78ed3eb304e0",
+          "lateral_offset_m": 0.14768679378612504,
+          "heading_jitter_deg": -0.3091885845510518,
+          "attempt": 0,
+          "rejected_draws": [],
+          "scientific_evidence": false
+        },
+        "reward_components": {
+          "route_progress": 0.2735010341296942,
+          "collision": 0.0,
+          "time": -0.004231719970703126
+        },
+        "telemetry": {
+          "vehicle_position": [
+            -6.281754248498825,
+            0.41970515413728104,
+            85.24178160936007
+          ],
+          "vehicle_velocity": [
+            -2.0320173709853973,
+            -0.09309665546913154,
+            6.461485925957252
+          ],
+          "vehicle_speed": 6.774109679846466,
+          "grounded": true,
+          "obstacle_hit_ids": [
+            "road-patch:road-main"
+          ],
+          "applied_boost_pad_ids": [],
+          "applied_slow_zone_ids": []
+        },
+        "training_telemetry": {
+          "schema_version": "f1rl_training_state_v1",
+          "track_id": "slalom-v1",
+          "seed_identity": {
+            "version": "wp7_train_reset_lifecycle_research_v1",
+            "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+            "seed": 1000,
+            "rank": 0,
+            "track_id": "slalom-v1",
+            "reset_index": 0,
+            "draw_seed": 31006427280302681747391895173684907054264048297823625074610567356187424273798,
+            "world_sha256": "6071829f2eb790ada04c5e59b22efb205e3a20d59fbe670e68fb78ed3eb304e0",
+            "lateral_offset_m": 0.14768679378612504,
+            "heading_jitter_deg": -0.3091885845510518,
+            "attempt": 0,
+            "rejected_draws": [],
+            "scientific_evidence": false
+          },
+          "observation_schema": {
+            "version": "f1rl_observation_features_v1",
+            "feature_names": [
+              "rangefinder:left-30deg",
+              "rangefinder:left-15deg",
+              "rangefinder:left-7p5deg",
+              "rangefinder:front",
+              "rangefinder:right-7p5deg",
+              "rangefinder:right-15deg",
+              "rangefinder:right-30deg",
+              "velocity_local_x",
+              "velocity_local_y",
+              "velocity_local_z",
+              "target_direction_local_x",
+              "target_direction_local_y",
+              "target_direction_local_z",
+              "target_distance",
+              "target_available",
+              "grounded"
+            ]
+          },
+          "position": [
+            -6.281754248498825,
+            0.41970515413728104,
+            85.24178160936007
+          ],
+          "velocity": [
+            -2.0320173709853973,
+            -0.09309665546913154,
+            6.461485925957252
+          ],
+          "speed": 6.774109679846466,
+          "grounded": true,
+          "heading_rad": -0.38672036077606586,
+          "yaw_rate_radps": 0.7777154570393102,
+          "lateral_route_deviation_m": 3.308483544458018,
+          "route_progress_m": 84.7514705484687,
+          "route_highwater_m": 84.7514705484687,
+          "action_contract_version": "steering-throttle-brake-v2"
+        },
+        "race": {
+          "configuration": {
+            "version": "wp7_directed_lifecycle_crash_contract_v4",
+            "soft_corridor_m": 2.0,
+            "hard_corridor_m": 4.0,
+            "hard_violation": "terminate_valid_failure",
+            "gate_orientation": "authored_local_positive_z_v1"
+          },
+          "course": {
+            "navigation": {
+              "points": [
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 4.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 18.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 30.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 43.0
+                },
+                {
+                  "x": 3.0,
+                  "y": 0.0,
+                  "z": 54.0
+                },
+                {
+                  "x": 3.0,
+                  "y": 0.0,
+                  "z": 70.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 80.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 92.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 96.0
+                },
+                {
+                  "x": 1.5,
+                  "y": 0.0,
+                  "z": 102.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 110.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 124.0
+                }
+              ],
+              "surface_ids": [
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main"
+              ],
+              "checkpoint_point_indices": [
+                2,
+                5,
+                10
+              ]
+            },
+            "checkpoints": [
+              {
+                "id": "checkpoint-0",
+                "volume": {
+                  "center": {
+                    "x": -3.0,
+                    "y": 0.0,
+                    "z": 30.0
+                  },
+                  "half_extents": {
+                    "x": 2.0,
+                    "y": 2.0,
+                    "z": 1.5
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 0
+              },
+              {
+                "id": "checkpoint-1",
+                "volume": {
+                  "center": {
+                    "x": 3.0,
+                    "y": 0.0,
+                    "z": 70.0
+                  },
+                  "half_extents": {
+                    "x": 2.0,
+                    "y": 2.0,
+                    "z": 1.5
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 1
+              },
+              {
+                "id": "checkpoint-2",
+                "volume": {
+                  "center": {
+                    "x": -3.0,
+                    "y": 0.0,
+                    "z": 110.0
+                  },
+                  "half_extents": {
+                    "x": 2.0,
+                    "y": 2.0,
+                    "z": 1.5
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 2
+              }
+            ],
+            "finish": {
+              "id": "finish",
+              "volume": {
+                "center": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 124.0
+                },
+                "half_extents": {
+                  "x": 7.0,
+                  "y": 2.0,
+                  "z": 1.0
+                },
+                "orientation": {
+                  "w": 1.0,
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                }
+              }
+            }
+          },
+          "outcome_contract": {
+            "configuration": {
+              "schema_version": "wp7_hard_route_owner_outcome_v2",
+              "version": "wp7_hard_route_terminal_failure_v2",
+              "owner_decision_date": "2026-10-17",
+              "parent_owner_contract_sha256": "d9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1",
+              "soft_corridor_m": 2.0,
+              "hard_corridor_m": 4.0,
+              "violation_comparison": "strict_greater_than",
+              "outcome": "valid_terminal_failure",
+              "reward_policy": "registered_terms_valid_prefix_no_terminal_adjustment",
+              "terminal_penalty": 0.0,
+              "new_success_credit": false,
+              "new_reward_shaping": false,
+              "training_permitted": false,
+              "heldout_permitted": false,
+              "scientific_freeze_permitted": false,
+              "wp8_permitted": false
+            },
+            "source_sha256": "7b306dc684cbc04f787bae9efaee77ab8bf97ee64ae2ee8d7665067b7e7d6954",
+            "sha256": "5bd036067ba901d2b4513530000d32924597e95e64ae46f8809a88263f6dd3a9"
+          },
+          "physical_crash_contract": {
+            "schema_version": "wp3_physical_crash_terminal_v1",
+            "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+            "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+            "terminal_kind": "valid_terminal_failure",
+            "terminal_reason": "physical_crash",
+            "terminal_is_finish": false,
+            "terminal_is_truncation": false,
+            "failure_scoring": "preimpact_reward_and_event_prefix_only",
+            "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+            "impulse": "world_linear_and_angular_applied_and_audited",
+            "energy": "nonincreasing_rigid_kinetic_energy",
+            "source_versions": [
+              "wp3_airborne_applied_road_crash_v4_dev",
+              "wp3_grounded_applied_crash_v4_dev",
+              "wp3_grounded_applied_edge_crash_v4_dev",
+              "wp3_grounded_applied_road_crash_v4_dev",
+              "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+              "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+            ],
+            "owner_scientific_signoff": false,
+            "independent_physics_reviewer_signature": null,
+            "scientific_evidence_allowed": false,
+            "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+          },
+          "sha256": "acef9d444f99b11d7e026adfa00f4e4cac664c81fd226862e5254caab07db9b2",
+          "completed_checkpoint_ids": [],
+          "directed_crossings": [],
+          "max_sampled_deviation_m": 3.2817542484988254,
+          "soft_zone_encountered": true,
+          "terminal_failure": true,
+          "terminal_time_s": 0.04231719970703125,
+          "reward_valid_prefix_s": 0.04231719970703125,
+          "reward_prefix_position": [
+            -6.281754248498825,
+            0.41970515413728104,
+            85.24178160936007
+          ],
+          "physical_tick_end_time_s": 0.1,
+          "terminal_reason": "physical_crash",
+          "tick_local_crossing_times_s": [],
+          "crossing_time_origin_s": 12.4
+        },
+        "physical_crash_terminal": {
+          "version": "wp3_physical_crash_terminal_v1",
+          "obstacle_id": "road-patch:road-main",
+          "last_proven_clear_s": 0.042316436767578125,
+          "impact_time_s": 0.04231719970703125,
+          "first_overlap_s": 0.04231719970703125,
+          "linear_impulse_n_s": [
+            -56.80700699168291,
+            360.50397156628327,
+            0.0
+          ],
+          "angular_impulse_nms": [
+            -664.5554226458676,
+            -104.71841510257401,
+            -282.7727059249232
+          ],
+          "kinetic_before_j": 28552.491827159272,
+          "kinetic_after_j": 28349.04934763561,
+          "energy_lost_j": 203.44247952366277,
+          "accepted_velocity_mps": [
+            -2.0320173709853973,
+            -0.09309665546913154,
+            6.461485925957252
+          ],
+          "accepted_angular_velocity_radps": [
+            -0.33659957949836505,
+            0.7777154570393102,
+            0.7925766950724005
+          ],
+          "scientific_evidence": false,
+          "contract_sha256": "0b8dc47120892179a326ab735873d2f08ee7ca9c0bdece41c5135369f5119b35",
+          "source_version": "wp3_grounded_applied_road_crash_v4_dev",
+          "contact_kind": "bounded_road_body",
+          "contact_position_world": [
+            -6.281754248498825,
+            0.41970515413728104,
+            85.24178160936007
+          ],
+          "contact_orientation_wxyz": [
+            0.9779242196150483,
+            0.01585588241881045,
+            -0.19372129408254754,
+            0.07671291874256161
+          ],
+          "preimpact_velocity_mps": [
+            -1.9846781984923283,
+            -0.3935166317743676,
+            6.461485925957252
+          ],
+          "preimpact_angular_velocity_radps": [
+            0.030560641173119362,
+            0.8355636881629195,
+            0.9546753562281114
+          ],
+          "science_review_approved": false
+        },
+        "route_highwater_meters": 84.7514705484687,
+        "research_outcome": {
+          "version": "wp7_episode_outcome_v1",
+          "kind": "valid_terminal_failure",
+          "valid_sample": true,
+          "reason": "physical_crash"
+        }
+      },
+      "physical_crash_contract_valid": true,
+      "final_vehicle": {
+        "position_m": [
+          -6.281754248498825,
+          0.41970515413728104,
+          85.24178160936007
+        ],
+        "velocity_mps": [
+          -2.0320173709853973,
+          -0.09309665546913154,
+          6.461485925957252
+        ],
+        "speed_mps": 6.774109679846466,
+        "orientation_wxyz": [
+          0.9779242196150483,
+          0.01585588241881045,
+          -0.19372129408254754,
+          0.07671291874256161
+        ],
+        "angular_velocity_radps": [
+          -0.33659957949836505,
+          0.7777154570393102,
+          0.7925766950724005
+        ],
+        "grounded": true
+      },
+      "research_outcome": {
+        "version": "wp7_episode_outcome_v1",
+        "kind": "valid_terminal_failure",
+        "valid_sample": true,
+        "reason": "physical_crash"
+      },
+      "phase2a_v4_counterfactual": {
+        "outcome": "terminal",
+        "step": 125,
+        "terminated": true,
+        "truncated": false,
+        "reason": "physical_crash",
+        "physical_crash_contract_valid": true
+      },
+      "episode_equivalence": {
+        "same_model_track_reset_seed_and_deterministic_mode": true,
+        "same_terminal_outcome_and_step_as_phase2a_v4": true,
+        "transition_substep_equivalence_claimed": false,
+        "note": "v4 dynamics differ from v3 from the first transition; v3 failed-attempt substep is not a same-state replay target."
+      }
+    },
+    {
+      "model_id": "B-seed1",
+      "track_id": "right-turn-v1",
+      "reset_seed": 20261106,
+      "inference_mode": "deterministic",
+      "requested_runtime_profile": "wp3_full06_physics_v4",
+      "effective_runtime_profile": {
+        "physics_version": "spatial_road_edge_partial_lifecycle_v4",
+        "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+        "terminal_contract": "wp3_physical_crash_terminal_v1",
+        "max_abs_tilt_rad": 0.7
+      },
+      "phase1_failed_attempt_step": 78,
+      "track_asset_sha256": "a302f5d1d7f08d2b51ae963a5e695d8600d52a0ebf2d1f212ca0a4fbf90e303e",
+      "model_sha256": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021",
+      "outcome": "terminal",
+      "reset_runtime_telemetry": {
+        "physics": {
+          "schema_version": 9,
+          "validation_scope": "software_research_only",
+          "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+          "mode": "wp7_lifecycle_v1",
+          "body_geometry": {
+            "width_m": 1.8,
+            "height_m": 1.2,
+            "length_m": 4.0,
+            "local_center": {
+              "x": 0.0,
+              "y": 0.3,
+              "z": 0.0
+            }
+          },
+          "independent_suspension_policy": {
+            "contact": {
+              "wheels": {
+                "front_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "front_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "rear_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                },
+                "rear_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                }
+              },
+              "max_bump_m": 0.12,
+              "max_droop_m": 0.12,
+              "max_subdivisions": 12,
+              "seam_height_tolerance_m": 1e-06
+            },
+            "mass_kg": 1200.0,
+            "pitch_inertia_kg_m2": 1800.0,
+            "roll_inertia_kg_m2": 600.0,
+            "spring_stiffness_npm": 30000.0,
+            "damper_nspm": 2000.0,
+            "angular_damping_nmsprad": 150.0,
+            "integration_substeps": 16,
+            "max_abs_tilt_rad": 0.7,
+            "angular_rate_mapping": "yaw_rx_rz_v1",
+            "force_model": "road_relative_unilateral_v3"
+          },
+          "ballistic_flight_policy": null,
+          "automatic_takeoff_policy": null,
+          "grounded_yaw_policy": null,
+          "contact_geometry": "suspension_reference_points_v1",
+          "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+          "spawn_reference": "authored_horizontal_road_v1",
+          "spatial_contact_policy": {
+            "traction": {
+              "traction_mu": 0.8,
+              "max_drive_power_w": 100000.0,
+              "brake_speed_scale_mps": 0.05,
+              "energy_relative_tolerance": 1e-08,
+              "energy_absolute_tolerance_j": 1e-07,
+              "max_refinements": 20
+            },
+            "yaw_inertia_kg_m2": 1800.0,
+            "lateral_damping_nspm": 12000.0,
+            "max_angular_speed_radps": 10.0
+          },
+          "body_clearance_version": "bounded_patch_planes_v2"
+        },
+        "race": {
+          "version": "wp7_directed_lifecycle_crash_contract_v4",
+          "soft_corridor_m": 2.0,
+          "hard_corridor_m": 4.0,
+          "hard_violation": "terminate_valid_failure",
+          "gate_orientation": "authored_local_positive_z_v1"
+        },
+        "physical_crash_contract": {
+          "schema_version": "wp3_physical_crash_terminal_v1",
+          "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+          "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+          "terminal_kind": "valid_terminal_failure",
+          "terminal_reason": "physical_crash",
+          "terminal_is_finish": false,
+          "terminal_is_truncation": false,
+          "failure_scoring": "preimpact_reward_and_event_prefix_only",
+          "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+          "impulse": "world_linear_and_angular_applied_and_audited",
+          "energy": "nonincreasing_rigid_kinetic_energy",
+          "source_versions": [
+            "wp3_airborne_applied_road_crash_v4_dev",
+            "wp3_grounded_applied_crash_v4_dev",
+            "wp3_grounded_applied_edge_crash_v4_dev",
+            "wp3_grounded_applied_road_crash_v4_dev",
+            "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+            "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+          ],
+          "owner_scientific_signoff": false,
+          "independent_physics_reviewer_signature": null,
+          "scientific_evidence_allowed": false,
+          "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+        }
+      },
+      "step": 81,
+      "terminated": true,
+      "truncated": false,
+      "terminal_reason": "physical_crash",
+      "terminal_info": {
+        "tick": 81,
+        "elapsed_time": 8.1,
+        "next_checkpoint_index": 1,
+        "finished": false,
+        "completed_checkpoint_id": null,
+        "finished_now": false,
+        "game_score": 0,
+        "physics": {
+          "configuration": {
+            "schema_version": 9,
+            "validation_scope": "software_research_only",
+            "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+            "mode": "wp7_lifecycle_v1",
+            "body_geometry": {
+              "width_m": 1.8,
+              "height_m": 1.2,
+              "length_m": 4.0,
+              "local_center": {
+                "x": 0.0,
+                "y": 0.3,
+                "z": 0.0
+              }
+            },
+            "independent_suspension_policy": {
+              "contact": {
+                "wheels": {
+                  "front_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "front_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "rear_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  },
+                  "rear_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  }
+                },
+                "max_bump_m": 0.12,
+                "max_droop_m": 0.12,
+                "max_subdivisions": 12,
+                "seam_height_tolerance_m": 1e-06
+              },
+              "mass_kg": 1200.0,
+              "pitch_inertia_kg_m2": 1800.0,
+              "roll_inertia_kg_m2": 600.0,
+              "spring_stiffness_npm": 30000.0,
+              "damper_nspm": 2000.0,
+              "angular_damping_nmsprad": 150.0,
+              "integration_substeps": 16,
+              "max_abs_tilt_rad": 0.7,
+              "angular_rate_mapping": "yaw_rx_rz_v1",
+              "force_model": "road_relative_unilateral_v3"
+            },
+            "ballistic_flight_policy": null,
+            "automatic_takeoff_policy": null,
+            "grounded_yaw_policy": null,
+            "contact_geometry": "suspension_reference_points_v1",
+            "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+            "spawn_reference": "authored_horizontal_road_v1",
+            "spatial_contact_policy": {
+              "traction": {
+                "traction_mu": 0.8,
+                "max_drive_power_w": 100000.0,
+                "brake_speed_scale_mps": 0.05,
+                "energy_relative_tolerance": 1e-08,
+                "energy_absolute_tolerance_j": 1e-07,
+                "max_refinements": 20
+              },
+              "yaw_inertia_kg_m2": 1800.0,
+              "lateral_damping_nspm": 12000.0,
+              "max_angular_speed_radps": 10.0
+            },
+            "body_clearance_version": "bounded_patch_planes_v2"
+          },
+          "sha256": "c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37",
+          "suspension": null,
+          "flight": null,
+          "partial_support": null,
+          "grounded_yaw": null,
+          "transition": {
+            "version": "wp7_transition_audit_v1",
+            "physical_mode": "wp7_lifecycle_v1",
+            "initial_phase": "grounded",
+            "final_phase": "grounded",
+            "start_time_s": 8.0,
+            "end_time_s": 8.1,
+            "solvers": [
+              "spatial_road_edge_partial_lifecycle_rk4_v4",
+              "grounded_road_obb_impulse_absorbing_v4_development"
+            ],
+            "events": []
+          }
+        },
+        "train_reset": {
+          "version": "wp7_train_reset_lifecycle_research_v1",
+          "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+          "seed": 1000,
+          "rank": 0,
+          "track_id": "right-turn-v1",
+          "reset_index": 0,
+          "draw_seed": 13316071062180048504291852760339709890985924980489973590830306488362885655708,
+          "world_sha256": "d79133bc9a0599f9b056c7eb78658446631f564f038bc4afa91f3325fd4f9fd2",
+          "lateral_offset_m": -0.10049681926992604,
+          "heading_jitter_deg": -1.6892219923641036,
+          "attempt": 0,
+          "rejected_draws": [],
+          "scientific_evidence": false
+        },
+        "reward_components": {
+          "route_progress": 0.0,
+          "collision": 0.0,
+          "time": -0.002905960083007813
+        },
+        "telemetry": {
+          "vehicle_position": [
+            -0.10083918297176579,
+            0.4310499345577138,
+            70.26661039500284
+          ],
+          "vehicle_velocity": [
+            1.3342739348534436,
+            -0.014243299317314606,
+            7.7718985652334345
+          ],
+          "vehicle_speed": 7.885613299742909,
+          "grounded": true,
+          "obstacle_hit_ids": [
+            "road-patch:road-exit"
+          ],
+          "applied_boost_pad_ids": [],
+          "applied_slow_zone_ids": []
+        },
+        "training_telemetry": {
+          "schema_version": "f1rl_training_state_v1",
+          "track_id": "right-turn-v1",
+          "seed_identity": {
+            "version": "wp7_train_reset_lifecycle_research_v1",
+            "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+            "seed": 1000,
+            "rank": 0,
+            "track_id": "right-turn-v1",
+            "reset_index": 0,
+            "draw_seed": 13316071062180048504291852760339709890985924980489973590830306488362885655708,
+            "world_sha256": "d79133bc9a0599f9b056c7eb78658446631f564f038bc4afa91f3325fd4f9fd2",
+            "lateral_offset_m": -0.10049681926992604,
+            "heading_jitter_deg": -1.6892219923641036,
+            "attempt": 0,
+            "rejected_draws": [],
+            "scientific_evidence": false
+          },
+          "observation_schema": {
+            "version": "f1rl_observation_features_v1",
+            "feature_names": [
+              "rangefinder:left-30deg",
+              "rangefinder:left-15deg",
+              "rangefinder:left-7p5deg",
+              "rangefinder:front",
+              "rangefinder:right-7p5deg",
+              "rangefinder:right-15deg",
+              "rangefinder:right-30deg",
+              "velocity_local_x",
+              "velocity_local_y",
+              "velocity_local_z",
+              "target_direction_local_x",
+              "target_direction_local_y",
+              "target_direction_local_z",
+              "target_distance",
+              "target_available",
+              "grounded"
+            ]
+          },
+          "position": [
+            -0.10083918297176579,
+            0.4310499345577138,
+            70.26661039500284
+          ],
+          "velocity": [
+            1.3342739348534436,
+            -0.014243299317314606,
+            7.7718985652334345
+          ],
+          "speed": 7.885613299742909,
+          "grounded": true,
+          "heading_rad": 0.12046839737573341,
+          "yaw_rate_radps": 0.5921717177419887,
+          "lateral_route_deviation_m": 0.5167723769980305,
+          "route_progress_m": 66.0,
+          "route_highwater_m": 66.0,
+          "action_contract_version": "steering-throttle-brake-v2"
+        },
+        "race": {
+          "configuration": {
+            "version": "wp7_directed_lifecycle_crash_contract_v4",
+            "soft_corridor_m": 2.0,
+            "hard_corridor_m": 4.0,
+            "hard_violation": "terminate_valid_failure",
+            "gate_orientation": "authored_local_positive_z_v1"
+          },
+          "course": {
+            "navigation": {
+              "points": [
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 4.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 35.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 64.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 70.0
+                },
+                {
+                  "x": 20.0,
+                  "y": 0.0,
+                  "z": 70.0
+                },
+                {
+                  "x": 64.0,
+                  "y": 0.0,
+                  "z": 70.0
+                }
+              ],
+              "surface_ids": [
+                "road-entry",
+                "road-entry",
+                "road-entry",
+                "road-exit",
+                "road-exit"
+              ],
+              "checkpoint_point_indices": [
+                1,
+                4
+              ]
+            },
+            "checkpoints": [
+              {
+                "id": "checkpoint-0",
+                "volume": {
+                  "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 35.0
+                  },
+                  "half_extents": {
+                    "x": 6.0,
+                    "y": 2.0,
+                    "z": 1.0
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 0
+              },
+              {
+                "id": "checkpoint-1",
+                "volume": {
+                  "center": {
+                    "x": 20.0,
+                    "y": 0.0,
+                    "z": 70.0
+                  },
+                  "half_extents": {
+                    "x": 1.0,
+                    "y": 2.0,
+                    "z": 6.0
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 1
+              }
+            ],
+            "finish": {
+              "id": "finish",
+              "volume": {
+                "center": {
+                  "x": 64.0,
+                  "y": 0.0,
+                  "z": 70.0
+                },
+                "half_extents": {
+                  "x": 1.0,
+                  "y": 2.0,
+                  "z": 6.0
+                },
+                "orientation": {
+                  "w": 1.0,
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                }
+              }
+            }
+          },
+          "outcome_contract": {
+            "configuration": {
+              "schema_version": "wp7_hard_route_owner_outcome_v2",
+              "version": "wp7_hard_route_terminal_failure_v2",
+              "owner_decision_date": "2026-10-17",
+              "parent_owner_contract_sha256": "d9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1",
+              "soft_corridor_m": 2.0,
+              "hard_corridor_m": 4.0,
+              "violation_comparison": "strict_greater_than",
+              "outcome": "valid_terminal_failure",
+              "reward_policy": "registered_terms_valid_prefix_no_terminal_adjustment",
+              "terminal_penalty": 0.0,
+              "new_success_credit": false,
+              "new_reward_shaping": false,
+              "training_permitted": false,
+              "heldout_permitted": false,
+              "scientific_freeze_permitted": false,
+              "wp8_permitted": false
+            },
+            "source_sha256": "7b306dc684cbc04f787bae9efaee77ab8bf97ee64ae2ee8d7665067b7e7d6954",
+            "sha256": "5bd036067ba901d2b4513530000d32924597e95e64ae46f8809a88263f6dd3a9"
+          },
+          "physical_crash_contract": {
+            "schema_version": "wp3_physical_crash_terminal_v1",
+            "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+            "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+            "terminal_kind": "valid_terminal_failure",
+            "terminal_reason": "physical_crash",
+            "terminal_is_finish": false,
+            "terminal_is_truncation": false,
+            "failure_scoring": "preimpact_reward_and_event_prefix_only",
+            "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+            "impulse": "world_linear_and_angular_applied_and_audited",
+            "energy": "nonincreasing_rigid_kinetic_energy",
+            "source_versions": [
+              "wp3_airborne_applied_road_crash_v4_dev",
+              "wp3_grounded_applied_crash_v4_dev",
+              "wp3_grounded_applied_edge_crash_v4_dev",
+              "wp3_grounded_applied_road_crash_v4_dev",
+              "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+              "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+            ],
+            "owner_scientific_signoff": false,
+            "independent_physics_reviewer_signature": null,
+            "scientific_evidence_allowed": false,
+            "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+          },
+          "sha256": "bbb91441268bc1e9fd23c453bcc120ffaaccdf089fd687b9c7a5ba7318ff6a8e",
+          "completed_checkpoint_ids": [],
+          "directed_crossings": [],
+          "max_sampled_deviation_m": 0.2850432310123943,
+          "soft_zone_encountered": false,
+          "terminal_failure": true,
+          "terminal_time_s": 0.029059600830078126,
+          "reward_valid_prefix_s": 0.029059600830078126,
+          "reward_prefix_position": [
+            -0.10083918297176579,
+            0.4310499345577138,
+            70.26661039500284
+          ],
+          "physical_tick_end_time_s": 0.1,
+          "terminal_reason": "physical_crash",
+          "tick_local_crossing_times_s": [],
+          "crossing_time_origin_s": 8.0
+        },
+        "physical_crash_terminal": {
+          "version": "wp3_physical_crash_terminal_v1",
+          "obstacle_id": "road-patch:road-exit",
+          "last_proven_clear_s": 0.029058837890625,
+          "impact_time_s": 0.029059600830078126,
+          "first_overlap_s": 0.029059600830078126,
+          "linear_impulse_n_s": [
+            -79.36932206539541,
+            569.83884223173,
+            0.0
+          ],
+          "angular_impulse_nms": [
+            -1129.1963162430088,
+            -157.27875928560033,
+            23.25115894928615
+          ],
+          "kinetic_before_j": 38268.674065562234,
+          "kinetic_after_j": 37763.54904794891,
+          "energy_lost_j": 505.1250176133253,
+          "accepted_velocity_mps": [
+            1.3342739348534436,
+            -0.014243299317314606,
+            7.7718985652334345
+          ],
+          "accepted_angular_velocity_radps": [
+            -0.17295149329467285,
+            0.5921717177419887,
+            0.5099378835547608
+          ],
+          "scientific_evidence": false,
+          "contract_sha256": "0b8dc47120892179a326ab735873d2f08ee7ca9c0bdece41c5135369f5119b35",
+          "source_version": "wp3_grounded_applied_road_crash_v4_dev",
+          "contact_kind": "bounded_road_body",
+          "contact_position_world": [
+            -0.10083918297176579,
+            0.4310499345577138,
+            70.26661039500284
+          ],
+          "contact_orientation_wxyz": [
+            0.9955601970880218,
+            0.03141981569734265,
+            0.05815097620802745,
+            0.06701606614579655
+          ],
+          "preimpact_velocity_mps": [
+            1.4004150365746064,
+            -0.48910900117708966,
+            7.7718985652334345
+          ],
+          "preimpact_angular_velocity_radps": [
+            0.4682245507090561,
+            0.6732300625341403,
+            0.6113884734812401
+          ],
+          "science_review_approved": false
+        },
+        "route_highwater_meters": 66.0,
+        "research_outcome": {
+          "version": "wp7_episode_outcome_v1",
+          "kind": "valid_terminal_failure",
+          "valid_sample": true,
+          "reason": "physical_crash"
+        }
+      },
+      "physical_crash_contract_valid": true,
+      "final_vehicle": {
+        "position_m": [
+          -0.10083918297176579,
+          0.4310499345577138,
+          70.26661039500284
+        ],
+        "velocity_mps": [
+          1.3342739348534436,
+          -0.014243299317314606,
+          7.7718985652334345
+        ],
+        "speed_mps": 7.885613299742909,
+        "orientation_wxyz": [
+          0.9955601970880218,
+          0.03141981569734265,
+          0.05815097620802745,
+          0.06701606614579655
+        ],
+        "angular_velocity_radps": [
+          -0.17295149329467285,
+          0.5921717177419887,
+          0.5099378835547608
+        ],
+        "grounded": true
+      },
+      "research_outcome": {
+        "version": "wp7_episode_outcome_v1",
+        "kind": "valid_terminal_failure",
+        "valid_sample": true,
+        "reason": "physical_crash"
+      },
+      "phase2a_v4_counterfactual": {
+        "outcome": "terminal",
+        "step": 81,
+        "terminated": true,
+        "truncated": false,
+        "reason": "physical_crash",
+        "physical_crash_contract_valid": true
+      },
+      "episode_equivalence": {
+        "same_model_track_reset_seed_and_deterministic_mode": true,
+        "same_terminal_outcome_and_step_as_phase2a_v4": true,
+        "transition_substep_equivalence_claimed": false,
+        "note": "v4 dynamics differ from v3 from the first transition; v3 failed-attempt substep is not a same-state replay target."
+      }
+    },
+    {
+      "model_id": "B-seed1",
+      "track_id": "ramp-v1",
+      "reset_seed": 20261106,
+      "inference_mode": "deterministic",
+      "requested_runtime_profile": "wp3_full06_physics_v4",
+      "effective_runtime_profile": {
+        "physics_version": "spatial_road_edge_partial_lifecycle_v4",
+        "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+        "terminal_contract": "wp3_physical_crash_terminal_v1",
+        "max_abs_tilt_rad": 0.7
+      },
+      "phase1_failed_attempt_step": 55,
+      "track_asset_sha256": "6c0da56966962363ed601c8fda2343006c207ee9ea6497deb72e6f6018721bd3",
+      "model_sha256": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021",
+      "outcome": "terminal",
+      "reset_runtime_telemetry": {
+        "physics": {
+          "schema_version": 9,
+          "validation_scope": "software_research_only",
+          "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+          "mode": "wp7_lifecycle_v1",
+          "body_geometry": {
+            "width_m": 1.8,
+            "height_m": 1.2,
+            "length_m": 4.0,
+            "local_center": {
+              "x": 0.0,
+              "y": 0.3,
+              "z": 0.0
+            }
+          },
+          "independent_suspension_policy": {
+            "contact": {
+              "wheels": {
+                "front_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "front_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "rear_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                },
+                "rear_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                }
+              },
+              "max_bump_m": 0.12,
+              "max_droop_m": 0.12,
+              "max_subdivisions": 12,
+              "seam_height_tolerance_m": 1e-06
+            },
+            "mass_kg": 1200.0,
+            "pitch_inertia_kg_m2": 1800.0,
+            "roll_inertia_kg_m2": 600.0,
+            "spring_stiffness_npm": 30000.0,
+            "damper_nspm": 2000.0,
+            "angular_damping_nmsprad": 150.0,
+            "integration_substeps": 16,
+            "max_abs_tilt_rad": 0.7,
+            "angular_rate_mapping": "yaw_rx_rz_v1",
+            "force_model": "road_relative_unilateral_v3"
+          },
+          "ballistic_flight_policy": null,
+          "automatic_takeoff_policy": null,
+          "grounded_yaw_policy": null,
+          "contact_geometry": "suspension_reference_points_v1",
+          "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+          "spawn_reference": "authored_horizontal_road_v1",
+          "spatial_contact_policy": {
+            "traction": {
+              "traction_mu": 0.8,
+              "max_drive_power_w": 100000.0,
+              "brake_speed_scale_mps": 0.05,
+              "energy_relative_tolerance": 1e-08,
+              "energy_absolute_tolerance_j": 1e-07,
+              "max_refinements": 20
+            },
+            "yaw_inertia_kg_m2": 1800.0,
+            "lateral_damping_nspm": 12000.0,
+            "max_angular_speed_radps": 10.0
+          },
+          "body_clearance_version": "bounded_patch_planes_v2"
+        },
+        "race": {
+          "version": "wp7_directed_lifecycle_crash_contract_v4",
+          "soft_corridor_m": 2.0,
+          "hard_corridor_m": 4.0,
+          "hard_violation": "terminate_valid_failure",
+          "gate_orientation": "authored_local_positive_z_v1"
+        },
+        "physical_crash_contract": {
+          "schema_version": "wp3_physical_crash_terminal_v1",
+          "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+          "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+          "terminal_kind": "valid_terminal_failure",
+          "terminal_reason": "physical_crash",
+          "terminal_is_finish": false,
+          "terminal_is_truncation": false,
+          "failure_scoring": "preimpact_reward_and_event_prefix_only",
+          "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+          "impulse": "world_linear_and_angular_applied_and_audited",
+          "energy": "nonincreasing_rigid_kinetic_energy",
+          "source_versions": [
+            "wp3_airborne_applied_road_crash_v4_dev",
+            "wp3_grounded_applied_crash_v4_dev",
+            "wp3_grounded_applied_edge_crash_v4_dev",
+            "wp3_grounded_applied_road_crash_v4_dev",
+            "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+            "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+          ],
+          "owner_scientific_signoff": false,
+          "independent_physics_reviewer_signature": null,
+          "scientific_evidence_allowed": false,
+          "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+        }
+      },
+      "step": 55,
+      "terminated": true,
+      "truncated": false,
+      "terminal_reason": "physical_crash",
+      "terminal_info": {
+        "tick": 55,
+        "elapsed_time": 5.5,
+        "next_checkpoint_index": 0,
+        "finished": false,
+        "completed_checkpoint_id": null,
+        "finished_now": false,
+        "game_score": 0,
+        "physics": {
+          "configuration": {
+            "schema_version": 9,
+            "validation_scope": "software_research_only",
+            "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+            "mode": "wp7_lifecycle_v1",
+            "body_geometry": {
+              "width_m": 1.8,
+              "height_m": 1.2,
+              "length_m": 4.0,
+              "local_center": {
+                "x": 0.0,
+                "y": 0.3,
+                "z": 0.0
+              }
+            },
+            "independent_suspension_policy": {
+              "contact": {
+                "wheels": {
+                  "front_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "front_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "rear_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  },
+                  "rear_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  }
+                },
+                "max_bump_m": 0.12,
+                "max_droop_m": 0.12,
+                "max_subdivisions": 12,
+                "seam_height_tolerance_m": 1e-06
+              },
+              "mass_kg": 1200.0,
+              "pitch_inertia_kg_m2": 1800.0,
+              "roll_inertia_kg_m2": 600.0,
+              "spring_stiffness_npm": 30000.0,
+              "damper_nspm": 2000.0,
+              "angular_damping_nmsprad": 150.0,
+              "integration_substeps": 16,
+              "max_abs_tilt_rad": 0.7,
+              "angular_rate_mapping": "yaw_rx_rz_v1",
+              "force_model": "road_relative_unilateral_v3"
+            },
+            "ballistic_flight_policy": null,
+            "automatic_takeoff_policy": null,
+            "grounded_yaw_policy": null,
+            "contact_geometry": "suspension_reference_points_v1",
+            "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+            "spawn_reference": "authored_horizontal_road_v1",
+            "spatial_contact_policy": {
+              "traction": {
+                "traction_mu": 0.8,
+                "max_drive_power_w": 100000.0,
+                "brake_speed_scale_mps": 0.05,
+                "energy_relative_tolerance": 1e-08,
+                "energy_absolute_tolerance_j": 1e-07,
+                "max_refinements": 20
+              },
+              "yaw_inertia_kg_m2": 1800.0,
+              "lateral_damping_nspm": 12000.0,
+              "max_angular_speed_radps": 10.0
+            },
+            "body_clearance_version": "bounded_patch_planes_v2"
+          },
+          "sha256": "c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37",
+          "suspension": null,
+          "flight": null,
+          "partial_support": null,
+          "grounded_yaw": null,
+          "transition": {
+            "version": "wp7_transition_audit_v1",
+            "physical_mode": "wp7_lifecycle_v1",
+            "initial_phase": "grounded",
+            "final_phase": "grounded",
+            "start_time_s": 5.4,
+            "end_time_s": 5.5,
+            "solvers": [
+              "spatial_road_edge_partial_lifecycle_rk4_v4",
+              "grounded_wheel_hard_stop_absorbing_v4_development"
+            ],
+            "events": []
+          }
+        },
+        "train_reset": {
+          "version": "wp7_train_reset_lifecycle_research_v1",
+          "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+          "seed": 1000,
+          "rank": 0,
+          "track_id": "ramp-v1",
+          "reset_index": 0,
+          "draw_seed": 57101470178341870852268177492143505798627221219049707380181432567855916806636,
+          "world_sha256": "775f795aa2763f64916e68e6a64fc763021e875c384050a974c747b6b4907978",
+          "lateral_offset_m": 0.4436302601672285,
+          "heading_jitter_deg": -1.2960266062558503,
+          "attempt": 0,
+          "rejected_draws": [],
+          "scientific_evidence": false
+        },
+        "reward_components": {
+          "route_progress": 0.27793581834790615,
+          "collision": 0.0,
+          "time": -0.003038295060396195
+        },
+        "telemetry": {
+          "vehicle_position": [
+            0.19361116888047997,
+            0.5499733127751075,
+            49.79709074567125
+          ],
+          "vehicle_velocity": [
+            0.13251565745525976,
+            0.887949413999778,
+            9.05402614499881
+          ],
+          "vehicle_speed": 9.098428655301715,
+          "grounded": true,
+          "obstacle_hit_ids": [
+            "wheel-hard-stop:road-incline"
+          ],
+          "applied_boost_pad_ids": [],
+          "applied_slow_zone_ids": []
+        },
+        "training_telemetry": {
+          "schema_version": "f1rl_training_state_v1",
+          "track_id": "ramp-v1",
+          "seed_identity": {
+            "version": "wp7_train_reset_lifecycle_research_v1",
+            "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+            "seed": 1000,
+            "rank": 0,
+            "track_id": "ramp-v1",
+            "reset_index": 0,
+            "draw_seed": 57101470178341870852268177492143505798627221219049707380181432567855916806636,
+            "world_sha256": "775f795aa2763f64916e68e6a64fc763021e875c384050a974c747b6b4907978",
+            "lateral_offset_m": 0.4436302601672285,
+            "heading_jitter_deg": -1.2960266062558503,
+            "attempt": 0,
+            "rejected_draws": [],
+            "scientific_evidence": false
+          },
+          "observation_schema": {
+            "version": "f1rl_observation_features_v1",
+            "feature_names": [
+              "rangefinder:left-30deg",
+              "rangefinder:left-15deg",
+              "rangefinder:left-7p5deg",
+              "rangefinder:front",
+              "rangefinder:right-7p5deg",
+              "rangefinder:right-15deg",
+              "rangefinder:right-30deg",
+              "velocity_local_x",
+              "velocity_local_y",
+              "velocity_local_z",
+              "target_direction_local_x",
+              "target_direction_local_y",
+              "target_direction_local_z",
+              "target_distance",
+              "target_available",
+              "grounded"
+            ]
+          },
+          "position": [
+            0.19361116888047997,
+            0.5499733127751075,
+            49.79709074567125
+          ],
+          "velocity": [
+            0.13251565745525976,
+            0.887949413999778,
+            9.05402614499881
+          ],
+          "speed": 9.098428655301715,
+          "grounded": true,
+          "heading_rad": 0.06702564928003407,
+          "yaw_rate_radps": -0.7296409611650214,
+          "lateral_route_deviation_m": 0.5830573981008148,
+          "route_progress_m": 45.79709074567125,
+          "route_highwater_m": 45.79709074567125,
+          "action_contract_version": "steering-throttle-brake-v2"
+        },
+        "race": {
+          "configuration": {
+            "version": "wp7_directed_lifecycle_crash_contract_v4",
+            "soft_corridor_m": 2.0,
+            "hard_corridor_m": 4.0,
+            "hard_violation": "terminate_valid_failure",
+            "gate_orientation": "authored_local_positive_z_v1"
+          },
+          "course": {
+            "navigation": {
+              "points": [
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 4.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 40.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 50.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 3.479327524001636,
+                  "z": 74.75670171853926
+                },
+                {
+                  "x": 0.0,
+                  "y": 8.350386057603925,
+                  "z": 109.41608412449422
+                },
+                {
+                  "x": 0.0,
+                  "y": 8.350386057603925,
+                  "z": 130.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 8.350386057603925,
+                  "z": 153.0
+                }
+              ],
+              "surface_ids": [
+                "road-approach",
+                "road-approach",
+                "road-incline",
+                "road-incline",
+                "road-upper",
+                "road-upper"
+              ],
+              "checkpoint_point_indices": [
+                3,
+                5
+              ]
+            },
+            "checkpoints": [
+              {
+                "id": "checkpoint-0",
+                "volume": {
+                  "center": {
+                    "x": 0.0,
+                    "y": 3.479327524001636,
+                    "z": 74.75670171853926
+                  },
+                  "half_extents": {
+                    "x": 6.0,
+                    "y": 2.0,
+                    "z": 1.0
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 0
+              },
+              {
+                "id": "checkpoint-1",
+                "volume": {
+                  "center": {
+                    "x": 0.0,
+                    "y": 8.350386057603925,
+                    "z": 130.0
+                  },
+                  "half_extents": {
+                    "x": 6.0,
+                    "y": 2.0,
+                    "z": 1.0
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 1
+              }
+            ],
+            "finish": {
+              "id": "finish",
+              "volume": {
+                "center": {
+                  "x": 0.0,
+                  "y": 8.350386057603925,
+                  "z": 153.0
+                },
+                "half_extents": {
+                  "x": 6.0,
+                  "y": 2.0,
+                  "z": 1.0
+                },
+                "orientation": {
+                  "w": 1.0,
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                }
+              }
+            }
+          },
+          "outcome_contract": {
+            "configuration": {
+              "schema_version": "wp7_hard_route_owner_outcome_v2",
+              "version": "wp7_hard_route_terminal_failure_v2",
+              "owner_decision_date": "2026-10-17",
+              "parent_owner_contract_sha256": "d9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1",
+              "soft_corridor_m": 2.0,
+              "hard_corridor_m": 4.0,
+              "violation_comparison": "strict_greater_than",
+              "outcome": "valid_terminal_failure",
+              "reward_policy": "registered_terms_valid_prefix_no_terminal_adjustment",
+              "terminal_penalty": 0.0,
+              "new_success_credit": false,
+              "new_reward_shaping": false,
+              "training_permitted": false,
+              "heldout_permitted": false,
+              "scientific_freeze_permitted": false,
+              "wp8_permitted": false
+            },
+            "source_sha256": "7b306dc684cbc04f787bae9efaee77ab8bf97ee64ae2ee8d7665067b7e7d6954",
+            "sha256": "5bd036067ba901d2b4513530000d32924597e95e64ae46f8809a88263f6dd3a9"
+          },
+          "physical_crash_contract": {
+            "schema_version": "wp3_physical_crash_terminal_v1",
+            "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+            "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+            "terminal_kind": "valid_terminal_failure",
+            "terminal_reason": "physical_crash",
+            "terminal_is_finish": false,
+            "terminal_is_truncation": false,
+            "failure_scoring": "preimpact_reward_and_event_prefix_only",
+            "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+            "impulse": "world_linear_and_angular_applied_and_audited",
+            "energy": "nonincreasing_rigid_kinetic_energy",
+            "source_versions": [
+              "wp3_airborne_applied_road_crash_v4_dev",
+              "wp3_grounded_applied_crash_v4_dev",
+              "wp3_grounded_applied_edge_crash_v4_dev",
+              "wp3_grounded_applied_road_crash_v4_dev",
+              "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+              "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+            ],
+            "owner_scientific_signoff": false,
+            "independent_physics_reviewer_signature": null,
+            "scientific_evidence_allowed": false,
+            "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+          },
+          "sha256": "f48ed38d2461473e668415ad071b64552072091384280c5f9c74766459be5e09",
+          "completed_checkpoint_ids": [],
+          "directed_crossings": [],
+          "max_sampled_deviation_m": 0.19361116888047997,
+          "soft_zone_encountered": false,
+          "terminal_failure": true,
+          "terminal_time_s": 0.03038295060396195,
+          "reward_valid_prefix_s": 0.03038295060396195,
+          "reward_prefix_position": [
+            0.19361116888047997,
+            0.5499733127751075,
+            49.79709074567125
+          ],
+          "physical_tick_end_time_s": 0.1,
+          "terminal_reason": "physical_crash",
+          "tick_local_crossing_times_s": [],
+          "crossing_time_origin_s": 5.4
+        },
+        "physical_crash_terminal": {
+          "version": "wp3_physical_crash_terminal_v1",
+          "obstacle_id": "wheel-hard-stop:road-incline",
+          "last_proven_clear_s": 0.03038295051082969,
+          "impact_time_s": 0.03038295060396195,
+          "first_overlap_s": 0.03038295060396195,
+          "linear_impulse_n_s": [
+            0.0,
+            106.04731487698196,
+            -14.903978150758379
+          ],
+          "angular_impulse_nms": [
+            -148.73756506316067,
+            12.062035846450454,
+            85.82584465214654
+          ],
+          "kinetic_before_j": 50453.55200773496,
+          "kinetic_after_j": 50437.322777008725,
+          "energy_lost_j": 16.229230726232345,
+          "accepted_velocity_mps": [
+            0.13251565745525976,
+            0.887949413999778,
+            9.05402614499881
+          ],
+          "accepted_angular_velocity_radps": [
+            -0.5562939809599429,
+            -0.7296409611650214,
+            -0.3864162380561249
+          ],
+          "scientific_evidence": false,
+          "contract_sha256": "0b8dc47120892179a326ab735873d2f08ee7ca9c0bdece41c5135369f5119b35",
+          "source_version": "wp3_grounded_wheel_hard_stop_crash_v4_dev",
+          "contact_kind": "wheel_hard_stop",
+          "contact_position_world": [
+            0.19361116888047997,
+            0.5499733127751075,
+            49.79709074567125
+          ],
+          "contact_orientation_wxyz": [
+            0.9984815321642996,
+            -0.022784144263017964,
+            0.032638642151575456,
+            -0.03808190824441802
+          ],
+          "preimpact_velocity_mps": [
+            0.13251565745525976,
+            0.7995766516022931,
+            9.066446126791108
+          ],
+          "preimpact_angular_velocity_radps": [
+            -0.4793214063721396,
+            -0.7399800615101592,
+            -0.5184072051220788
+          ],
+          "science_review_approved": false
+        },
+        "route_highwater_meters": 45.79709074567125,
+        "research_outcome": {
+          "version": "wp7_episode_outcome_v1",
+          "kind": "valid_terminal_failure",
+          "valid_sample": true,
+          "reason": "physical_crash"
+        }
+      },
+      "physical_crash_contract_valid": true,
+      "final_vehicle": {
+        "position_m": [
+          0.19361116888047997,
+          0.5499733127751075,
+          49.79709074567125
+        ],
+        "velocity_mps": [
+          0.13251565745525976,
+          0.887949413999778,
+          9.05402614499881
+        ],
+        "speed_mps": 9.098428655301715,
+        "orientation_wxyz": [
+          0.9984815321642996,
+          -0.022784144263017964,
+          0.032638642151575456,
+          -0.03808190824441802
+        ],
+        "angular_velocity_radps": [
+          -0.5562939809599429,
+          -0.7296409611650214,
+          -0.3864162380561249
+        ],
+        "grounded": true
+      },
+      "research_outcome": {
+        "version": "wp7_episode_outcome_v1",
+        "kind": "valid_terminal_failure",
+        "valid_sample": true,
+        "reason": "physical_crash"
+      },
+      "phase2a_v4_counterfactual": {
+        "outcome": "terminal",
+        "step": 55,
+        "terminated": true,
+        "truncated": false,
+        "reason": "physical_crash",
+        "physical_crash_contract_valid": true
+      },
+      "episode_equivalence": {
+        "same_model_track_reset_seed_and_deterministic_mode": true,
+        "same_terminal_outcome_and_step_as_phase2a_v4": true,
+        "transition_substep_equivalence_claimed": false,
+        "note": "v4 dynamics differ from v3 from the first transition; v3 failed-attempt substep is not a same-state replay target."
+      }
+    },
+    {
+      "model_id": "A-seed2",
+      "track_id": "slalom-v1",
+      "reset_seed": 20261106,
+      "inference_mode": "deterministic",
+      "requested_runtime_profile": "wp3_full06_physics_v4",
+      "effective_runtime_profile": {
+        "physics_version": "spatial_road_edge_partial_lifecycle_v4",
+        "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+        "terminal_contract": "wp3_physical_crash_terminal_v1",
+        "max_abs_tilt_rad": 0.7
+      },
+      "phase1_failed_attempt_step": 82,
+      "track_asset_sha256": "e9dd588740189f7ed857de8e8b8f5eeb99f3161fdb9b8d3fa05d18978cdefa53",
+      "model_sha256": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc",
+      "outcome": "terminal",
+      "reset_runtime_telemetry": {
+        "physics": {
+          "schema_version": 9,
+          "validation_scope": "software_research_only",
+          "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+          "mode": "wp7_lifecycle_v1",
+          "body_geometry": {
+            "width_m": 1.8,
+            "height_m": 1.2,
+            "length_m": 4.0,
+            "local_center": {
+              "x": 0.0,
+              "y": 0.3,
+              "z": 0.0
+            }
+          },
+          "independent_suspension_policy": {
+            "contact": {
+              "wheels": {
+                "front_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "front_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "rear_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                },
+                "rear_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                }
+              },
+              "max_bump_m": 0.12,
+              "max_droop_m": 0.12,
+              "max_subdivisions": 12,
+              "seam_height_tolerance_m": 1e-06
+            },
+            "mass_kg": 1200.0,
+            "pitch_inertia_kg_m2": 1800.0,
+            "roll_inertia_kg_m2": 600.0,
+            "spring_stiffness_npm": 30000.0,
+            "damper_nspm": 2000.0,
+            "angular_damping_nmsprad": 150.0,
+            "integration_substeps": 16,
+            "max_abs_tilt_rad": 0.7,
+            "angular_rate_mapping": "yaw_rx_rz_v1",
+            "force_model": "road_relative_unilateral_v3"
+          },
+          "ballistic_flight_policy": null,
+          "automatic_takeoff_policy": null,
+          "grounded_yaw_policy": null,
+          "contact_geometry": "suspension_reference_points_v1",
+          "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+          "spawn_reference": "authored_horizontal_road_v1",
+          "spatial_contact_policy": {
+            "traction": {
+              "traction_mu": 0.8,
+              "max_drive_power_w": 100000.0,
+              "brake_speed_scale_mps": 0.05,
+              "energy_relative_tolerance": 1e-08,
+              "energy_absolute_tolerance_j": 1e-07,
+              "max_refinements": 20
+            },
+            "yaw_inertia_kg_m2": 1800.0,
+            "lateral_damping_nspm": 12000.0,
+            "max_angular_speed_radps": 10.0
+          },
+          "body_clearance_version": "bounded_patch_planes_v2"
+        },
+        "race": {
+          "version": "wp7_directed_lifecycle_crash_contract_v4",
+          "soft_corridor_m": 2.0,
+          "hard_corridor_m": 4.0,
+          "hard_violation": "terminate_valid_failure",
+          "gate_orientation": "authored_local_positive_z_v1"
+        },
+        "physical_crash_contract": {
+          "schema_version": "wp3_physical_crash_terminal_v1",
+          "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+          "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+          "terminal_kind": "valid_terminal_failure",
+          "terminal_reason": "physical_crash",
+          "terminal_is_finish": false,
+          "terminal_is_truncation": false,
+          "failure_scoring": "preimpact_reward_and_event_prefix_only",
+          "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+          "impulse": "world_linear_and_angular_applied_and_audited",
+          "energy": "nonincreasing_rigid_kinetic_energy",
+          "source_versions": [
+            "wp3_airborne_applied_road_crash_v4_dev",
+            "wp3_grounded_applied_crash_v4_dev",
+            "wp3_grounded_applied_edge_crash_v4_dev",
+            "wp3_grounded_applied_road_crash_v4_dev",
+            "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+            "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+          ],
+          "owner_scientific_signoff": false,
+          "independent_physics_reviewer_signature": null,
+          "scientific_evidence_allowed": false,
+          "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+        }
+      },
+      "step": 86,
+      "terminated": true,
+      "truncated": false,
+      "terminal_reason": "physical_crash",
+      "terminal_info": {
+        "tick": 86,
+        "elapsed_time": 8.6,
+        "next_checkpoint_index": 1,
+        "finished": false,
+        "completed_checkpoint_id": null,
+        "finished_now": false,
+        "game_score": 0,
+        "physics": {
+          "configuration": {
+            "schema_version": 9,
+            "validation_scope": "software_research_only",
+            "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+            "mode": "wp7_lifecycle_v1",
+            "body_geometry": {
+              "width_m": 1.8,
+              "height_m": 1.2,
+              "length_m": 4.0,
+              "local_center": {
+                "x": 0.0,
+                "y": 0.3,
+                "z": 0.0
+              }
+            },
+            "independent_suspension_policy": {
+              "contact": {
+                "wheels": {
+                  "front_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "front_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "rear_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  },
+                  "rear_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  }
+                },
+                "max_bump_m": 0.12,
+                "max_droop_m": 0.12,
+                "max_subdivisions": 12,
+                "seam_height_tolerance_m": 1e-06
+              },
+              "mass_kg": 1200.0,
+              "pitch_inertia_kg_m2": 1800.0,
+              "roll_inertia_kg_m2": 600.0,
+              "spring_stiffness_npm": 30000.0,
+              "damper_nspm": 2000.0,
+              "angular_damping_nmsprad": 150.0,
+              "integration_substeps": 16,
+              "max_abs_tilt_rad": 0.7,
+              "angular_rate_mapping": "yaw_rx_rz_v1",
+              "force_model": "road_relative_unilateral_v3"
+            },
+            "ballistic_flight_policy": null,
+            "automatic_takeoff_policy": null,
+            "grounded_yaw_policy": null,
+            "contact_geometry": "suspension_reference_points_v1",
+            "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+            "spawn_reference": "authored_horizontal_road_v1",
+            "spatial_contact_policy": {
+              "traction": {
+                "traction_mu": 0.8,
+                "max_drive_power_w": 100000.0,
+                "brake_speed_scale_mps": 0.05,
+                "energy_relative_tolerance": 1e-08,
+                "energy_absolute_tolerance_j": 1e-07,
+                "max_refinements": 20
+              },
+              "yaw_inertia_kg_m2": 1800.0,
+              "lateral_damping_nspm": 12000.0,
+              "max_angular_speed_radps": 10.0
+            },
+            "body_clearance_version": "bounded_patch_planes_v2"
+          },
+          "sha256": "c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37",
+          "suspension": null,
+          "flight": null,
+          "partial_support": null,
+          "grounded_yaw": null,
+          "transition": {
+            "version": "wp7_transition_audit_v1",
+            "physical_mode": "wp7_lifecycle_v1",
+            "initial_phase": "grounded",
+            "final_phase": "grounded",
+            "start_time_s": 8.5,
+            "end_time_s": 8.6,
+            "solvers": [
+              "spatial_road_edge_partial_lifecycle_rk4_v4",
+              "grounded_road_obb_impulse_absorbing_v4_development"
+            ],
+            "events": []
+          }
+        },
+        "train_reset": {
+          "version": "wp7_train_reset_lifecycle_research_v1",
+          "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+          "seed": 1000,
+          "rank": 0,
+          "track_id": "slalom-v1",
+          "reset_index": 0,
+          "draw_seed": 31006427280302681747391895173684907054264048297823625074610567356187424273798,
+          "world_sha256": "6071829f2eb790ada04c5e59b22efb205e3a20d59fbe670e68fb78ed3eb304e0",
+          "lateral_offset_m": 0.14768679378612504,
+          "heading_jitter_deg": -0.3091885845510518,
+          "attempt": 0,
+          "rejected_draws": [],
+          "scientific_evidence": false
+        },
+        "reward_components": {
+          "route_progress": 0.020512684939617998,
+          "collision": 0.0,
+          "time": -0.001339111328125
+        },
+        "telemetry": {
+          "vehicle_position": [
+            6.900331475734602,
+            0.34359364869244313,
+            54.565724075962635
+          ],
+          "vehicle_velocity": [
+            5.596797604662178,
+            -1.194468761702437,
+            1.5367017556819327
+          ],
+          "vehicle_speed": 5.925567596116947,
+          "grounded": true,
+          "obstacle_hit_ids": [
+            "road-patch:road-main"
+          ],
+          "applied_boost_pad_ids": [],
+          "applied_slow_zone_ids": []
+        },
+        "training_telemetry": {
+          "schema_version": "f1rl_training_state_v1",
+          "track_id": "slalom-v1",
+          "seed_identity": {
+            "version": "wp7_train_reset_lifecycle_research_v1",
+            "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+            "seed": 1000,
+            "rank": 0,
+            "track_id": "slalom-v1",
+            "reset_index": 0,
+            "draw_seed": 31006427280302681747391895173684907054264048297823625074610567356187424273798,
+            "world_sha256": "6071829f2eb790ada04c5e59b22efb205e3a20d59fbe670e68fb78ed3eb304e0",
+            "lateral_offset_m": 0.14768679378612504,
+            "heading_jitter_deg": -0.3091885845510518,
+            "attempt": 0,
+            "rejected_draws": [],
+            "scientific_evidence": false
+          },
+          "observation_schema": {
+            "version": "f1rl_observation_features_v1",
+            "feature_names": [
+              "rangefinder:left-30deg",
+              "rangefinder:left-15deg",
+              "rangefinder:left-7p5deg",
+              "rangefinder:front",
+              "rangefinder:right-7p5deg",
+              "rangefinder:right-15deg",
+              "rangefinder:right-30deg",
+              "velocity_local_x",
+              "velocity_local_y",
+              "velocity_local_z",
+              "target_direction_local_x",
+              "target_direction_local_y",
+              "target_direction_local_z",
+              "target_distance",
+              "target_available",
+              "grounded"
+            ]
+          },
+          "position": [
+            6.900331475734602,
+            0.34359364869244313,
+            54.565724075962635
+          ],
+          "velocity": [
+            5.596797604662178,
+            -1.194468761702437,
+            1.5367017556819327
+          ],
+          "speed": 5.925567596116947,
+          "grounded": true,
+          "heading_rad": 1.3471912730028288,
+          "yaw_rate_radps": -0.17313376151797139,
+          "lateral_route_deviation_m": 3.9154364017345302,
+          "route_progress_m": 52.41350922538066,
+          "route_highwater_m": 52.41350922538066,
+          "action_contract_version": "steering-throttle-brake-v2"
+        },
+        "race": {
+          "configuration": {
+            "version": "wp7_directed_lifecycle_crash_contract_v4",
+            "soft_corridor_m": 2.0,
+            "hard_corridor_m": 4.0,
+            "hard_violation": "terminate_valid_failure",
+            "gate_orientation": "authored_local_positive_z_v1"
+          },
+          "course": {
+            "navigation": {
+              "points": [
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 4.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 18.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 30.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 43.0
+                },
+                {
+                  "x": 3.0,
+                  "y": 0.0,
+                  "z": 54.0
+                },
+                {
+                  "x": 3.0,
+                  "y": 0.0,
+                  "z": 70.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 80.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 92.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 96.0
+                },
+                {
+                  "x": 1.5,
+                  "y": 0.0,
+                  "z": 102.0
+                },
+                {
+                  "x": -3.0,
+                  "y": 0.0,
+                  "z": 110.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 124.0
+                }
+              ],
+              "surface_ids": [
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main",
+                "road-main"
+              ],
+              "checkpoint_point_indices": [
+                2,
+                5,
+                10
+              ]
+            },
+            "checkpoints": [
+              {
+                "id": "checkpoint-0",
+                "volume": {
+                  "center": {
+                    "x": -3.0,
+                    "y": 0.0,
+                    "z": 30.0
+                  },
+                  "half_extents": {
+                    "x": 2.0,
+                    "y": 2.0,
+                    "z": 1.5
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 0
+              },
+              {
+                "id": "checkpoint-1",
+                "volume": {
+                  "center": {
+                    "x": 3.0,
+                    "y": 0.0,
+                    "z": 70.0
+                  },
+                  "half_extents": {
+                    "x": 2.0,
+                    "y": 2.0,
+                    "z": 1.5
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 1
+              },
+              {
+                "id": "checkpoint-2",
+                "volume": {
+                  "center": {
+                    "x": -3.0,
+                    "y": 0.0,
+                    "z": 110.0
+                  },
+                  "half_extents": {
+                    "x": 2.0,
+                    "y": 2.0,
+                    "z": 1.5
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 2
+              }
+            ],
+            "finish": {
+              "id": "finish",
+              "volume": {
+                "center": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 124.0
+                },
+                "half_extents": {
+                  "x": 7.0,
+                  "y": 2.0,
+                  "z": 1.0
+                },
+                "orientation": {
+                  "w": 1.0,
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                }
+              }
+            }
+          },
+          "outcome_contract": {
+            "configuration": {
+              "schema_version": "wp7_hard_route_owner_outcome_v2",
+              "version": "wp7_hard_route_terminal_failure_v2",
+              "owner_decision_date": "2026-10-17",
+              "parent_owner_contract_sha256": "d9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1",
+              "soft_corridor_m": 2.0,
+              "hard_corridor_m": 4.0,
+              "violation_comparison": "strict_greater_than",
+              "outcome": "valid_terminal_failure",
+              "reward_policy": "registered_terms_valid_prefix_no_terminal_adjustment",
+              "terminal_penalty": 0.0,
+              "new_success_credit": false,
+              "new_reward_shaping": false,
+              "training_permitted": false,
+              "heldout_permitted": false,
+              "scientific_freeze_permitted": false,
+              "wp8_permitted": false
+            },
+            "source_sha256": "7b306dc684cbc04f787bae9efaee77ab8bf97ee64ae2ee8d7665067b7e7d6954",
+            "sha256": "5bd036067ba901d2b4513530000d32924597e95e64ae46f8809a88263f6dd3a9"
+          },
+          "physical_crash_contract": {
+            "schema_version": "wp3_physical_crash_terminal_v1",
+            "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+            "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+            "terminal_kind": "valid_terminal_failure",
+            "terminal_reason": "physical_crash",
+            "terminal_is_finish": false,
+            "terminal_is_truncation": false,
+            "failure_scoring": "preimpact_reward_and_event_prefix_only",
+            "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+            "impulse": "world_linear_and_angular_applied_and_audited",
+            "energy": "nonincreasing_rigid_kinetic_energy",
+            "source_versions": [
+              "wp3_airborne_applied_road_crash_v4_dev",
+              "wp3_grounded_applied_crash_v4_dev",
+              "wp3_grounded_applied_edge_crash_v4_dev",
+              "wp3_grounded_applied_road_crash_v4_dev",
+              "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+              "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+            ],
+            "owner_scientific_signoff": false,
+            "independent_physics_reviewer_signature": null,
+            "scientific_evidence_allowed": false,
+            "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+          },
+          "sha256": "acef9d444f99b11d7e026adfa00f4e4cac664c81fd226862e5254caab07db9b2",
+          "completed_checkpoint_ids": [],
+          "directed_crossings": [],
+          "max_sampled_deviation_m": 3.9003314757346024,
+          "soft_zone_encountered": true,
+          "terminal_failure": true,
+          "terminal_time_s": 0.01339111328125,
+          "reward_valid_prefix_s": 0.01339111328125,
+          "reward_prefix_position": [
+            6.900331475734602,
+            0.34359364869244313,
+            54.565724075962635
+          ],
+          "physical_tick_end_time_s": 0.1,
+          "terminal_reason": "physical_crash",
+          "tick_local_crossing_times_s": [],
+          "crossing_time_origin_s": 8.5
+        },
+        "physical_crash_terminal": {
+          "version": "wp3_physical_crash_terminal_v1",
+          "obstacle_id": "road-patch:road-main",
+          "last_proven_clear_s": 0.013390350341796876,
+          "impact_time_s": 0.01339111328125,
+          "first_overlap_s": 0.01339111328125,
+          "linear_impulse_n_s": [
+            19.686596120568883,
+            167.38084372509945,
+            0.0
+          ],
+          "angular_impulse_nms": [
+            147.3907086153936,
+            -17.335444653399104,
+            23.447500191034983
+          ],
+          "kinetic_before_j": 21888.24953439804,
+          "kinetic_after_j": 21857.65624077872,
+          "energy_lost_j": 30.59329361932032,
+          "accepted_velocity_mps": [
+            5.596797604662178,
+            -1.194468761702437,
+            1.5367017556819327
+          ],
+          "accepted_angular_velocity_radps": [
+            0.7059802978305352,
+            -0.17313376151797139,
+            -0.7381167220256197
+          ],
+          "scientific_evidence": false,
+          "contract_sha256": "0b8dc47120892179a326ab735873d2f08ee7ca9c0bdece41c5135369f5119b35",
+          "source_version": "wp3_grounded_applied_road_crash_v4_dev",
+          "contact_kind": "bounded_road_body",
+          "contact_position_world": [
+            6.900331475734602,
+            0.34359364869244313,
+            54.565724075962635
+          ],
+          "contact_orientation_wxyz": [
+            0.7789212566861256,
+            0.026217191817548023,
+            0.6238281457663679,
+            -0.05858992477725381
+          ],
+          "preimpact_velocity_mps": [
+            5.580392107895037,
+            -1.3339527981400199,
+            1.5367017556819327
+          ],
+          "preimpact_angular_velocity_radps": [
+            0.462717138365736,
+            -0.1445219243984928,
+            -0.7878420557578824
+          ],
+          "science_review_approved": false
+        },
+        "route_highwater_meters": 52.41350922538066,
+        "research_outcome": {
+          "version": "wp7_episode_outcome_v1",
+          "kind": "valid_terminal_failure",
+          "valid_sample": true,
+          "reason": "physical_crash"
+        }
+      },
+      "physical_crash_contract_valid": true,
+      "final_vehicle": {
+        "position_m": [
+          6.900331475734602,
+          0.34359364869244313,
+          54.565724075962635
+        ],
+        "velocity_mps": [
+          5.596797604662178,
+          -1.194468761702437,
+          1.5367017556819327
+        ],
+        "speed_mps": 5.925567596116947,
+        "orientation_wxyz": [
+          0.7789212566861256,
+          0.026217191817548023,
+          0.6238281457663679,
+          -0.05858992477725381
+        ],
+        "angular_velocity_radps": [
+          0.7059802978305352,
+          -0.17313376151797139,
+          -0.7381167220256197
+        ],
+        "grounded": true
+      },
+      "research_outcome": {
+        "version": "wp7_episode_outcome_v1",
+        "kind": "valid_terminal_failure",
+        "valid_sample": true,
+        "reason": "physical_crash"
+      },
+      "phase2a_v4_counterfactual": {
+        "outcome": "terminal",
+        "step": 86,
+        "terminated": true,
+        "truncated": false,
+        "reason": "physical_crash",
+        "physical_crash_contract_valid": true
+      },
+      "episode_equivalence": {
+        "same_model_track_reset_seed_and_deterministic_mode": true,
+        "same_terminal_outcome_and_step_as_phase2a_v4": true,
+        "transition_substep_equivalence_claimed": false,
+        "note": "v4 dynamics differ from v3 from the first transition; v3 failed-attempt substep is not a same-state replay target."
+      }
+    },
+    {
+      "model_id": "A-seed2",
+      "track_id": "right-turn-v1",
+      "reset_seed": 20261106,
+      "inference_mode": "deterministic",
+      "requested_runtime_profile": "wp3_full06_physics_v4",
+      "effective_runtime_profile": {
+        "physics_version": "spatial_road_edge_partial_lifecycle_v4",
+        "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+        "terminal_contract": "wp3_physical_crash_terminal_v1",
+        "max_abs_tilt_rad": 0.7
+      },
+      "phase1_failed_attempt_step": 82,
+      "track_asset_sha256": "a302f5d1d7f08d2b51ae963a5e695d8600d52a0ebf2d1f212ca0a4fbf90e303e",
+      "model_sha256": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc",
+      "outcome": "terminal",
+      "reset_runtime_telemetry": {
+        "physics": {
+          "schema_version": 9,
+          "validation_scope": "software_research_only",
+          "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+          "mode": "wp7_lifecycle_v1",
+          "body_geometry": {
+            "width_m": 1.8,
+            "height_m": 1.2,
+            "length_m": 4.0,
+            "local_center": {
+              "x": 0.0,
+              "y": 0.3,
+              "z": 0.0
+            }
+          },
+          "independent_suspension_policy": {
+            "contact": {
+              "wheels": {
+                "front_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "front_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "rear_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                },
+                "rear_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                }
+              },
+              "max_bump_m": 0.12,
+              "max_droop_m": 0.12,
+              "max_subdivisions": 12,
+              "seam_height_tolerance_m": 1e-06
+            },
+            "mass_kg": 1200.0,
+            "pitch_inertia_kg_m2": 1800.0,
+            "roll_inertia_kg_m2": 600.0,
+            "spring_stiffness_npm": 30000.0,
+            "damper_nspm": 2000.0,
+            "angular_damping_nmsprad": 150.0,
+            "integration_substeps": 16,
+            "max_abs_tilt_rad": 0.7,
+            "angular_rate_mapping": "yaw_rx_rz_v1",
+            "force_model": "road_relative_unilateral_v3"
+          },
+          "ballistic_flight_policy": null,
+          "automatic_takeoff_policy": null,
+          "grounded_yaw_policy": null,
+          "contact_geometry": "suspension_reference_points_v1",
+          "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+          "spawn_reference": "authored_horizontal_road_v1",
+          "spatial_contact_policy": {
+            "traction": {
+              "traction_mu": 0.8,
+              "max_drive_power_w": 100000.0,
+              "brake_speed_scale_mps": 0.05,
+              "energy_relative_tolerance": 1e-08,
+              "energy_absolute_tolerance_j": 1e-07,
+              "max_refinements": 20
+            },
+            "yaw_inertia_kg_m2": 1800.0,
+            "lateral_damping_nspm": 12000.0,
+            "max_angular_speed_radps": 10.0
+          },
+          "body_clearance_version": "bounded_patch_planes_v2"
+        },
+        "race": {
+          "version": "wp7_directed_lifecycle_crash_contract_v4",
+          "soft_corridor_m": 2.0,
+          "hard_corridor_m": 4.0,
+          "hard_violation": "terminate_valid_failure",
+          "gate_orientation": "authored_local_positive_z_v1"
+        },
+        "physical_crash_contract": {
+          "schema_version": "wp3_physical_crash_terminal_v1",
+          "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+          "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+          "terminal_kind": "valid_terminal_failure",
+          "terminal_reason": "physical_crash",
+          "terminal_is_finish": false,
+          "terminal_is_truncation": false,
+          "failure_scoring": "preimpact_reward_and_event_prefix_only",
+          "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+          "impulse": "world_linear_and_angular_applied_and_audited",
+          "energy": "nonincreasing_rigid_kinetic_energy",
+          "source_versions": [
+            "wp3_airborne_applied_road_crash_v4_dev",
+            "wp3_grounded_applied_crash_v4_dev",
+            "wp3_grounded_applied_edge_crash_v4_dev",
+            "wp3_grounded_applied_road_crash_v4_dev",
+            "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+            "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+          ],
+          "owner_scientific_signoff": false,
+          "independent_physics_reviewer_signature": null,
+          "scientific_evidence_allowed": false,
+          "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+        }
+      },
+      "step": 84,
+      "terminated": true,
+      "truncated": false,
+      "terminal_reason": "physical_crash",
+      "terminal_info": {
+        "tick": 84,
+        "elapsed_time": 8.4,
+        "next_checkpoint_index": 1,
+        "finished": false,
+        "completed_checkpoint_id": null,
+        "finished_now": false,
+        "game_score": 0,
+        "physics": {
+          "configuration": {
+            "schema_version": 9,
+            "validation_scope": "software_research_only",
+            "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+            "mode": "wp7_lifecycle_v1",
+            "body_geometry": {
+              "width_m": 1.8,
+              "height_m": 1.2,
+              "length_m": 4.0,
+              "local_center": {
+                "x": 0.0,
+                "y": 0.3,
+                "z": 0.0
+              }
+            },
+            "independent_suspension_policy": {
+              "contact": {
+                "wheels": {
+                  "front_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "front_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "rear_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  },
+                  "rear_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  }
+                },
+                "max_bump_m": 0.12,
+                "max_droop_m": 0.12,
+                "max_subdivisions": 12,
+                "seam_height_tolerance_m": 1e-06
+              },
+              "mass_kg": 1200.0,
+              "pitch_inertia_kg_m2": 1800.0,
+              "roll_inertia_kg_m2": 600.0,
+              "spring_stiffness_npm": 30000.0,
+              "damper_nspm": 2000.0,
+              "angular_damping_nmsprad": 150.0,
+              "integration_substeps": 16,
+              "max_abs_tilt_rad": 0.7,
+              "angular_rate_mapping": "yaw_rx_rz_v1",
+              "force_model": "road_relative_unilateral_v3"
+            },
+            "ballistic_flight_policy": null,
+            "automatic_takeoff_policy": null,
+            "grounded_yaw_policy": null,
+            "contact_geometry": "suspension_reference_points_v1",
+            "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+            "spawn_reference": "authored_horizontal_road_v1",
+            "spatial_contact_policy": {
+              "traction": {
+                "traction_mu": 0.8,
+                "max_drive_power_w": 100000.0,
+                "brake_speed_scale_mps": 0.05,
+                "energy_relative_tolerance": 1e-08,
+                "energy_absolute_tolerance_j": 1e-07,
+                "max_refinements": 20
+              },
+              "yaw_inertia_kg_m2": 1800.0,
+              "lateral_damping_nspm": 12000.0,
+              "max_angular_speed_radps": 10.0
+            },
+            "body_clearance_version": "bounded_patch_planes_v2"
+          },
+          "sha256": "c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37",
+          "suspension": null,
+          "flight": null,
+          "partial_support": null,
+          "grounded_yaw": null,
+          "transition": {
+            "version": "wp7_transition_audit_v1",
+            "physical_mode": "wp7_lifecycle_v1",
+            "initial_phase": "grounded",
+            "final_phase": "grounded",
+            "start_time_s": 8.3,
+            "end_time_s": 8.4,
+            "solvers": [
+              "spatial_road_edge_partial_lifecycle_rk4_v4",
+              "grounded_road_obb_impulse_absorbing_v4_development"
+            ],
+            "events": []
+          }
+        },
+        "train_reset": {
+          "version": "wp7_train_reset_lifecycle_research_v1",
+          "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+          "seed": 1000,
+          "rank": 0,
+          "track_id": "right-turn-v1",
+          "reset_index": 0,
+          "draw_seed": 13316071062180048504291852760339709890985924980489973590830306488362885655708,
+          "world_sha256": "d79133bc9a0599f9b056c7eb78658446631f564f038bc4afa91f3325fd4f9fd2",
+          "lateral_offset_m": -0.10049681926992604,
+          "heading_jitter_deg": -1.6892219923641036,
+          "attempt": 0,
+          "rejected_draws": [],
+          "scientific_evidence": false
+        },
+        "reward_components": {
+          "route_progress": 0.7410419675828734,
+          "collision": 0.0,
+          "time": -0.008705291748046877
+        },
+        "telemetry": {
+          "vehicle_position": [
+            0.14198988062624304,
+            0.43452244074339624,
+            70.04699761538717
+          ],
+          "vehicle_velocity": [
+            1.0880162726337868,
+            -0.14755998305325863,
+            7.383147279386925
+          ],
+          "vehicle_speed": 7.464343045923945,
+          "grounded": true,
+          "obstacle_hit_ids": [
+            "road-patch:road-exit"
+          ],
+          "applied_boost_pad_ids": [],
+          "applied_slow_zone_ids": []
+        },
+        "training_telemetry": {
+          "schema_version": "f1rl_training_state_v1",
+          "track_id": "right-turn-v1",
+          "seed_identity": {
+            "version": "wp7_train_reset_lifecycle_research_v1",
+            "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+            "seed": 1000,
+            "rank": 0,
+            "track_id": "right-turn-v1",
+            "reset_index": 0,
+            "draw_seed": 13316071062180048504291852760339709890985924980489973590830306488362885655708,
+            "world_sha256": "d79133bc9a0599f9b056c7eb78658446631f564f038bc4afa91f3325fd4f9fd2",
+            "lateral_offset_m": -0.10049681926992604,
+            "heading_jitter_deg": -1.6892219923641036,
+            "attempt": 0,
+            "rejected_draws": [],
+            "scientific_evidence": false
+          },
+          "observation_schema": {
+            "version": "f1rl_observation_features_v1",
+            "feature_names": [
+              "rangefinder:left-30deg",
+              "rangefinder:left-15deg",
+              "rangefinder:left-7p5deg",
+              "rangefinder:front",
+              "rangefinder:right-7p5deg",
+              "rangefinder:right-15deg",
+              "rangefinder:right-30deg",
+              "velocity_local_x",
+              "velocity_local_y",
+              "velocity_local_z",
+              "target_direction_local_x",
+              "target_direction_local_y",
+              "target_direction_local_z",
+              "target_distance",
+              "target_available",
+              "grounded"
+            ]
+          },
+          "position": [
+            0.14198988062624304,
+            0.43452244074339624,
+            70.04699761538717
+          ],
+          "velocity": [
+            1.0880162726337868,
+            -0.14755998305325863,
+            7.383147279386925
+          ],
+          "speed": 7.464343045923945,
+          "grounded": true,
+          "heading_rad": 0.1347312386954355,
+          "yaw_rate_radps": 0.12351661167371181,
+          "lateral_route_deviation_m": 0.43705666378820796,
+          "route_progress_m": 66.14198988062624,
+          "route_highwater_m": 66.14198988062624,
+          "action_contract_version": "steering-throttle-brake-v2"
+        },
+        "race": {
+          "configuration": {
+            "version": "wp7_directed_lifecycle_crash_contract_v4",
+            "soft_corridor_m": 2.0,
+            "hard_corridor_m": 4.0,
+            "hard_violation": "terminate_valid_failure",
+            "gate_orientation": "authored_local_positive_z_v1"
+          },
+          "course": {
+            "navigation": {
+              "points": [
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 4.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 35.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 64.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 70.0
+                },
+                {
+                  "x": 20.0,
+                  "y": 0.0,
+                  "z": 70.0
+                },
+                {
+                  "x": 64.0,
+                  "y": 0.0,
+                  "z": 70.0
+                }
+              ],
+              "surface_ids": [
+                "road-entry",
+                "road-entry",
+                "road-entry",
+                "road-exit",
+                "road-exit"
+              ],
+              "checkpoint_point_indices": [
+                1,
+                4
+              ]
+            },
+            "checkpoints": [
+              {
+                "id": "checkpoint-0",
+                "volume": {
+                  "center": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 35.0
+                  },
+                  "half_extents": {
+                    "x": 6.0,
+                    "y": 2.0,
+                    "z": 1.0
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 0
+              },
+              {
+                "id": "checkpoint-1",
+                "volume": {
+                  "center": {
+                    "x": 20.0,
+                    "y": 0.0,
+                    "z": 70.0
+                  },
+                  "half_extents": {
+                    "x": 1.0,
+                    "y": 2.0,
+                    "z": 6.0
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 1
+              }
+            ],
+            "finish": {
+              "id": "finish",
+              "volume": {
+                "center": {
+                  "x": 64.0,
+                  "y": 0.0,
+                  "z": 70.0
+                },
+                "half_extents": {
+                  "x": 1.0,
+                  "y": 2.0,
+                  "z": 6.0
+                },
+                "orientation": {
+                  "w": 1.0,
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                }
+              }
+            }
+          },
+          "outcome_contract": {
+            "configuration": {
+              "schema_version": "wp7_hard_route_owner_outcome_v2",
+              "version": "wp7_hard_route_terminal_failure_v2",
+              "owner_decision_date": "2026-10-17",
+              "parent_owner_contract_sha256": "d9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1",
+              "soft_corridor_m": 2.0,
+              "hard_corridor_m": 4.0,
+              "violation_comparison": "strict_greater_than",
+              "outcome": "valid_terminal_failure",
+              "reward_policy": "registered_terms_valid_prefix_no_terminal_adjustment",
+              "terminal_penalty": 0.0,
+              "new_success_credit": false,
+              "new_reward_shaping": false,
+              "training_permitted": false,
+              "heldout_permitted": false,
+              "scientific_freeze_permitted": false,
+              "wp8_permitted": false
+            },
+            "source_sha256": "7b306dc684cbc04f787bae9efaee77ab8bf97ee64ae2ee8d7665067b7e7d6954",
+            "sha256": "5bd036067ba901d2b4513530000d32924597e95e64ae46f8809a88263f6dd3a9"
+          },
+          "physical_crash_contract": {
+            "schema_version": "wp3_physical_crash_terminal_v1",
+            "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+            "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+            "terminal_kind": "valid_terminal_failure",
+            "terminal_reason": "physical_crash",
+            "terminal_is_finish": false,
+            "terminal_is_truncation": false,
+            "failure_scoring": "preimpact_reward_and_event_prefix_only",
+            "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+            "impulse": "world_linear_and_angular_applied_and_audited",
+            "energy": "nonincreasing_rigid_kinetic_energy",
+            "source_versions": [
+              "wp3_airborne_applied_road_crash_v4_dev",
+              "wp3_grounded_applied_crash_v4_dev",
+              "wp3_grounded_applied_edge_crash_v4_dev",
+              "wp3_grounded_applied_road_crash_v4_dev",
+              "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+              "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+            ],
+            "owner_scientific_signoff": false,
+            "independent_physics_reviewer_signature": null,
+            "scientific_evidence_allowed": false,
+            "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+          },
+          "sha256": "bbb91441268bc1e9fd23c453bcc120ffaaccdf089fd687b9c7a5ba7318ff6a8e",
+          "completed_checkpoint_ids": [],
+          "directed_crossings": [],
+          "max_sampled_deviation_m": 0.11333033619686526,
+          "soft_zone_encountered": false,
+          "terminal_failure": true,
+          "terminal_time_s": 0.08705291748046876,
+          "reward_valid_prefix_s": 0.08705291748046876,
+          "reward_prefix_position": [
+            0.14198988062624304,
+            0.43452244074339624,
+            70.04699761538717
+          ],
+          "physical_tick_end_time_s": 0.1,
+          "terminal_reason": "physical_crash",
+          "tick_local_crossing_times_s": [],
+          "crossing_time_origin_s": 8.3
+        },
+        "physical_crash_terminal": {
+          "version": "wp3_physical_crash_terminal_v1",
+          "obstacle_id": "road-patch:road-exit",
+          "last_proven_clear_s": 0.08705215454101563,
+          "impact_time_s": 0.08705291748046876,
+          "first_overlap_s": 0.08705291748046876,
+          "linear_impulse_n_s": [
+            -37.83149455146718,
+            362.98373130279,
+            0.0
+          ],
+          "angular_impulse_nms": [
+            -733.1248156138017,
+            -76.40895466001768,
+            -67.97825868283581
+          ],
+          "kinetic_before_j": 33681.75153800861,
+          "kinetic_after_j": 33459.436353577126,
+          "energy_lost_j": 222.31518443148525,
+          "accepted_velocity_mps": [
+            1.0880162726337868,
+            -0.14755998305325863,
+            7.383147279386925
+          ],
+          "accepted_angular_velocity_radps": [
+            -0.13299375775085198,
+            0.12351661167371181,
+            -0.09797111769263649
+          ],
+          "scientific_evidence": false,
+          "contract_sha256": "0b8dc47120892179a326ab735873d2f08ee7ca9c0bdece41c5135369f5119b35",
+          "source_version": "wp3_grounded_applied_road_crash_v4_dev",
+          "contact_kind": "bounded_road_body",
+          "contact_position_world": [
+            0.14198988062624304,
+            0.43452244074339624,
+            70.04699761538717
+          ],
+          "contact_orientation_wxyz": [
+            0.9962293578460918,
+            0.02605495516600391,
+            0.0660427484620926,
+            0.04986543143735858
+          ],
+          "preimpact_velocity_mps": [
+            1.1195425180933427,
+            -0.4500464258055836,
+            7.383147279386925
+          ],
+          "preimpact_angular_velocity_radps": [
+            0.2984817828831097,
+            0.15779687941449866,
+            0.11820506735453014
+          ],
+          "science_review_approved": false
+        },
+        "route_highwater_meters": 66.14198988062624,
+        "research_outcome": {
+          "version": "wp7_episode_outcome_v1",
+          "kind": "valid_terminal_failure",
+          "valid_sample": true,
+          "reason": "physical_crash"
+        }
+      },
+      "physical_crash_contract_valid": true,
+      "final_vehicle": {
+        "position_m": [
+          0.14198988062624304,
+          0.43452244074339624,
+          70.04699761538717
+        ],
+        "velocity_mps": [
+          1.0880162726337868,
+          -0.14755998305325863,
+          7.383147279386925
+        ],
+        "speed_mps": 7.464343045923945,
+        "orientation_wxyz": [
+          0.9962293578460918,
+          0.02605495516600391,
+          0.0660427484620926,
+          0.04986543143735858
+        ],
+        "angular_velocity_radps": [
+          -0.13299375775085198,
+          0.12351661167371181,
+          -0.09797111769263649
+        ],
+        "grounded": true
+      },
+      "research_outcome": {
+        "version": "wp7_episode_outcome_v1",
+        "kind": "valid_terminal_failure",
+        "valid_sample": true,
+        "reason": "physical_crash"
+      },
+      "phase2a_v4_counterfactual": {
+        "outcome": "terminal",
+        "step": 84,
+        "terminated": true,
+        "truncated": false,
+        "reason": "physical_crash",
+        "physical_crash_contract_valid": true
+      },
+      "episode_equivalence": {
+        "same_model_track_reset_seed_and_deterministic_mode": true,
+        "same_terminal_outcome_and_step_as_phase2a_v4": true,
+        "transition_substep_equivalence_claimed": false,
+        "note": "v4 dynamics differ from v3 from the first transition; v3 failed-attempt substep is not a same-state replay target."
+      }
+    },
+    {
+      "model_id": "A-seed2",
+      "track_id": "ramp-v1",
+      "reset_seed": 20261106,
+      "inference_mode": "deterministic",
+      "requested_runtime_profile": "wp3_full06_physics_v4",
+      "effective_runtime_profile": {
+        "physics_version": "spatial_road_edge_partial_lifecycle_v4",
+        "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+        "terminal_contract": "wp3_physical_crash_terminal_v1",
+        "max_abs_tilt_rad": 0.7
+      },
+      "phase1_failed_attempt_step": 55,
+      "track_asset_sha256": "6c0da56966962363ed601c8fda2343006c207ee9ea6497deb72e6f6018721bd3",
+      "model_sha256": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc",
+      "outcome": "terminal",
+      "reset_runtime_telemetry": {
+        "physics": {
+          "schema_version": 9,
+          "validation_scope": "software_research_only",
+          "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+          "mode": "wp7_lifecycle_v1",
+          "body_geometry": {
+            "width_m": 1.8,
+            "height_m": 1.2,
+            "length_m": 4.0,
+            "local_center": {
+              "x": 0.0,
+              "y": 0.3,
+              "z": 0.0
+            }
+          },
+          "independent_suspension_policy": {
+            "contact": {
+              "wheels": {
+                "front_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "front_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": 1.5
+                },
+                "rear_left": {
+                  "x": -0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                },
+                "rear_right": {
+                  "x": 0.75,
+                  "y": -0.5,
+                  "z": -1.5
+                }
+              },
+              "max_bump_m": 0.12,
+              "max_droop_m": 0.12,
+              "max_subdivisions": 12,
+              "seam_height_tolerance_m": 1e-06
+            },
+            "mass_kg": 1200.0,
+            "pitch_inertia_kg_m2": 1800.0,
+            "roll_inertia_kg_m2": 600.0,
+            "spring_stiffness_npm": 30000.0,
+            "damper_nspm": 2000.0,
+            "angular_damping_nmsprad": 150.0,
+            "integration_substeps": 16,
+            "max_abs_tilt_rad": 0.7,
+            "angular_rate_mapping": "yaw_rx_rz_v1",
+            "force_model": "road_relative_unilateral_v3"
+          },
+          "ballistic_flight_policy": null,
+          "automatic_takeoff_policy": null,
+          "grounded_yaw_policy": null,
+          "contact_geometry": "suspension_reference_points_v1",
+          "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+          "spawn_reference": "authored_horizontal_road_v1",
+          "spatial_contact_policy": {
+            "traction": {
+              "traction_mu": 0.8,
+              "max_drive_power_w": 100000.0,
+              "brake_speed_scale_mps": 0.05,
+              "energy_relative_tolerance": 1e-08,
+              "energy_absolute_tolerance_j": 1e-07,
+              "max_refinements": 20
+            },
+            "yaw_inertia_kg_m2": 1800.0,
+            "lateral_damping_nspm": 12000.0,
+            "max_angular_speed_radps": 10.0
+          },
+          "body_clearance_version": "bounded_patch_planes_v2"
+        },
+        "race": {
+          "version": "wp7_directed_lifecycle_crash_contract_v4",
+          "soft_corridor_m": 2.0,
+          "hard_corridor_m": 4.0,
+          "hard_violation": "terminate_valid_failure",
+          "gate_orientation": "authored_local_positive_z_v1"
+        },
+        "physical_crash_contract": {
+          "schema_version": "wp3_physical_crash_terminal_v1",
+          "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+          "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+          "terminal_kind": "valid_terminal_failure",
+          "terminal_reason": "physical_crash",
+          "terminal_is_finish": false,
+          "terminal_is_truncation": false,
+          "failure_scoring": "preimpact_reward_and_event_prefix_only",
+          "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+          "impulse": "world_linear_and_angular_applied_and_audited",
+          "energy": "nonincreasing_rigid_kinetic_energy",
+          "source_versions": [
+            "wp3_airborne_applied_road_crash_v4_dev",
+            "wp3_grounded_applied_crash_v4_dev",
+            "wp3_grounded_applied_edge_crash_v4_dev",
+            "wp3_grounded_applied_road_crash_v4_dev",
+            "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+            "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+          ],
+          "owner_scientific_signoff": false,
+          "independent_physics_reviewer_signature": null,
+          "scientific_evidence_allowed": false,
+          "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+        }
+      },
+      "step": 55,
+      "terminated": true,
+      "truncated": false,
+      "terminal_reason": "physical_crash",
+      "terminal_info": {
+        "tick": 55,
+        "elapsed_time": 5.5,
+        "next_checkpoint_index": 0,
+        "finished": false,
+        "completed_checkpoint_id": null,
+        "finished_now": false,
+        "game_score": 0,
+        "physics": {
+          "configuration": {
+            "schema_version": 9,
+            "validation_scope": "software_research_only",
+            "longitudinal_model": "spatial_road_edge_partial_lifecycle_rk4_v4",
+            "mode": "wp7_lifecycle_v1",
+            "body_geometry": {
+              "width_m": 1.8,
+              "height_m": 1.2,
+              "length_m": 4.0,
+              "local_center": {
+                "x": 0.0,
+                "y": 0.3,
+                "z": 0.0
+              }
+            },
+            "independent_suspension_policy": {
+              "contact": {
+                "wheels": {
+                  "front_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "front_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": 1.5
+                  },
+                  "rear_left": {
+                    "x": -0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  },
+                  "rear_right": {
+                    "x": 0.75,
+                    "y": -0.5,
+                    "z": -1.5
+                  }
+                },
+                "max_bump_m": 0.12,
+                "max_droop_m": 0.12,
+                "max_subdivisions": 12,
+                "seam_height_tolerance_m": 1e-06
+              },
+              "mass_kg": 1200.0,
+              "pitch_inertia_kg_m2": 1800.0,
+              "roll_inertia_kg_m2": 600.0,
+              "spring_stiffness_npm": 30000.0,
+              "damper_nspm": 2000.0,
+              "angular_damping_nmsprad": 150.0,
+              "integration_substeps": 16,
+              "max_abs_tilt_rad": 0.7,
+              "angular_rate_mapping": "yaw_rx_rz_v1",
+              "force_model": "road_relative_unilateral_v3"
+            },
+            "ballistic_flight_policy": null,
+            "automatic_takeoff_policy": null,
+            "grounded_yaw_policy": null,
+            "contact_geometry": "suspension_reference_points_v1",
+            "ground_motion_version": "spatial_road_edge_partial_lifecycle_v4",
+            "spawn_reference": "authored_horizontal_road_v1",
+            "spatial_contact_policy": {
+              "traction": {
+                "traction_mu": 0.8,
+                "max_drive_power_w": 100000.0,
+                "brake_speed_scale_mps": 0.05,
+                "energy_relative_tolerance": 1e-08,
+                "energy_absolute_tolerance_j": 1e-07,
+                "max_refinements": 20
+              },
+              "yaw_inertia_kg_m2": 1800.0,
+              "lateral_damping_nspm": 12000.0,
+              "max_angular_speed_radps": 10.0
+            },
+            "body_clearance_version": "bounded_patch_planes_v2"
+          },
+          "sha256": "c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37",
+          "suspension": null,
+          "flight": null,
+          "partial_support": null,
+          "grounded_yaw": null,
+          "transition": {
+            "version": "wp7_transition_audit_v1",
+            "physical_mode": "wp7_lifecycle_v1",
+            "initial_phase": "grounded",
+            "final_phase": "grounded",
+            "start_time_s": 5.4,
+            "end_time_s": 5.5,
+            "solvers": [
+              "spatial_road_edge_partial_lifecycle_rk4_v4",
+              "grounded_wheel_hard_stop_absorbing_v4_development"
+            ],
+            "events": []
+          }
+        },
+        "train_reset": {
+          "version": "wp7_train_reset_lifecycle_research_v1",
+          "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+          "seed": 1000,
+          "rank": 0,
+          "track_id": "ramp-v1",
+          "reset_index": 0,
+          "draw_seed": 57101470178341870852268177492143505798627221219049707380181432567855916806636,
+          "world_sha256": "775f795aa2763f64916e68e6a64fc763021e875c384050a974c747b6b4907978",
+          "lateral_offset_m": 0.4436302601672285,
+          "heading_jitter_deg": -1.2960266062558503,
+          "attempt": 0,
+          "rejected_draws": [],
+          "scientific_evidence": false
+        },
+        "reward_components": {
+          "route_progress": 0.550230050899529,
+          "collision": 0.0,
+          "time": -0.006734918793663381
+        },
+        "telemetry": {
+          "vehicle_position": [
+            -0.4347207846243921,
+            0.5113974472267562,
+            49.16318060353391
+          ],
+          "vehicle_velocity": [
+            2.348438104417271,
+            0.5678746730394489,
+            7.906635463794844
+          ],
+          "vehicle_speed": 8.267558740758783,
+          "grounded": true,
+          "obstacle_hit_ids": [
+            "wheel-hard-stop:road-incline"
+          ],
+          "applied_boost_pad_ids": [],
+          "applied_slow_zone_ids": []
+        },
+        "training_telemetry": {
+          "schema_version": "f1rl_training_state_v1",
+          "track_id": "ramp-v1",
+          "seed_identity": {
+            "version": "wp7_train_reset_lifecycle_research_v1",
+            "configuration_sha256": "0ef28dadbb82864dcbbb02e2338596d097910191dfb2d7611c7981517362edb1",
+            "seed": 1000,
+            "rank": 0,
+            "track_id": "ramp-v1",
+            "reset_index": 0,
+            "draw_seed": 57101470178341870852268177492143505798627221219049707380181432567855916806636,
+            "world_sha256": "775f795aa2763f64916e68e6a64fc763021e875c384050a974c747b6b4907978",
+            "lateral_offset_m": 0.4436302601672285,
+            "heading_jitter_deg": -1.2960266062558503,
+            "attempt": 0,
+            "rejected_draws": [],
+            "scientific_evidence": false
+          },
+          "observation_schema": {
+            "version": "f1rl_observation_features_v1",
+            "feature_names": [
+              "rangefinder:left-30deg",
+              "rangefinder:left-15deg",
+              "rangefinder:left-7p5deg",
+              "rangefinder:front",
+              "rangefinder:right-7p5deg",
+              "rangefinder:right-15deg",
+              "rangefinder:right-30deg",
+              "velocity_local_x",
+              "velocity_local_y",
+              "velocity_local_z",
+              "target_direction_local_x",
+              "target_direction_local_y",
+              "target_direction_local_z",
+              "target_distance",
+              "target_available",
+              "grounded"
+            ]
+          },
+          "position": [
+            -0.4347207846243921,
+            0.5113974472267562,
+            49.16318060353391
+          ],
+          "velocity": [
+            2.348438104417271,
+            0.5678746730394489,
+            7.906635463794844
+          ],
+          "speed": 8.267558740758783,
+          "grounded": true,
+          "heading_rad": 0.1528326058139281,
+          "yaw_rate_radps": 0.9737585980421083,
+          "lateral_route_deviation_m": 0.6712000518582295,
+          "route_progress_m": 45.16318060353391,
+          "route_highwater_m": 45.16318060353391,
+          "action_contract_version": "steering-throttle-brake-v2"
+        },
+        "race": {
+          "configuration": {
+            "version": "wp7_directed_lifecycle_crash_contract_v4",
+            "soft_corridor_m": 2.0,
+            "hard_corridor_m": 4.0,
+            "hard_violation": "terminate_valid_failure",
+            "gate_orientation": "authored_local_positive_z_v1"
+          },
+          "course": {
+            "navigation": {
+              "points": [
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 4.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 40.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 50.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 3.479327524001636,
+                  "z": 74.75670171853926
+                },
+                {
+                  "x": 0.0,
+                  "y": 8.350386057603925,
+                  "z": 109.41608412449422
+                },
+                {
+                  "x": 0.0,
+                  "y": 8.350386057603925,
+                  "z": 130.0
+                },
+                {
+                  "x": 0.0,
+                  "y": 8.350386057603925,
+                  "z": 153.0
+                }
+              ],
+              "surface_ids": [
+                "road-approach",
+                "road-approach",
+                "road-incline",
+                "road-incline",
+                "road-upper",
+                "road-upper"
+              ],
+              "checkpoint_point_indices": [
+                3,
+                5
+              ]
+            },
+            "checkpoints": [
+              {
+                "id": "checkpoint-0",
+                "volume": {
+                  "center": {
+                    "x": 0.0,
+                    "y": 3.479327524001636,
+                    "z": 74.75670171853926
+                  },
+                  "half_extents": {
+                    "x": 6.0,
+                    "y": 2.0,
+                    "z": 1.0
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 0
+              },
+              {
+                "id": "checkpoint-1",
+                "volume": {
+                  "center": {
+                    "x": 0.0,
+                    "y": 8.350386057603925,
+                    "z": 130.0
+                  },
+                  "half_extents": {
+                    "x": 6.0,
+                    "y": 2.0,
+                    "z": 1.0
+                  },
+                  "orientation": {
+                    "w": 1.0,
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                },
+                "order": 1
+              }
+            ],
+            "finish": {
+              "id": "finish",
+              "volume": {
+                "center": {
+                  "x": 0.0,
+                  "y": 8.350386057603925,
+                  "z": 153.0
+                },
+                "half_extents": {
+                  "x": 6.0,
+                  "y": 2.0,
+                  "z": 1.0
+                },
+                "orientation": {
+                  "w": 1.0,
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                }
+              }
+            }
+          },
+          "outcome_contract": {
+            "configuration": {
+              "schema_version": "wp7_hard_route_owner_outcome_v2",
+              "version": "wp7_hard_route_terminal_failure_v2",
+              "owner_decision_date": "2026-10-17",
+              "parent_owner_contract_sha256": "d9dd49cef664b083a30c98cf6b1d9205ca9a45522ed1ef431b49289edf72c0d1",
+              "soft_corridor_m": 2.0,
+              "hard_corridor_m": 4.0,
+              "violation_comparison": "strict_greater_than",
+              "outcome": "valid_terminal_failure",
+              "reward_policy": "registered_terms_valid_prefix_no_terminal_adjustment",
+              "terminal_penalty": 0.0,
+              "new_success_credit": false,
+              "new_reward_shaping": false,
+              "training_permitted": false,
+              "heldout_permitted": false,
+              "scientific_freeze_permitted": false,
+              "wp8_permitted": false
+            },
+            "source_sha256": "7b306dc684cbc04f787bae9efaee77ab8bf97ee64ae2ee8d7665067b7e7d6954",
+            "sha256": "5bd036067ba901d2b4513530000d32924597e95e64ae46f8809a88263f6dd3a9"
+          },
+          "physical_crash_contract": {
+            "schema_version": "wp3_physical_crash_terminal_v1",
+            "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+            "required_physics_version": "spatial_road_edge_partial_lifecycle_v4",
+            "terminal_kind": "valid_terminal_failure",
+            "terminal_reason": "physical_crash",
+            "terminal_is_finish": false,
+            "terminal_is_truncation": false,
+            "failure_scoring": "preimpact_reward_and_event_prefix_only",
+            "time_origin": "tick_local_impact_s_absolute_transition_start_s",
+            "impulse": "world_linear_and_angular_applied_and_audited",
+            "energy": "nonincreasing_rigid_kinetic_energy",
+            "source_versions": [
+              "wp3_airborne_applied_road_crash_v4_dev",
+              "wp3_grounded_applied_crash_v4_dev",
+              "wp3_grounded_applied_edge_crash_v4_dev",
+              "wp3_grounded_applied_road_crash_v4_dev",
+              "wp3_grounded_wheel_edge_stop_crash_v4_dev",
+              "wp3_grounded_wheel_hard_stop_crash_v4_dev"
+            ],
+            "owner_scientific_signoff": false,
+            "independent_physics_reviewer_signature": null,
+            "scientific_evidence_allowed": false,
+            "release_scope": "ENGINEERING_VALID_FAILED_EPISODE_NOT_SCIENTIFIC_EVAL"
+          },
+          "sha256": "f48ed38d2461473e668415ad071b64552072091384280c5f9c74766459be5e09",
+          "completed_checkpoint_ids": [],
+          "directed_crossings": [],
+          "max_sampled_deviation_m": 0.5709289824051882,
+          "soft_zone_encountered": false,
+          "terminal_failure": true,
+          "terminal_time_s": 0.0673491879366338,
+          "reward_valid_prefix_s": 0.0673491879366338,
+          "reward_prefix_position": [
+            -0.4347207846243921,
+            0.5113974472267562,
+            49.16318060353391
+          ],
+          "physical_tick_end_time_s": 0.1,
+          "terminal_reason": "physical_crash",
+          "tick_local_crossing_times_s": [],
+          "crossing_time_origin_s": 5.4
+        },
+        "physical_crash_terminal": {
+          "version": "wp3_physical_crash_terminal_v1",
+          "obstacle_id": "wheel-hard-stop:road-incline",
+          "last_proven_clear_s": 0.06734918784350155,
+          "impact_time_s": 0.0673491879366338,
+          "first_overlap_s": 0.0673491879366338,
+          "linear_impulse_n_s": [
+            0.0,
+            158.15511011965194,
+            -22.227251188664518
+          ],
+          "angular_impulse_nms": [
+            -241.22036724329874,
+            -10.686173070098953,
+            -76.0360723111396
+          ],
+          "kinetic_before_j": 42050.79332313483,
+          "kinetic_after_j": 42015.39511688584,
+          "energy_lost_j": 35.39820624898857,
+          "accepted_velocity_mps": [
+            2.348438104417271,
+            0.5678746730394489,
+            7.906635463794844
+          ],
+          "accepted_angular_velocity_radps": [
+            -0.4083046888716698,
+            0.9737585980421083,
+            0.028343955202415616
+          ],
+          "scientific_evidence": false,
+          "contract_sha256": "0b8dc47120892179a326ab735873d2f08ee7ca9c0bdece41c5135369f5119b35",
+          "source_version": "wp3_grounded_wheel_hard_stop_crash_v4_dev",
+          "contact_kind": "wheel_hard_stop",
+          "contact_position_world": [
+            -0.4347207846243921,
+            0.5113974472267562,
+            49.16318060353391
+          ],
+          "contact_orientation_wxyz": [
+            0.9965935625347621,
+            -0.004298323777734384,
+            0.07650418004228736,
+            0.030494359528122718
+          ],
+          "preimpact_velocity_mps": [
+            2.348438104417271,
+            0.436078747939739,
+            7.925158173118731
+          ],
+          "preimpact_angular_velocity_radps": [
+            -0.25534907702178133,
+            0.9813422304533277,
+            0.19357415824982857
+          ],
+          "science_review_approved": false
+        },
+        "route_highwater_meters": 45.16318060353391,
+        "research_outcome": {
+          "version": "wp7_episode_outcome_v1",
+          "kind": "valid_terminal_failure",
+          "valid_sample": true,
+          "reason": "physical_crash"
+        }
+      },
+      "physical_crash_contract_valid": true,
+      "final_vehicle": {
+        "position_m": [
+          -0.4347207846243921,
+          0.5113974472267562,
+          49.16318060353391
+        ],
+        "velocity_mps": [
+          2.348438104417271,
+          0.5678746730394489,
+          7.906635463794844
+        ],
+        "speed_mps": 8.267558740758783,
+        "orientation_wxyz": [
+          0.9965935625347621,
+          -0.004298323777734384,
+          0.07650418004228736,
+          0.030494359528122718
+        ],
+        "angular_velocity_radps": [
+          -0.4083046888716698,
+          0.9737585980421083,
+          0.028343955202415616
+        ],
+        "grounded": true
+      },
+      "research_outcome": {
+        "version": "wp7_episode_outcome_v1",
+        "kind": "valid_terminal_failure",
+        "valid_sample": true,
+        "reason": "physical_crash"
+      },
+      "phase2a_v4_counterfactual": {
+        "outcome": "terminal",
+        "step": 55,
+        "terminated": true,
+        "truncated": false,
+        "reason": "physical_crash",
+        "physical_crash_contract_valid": true
+      },
+      "episode_equivalence": {
+        "same_model_track_reset_seed_and_deterministic_mode": true,
+        "same_terminal_outcome_and_step_as_phase2a_v4": true,
+        "transition_substep_equivalence_claimed": false,
+        "note": "v4 dynamics differ from v3 from the first transition; v3 failed-attempt substep is not a same-state replay target."
+      }
+    }
+  ]
+}

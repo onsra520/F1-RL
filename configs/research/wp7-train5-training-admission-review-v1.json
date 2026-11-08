@@ -1,0 +1,64 @@
+{
+  "schema": "f1rl_train5_ppo_training_admission_review_v1",
+  "source_base_commit": "bb2d48bc17ba1e5bef75764998977fdc0cef27f0",
+  "branch": "handoff/physics-v4-khanh-bang-20261106",
+  "owner_request": "User explicitly requested PPO smoke and training on 2026-11-07, but independent training-specific scientific admissibility has not been established.",
+  "status": "BLOCKED_PENDING_SCIENTIFIC_TRAINING_PROTOCOL_AND_SMOKE_VALIDATION",
+  "global_seed_registry": "CLOSED_WITH_OWNER_ACCEPTED_EVIDENCE_EXCEPTION",
+  "source_registration": "configs/research/wp7-train5-paired-v2-registration.json",
+  "prior_protocol_read_only": true,
+  "cohorts": [
+    "train5_from_scratch",
+    "train5_from_frozen_checkpoint"
+  ],
+  "replicates_per_cohort": 3,
+  "total_training_policy_runs_planned": 6,
+  "proposed_timesteps_per_policy": 200000,
+  "proposed_timesteps_total": 1200000,
+  "proposed_checkpoint_every_steps": 25000,
+  "backend": "CPU",
+  "vector_env_count": 8,
+  "ppo_hyperparameters_source": "configs/recovery/wp7-pilot-200k.yml",
+  "frozen_finetune_init_candidates": [
+    "C-seed0",
+    "B-seed1",
+    "A-seed2"
+  ],
+  "frozen_reference_checkpoints_must_not_change": true,
+  "training_seed_bundles_source": "configs/research/wp7-train5-paired-v2-registration.json",
+  "reserved_training_seed_count": 18,
+  "reserved_training_seeds_consumed": 0,
+  "development_plan": {
+    "cells": 60,
+    "episodes_per_cell": 60,
+    "proposed_total_episodes": 3600,
+    "tracks": [
+      "straight-sprint-v1",
+      "slalom-v1",
+      "right-turn-train-v2",
+      "ramp-v1",
+      "left-turn-train-v2"
+    ],
+    "heldout": false,
+    "selection_rule": "final-checkpoint-only"
+  },
+  "not_proven": [
+    "Action/observation/reward equivalence and current v4 world reset perturbation distribution not yet scientifically registered as a complete training contract.",
+    "TRAIN-5 v2 draft's require_training_admission is an unconditional fail-closed gate.",
+    "Project training runner and PPO model training admission reject research Physics without a separate scientific capability/reviewer-approved registration.",
+    "Material physics empirical calibration and independent validation evidence missing under legacy WP7 scientific admission report.",
+    "Six-case frozen PPO smoke has not yet been executed on this new versioned protocol, so no smoke result may be inferred.",
+    "Per-cohort source/seed/admission review, stochastic evaluation criteria and immutable output lock not yet separately completed."
+  ],
+  "explicitly_not_authorized_actions": [
+    "PPO training",
+    "fine-tuning",
+    "HELD-OUT evaluation",
+    "FULL-06 scientific evaluation",
+    "scientific release"
+  ],
+  "training_permitted": false,
+  "smoke_permitted_by_this_review": false,
+  "separate_smoke_protocol": "configs/research/wp7-train5-frozen-ppo-smoke-v1.json",
+  "any_training_attempt_would_be_unregistered": true
+}

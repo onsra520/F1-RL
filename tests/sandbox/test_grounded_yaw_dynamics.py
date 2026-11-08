@@ -2,12 +2,12 @@
 from dataclasses import replace
 import pytest
 
-from src.simulation.grounded_yaw_dynamics import (
+from f1rl.sandbox.grounded_yaw_dynamics import (
     GroundedYawPolicy,GroundedYawResolutionError,advance_grounded_yaw,
 )
-from src.simulation.geometry.vector import Vec3
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.vehicle import VehicleState
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.vehicle import VehicleState
 
 POL=GroundedYawPolicy(
     1200.,1600.,1.25,1.25,18000.,18000.,.8,

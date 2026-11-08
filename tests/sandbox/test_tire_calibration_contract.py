@@ -2,14 +2,14 @@
 from dataclasses import replace
 import pytest
 
-from src.simulation.tire_calibration_contract import (
+from f1rl.sandbox.tire_calibration_contract import (
     TireHubGeometry,sample_spherical_tire_contact,
     MeasuredPhysicsParameter,PhysicsCalibrationRegister,
     REQUIRED_WP7_MEASUREMENTS,
 )
-from src.simulation.geometry.vector import Vec3
-from src.simulation.geometry.rotation import Quaternion
-from src.simulation.track.patch import PlanarSurfacePatch
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.geometry.rotation import Quaternion
+from f1rl.sandbox.track.patch import PlanarSurfacePatch
 
 HUBS=(
     Vec3(-.4,0.,.8),Vec3(.4,0.,.8),

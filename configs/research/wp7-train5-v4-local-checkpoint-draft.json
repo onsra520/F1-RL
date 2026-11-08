@@ -1,0 +1,36 @@
+{
+  "schema": "f1rl_wp7_train5_v4_local_checkpoint_draft_v1",
+  "source_baseline_commit": "a22bd65113a713d465b44d7b88d177243080aed1",
+  "status": "DRAFT_NOT_AUTHORIZED",
+  "scope": "SIMULATION_ONLY_TRAIN5_DEV_PROPOSAL",
+  "legacy_training_profile": "configs/recovery/wp7-pilot-200k.yml",
+  "legacy_training_sha256_canonical_lf": "79172c7ca71b211d23047b234d03eb5f9537b599dac982f2913a61ce03942b1f",
+  "budget": {
+    "vector_envs": 8,
+    "rollout_steps_per_env": 256,
+    "rollout_quantum": 2048,
+    "requested_steps": 200000,
+    "rollouts_per_policy": 98,
+    "actual_final_checkpoint_step": 200704,
+    "overshoot_per_policy": 704,
+    "models": 6,
+    "actual_total_steps": 1204224,
+    "checkpoint_strategy": "FINAL_ONLY_NO_INTERMEDIATE",
+    "checkpoint_steps": [
+      200704
+    ]
+  },
+  "permissions": {
+    "ppo_smoke": false,
+    "ppo_training": false,
+    "finetuning": false,
+    "heldout": false,
+    "full06": false,
+    "scientific_release": false
+  },
+  "owner_scientific_signature": false,
+  "reviewer_approval": false,
+  "global_seed_exception": "CLOSED_WITH_OWNER_ACCEPTED_EVIDENCE_EXCEPTION",
+  "reserved_seed_consumption": 0,
+  "notes": "Development-only source contract; no training or release rights. Prior v3 protocol and model artifacts remain immutable."
+}

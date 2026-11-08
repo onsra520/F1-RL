@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from src.training import TrainingRunConfig, TrainingRunner
+from f1rl.learning.training import TrainingRunConfig, TrainingRunner
 from tests.learning.training.mocks.mock_provenance import make_provenance
 from tests.learning.training.test_vector_env import _scenario_set
 

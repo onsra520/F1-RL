@@ -16,10 +16,18 @@ HEALTH = {
     "scientific_admission": "disabled",
     "protocol_version": "f1rl_runtime_v1",
     "source_sha256": "a" * 64,
+    "runtime_inputs_sha256": "b" * 64,
 }
 OPENAPI = {"info": {"title": "F1-RL Development Runtime", "version": "1.0.0"}}
 FRONTEND = '<title>Racing Sandbox · F1-RL</title><script type="module" src="/src/main.tsx"></script>'
 RUNTIME_MODULE = 'import.meta.env = {"BASE_URL": "/", "DEV": true, "PROD": false}; export const runtime = "ok";'
+
+
+@pytest.fixture(autouse=True)
+def isolated_web_root(monkeypatch, tmp_path):
+    monkeypatch.setattr(run, "WEB_ROOT", tmp_path)
+    monkeypatch.setattr(run, "_local_runtime_source_sha256", lambda: "a" * 64)
+    monkeypatch.setattr(run, "_local_runtime_inputs_sha256", lambda: "b" * 64)
 
 
 class Response(io.BytesIO):
@@ -139,6 +147,22 @@ def test_backend_openapi_version_must_match_before_reuse():
     assert "OpenAPI title or version" in output.getvalue()
 
 
+def test_backend_reuse_rejects_a_different_source():
+    with (patch.object(run, "_read_text", side_effect=lambda url: json.dumps(HEALTH if url.endswith("/health") else OPENAPI)),
+          patch.object(run, "_local_runtime_source_sha256", return_value="b" * 64)):
+        compatible, reason = run.backend_compatibility()
+    assert not compatible
+    assert "source" in reason
+
+
+def test_backend_reuse_rejects_different_runtime_inputs():
+    with (patch.object(run, "_read_text", side_effect=lambda url: json.dumps(HEALTH if url.endswith("/health") else OPENAPI)),
+          patch.object(run, "_local_runtime_inputs_sha256", return_value="c" * 64)):
+        compatible, reason = run.backend_compatibility()
+    assert not compatible
+    assert "input" in reason
+
+
 def test_foreign_frontend_port_is_reported_without_starting_or_stopping_processes():
     output = io.StringIO()
     with (
@@ -195,7 +219,7 @@ def test_backend_only_uses_current_python_and_cleans_owned_process_on_ctrl_c():
         assert run.main(["--backend-only"]) == 0
 
     command = popen.call_args.args[0]
-    assert command == [sys.executable, "-m", "src.runtime"]
+    assert command == [sys.executable, "-m", "f1rl.local_demo.runtime"]
     assert popen.call_args.kwargs["cwd"] == run.ROOT
     terminate.assert_called_once_with(process, graceful=True)
     browser.assert_not_called()
@@ -354,3 +378,44 @@ def test_help_and_exclusive_modes_are_declared():
     with pytest.raises(SystemExit) as mode_exit:
         run.main(["--backend-only", "--frontend-only"])
     assert mode_exit.value.code == 2
+
+
+def test_launcher_prefers_a_built_frontend_without_npm(tmp_path):
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text('<title>Racing Sandbox · F1-RL</title><script type="module" src="/assets/index.js"></script>', encoding="utf-8")
+    (dist / ".vite").mkdir()
+    (dist / ".vite" / "manifest.json").write_text("{}", encoding="utf-8")
+    with patch.object(run, "WEB_ROOT", tmp_path):
+        assert run._process_command("FRONTEND") == [sys.executable, "-m", "http.server", "5173", "--bind", "127.0.0.1", "--directory", str(dist)]
+    with (patch.object(run, "WEB_ROOT", tmp_path), patch.object(run.shutil, "which", return_value=None),
+          patch.object(run.subprocess, "Popen", return_value=Process()) as popen):
+        launcher = run.Launcher(run._parser().parse_args(["--frontend-only"]))
+        launcher._start("FRONTEND")
+        assert "http.server" in popen.call_args.args[0]
+
+
+def test_frontend_reuse_checks_production_bundle_matches_local_build(tmp_path):
+    dist = tmp_path / "dist"
+    assets = dist / "assets"
+    assets.mkdir(parents=True)
+    index = '<title>Racing Sandbox · F1-RL</title>\r\n<meta name="f1rl-runtime-url" content="http://127.0.0.1:8000"><script type="module" src="/assets/index.js"></script>'
+    (dist / "index.html").write_bytes(index.encode("utf-8"))
+    (assets / "index.js").write_text('known-build', encoding="utf-8")
+    manifest = dist / ".vite" / "manifest.json"
+    manifest.parent.mkdir()
+    manifest.write_text(json.dumps({"index.html": {"file": "assets/index.js"}}), encoding="utf-8")
+    with patch.object(run, "WEB_ROOT", tmp_path), patch.object(run, "_read_text", return_value=index), patch.object(run, "_read_bytes", return_value=b'known-build'):
+        assert run.frontend_compatibility()[0]
+    with patch.object(run, "WEB_ROOT", tmp_path), patch.object(run, "_read_text", return_value=index), patch.object(run, "_read_bytes", return_value=b'different-build'):
+        assert not run.frontend_compatibility()[0]
+    manifest.write_text(json.dumps({"index.html": {"file": "assets/index.js"}, "lazy": {"file": "assets/lazy.js"}}), encoding="utf-8")
+    with patch.object(run, "WEB_ROOT", tmp_path), patch.object(run, "_read_text", return_value=index), patch.object(run, "_read_bytes", return_value=b'known-build'):
+        assert not run.frontend_compatibility()[0]
+    (assets / "lazy.js").write_text('lazy-chunk', encoding="utf-8")
+    with patch.object(run, "WEB_ROOT", tmp_path), patch.object(run, "_read_text", return_value=index), patch.object(run, "_read_bytes", side_effect=[b'known-build', OSError('missing chunk')]):
+        assert not run.frontend_compatibility()[0]
+    wrong_runtime = index.replace("127.0.0.1:8000", "127.0.0.1:8001")
+    (dist / "index.html").write_bytes(wrong_runtime.encode("utf-8"))
+    with patch.object(run, "WEB_ROOT", tmp_path), patch.object(run, "_read_text", return_value=wrong_runtime):
+        assert not run.frontend_compatibility()[0]

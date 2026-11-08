@@ -1,24 +1,24 @@
 from pathlib import Path
 
-from src.rl.episode import EpisodeConfig
-from src.rl.experiments import ExperimentDefinition, resolve_track_split
-from src.rl.observation import ObservationConfig, ObservationEncoder
-from src.rl.rewards import (
+from f1rl.learning.episode import EpisodeConfig
+from f1rl.learning.experiments import ExperimentDefinition, resolve_track_split
+from f1rl.learning.observation import ObservationConfig, ObservationEncoder
+from f1rl.learning.rewards import (
     CollisionPenalty,
     RewardComposer,
     TargetProgressReward,
     TimePenalty,
 )
-from src.training import (
+from f1rl.learning.training import (
     F1RLEnvFactory,
     TrainingScenario,
     TrainingScenarioSet,
 )
-from src.core import SimulationConfig
-from src.simulation.geometry.vector import Vec3
-from src.simulation.perception import RangefinderSpec, SensorSuite
-from src.simulation.vehicle import VehicleParameters
-from src.tracks import build_initial_world_state, load_track_asset
+from f1rl.runtime import SimulationConfig
+from f1rl.sandbox.geometry.vector import Vec3
+from f1rl.sandbox.perception import RangefinderSpec, SensorSuite
+from f1rl.sandbox.vehicle import VehicleParameters
+from f1rl.track_assets import build_initial_world_state, load_track_asset
 
 
 PROFILE = Path("configs/experiments/ppo-generalization-v1.yml")

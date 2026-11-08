@@ -2,8 +2,8 @@
 from pathlib import Path
 import json
 import pytest
-from src.validation.wp7_protocol import digest
-from src.validation.wp7_train_acceptance import verify_gym_finish_prefix,run_acceptance,_write_new
+from f1rl.research.wp7_protocol import digest
+from f1rl.research.wp7_train_acceptance import verify_gym_finish_prefix,run_acceptance,_write_new
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -11,7 +11,7 @@ ROOT=Path(__file__).resolve().parents[2]
 @pytest.mark.parametrize('certificate',[None,{}, {'training_authorized':True},
     {'execution_profile':'pv5_v1','track_id':'heldout-track'}])
 def test_invalid_or_unadmitted_certificate_denied_before_factory(certificate,monkeypatch):
-    import src.validation.wp7_train_acceptance as module
+    import f1rl.research.wp7_train_acceptance as module
     def forbidden(*args,**kwargs):
         raise AssertionError('invalid certificate must not inspect source or construct factory')
     monkeypatch.setattr(module,'build_protocol',forbidden)
@@ -21,7 +21,7 @@ def test_invalid_or_unadmitted_certificate_denied_before_factory(certificate,mon
 
 
 def test_acceptance_refuses_existing_output_and_source_tree_before_allocation(tmp_path,monkeypatch):
-    import src.validation.wp7_train_acceptance as module
+    import f1rl.research.wp7_train_acceptance as module
     monkeypatch.setattr(module,'build_protocol',lambda *a,**k:pytest.fail('output must be rejected first'))
     with pytest.raises(ValueError,match='new evidence directory'):
         run_acceptance(ROOT,tmp_path)
@@ -42,8 +42,8 @@ def test_evidence_is_checksummed_and_never_overwrites_or_repairs_tampering(tmp_p
 
 
 def test_foreign_loaded_code_is_rejected_before_factory_or_protocol(tmp_path,monkeypatch):
-    import src.training.env_factory as factory_module
-    import src.validation.wp7_train_acceptance as module
+    import f1rl.learning.training.env_factory as factory_module
+    import f1rl.research.wp7_train_acceptance as module
     monkeypatch.setattr(factory_module,'__file__',str(tmp_path/'foreign-install'/'env_factory.py'))
     def forbidden(*args,**kwargs):
         raise AssertionError('foreign loaded module must be rejected first')

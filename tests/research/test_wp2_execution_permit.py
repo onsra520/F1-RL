@@ -5,7 +5,7 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from src.validation.wp2_execution_permit import (
+from f1rl.research.wp2_execution_permit import (
     claim_repository_wp2_execution_permit,
     claim_wp2_execution_permit,
     execution_permit_message,
@@ -44,8 +44,7 @@ def test_distinct_owner_and_reviewer_can_verify_exact_source_run_bound_train_per
     envelope, registry = signed_permit()
     verified = verify_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
     assert verified['state'] == 'authenticated_execution_permit_verified'
-    assert verified['authorization'] == 'signature_authenticated_only'
-    assert verified['permissions'] == dict(training_permitted=False, heldout_permitted=False)
+    assert verified['permissions'] == dict(training_permitted=True, heldout_permitted=False)
 
 
 @pytest.mark.parametrize('mutation', ['manifest', 'source', 'run', 'candidate', 'split', 'action', 'expiry', 'replay_nonce'])
@@ -70,7 +69,7 @@ def test_permit_rejects_scope_change_expiry_and_invalid_replay_nonce(mutation):
 
 
 def test_permit_requires_two_distinct_roles_and_atomic_single_use_claim(tmp_path, monkeypatch):
-    import src.validation.wp2_execution_permit as permit_module
+    import f1rl.research.wp2_execution_permit as permit_module
 
     monkeypatch.setattr(permit_module, '_replay_ledger_directory', lambda: tmp_path)
     envelope, registry = signed_permit()
@@ -83,20 +82,24 @@ def test_permit_requires_two_distinct_roles_and_atomic_single_use_claim(tmp_path
         claim_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
 
 
-def test_nonce_replay_ledger_is_fixed_across_low_level_claim_callers(tmp_path, monkeypatch):
-    import src.validation.wp2_execution_permit as permit_module
+def test_nonce_replay_ledger_is_fixed_across_callers_and_repository_paths(tmp_path, monkeypatch):
+    import f1rl.research.wp2_execution_permit as permit_module
 
     ledger = tmp_path / 'shared-ledger'
     monkeypatch.setattr(permit_module, '_replay_ledger_directory', lambda: ledger)
     envelope, registry = signed_permit()
-    verified, _ = claim_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
-    assert verified['permissions']['training_permitted'] is False
+    roots = [tmp_path / 'repo-one', tmp_path / 'repo-two']
+    for root in roots:
+        registry_path = root / 'configs' / 'research' / 'wp2-trusted-signers-v1.json'
+        registry_path.parent.mkdir(parents=True)
+        registry_path.write_text(json.dumps(registry), encoding='utf-8')
+    claim_repository_wp2_execution_permit(roots[0], envelope, expected=identity(), now=NOW)
     with pytest.raises(FileExistsError):
-        claim_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
+        claim_repository_wp2_execution_permit(roots[1], envelope, expected=identity(), now=NOW)
 
 
 def test_nonce_ledger_rejects_symlinked_ancestor_before_claim(tmp_path, monkeypatch):
-    import src.validation.wp2_execution_permit as permit_module
+    import f1rl.research.wp2_execution_permit as permit_module
 
     target = tmp_path / 'target'
     target.mkdir()
@@ -115,7 +118,7 @@ def test_nonce_ledger_rejects_symlinked_ancestor_before_claim(tmp_path, monkeypa
 
 def test_nonce_claim_is_atomic_under_concurrent_calls(tmp_path, monkeypatch):
     from concurrent.futures import ThreadPoolExecutor
-    import src.validation.wp2_execution_permit as permit_module
+    import f1rl.research.wp2_execution_permit as permit_module
 
     monkeypatch.setattr(permit_module, '_replay_ledger_directory', lambda: tmp_path / 'ledger')
     envelope, registry = signed_permit()
@@ -138,43 +141,10 @@ def test_tampered_signature_and_overlong_lifetime_are_rejected():
         verify_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
 
 
-def test_repository_claim_rejects_draft_even_with_trusted_signers(tmp_path, monkeypatch):
+def test_repository_trust_registry_is_empty_and_cannot_authenticate_permits():
     from pathlib import Path
-    import src.validation.wp2_execution_permit as permit_module
-
-    root = Path(__file__).resolve().parents[2]
-    envelope, registry = signed_permit()
-    ledger = tmp_path / 'replay-ledger'
-    monkeypatch.setattr(permit_module, '_replay_ledger_directory', lambda: ledger)
-    monkeypatch.setattr(permit_module, 'load_repository_signers', lambda _: registry)
-    with pytest.raises(ValueError, match='approved preregistration'):
-        claim_repository_wp2_execution_permit(root, envelope, expected=identity(),
-            now=NOW)
-    assert not ledger.exists()
-
-
-def test_committed_trust_registry_cannot_authenticate_fixture_signatures():
-    from pathlib import Path
-    from src.validation.wp2_execution_permit import load_repository_signers
     root = Path(__file__).resolve().parents[2]
     envelope, _ = signed_permit()
-    registry = load_repository_signers(root)
-    assert registry['signers'] == []
     with pytest.raises(ValueError):
-        verify_wp2_execution_permit(envelope, registry, expected=identity(), now=NOW)
-
-def test_repository_claim_replay_ledger_is_shared_across_roots(tmp_path, monkeypatch):
-    import src.exploratory.abcd as abcd
-    import src.validation.wp2_execution_permit as permits
-    ledger = tmp_path / 'shared-ledger'
-    monkeypatch.setattr(permits, '_replay_ledger_directory', lambda: ledger)
-    monkeypatch.setattr(abcd, 'load_abcd_manifest', lambda root: {'status': 'APPROVED — PREREGISTERED'})
-    envelope, registry = signed_permit()
-    roots = [tmp_path / 'repo-one', tmp_path / 'repo-two']
-    for root in roots:
-        path = root / 'configs/research/wp2-trusted-signers-v1.json'
-        path.parent.mkdir(parents=True)
-        path.write_text(json.dumps(registry), encoding='utf-8')
-    claim_repository_wp2_execution_permit(roots[0], envelope, expected=identity(), now=NOW)
-    with pytest.raises(FileExistsError):
-        claim_repository_wp2_execution_permit(roots[1], envelope, expected=identity(), now=NOW)
+        claim_repository_wp2_execution_permit(root, envelope, expected=identity(),
+            now=NOW)

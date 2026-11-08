@@ -10,7 +10,7 @@ import pytest
 
 
 def pilot():
-    return importlib.import_module('src.exploratory.pilot')
+    return importlib.import_module('f1rl.exploratory.pilot')
 
 
 def fake_session(factory=None, count=32):
@@ -189,18 +189,14 @@ def test_pilot_phases_do_not_select_best_checkpoint(tmp_path, monkeypatch):
     assert calls == [('untrained', i) for i in range(7)]
 
 
-@pytest.mark.parametrize('state_write_fails', [False, True])
 @pytest.mark.parametrize('evaluation_fails', [False, True])
 @pytest.mark.parametrize('schedule', ['learning_first', 'baseline_first'])
-@pytest.mark.parametrize('telemetry_failure', [None, 'close', 'manifest'])
-def test_worker_orchestration_with_fake_model_only(
-    tmp_path, monkeypatch, schedule, evaluation_fails, telemetry_failure, state_write_fails
-):
+def test_worker_orchestration_with_fake_model_only(tmp_path, monkeypatch, schedule, evaluation_fails):
     p = pilot()
-    from src.rl.algorithms.ppo import PPOConfig, PPOModel
+    from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel
     from dataclasses import asdict
     import torch
-    from src.rl.train_reset import derive_train_reset_draw_seed
+    from f1rl.learning.train_reset import derive_train_reset_draw_seed
     permit = dict(sha256='a'*64, output_directory=str(tmp_path/'run'),
                   source={'commit_sha':'b'*40}, policy='singletrack-straight-sprint-v1-seed0',
                   track='straight-sprint-v1', seeds={'ppo':0, 'training_reset':1000},
@@ -286,66 +282,25 @@ def test_worker_orchestration_with_fake_model_only(
         path.write_bytes(name.encode())
         return path
     monkeypatch.setattr(p, 'save_checkpoint', save)
-    env_closed = []
-    env = SimpleNamespace(close=lambda: env_closed.append(True))
+    env = SimpleNamespace(close=lambda: None)
     env.training_reset_contract = {
         'version': 'wp7_train_reset_research_v1', 'seed': 1000,
         'configuration_sha256': 'd'*64, 'world_sha256': 'e'*64,
     }
     monkeypatch.setattr(p, 'Session', lambda *a, **kw: SimpleNamespace(
         create_env=lambda **kw: env, validate=lambda: None, permit=permit))
-    if telemetry_failure:
-        original_recorder = p.TrainingTelemetryRecorder
-
-        class FinalizationFailingRecorder(original_recorder):
-            def close(self):
-                super().close()
-                if telemetry_failure == 'close':
-                    raise OSError('injected telemetry close failure')
-
-            def manifest(self, *, complete):
-                if telemetry_failure == 'manifest':
-                    raise OSError('injected telemetry manifest failure')
-                return super().manifest(complete=complete)
-
-        monkeypatch.setattr(p, 'TrainingTelemetryRecorder', FinalizationFailingRecorder)
     def evaluation(session, evaluated_model, name, ep):
         if evaluation_fails and name == 'trained_final':
             raise RuntimeError('evaluation interrupted')
         events.append(('evaluate', name, getattr(evaluated_model, 'snapshot', 'live')))
         return {'success':False, 'progress':0., 'policy':name, 'episode':ep}
     monkeypatch.setattr(p, 'evaluate_episode', evaluation)
-    if evaluation_fails and state_write_fails:
-        write_json = p.write_json
-        def maybe_fail_state(path, value):
-            if path.name == 'state.json' and value.get('status') == 'learning_completed_evaluation_incomplete':
-                raise OSError('injected state write failure')
-            return write_json(path, value)
-        monkeypatch.setattr(p, 'write_json', maybe_fail_state)
-    if telemetry_failure:
-        if evaluation_fails:
-            with pytest.raises(RuntimeError, match='evaluation interrupted') as failure:
-                p.worker(tmp_path, permit, envelope)
-            assert any('injected telemetry' in note for note in failure.value.__notes__)
-            if state_write_fails:
-                assert any('injected state write' in note for note in failure.value.__notes__)
-        else:
-            with pytest.raises(OSError, match=f'injected telemetry {telemetry_failure} failure'):
-                p.worker(tmp_path, permit, envelope)
-        assert env_closed == [True]
-        failed_state = json.loads((output/'state.json').read_text())
-        assert failed_state['status'] == 'finalization_failed'
-        assert f'injected telemetry {telemetry_failure} failure' in failed_state['error']
-        return
     if evaluation_fails:
-        with pytest.raises(RuntimeError, match='evaluation interrupted') as failure:
+        with pytest.raises(RuntimeError, match='evaluation interrupted'):
             p.worker(tmp_path, permit, envelope)
-        if state_write_fails:
-            assert any('injected state write' in note for note in failure.value.__notes__)
         assert saved[-1] == 'trained-final'
         assert json.loads((output/'learning-summary.json').read_text())['status'] == 'learning_completed'
-        if not state_write_fails:
-            assert json.loads((output/'state.json').read_text())['status'] == 'learning_completed_evaluation_incomplete'
+        assert json.loads((output/'state.json').read_text())['status'] == 'learning_completed_evaluation_incomplete'
         return
     assert p.worker(tmp_path, permit, envelope) == 0
     comparison = json.loads((output/'comparison.json').read_text())

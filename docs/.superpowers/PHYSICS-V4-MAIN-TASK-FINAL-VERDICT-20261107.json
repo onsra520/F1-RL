@@ -1,0 +1,139 @@
+{
+  "branch": "handoff/physics-v4-khanh-bang-20261106",
+  "direction_retraining": {
+    "left_v2": "NO_AUTOMATIC_RETRAINING_3_OF_3_NOMINAL_ZERO_SHOT_FINISH",
+    "mirror_left_v1": "NOT_ADMISSIBLE_HELDOUT_HASH_COLLISION",
+    "old_right_v1": "BLOCKED_CAUSAL_INFERENCE_0_OF_3_CRASH_AND_GATE_MISMATCH",
+    "right_v2": "NO_AUTOMATIC_RETRAINING_3_OF_3_NOMINAL_FINISH"
+  },
+  "evidence_sha256": {
+    "FINAL-REPORT.md": "9f672ae1b061ae5478f2f5dfcc4c5793529b038b90e97cfa37fbe98ebd738217",
+    "HANDOFF-01EF1E3-TRAIN5-PPO-SMOKE-LOCKED-ACCEPTANCE-20261107.json": "41d3ddf2a20801c442f2229ec241fb9aa1f7921f9ef518e575d1391362a58097",
+    "HANDOFF-F1B9AE4-PHYSICS-V4-ORIGINAL-73-FINAL-20261107.xml": "6f0213b91bc9d49893e23b5dba5291c51dd7422234e99d9ef25021e8822b6efa",
+    "HANDOFF-F1B9AE4-PHYSICS-V4-TARGETED-AND-LEGACY-85-FINAL-20261107.xml": "bbd54c4a7a55c4720c6656d5ad6d29bb95f51da5953bd7496e4772e9d622fc22",
+    "HANDOFF-F1B9AE4-TRAIN5-V3-LOCAL-217-20261107.xml": "3fac8b051372ff6507185dc0a86dae733e810046258435cdcaaf581c53d18b70",
+    "PHYSICS-V4-LEFT-TURN-PLAN.md": "98b8b9481cc4d0267c1ddaf1b085c97e809be4a210080c68db7f99ddead2569d",
+    "STEP3-PHYSICS-V4-DUAL-TURN-ACCEPTANCE.json": "0bbc1636fdb330d58d0808ad83c2b0d73e7d1b686d597d87796510c6788bd5d4",
+    "baseline-and-evidence-integrity.json": "6569bacd9ff6309ba8ac2bf432e4f37df748aa4e298b2c1454f489929add3407",
+    "driving-diagnosis.md": "cd8d6335b1fc01f383bdaa3fd788e55aa5b49f4e85a4d759b1bd2a6f4f84cbca",
+    "driving-nine-cases.json": "68fefcc81b1a17deb4e61b0c7956d4dc21d39bedbf75b8c70efe3f71a785378c",
+    "handoff-train5-engineering-junit.xml": "d8933c119a33b44e5804e73ab3a9e3408880bdb9567a35aad43548db708297bd",
+    "wp7-train5-global-seed-registry-owner-exception-20261107.json": "6a5099fd5860892d53b9f6b3ef6b49e1df4e7ccce318931a2f60f3dd5bfc344c",
+    "wp7-train5-paired-v2-registration.json": "f90474246b7c6903ff77723388caf05f5d07babc1e95a6604305f0f5ad674b1c"
+  },
+  "frozen_source_asset_model_count": 19,
+  "heldout_geometry_read": false,
+  "historical_baseline": "2417570f32f6879c2651bce37d88fd6ac83a2ea4",
+  "historical_full06": {
+    "cells": 96,
+    "episodes": 5760,
+    "rerun": false,
+    "tracks": 4
+  },
+  "historical_handoff_sha256_entries_verified": 30,
+  "left_v2_nonppo": {
+    "gates": [
+      113,
+      311,
+      497
+    ],
+    "replay": true,
+    "steps": 497
+  },
+  "limits": [
+    "Original exact left-turn-train-v1 mirror is REJECTED because it collides with HELD-OUT metadata; v2 is a separate source-bound remedy, not a v1 PASS.",
+    "Right TRAIN v1 historical 0/3 PPO crashes do not prove PPO was the sole cause; directed gate mismatch was observed and independent v1 feasibility was not established.",
+    "3/3 Right and 3/3 zero-shot Left on authored TRAIN v2 at one reset seed do not prove statistical generalization.",
+    "No physical hardware calibration, scientific training admission, HELD-OUT or new FULL-06.",
+    "Historical 2026-11-06 FINAL-REPORT.md remains unchanged; this is an append-only current decision."
+  ],
+  "literal_original_mirror_v1_100_percent": false,
+  "new_ppo_training_performed": false,
+  "new_training_seeds_consumed": 0,
+  "original_historical_report_preserved": true,
+  "overall": "SEVEN_ENGINEERING_TASKS_DISPOSITIONED_ON_VERSIONED_V2_AMENDMENT",
+  "recorded_at": "2026-11-07T17:51:47.131561+07:00",
+  "repo": "onsra520/F1-RL",
+  "right_v2_nonppo": {
+    "gates": [
+      113,
+      311,
+      497
+    ],
+    "replay": true,
+    "steps": 497
+  },
+  "schema": "f1rl_physics_v4_main_task_final_scope_disposition_v1",
+  "scientific_release_permission": false,
+  "smoke_cases": {
+    "A-seed2/left-turn-train-v2": {
+      "sha256": "ff8d29e87c455d08fd811f268bd4db1bd894a1373f8d2bf3425f36c46e1e605b",
+      "steps": 176,
+      "terminal": "finished"
+    },
+    "A-seed2/right-turn-train-v2": {
+      "sha256": "d799436dd189f5066d318136f334a5b90b5df4fb3fbbbb9d40b0e7d3d8e6d789",
+      "steps": 179,
+      "terminal": "finished"
+    },
+    "B-seed1/left-turn-train-v2": {
+      "sha256": "bb45a0a905ffa1d5577531cfc2cb6f40d9c22b6f377b37a78e563621c81d623d",
+      "steps": 177,
+      "terminal": "finished"
+    },
+    "B-seed1/right-turn-train-v2": {
+      "sha256": "c70565a81ce60ba3763145623077cac7154b993e02113a08237a221bd00f3f4c",
+      "steps": 177,
+      "terminal": "finished"
+    },
+    "C-seed0/left-turn-train-v2": {
+      "sha256": "d83eb6a276f65c74b225c22bfa8359a4f5b2acc854f649e1f461ea6b8ac52ebf",
+      "steps": 205,
+      "terminal": "finished"
+    },
+    "C-seed0/right-turn-train-v2": {
+      "sha256": "75e1c16a7cb4f1a9e8b187517d7a881e6b8805ffc2fcc27d482e590545f33500",
+      "steps": 203,
+      "terminal": "finished"
+    }
+  },
+  "tasks": {
+    "0": "PASS_NINE_HISTORICAL_EPISODES_DIAGNOSED",
+    "1": "PASS_HISTORICAL_FOUR_TRACK_AND_12_MODELS_FROZEN",
+    "2": "PASS_SEPARATE_PAIRED_V2_INSTEAD_OF_REJECTED_MIRROR_V1",
+    "3": "PASS_INDEPENDENT_NON_PPO_BOTH_V2_FINISHES_REPLAYED",
+    "4": "PASS_EXACT_SOURCE_73_ORIGINAL_61_PHYSICS_V4_24_OPTIONAL",
+    "5": "PASS_6_OF_6_FROZEN_PPO_TRAIN_V2_ONE_RESET_SEED",
+    "6": "PASS_CURRENT_FINAL_REPORT_WITH_PER_DIRECTION_RETRAINING_DECISION"
+  },
+  "test_groups": {
+    "original": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 73
+    },
+    "scoped_ci": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 108
+    },
+    "scoped_local": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 217
+    },
+    "targeted_and_legacy": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 85
+    }
+  },
+  "tested_source_anchor": "f1b9ae4d2a2dc16a7ecd9698ff31705f01c97932",
+  "training_permission": false,
+  "v1_heldout_metadata_collision": true,
+  "versioned_v2_replacement_accepted_engineering": true
+}

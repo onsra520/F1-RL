@@ -2,9 +2,9 @@ import math
 
 import pytest
 
-from src.rl.episode import RaceCheckpoint, RaceFinish, RaceRoute
-from src.evaluation.metrics import _normalized_route_progress
-from src.simulation.geometry.vector import Vec3
+from f1rl.learning.episode import RaceCheckpoint, RaceFinish, RaceRoute
+from f1rl.learning.evaluation.metrics import _normalized_route_progress
+from f1rl.sandbox.geometry.vector import Vec3
 
 
 def _straight() -> RaceRoute:

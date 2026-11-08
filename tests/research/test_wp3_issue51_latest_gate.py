@@ -1,15 +1,11 @@
 """Current V4V replay admission separates engineering crash from Eval success."""
 import json
-import os
-from pathlib import Path
 import pytest
-from src.validation.wp3_issue51_latest_gate import LATEST,OLD,source_bound_dev_crash_gate
+from f1rl.research.wp3_issue51_latest_gate import LATEST,OLD,source_bound_dev_crash_gate
 
-
-OLD = Path(os.environ.get("F1RL_WP3_EVIDENCE", str(OLD)))
 
 def test_latest_replay_does_not_mint_scientific_approval():
-    x=source_bound_dev_crash_gate(LATEST, OLD)
+    x=source_bound_dev_crash_gate()
     assert x["status"]=="BLOCKED"
     assert x["real_frozen_replay_cases"]==3
     assert x["development_only_completed_crash"]==1
