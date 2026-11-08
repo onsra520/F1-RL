@@ -79,6 +79,9 @@ jobs:
             tests/research/test_wp7_train5_v4_budget_and_metrics.py \
             tests/research/test_wp7_train5_v4_checkpoint_wiring.py \
             tests/research/test_wp7_train5_v4_admission.py \
+            tests/research/test_wp7_train5_v4_factory_preview.py \
+            tests/research/test_wp7_train5_v4_review_manifest.py \
+            tests/research/test_wp7_trusted_reviews.py \
             tests/learning/algorithms/test_ppo_frozen_initialization.py \
             tests/research/test_wp7_train5_v4_local_admission_audit.py \
             tests/learning/experiments/test_c2_protocol_v2.py \

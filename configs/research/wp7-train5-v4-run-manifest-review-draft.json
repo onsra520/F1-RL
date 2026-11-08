@@ -1,0 +1,161 @@
+{
+  "schema": "f1rl_train5_v4_run_manifest_review_draft_v1",
+  "status": "DRAFT_NOT_AUTHORIZED",
+  "hash_convention": "sha256; text normalized CRLF to LF; model zip raw bytes",
+  "protocol": {
+    "path": "configs/research/wp7-train5-v4-simulation-protocol-draft.json",
+    "sha256": "2df3b500df5e50f6153655492f064d9823c6334f2462079bb5d6b5a21ea2531d"
+  },
+  "review_source_bindings": {
+    "scripts/wp7_train5_v4_factory_preview.py": "57867fe5554b3837030abee7edbf206b8b07f0b18d05b262ffd037f97ad3ab3e",
+    "scripts/wp7_train5_v4_review_manifest.py": "f177aebd043d5357a585feeecde89a2fdb366463b5d8cfae3286d2923bb9ea2d",
+    "tests/research/test_wp7_train5_v4_factory_preview.py": "917e837bab87f9cf518a97766e8073d8b32e82898bdfed3343fc752be2f2a5e1",
+    "tests/research/test_wp7_train5_v4_review_manifest.py": "7cb9374e261d52126034306cec165b363a02baa874fb17f346e27b89a30a7896",
+    ".github/workflows/handoff-train5-engineering-preflight.yml": "a2e901fed7d37fd211eb03b89f891552b6f619613f32b49125d73808091f53a0"
+  },
+  "claim_scope": "SIMULATION_ONLY_FIVE_TRAIN_TRACKS",
+  "track_ids": [
+    "straight-sprint-v1",
+    "slalom-v1",
+    "right-turn-train-v2",
+    "ramp-v1",
+    "left-turn-train-v2"
+  ],
+  "runs": [
+    {
+      "cohort": "train5_from_scratch",
+      "replicate": 0,
+      "seeds": {
+        "ppo": 295585447,
+        "sampling": 3306072967,
+        "perturbation": 3954364937
+      },
+      "initial_checkpoint": null
+    },
+    {
+      "cohort": "train5_from_scratch",
+      "replicate": 1,
+      "seeds": {
+        "ppo": 1279974536,
+        "sampling": 1734672715,
+        "perturbation": 1492342567
+      },
+      "initial_checkpoint": null
+    },
+    {
+      "cohort": "train5_from_scratch",
+      "replicate": 2,
+      "seeds": {
+        "ppo": 1941130481,
+        "sampling": 171051932,
+        "perturbation": 62121140
+      },
+      "initial_checkpoint": null
+    },
+    {
+      "cohort": "train5_from_frozen_checkpoint",
+      "replicate": 0,
+      "seeds": {
+        "ppo": 390083067,
+        "sampling": 921124778,
+        "perturbation": 2088852152
+      },
+      "initial_checkpoint": "C-seed0"
+    },
+    {
+      "cohort": "train5_from_frozen_checkpoint",
+      "replicate": 1,
+      "seeds": {
+        "ppo": 3883536686,
+        "sampling": 2777317110,
+        "perturbation": 308109877
+      },
+      "initial_checkpoint": "B-seed1"
+    },
+    {
+      "cohort": "train5_from_frozen_checkpoint",
+      "replicate": 2,
+      "seeds": {
+        "ppo": 193597580,
+        "sampling": 3480417957,
+        "perturbation": 1147737241
+      },
+      "initial_checkpoint": "A-seed2"
+    }
+  ],
+  "frozen_checkpoints": {
+    "C-seed0": {
+      "path": "models/C-seed0/model-final.zip",
+      "sha256": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492"
+    },
+    "B-seed1": {
+      "path": "models/B-seed1/model-final.zip",
+      "sha256": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021"
+    },
+    "A-seed2": {
+      "path": "models/A-seed2/model-final.zip",
+      "sha256": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc"
+    }
+  },
+  "budget": {
+    "requested_steps": 200000,
+    "actual_final_steps": 200704,
+    "vector_envs": 8,
+    "rollout_steps": 256,
+    "checkpoint_strategy": "FINAL_ONLY"
+  },
+  "reset": {
+    "lateral_m": [
+      -0.5,
+      0.5
+    ],
+    "heading_deg": [
+      -5,
+      5
+    ],
+    "max_rejection_draws": 32,
+    "calibration": "ENGINEERING_ASSUMPTION_NOT_EMPIRICAL"
+  },
+  "development": {
+    "conditions": [
+      "nominal",
+      "perturbation"
+    ],
+    "episodes_per_cell": 60,
+    "cells": 60,
+    "total_episodes": 3600,
+    "thresholds": {
+      "nominal_finish_rate_min": 0.9,
+      "per_track_finish_rate_min": 0.8,
+      "hard_route_violation_rate_max": 0.02,
+      "certified_physical_crash_rate_max": 0.01,
+      "invalid_or_uncertified_physics_count_max": 0
+    },
+    "seed_derivation": "SHA256 canonical JSON [domain, protocol_sha256, cohort, replicate, track_id, condition, episode_index]; first 4 bytes big-endian uint32; domain=F1RL-TRAIN5-V4-DEV-SEED; reject collisions among development, reserved training and vector-rank seeds before use",
+    "analysis": [
+      "report counts and rates for every policy, cohort, track, condition and 60-episode cell",
+      "report 95% Wilson intervals within each cell only as conditional descriptive intervals; do not pool episodes as independent policies",
+      "report the mean and range of policy-level rates per cohort; no formal between-cohort significance test with three policies per cohort",
+      "report zero-event upper bounds and 60-episode detection probability 1-(1-p)^60 as conditional on independent episodes; no unqualified power claim",
+      "apply the fixed thresholds without post-hoc tuning; describe cohort comparisons without causal finetuning claims"
+    ]
+  },
+  "permissions": {
+    "training": false,
+    "finetuning": false,
+    "heldout": false,
+    "full06": false,
+    "scientific_release": false
+  },
+  "review": {
+    "owner_signature": false,
+    "independent_reviewer_signature": false,
+    "statistical_power_review": "PENDING"
+  },
+  "limitations": [
+    "source lock does not authenticate reviewer or owner",
+    "factory preview is not connected to an admitting runner",
+    "seed history and compatibility gates remain open",
+    "training-specific execution permit is absent"
+  ]
+}
