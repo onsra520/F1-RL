@@ -55,6 +55,39 @@ def test_linux_lf_checkout_of_windows_crlf_registered_source_is_accepted(monkeyp
     assert receipt["registered_windows_sha256_via_pinned_eol_bridge"] >= 1
 
 
+def test_windows_crlf_checkout_of_lf_registered_source_is_accepted(monkeypatch):
+    name = "configs/research/wp7-spatial-ground-protocol-v1.json"
+    path = ROOT / name
+    blob = subprocess.run(
+        ["git", "-C", str(ROOT), "show", "HEAD:" + name],
+        check=True, capture_output=True,
+    ).stdout
+    original = Path.read_bytes
+
+    def bytes_override(candidate):
+        if candidate == path:
+            return blob.replace(b"\n", b"\r\n")
+        return original(candidate)
+
+    monkeypatch.setattr(Path, "read_bytes", bytes_override)
+    assert h.audit(ROOT)["source_file_git_blob_hashes_verified"] == 44
+
+
+def test_changed_source_is_not_accepted_as_line_ending_conversion(monkeypatch):
+    name = "configs/research/wp7-spatial-ground-protocol-v1.json"
+    path = ROOT / name
+    original = Path.read_bytes
+
+    def bytes_override(candidate):
+        if candidate == path:
+            return original(candidate) + b"changed"
+        return original(candidate)
+
+    monkeypatch.setattr(Path, "read_bytes", bytes_override)
+    with pytest.raises(h.HandoffPreflightError):
+        h.audit(ROOT)
+
+
 @pytest.mark.parametrize("field,value", [
     ("status", "approved"),
     ("training_permission", True),
