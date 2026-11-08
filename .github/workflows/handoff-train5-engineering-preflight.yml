@@ -80,6 +80,7 @@ jobs:
             tests/research/test_wp7_train5_v4_checkpoint_wiring.py \
             tests/research/test_wp7_train5_v4_admission.py \
             tests/research/test_wp7_train5_v4_factory_preview.py \
+            tests/research/test_wp7_train5_execution_authorization.py \
             tests/research/test_wp7_train5_v4_review_manifest.py \
             tests/research/test_wp7_trusted_reviews.py \
             tests/learning/algorithms/test_ppo_frozen_initialization.py \

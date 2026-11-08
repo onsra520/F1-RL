@@ -10,8 +10,10 @@ from f1rl.research.wp7_protocol import _unique
 
 REVIEW_SOURCES = (
     "scripts/wp7_train5_v4_factory_preview.py",
+    "scripts/wp7_train5_execution_authorization.py",
     "scripts/wp7_train5_v4_review_manifest.py",
     "tests/research/test_wp7_train5_v4_factory_preview.py",
+    "tests/research/test_wp7_train5_execution_authorization.py",
     "tests/research/test_wp7_train5_v4_review_manifest.py",
     ".github/workflows/handoff-train5-engineering-preflight.yml",
 )
