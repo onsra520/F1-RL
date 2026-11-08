@@ -1,18 +1,18 @@
 from copy import deepcopy
 from pathlib import Path
-import json
 
 import pytest
 
-from scripts.wp7_train5_v4_review_manifest import MANIFEST, build_review_manifest, validate_review_manifest
+from scripts.wp7_train5_v4_review_manifest import MANIFEST, build_review_manifest, load_review_manifest, validate_review_manifest
 
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_saved_manifest_matches_sources_and_grants_no_permission():
-    manifest = json.loads((ROOT / MANIFEST).read_text(encoding="utf8"))
+    manifest, digest = load_review_manifest(ROOT)
     validate_review_manifest(ROOT, manifest)
+    assert len(digest) == 64
     assert len(manifest["track_ids"]) == 5
     assert len(manifest["runs"]) == 6
     assert len(manifest["frozen_checkpoints"]) == 3
@@ -25,6 +25,27 @@ def test_manifest_tampering_is_rejected(field):
     manifest[field] = None
     with pytest.raises(ValueError, match="manifest differs"):
         validate_review_manifest(ROOT, manifest)
+
+
+def test_numeric_zero_does_not_replace_false_permission():
+    manifest = deepcopy(build_review_manifest(ROOT))
+    manifest["permissions"]["training"] = 0
+    with pytest.raises(ValueError, match="manifest differs"):
+        validate_review_manifest(ROOT, manifest)
+
+
+def test_duplicate_manifest_fields_are_rejected(monkeypatch):
+    target = ROOT / MANIFEST
+    original = Path.read_bytes
+
+    def duplicate(path):
+        if path == target:
+            return b'{"permissions": {}, "permissions": {}}'
+        return original(path)
+
+    monkeypatch.setattr(Path, "read_bytes", duplicate)
+    with pytest.raises(ValueError, match="duplicate"):
+        load_review_manifest(ROOT)
 
 
 @pytest.mark.parametrize("relative", ["scripts/wp7_train5_v4_factory_preview.py", "models/C-seed0/model-final.zip"])

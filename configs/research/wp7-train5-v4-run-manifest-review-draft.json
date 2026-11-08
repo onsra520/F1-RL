@@ -8,9 +8,9 @@
   },
   "review_source_bindings": {
     "scripts/wp7_train5_v4_factory_preview.py": "57867fe5554b3837030abee7edbf206b8b07f0b18d05b262ffd037f97ad3ab3e",
-    "scripts/wp7_train5_v4_review_manifest.py": "f177aebd043d5357a585feeecde89a2fdb366463b5d8cfae3286d2923bb9ea2d",
+    "scripts/wp7_train5_v4_review_manifest.py": "87040826ff742ca1c3d3a60d10d69bcd0904837bbb531fcd263d9fe636488c51",
     "tests/research/test_wp7_train5_v4_factory_preview.py": "917e837bab87f9cf518a97766e8073d8b32e82898bdfed3343fc752be2f2a5e1",
-    "tests/research/test_wp7_train5_v4_review_manifest.py": "7cb9374e261d52126034306cec165b363a02baa874fb17f346e27b89a30a7896",
+    "tests/research/test_wp7_train5_v4_review_manifest.py": "2d404fa0277f9266d84c4755af7067dd90503e1c9e84502ef8d4a4faf26100d0",
     ".github/workflows/handoff-train5-engineering-preflight.yml": "a2e901fed7d37fd211eb03b89f891552b6f619613f32b49125d73808091f53a0"
   },
   "claim_scope": "SIMULATION_ONLY_FIVE_TRAIN_TRACKS",

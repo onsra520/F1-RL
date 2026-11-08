@@ -5,6 +5,7 @@ from pathlib import Path
 
 from f1rl.research.wp7_train5_v4_admission import load_v4_protocol, validate_v4_protocol
 from f1rl.research.wp7_train5_v4_checkpoint import FROZEN_CHECKPOINTS
+from f1rl.research.wp7_protocol import _unique
 
 
 REVIEW_SOURCES = (
@@ -60,8 +61,26 @@ def build_review_manifest(root):
 
 
 def validate_review_manifest(root, manifest):
-    if manifest != build_review_manifest(root):
+    def canonical(value):
+        return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False)
+
+    try:
+        matches = canonical(manifest) == canonical(build_review_manifest(root))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("review manifest differs from verified sources or draft protocol") from exc
+    if not matches:
         raise ValueError("review manifest differs from verified sources or draft protocol")
+
+
+def load_review_manifest(root):
+    root = Path(root).resolve(strict=True)
+    path = root / MANIFEST
+    if path.is_symlink() or not path.resolve(strict=True).is_relative_to(root):
+        raise ValueError("review manifest must stay inside the checkout")
+    data = path.read_bytes().replace(b"\r\n", b"\n")
+    manifest = json.loads(data, object_pairs_hook=_unique)
+    validate_review_manifest(root, manifest)
+    return manifest, sha256(data).hexdigest()
 
 
 if __name__ == "__main__":
