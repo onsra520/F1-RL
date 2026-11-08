@@ -1,13 +1,15 @@
 # TRAIN-5 v4 review packet — draft, admission closed
 
-This packet prepares a future independent review. It is not an approval, signed run manifest, execution permit or authorization to train. The owner reports that no independent reviewer is currently available. CI evidence must match the exact candidate being reviewed.
+This packet prepares a future independent review. It is not an approval, signed run manifest, execution permit or authorization to train. The owner nominated GitHub account `onsra520` as scientific reviewer; acceptance, independence from the TRAIN-5 work, and an authenticated public key remain unverified. CI evidence must match the exact candidate being reviewed.
+
+For a personal-repository alternative, see `docs/.superpowers/TRAIN5-V4-PERSONAL-REPO-AMENDMENT-DRAFT-20261109.md`: it proposes an internal review and scoped owner decision with disclosed evidence gaps, not an independent scientific review. It is not yet adopted and does not authorize execution.
 
 ## Material to review
 
 - Prior candidate: `f2cc663ccd7c54be697b68d530eee0ec4db616c9`. GitHub Actions run `42507231870` passed Windows and Ubuntu on that exact commit. This is partial compatibility evidence, not an admission; later changes require fresh exact-commit CI.
 - Draft protocol: `configs/research/wp7-train5-v4-simulation-protocol-draft.json`, file SHA-256 `2df3b500df5e50f6153655492f064d9823c6334f2462079bb5d6b5a21ea2531d`. Its own permissions remain false. Recompute all hashes when preparing the version for signature; this file hash is not an authenticated signature or necessarily the protocol's internal canonical digest.
-- Unsigned review manifest: `configs/research/wp7-train5-v4-run-manifest-review-draft.json`, SHA-256 after CRLF-to-LF normalization `291939c969dddc23ee48f3e8cfd6e98a70a187708035b23ba27d921080782fdc`. It binds the saved protocol, review adapter and tests, six run allocations and three raw checkpoint hashes. This is not an authenticated execution manifest or admission.
-- Factory preview: `scripts/wp7_train5_v4_factory_preview.py`, SHA-256 `57867fe5554b3837030abee7edbf206b8b07f0b18d05b262ffd037f97ad3ab3e`; tests: `tests/research/test_wp7_train5_v4_factory_preview.py`, SHA-256 `917e837bab87f9cf518a97766e8073d8b32e82898bdfed3343fc752be2f2a5e1`. The adapter is bound by the separate draft review manifest but is not part of the committed protocol's source lock and is not a training runner.
+- Unsigned review manifest: `configs/research/wp7-train5-v4-run-manifest-review-draft.json`, SHA-256 after CRLF-to-LF normalization `8d31f608571b88e475b9430fefd0c3d77f174a00a9ed63b0d43880d917f2b338`. It binds the saved protocol, review adapter and tests, six run allocations and three raw checkpoint hashes. This is not an authenticated execution manifest or admission.
+- Factory preview: `scripts/wp7_train5_v4_factory_preview.py`, SHA-256 `57867fe5554b3837030abee7edbf206b8b07f0b18d05b262ffd037f97ad3ab3e`; tests: `tests/research/test_wp7_train5_v4_factory_preview.py`, SHA-256 `d9b15f2f88cb14564b52e01379dc5a4019b3c3d272e645e72387efbed8378e3b`. The adapter is bound by the separate draft review manifest but is not part of the committed protocol's source lock and is not a training runner.
 - Evidence, search limits, all nine open gates and local receipt locations: `docs/.superpowers/TRAIN5-V4-FACTORY-EVIDENCE-20261109.md`. The cross-platform CI on `f2cc663` includes the initial manifest and adapter; the later manifest-validation changes require their own tests and cross-platform CI.
 - Existing review verifier: `f1rl/research/wp7_trusted_reviews.py`. It verifies owner and independent reviewer signatures over a protocol and run-manifest digest against a separately authenticated registry. Its output explicitly does not permit training.
 
@@ -21,4 +23,4 @@ This packet prepares a future independent review. It is not an approval, signed 
 6. Prepare and validate a real run manifest for the exact candidate, then obtain the required authenticated owner and independent scientific reviews. Connect a separately authenticated, training-specific permit through all guards and verify fail-closed behavior for missing, modified, expired and wrong-scope evidence. Review signatures alone do not grant execution rights.
 7. Commit the reviewed candidate and run Windows/Linux CI for that exact commit. Training remains blocked unless all applicable evidence and authorization requirements pass. HELD-OUT remains a separate decision.
 
-Current state: **no independent reviewer, no authenticated training permit, no six-run training**.
+Current state: **reviewer nominated but not authenticated or confirmed independent; no authenticated training permit; no six-run training**.

@@ -2,6 +2,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+import numpy as np
 
 from f1rl.learning.action import ActionContract
 from f1rl.learning.gym_environment import F1RLEnv
@@ -82,3 +83,28 @@ def test_refuses_unverified_external_witnesses(tmp_path, monkeypatch):
 def test_matching_factories_still_cannot_obtain_training_admission(prepared, tmp_path):
     with pytest.raises(ValueError, match="admission is not granted"):
         preview.require_registered_factory_admission(ROOT, tmp_path, prepared, cohort="train5_from_scratch", replicate=0)
+
+
+def test_five_factories_reset_deterministically_with_separate_fixture_seed(tmp_path, monkeypatch):
+    monkeypatch.setattr(preview, "audit", lambda *_: {"external_witness_status": "FOUR_EXTERNAL_WITNESSES_SHA256_VERIFIED"})
+    scenarios = preview.preview_registered_factories(ROOT, tmp_path, cohort="train5_from_scratch", replicate=0)
+    protocol, _ = preview.load_v4_protocol(ROOT)
+    fixture_seed = 0
+    assert all(fixture_seed not in run["seeds"].values() for run in protocol["runs"])
+    assert all(fixture_seed not in range(run["seeds"]["ppo"], run["seeds"]["ppo"] + protocol["budget"]["vector_envs"]) for run in protocol["runs"])
+    for row in scenarios.scenarios:
+        factory = replace(row.factory, reset_config=replace(row.factory.reset_config, seed=fixture_seed))
+        env1, env2 = factory.create(reset_rank=0), factory.create(reset_rank=0)
+        try:
+            obs1, info1 = env1.reset()
+            obs2, info2 = env2.reset()
+            assert np.array_equal(obs1, obs2)
+            assert np.isfinite(obs1).all()
+            assert info1["train_reset"] == info2["train_reset"]
+            assert info1["train_reset"]["track_id"] == row.track_id
+            assert info1["train_reset"]["seed"] == fixture_seed
+            assert info1["train_reset"]["scientific_evidence"] is False
+            assert env1.requires_scientific_admission
+        finally:
+            env1.close()
+            env2.close()
