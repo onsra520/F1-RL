@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+import numpy as np
 import pytest
 
 from f1rl.learning.algorithms.ppo import PPOConfig, PPOModel, _validate_training_admission
@@ -77,6 +78,32 @@ def test_fake_signed_run_crosses_eight_selector_and_ppo_guards(authorized_fixtur
     state = json.loads((result.run_directory / "state.json").read_text(encoding="utf8"))
     assert state["execution_scope"] == "INTERNAL_SIMULATION_ONLY"
     assert state["internal_authorization"] == envelope
+
+
+def test_fake_model_resets_and_steps_all_eight_selectors(authorized_fixture, monkeypatch):
+    from f1rl.learning.gym_environment import F1RLEnv
+    from f1rl.research import wp7_train5_internal_execution as execution
+
+    runner, scenarios, envelope, evidence, output, model = authorized_fixture
+    monkeypatch.setattr(F1RLEnv, "reset", lambda self, **kwargs: (
+        np.zeros(self.observation_space.shape, dtype=self.observation_space.dtype), {}))
+    monkeypatch.setattr(F1RLEnv, "step", lambda self, action: (
+        np.zeros(self.observation_space.shape, dtype=self.observation_space.dtype), 0.0, False, False, {}))
+
+    class SteppingFakeModel(model):
+        def learn(self, total_timesteps, **kwargs):
+            _validate_training_admission(self.env)
+            observations = self.env.reset()
+            assert observations.shape[0] == 8
+            assert all(info["track_id"] in preview.TRAIN5_IDS for info in self.env.reset_infos)
+            self.env.step(np.zeros((8, *self.env.action_space.shape), dtype=self.env.action_space.dtype))
+            assert execution._active.get()["steps"] == 8
+            execution._active.get()["steps"] = 200704
+            return MockPPOModel.learn(self, total_timesteps, **kwargs)
+
+    monkeypatch.setattr(core_runner, "PPOModel", SteppingFakeModel)
+    result = runner.run_authorized_multi(scenarios, envelope=envelope, evidence_root=evidence)
+    assert result.actual_total_timesteps == 200704
 
 
 @pytest.mark.parametrize("replicate", [1, 2])

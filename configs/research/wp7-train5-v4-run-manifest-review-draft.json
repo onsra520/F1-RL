@@ -13,7 +13,7 @@
     "scripts/wp7_train5_v4_review_manifest.py": "07952f587cec3dc74ba535e0368d81be306484e526b761bc7ff72b4a031514de",
     "tests/research/test_wp7_train5_v4_factory_preview.py": "d9b15f2f88cb14564b52e01379dc5a4019b3c3d272e645e72387efbed8378e3b",
     "tests/research/test_wp7_train5_execution_authorization.py": "6a5f9f1d2be4620afdf63f4951cf2baeca49431833dee092a4635a05e9cdee17",
-    "tests/research/test_wp7_train5_authorized_integration.py": "0e208052742b3f8c31d7a56a8d189ea1a29739cbaf0aec834053d6030bb8008c",
+    "tests/research/test_wp7_train5_authorized_integration.py": "6ece278d9a9ad1728096c9f9eb4e12af8819c204c760be073f52488f85cfd10c",
     "tests/research/test_wp7_train5_v4_review_manifest.py": "2d404fa0277f9266d84c4755af7067dd90503e1c9e84502ef8d4a4faf26100d0",
     ".github/workflows/handoff-train5-engineering-preflight.yml": "039730057c4fe2d9dc419eb47fe71acc656ea86e88582624442377aafb8cadd0"
   },
