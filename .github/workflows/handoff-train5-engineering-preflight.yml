@@ -82,6 +82,8 @@ jobs:
             tests/research/test_wp7_train5_v4_factory_preview.py \
             tests/research/test_wp7_train5_execution_authorization.py \
             tests/research/test_wp7_train5_authorized_integration.py \
+            tests/research/test_wp7_train5_batch.py \
+            tests/research/test_wp7_train5_development.py \
             tests/research/test_wp7_train5_v4_review_manifest.py \
             tests/research/test_wp7_trusted_reviews.py \
             tests/learning/algorithms/test_ppo_frozen_initialization.py \

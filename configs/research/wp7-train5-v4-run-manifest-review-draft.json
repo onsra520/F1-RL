@@ -4,18 +4,22 @@
   "hash_convention": "sha256; text normalized CRLF to LF; model zip raw bytes",
   "protocol": {
     "path": "configs/research/wp7-train5-v4-simulation-protocol-draft.json",
-    "sha256": "5f935c1557f8ecadf7a4319d0e55a8d37b68c83321fffa0417b17e0309367580"
+    "sha256": "eefe5ea9338b9e18fbdd2b400d7b3c4a61e4786e61df32254783cf4fff5a5836"
   },
   "review_source_bindings": {
-    "configs/research/wp7-train5-internal-owner-key-v1.json": "5d3b623fbcd2ecfd6f0cce81efab54505c09627a44b30ba73d6ff733ed74428b",
+    "configs/research/wp7-train5-internal-owner-key-v1.json": "0647e141612d223d962139fe5fe680dc88182f6be3a4b47be97fc1901adbd131",
+    "scripts/wp7_train5_batch.py": "5d870d8cc44006eac14a5fdb7e825753b5c8fa6357e55b111522b775b8586883",
+    "scripts/wp7_train5_v4_development.py": "c527c298750e975d02d348f0263fe6601ff5d517f36073e5a770f95f7f3d39d1",
     "scripts/wp7_train5_v4_factory_preview.py": "57867fe5554b3837030abee7edbf206b8b07f0b18d05b262ffd037f97ad3ab3e",
-    "scripts/wp7_train5_execution_authorization.py": "1b87f1cc421b487d3b5190b279b31b7961508c032b293a93f58594ee7bb6da5c",
-    "scripts/wp7_train5_v4_review_manifest.py": "07952f587cec3dc74ba535e0368d81be306484e526b761bc7ff72b4a031514de",
+    "scripts/wp7_train5_execution_authorization.py": "271843ee9b238dacc2d5b7e69b74b05a77ad83c9d58748d15f85d265d4a8258f",
+    "scripts/wp7_train5_v4_review_manifest.py": "4d1968fed6f4237e49f5acaa9c2a5d915697de2d564f8197a57316e69264d188",
     "tests/research/test_wp7_train5_v4_factory_preview.py": "d9b15f2f88cb14564b52e01379dc5a4019b3c3d272e645e72387efbed8378e3b",
-    "tests/research/test_wp7_train5_execution_authorization.py": "6a5f9f1d2be4620afdf63f4951cf2baeca49431833dee092a4635a05e9cdee17",
-    "tests/research/test_wp7_train5_authorized_integration.py": "6ece278d9a9ad1728096c9f9eb4e12af8819c204c760be073f52488f85cfd10c",
+    "tests/research/test_wp7_train5_execution_authorization.py": "1d2179f13da18b93235af317523a4a226e78434eb3e8b81f7822bee536ecf4f3",
+    "tests/research/test_wp7_train5_authorized_integration.py": "1bc45680fd76ba43f9a908f9dd18c7c1a70ffffb4de9090dbd1d7a75620f0dfc",
+    "tests/research/test_wp7_train5_batch.py": "222e8b85077f54ecb75a89de01be7d8f2a17b188b70b899862c050a1d563d559",
+    "tests/research/test_wp7_train5_development.py": "8a8d0103599860517b8e080db9cb8197ccf03f703e244f8c8a90c4f506169b2e",
     "tests/research/test_wp7_train5_v4_review_manifest.py": "2d404fa0277f9266d84c4755af7067dd90503e1c9e84502ef8d4a4faf26100d0",
-    ".github/workflows/handoff-train5-engineering-preflight.yml": "039730057c4fe2d9dc419eb47fe71acc656ea86e88582624442377aafb8cadd0"
+    ".github/workflows/handoff-train5-engineering-preflight.yml": "94f647cbe93de0bf9671b35b1958e21fa1e4528728044b81ef1dc55351386617"
   },
   "claim_scope": "SIMULATION_ONLY_FIVE_TRAIN_TRACKS",
   "track_ids": [
@@ -142,7 +146,10 @@
       "report the mean and range of policy-level rates per cohort; no formal between-cohort significance test with three policies per cohort",
       "report zero-event upper bounds and 60-episode detection probability 1-(1-p)^60 as conditional on independent episodes; no unqualified power claim",
       "apply the fixed thresholds without post-hoc tuning; describe cohort comparisons without causal finetuning claims"
-    ]
+    ],
+    "policy_inference": "stochastic_cpu",
+    "policy_seed_derivation": "SHA256 canonical JSON [domain, protocol_sha256, cohort, replicate, track_id, condition, episode_index]; first 4 bytes big-endian uint32; domain=F1RL-TRAIN5-V4-DEV-POLICY-SEED; reject collisions with environment, training, historical and policy seeds before use",
+    "tilt_envelope_outcome": "report_separately_as_valid_nonfinish"
   },
   "permissions": {
     "training": false,

@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import json
 import hashlib
 import random
+import subprocess
 from pathlib import Path
 from weakref import WeakSet
 
@@ -43,11 +44,13 @@ def verify_run(root, output, cohort, replicate, envelope):
     protocol, protocol_sha = load_v4_protocol(root)
     validate_v4_protocol(root, protocol)
     manifest, manifest_sha = load_review_manifest(root)
+    head = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True,
+                          text=True, check=True).stdout.strip()
     if not any(row["cohort"] == cohort and row["replicate"] == replicate for row in protocol["runs"]):
         raise ValueError("unregistered TRAIN-5 run")
     owner_key = _owner_public_key(root, manifest["review_source_bindings"][OWNER_KEY])
     verify_authorization(envelope, owner_key, protocol_sha256=protocol_sha,
-                         manifest_sha256=manifest_sha, cohort=cohort, replicate=replicate,
+                         manifest_sha256=manifest_sha, source_commit=head, cohort=cohort, replicate=replicate,
                          output_root=str(output))
     return protocol
 

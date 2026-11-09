@@ -25,6 +25,22 @@ def test_protocol_allocations_and_development_seeds_are_deterministic():
     assert [run["initial_checkpoint"] for run in protocol["runs"][3:]] == ["C-seed0", "B-seed1", "A-seed2"]
 
 
+def test_stochastic_policy_seeds_are_reproducible_and_separate_from_environment():
+    from f1rl.research.wp7_train5_v4_admission import development_policy_seeds
+
+    protocol, digest = load_v4_protocol(ROOT)
+    env = development_seeds(ROOT, protocol, digest)
+    policy = development_policy_seeds(ROOT, protocol, digest)
+    assert policy == development_policy_seeds(ROOT, protocol, digest)
+    assert set(policy) == set(env)
+    assert len(set(policy.values())) == 3600
+    assert not set(policy.values()).intersection(env.values())
+    reserved = {seed for run in protocol["runs"] for seed in run["seeds"].values()}
+    reserved.update(seed for run in protocol["runs"] for seed in range(
+        run["seeds"]["ppo"], run["seeds"]["ppo"] + protocol["budget"]["vector_envs"]))
+    assert not set(policy.values()).intersection(reserved)
+
+
 @pytest.mark.parametrize("mutation", ["seed", "checkpoint", "threshold", "permission", "exception"])
 def test_protocol_rejects_unregistered_changes(mutation):
     protocol, _ = load_v4_protocol(ROOT)

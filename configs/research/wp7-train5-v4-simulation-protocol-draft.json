@@ -118,7 +118,10 @@
       "report the mean and range of policy-level rates per cohort; no formal between-cohort significance test with three policies per cohort",
       "report zero-event upper bounds and 60-episode detection probability 1-(1-p)^60 as conditional on independent episodes; no unqualified power claim",
       "apply the fixed thresholds without post-hoc tuning; describe cohort comparisons without causal finetuning claims"
-    ]
+    ],
+    "policy_inference": "stochastic_cpu",
+    "policy_seed_derivation": "SHA256 canonical JSON [domain, protocol_sha256, cohort, replicate, track_id, condition, episode_index]; first 4 bytes big-endian uint32; domain=F1RL-TRAIN5-V4-DEV-POLICY-SEED; reject collisions with environment, training, historical and policy seeds before use",
+    "tilt_envelope_outcome": "report_separately_as_valid_nonfinish"
   },
   "seed_exception": {
     "historical_18_status": "CLOSED_WITH_OWNER_ACCEPTED_EVIDENCE_EXCEPTION",
@@ -252,16 +255,16 @@
     "f1rl/research/wp7_robustness_gate.py": "442d4062f4f8163848f6dc2d00449dd9cc8516eb8d58809f403d285907d908e5",
     "f1rl/research/wp7_run_manifest.py": "fbd3f51910fcdaab2fe5dd7ed1e106bd1091de3bc2b7da472e56a93706a6e8f1",
     "f1rl/research/wp7_track_feasibility.py": "a0b6b53080f6e48d07993bbafb33da0e88537f40efb3afc0ea2ca8e10f5e64ab",
-    "f1rl/research/wp7_train5_internal_execution.py": "dce05ed7c5f0cb87c2811474455eb000c9c9de0a02d2ba6d6918f05e1c238da8",
+    "f1rl/research/wp7_train5_internal_execution.py": "701b6d3966bc036aff8a43f8049d67724f5c4d5ff2038f8e6b9fd9ae042996ac",
     "f1rl/research/wp7_train5_reset_perturbation_v3.py": "26677c0ce4bdab41f7f1693203231b1364cc346ea9badee59c70e1666630a40c",
     "f1rl/research/wp7_train5_v2_protocol.py": "2a3abe43eb5ed4c18c98b5263125dd5ae95bdd6405d37da4a7ddb12d07f45707",
     "f1rl/research/wp7_train5_v3_dev_metrics.py": "9040711902059f62cb260bdba3d4b2e0b348b9552f914f4ad65ff6cbf5ed5ade",
-    "f1rl/research/wp7_train5_v4_admission.py": "a32f864127ebd5e3d60b831cb2aff2d25df9e257151d48f8f2de23350f0a2e8e",
+    "f1rl/research/wp7_train5_v4_admission.py": "721a65137b22838d3f2f9c857cf19b1d246650c506cd50cc6fb3c8cf7090ba2f",
     "f1rl/research/wp7_train5_v4_budget.py": "056a7fd5ca21cd0bb8a9920a937771907c5cba387b7f7d4a826858a2cc6fa59f",
     "f1rl/research/wp7_train5_v4_checkpoint.py": "876ff661a7dd43feb6a3aaa7e7ba1bb1a4b12faa2a047561f7b67c6f0ea0ef86",
-    "f1rl/research/wp7_train5_v4_dev_metrics.py": "b91fb78a882a06f57281d8aeeaede49e1ed06664c31554ddacd30d178f1f9044",
+    "f1rl/research/wp7_train5_v4_dev_metrics.py": "2722b726cd6dc13ab745690903e322fe3f2f927c89a3822b1c4737b8c44e120b",
     "f1rl/research/wp7_train5_v4_local_audit.py": "29b56d7a080bac6366e44ce37edef3b392edaa1cebc5c07a48c323448e9fdb59",
-    "f1rl/research/wp7_train5_v4_runner.py": "8366a9c27b73666ae64b75f503a9440af204ecd343bb6188686ef4301724795c",
+    "f1rl/research/wp7_train5_v4_runner.py": "e2c5c89ad95b106f81cdce5ce25300adf235f89cf8bf92ab3126d009982362af",
     "f1rl/research/wp7_train_acceptance.py": "4141b8ed0e14ac1bdb9014806f302c0047cbf69e9620dee6f5469c652fa9762a",
     "f1rl/research/wp7_trusted_reviews.py": "14e032a58c74b0dd02ce77f775e83fc9dd1f18950b1f8346efda049679ae511f",
     "f1rl/runtime/__init__.py": "48a5340af5b3fd5b73648eb49c05df74e43f08ef07bb33567f5fd1a5ac80ee1c",

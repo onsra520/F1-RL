@@ -10,12 +10,16 @@ from f1rl.research.wp7_protocol import _unique
 
 REVIEW_SOURCES = (
     "configs/research/wp7-train5-internal-owner-key-v1.json",
+    "scripts/wp7_train5_batch.py",
+    "scripts/wp7_train5_v4_development.py",
     "scripts/wp7_train5_v4_factory_preview.py",
     "scripts/wp7_train5_execution_authorization.py",
     "scripts/wp7_train5_v4_review_manifest.py",
     "tests/research/test_wp7_train5_v4_factory_preview.py",
     "tests/research/test_wp7_train5_execution_authorization.py",
     "tests/research/test_wp7_train5_authorized_integration.py",
+    "tests/research/test_wp7_train5_batch.py",
+    "tests/research/test_wp7_train5_development.py",
     "tests/research/test_wp7_train5_v4_review_manifest.py",
     ".github/workflows/handoff-train5-engineering-preflight.yml",
 )

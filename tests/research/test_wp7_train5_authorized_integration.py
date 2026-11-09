@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from dataclasses import replace
 from hashlib import sha256
 import json
+import subprocess
 from pathlib import Path
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -33,6 +34,8 @@ def make_authorized_fixture(tmp_path, monkeypatch, cohort="train5_from_scratch",
     now = datetime.now(timezone.utc)
     output = (tmp_path / "runs").resolve()
     payload = {"schema": "train5_local_execution_review_v1", "purpose": "simulation_only_train5",
+               "source_commit": subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+                                                capture_output=True, text=True, check=True).stdout.strip(),
                "protocol_sha256": protocol_sha, "manifest_sha256": manifest_sha,
                "cohort": cohort, "replicate": replicate, "output_root": str(output),
                "nonce": "2" * 32, "issued_at_utc": (now - timedelta(minutes=1)).isoformat(),
@@ -272,7 +275,15 @@ def test_missing_owner_key_rejected_before_allocation(authorized_fixture, monkey
 
     runner, scenarios, envelope, evidence, output, model = authorized_fixture
     monkeypatch.undo()
-    with pytest.raises(ValueError, match="hexadecimal"):
+    original = Path.read_bytes
+
+    def missing(path):
+        if path == ROOT / execution.OWNER_KEY:
+            raise FileNotFoundError(path)
+        return original(path)
+
+    monkeypatch.setattr(Path, "read_bytes", missing)
+    with pytest.raises((FileNotFoundError, ValueError)):
         runner.run_authorized_multi(scenarios, envelope=envelope, evidence_root=evidence)
     assert not model.instances
     assert not output.exists()

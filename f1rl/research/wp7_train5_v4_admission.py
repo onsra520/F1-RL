@@ -12,6 +12,7 @@ class V4AdmissionError(ValueError):
 
 
 SEED_DERIVATION = "SHA256 canonical JSON [domain, protocol_sha256, cohort, replicate, track_id, condition, episode_index]; first 4 bytes big-endian uint32; domain=F1RL-TRAIN5-V4-DEV-SEED; reject collisions among development, reserved training and vector-rank seeds before use"
+POLICY_SEED_DERIVATION = "SHA256 canonical JSON [domain, protocol_sha256, cohort, replicate, track_id, condition, episode_index]; first 4 bytes big-endian uint32; domain=F1RL-TRAIN5-V4-DEV-POLICY-SEED; reject collisions with environment, training, historical and policy seeds before use"
 ANALYSIS = ["report counts and rates for every policy, cohort, track, condition and 60-episode cell",
             "report 95% Wilson intervals within each cell only as conditional descriptive intervals; do not pool episodes as independent policies",
             "report the mean and range of policy-level rates per cohort; no formal between-cohort significance test with three policies per cohort",
@@ -101,6 +102,9 @@ def validate_v4_protocol(root: Path, protocol: dict) -> None:
         raise V4AdmissionError("reset assumptions differ")
     development = protocol.get("development", {})
     if (development.get("conditions") != ["nominal", "perturbation"]
+            or development.get("policy_inference") != "stochastic_cpu"
+            or development.get("policy_seed_derivation") != POLICY_SEED_DERIVATION
+            or development.get("tilt_envelope_outcome") != "report_separately_as_valid_nonfinish"
             or (development.get("episodes_per_cell"), development.get("cells"), development.get("total_episodes")) != (60, 60, 3600)
             or development.get("seed_derivation") != SEED_DERIVATION or development.get("analysis") != ANALYSIS
             or development.get("thresholds") != {"nominal_finish_rate_min": .9, "per_track_finish_rate_min": .8,
@@ -162,6 +166,29 @@ def development_seeds(root: Path, protocol: dict, protocol_sha256: str) -> dict:
     return seeds
 
 
+def development_policy_seeds(root: Path, protocol: dict, protocol_sha256: str) -> dict:
+    env = development_seeds(root, protocol, protocol_sha256)
+    reserved = set(env.values())
+    for run in protocol["runs"]:
+        reserved.update(run["seeds"].values())
+        reserved.update(range(run["seeds"]["ppo"], run["seeds"]["ppo"] + protocol["budget"]["vector_envs"]))
+    registration = json.loads((Path(root) / "configs/research/wp7-train5-paired-v2-registration.json").read_text(encoding="utf8"))
+    for group in registration["proposed_training_seeds"].values():
+        for run in group:
+            reserved.update(run.values())
+            reserved.update(range(run["ppo"], run["ppo"] + 8))
+    result = {}
+    for key in env:
+        payload = ["F1RL-TRAIN5-V4-DEV-POLICY-SEED", protocol_sha256, *key]
+        encoded = json.dumps(payload, separators=(",", ":"), ensure_ascii=True).encode("ascii")
+        seed = int.from_bytes(sha256(encoded).digest()[:4], "big")
+        if seed in reserved:
+            raise V4AdmissionError("policy seed collision; no retry permitted")
+        result[key] = seed
+        reserved.add(seed)
+    return result
+
+
 def training_vector_seed_overlaps(protocol: dict) -> dict:
     owners = {}
     for run in protocol["runs"]:
@@ -175,6 +202,7 @@ def assess_v4_admission(root: Path, *, review_envelope=None, run_manifest_sha256
     protocol, protocol_sha256 = load_v4_protocol(root)
     validate_v4_protocol(root, protocol)
     development_seeds(root, protocol, protocol_sha256)
+    development_policy_seeds(root, protocol, protocol_sha256)
     matrix_bytes = (Path(root) / "configs/research/wp7-core-readiness-matrix-v1.json").read_bytes().replace(b"\r\n", b"\n")
     if sha256(matrix_bytes).hexdigest() != "2d7c126715f95e13ce93682c9fb70ea958d547fae605d736cbbbbac1e2ae9549":
         raise V4AdmissionError("compatibility matrix differs from locked source")

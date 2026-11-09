@@ -15,15 +15,17 @@ def authorization_message(payload):
 
 
 def verify_authorization(envelope, public_key, *, protocol_sha256, manifest_sha256,
-                         cohort, replicate, output_root, now=None):
+                         source_commit, cohort, replicate, output_root, now=None):
     """Check bytes and scope only; a caller-supplied key is not a trust anchor."""
     _fields(envelope, "payload signature_hex")
     payload = envelope["payload"]
-    _fields(payload, "schema purpose protocol_sha256 manifest_sha256 cohort replicate output_root nonce issued_at_utc expires_at_utc accept_missing_seed_history accept_missing_c2_replay accept_internal_review_pending")
+    _fields(payload, "schema purpose source_commit protocol_sha256 manifest_sha256 cohort replicate output_root nonce issued_at_utc expires_at_utc accept_missing_seed_history accept_missing_c2_replay accept_internal_review_pending")
     _hex(protocol_sha256, 32)
     _hex(manifest_sha256, 32)
+    _hex(source_commit, 20)
     if (payload["schema"] != "train5_local_execution_review_v1"
             or payload["purpose"] != "simulation_only_train5"
+            or payload["source_commit"] != source_commit
             or payload["protocol_sha256"] != protocol_sha256
             or payload["manifest_sha256"] != manifest_sha256
             or cohort not in ("train5_from_scratch", "train5_from_frozen_checkpoint")

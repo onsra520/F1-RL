@@ -54,6 +54,15 @@ def test_rollout_budget_v4_is_actual_not_rounded_down():
     assert result["heldout_permission"] is False
 
 
+def test_valid_roll_envelope_exit_is_counted_separately():
+    records = rows()
+    records[0]["outcome"] = "tilt_envelope_exit"
+    result = evaluate_dev_metrics_v4(records, LEGACY, load_v4_budget(ROOT), PILOT)
+    assert result["tilt_envelope_exit_count"] == 1
+    assert result["certified_physical_crash_rate"] == 0
+    assert result["invalid_or_uncertified_physics_count"] == 0
+
+
 @pytest.mark.parametrize("field, value", [
     ("requested_steps", 200704),
     ("rollout_quantum", 2000),

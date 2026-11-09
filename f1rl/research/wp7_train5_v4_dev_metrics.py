@@ -22,7 +22,7 @@ REPLICATES=(0,1,2)
 EPISODES_PER_CELL=60
 OUTCOMES=frozenset({
     "finished", "valid_step_limit", "hard_route_violation",
-    "certified_physical_crash", "invalid_physics",
+    "certified_physical_crash", "invalid_physics", "tilt_envelope_exit",
 })
 SHA=re.compile(r"[0-9a-f]{64}\Z")
 
@@ -137,6 +137,7 @@ def evaluate_dev_metrics_v4(records: list[dict], contract: dict, protocol: dict,
         },
         "hard_route_violation_rate":rate(counts["hard_route_violation"],n),
         "certified_physical_crash_rate":rate(counts["certified_physical_crash"],n),
+        "tilt_envelope_exit_count":counts["tilt_envelope_exit"],
         "invalid_or_uncertified_physics_count":counts["invalid"],
         "mean_episode_return":counts["return_sum"]/n,
         "only_train_tracks":True,

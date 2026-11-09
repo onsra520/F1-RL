@@ -12,7 +12,7 @@
 
 The owner nominates GitHub account `onsra520` for an internal scientific/technical review. An actual review or acknowledgement on the exact proposed source and manifest may be recorded through GitHub if the person accepts; do not describe it as independent unless their role and independence are established. Owner review is recorded separately. This draft proposes replacing mandatory external reviewer PKI for this **internal engineering scope only**, not fabricating a review or changing existing scientific freeze or HELD-OUT conditions.
 
-The existing local exploratory path already distinguishes explicit, scope-bound owner acknowledgement from a cryptographic identity claim. The TRAIN-5 internal path instead uses a separate, exact-run owner signature and a process-local capability; its owner public-key registry is empty until the owner enrolls a key. Existing straight-track exploratory permissions do not authorize TRAIN-5 and are not reused as if they did.
+The existing local exploratory path already distinguishes explicit, scope-bound owner acknowledgement from a cryptographic identity claim. The TRAIN-5 internal path instead uses a separate, exact-run owner signature and a process-local capability. The owner has confirmed and enrolled their public key; no real run authorization has been signed. Existing straight-track exploratory permissions do not authorize TRAIN-5 and are not reused as if they did.
 
 ## Disclosures requiring an explicit owner decision
 

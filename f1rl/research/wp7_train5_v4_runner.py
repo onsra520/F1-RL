@@ -120,7 +120,18 @@ class V4TrainingRunner(TrainingRunner):
             model = core.PPOModel.create(env, self._config.ppo)
             if self._model_initializer is not None:
                 self._model_initializer(model)
-            model.learn(self._config.total_timesteps)
+            if self._authorized_context is not None:
+                next_report = 8192
+
+                def report(steps):
+                    nonlocal next_report
+                    if steps >= next_report:
+                        print(f"TRAIN-5 {self._registered_run['cohort']} replicate {self._registered_run['replicate']}: {steps}/200704 steps", flush=True)
+                        next_report = ((steps // 8192) + 1) * 8192
+
+                model.learn(self._config.total_timesteps, progress_hook=report)
+            else:
+                model.learn(self._config.total_timesteps)
             actual = model.num_timesteps
             if self._authorized_context is not None:
                 from .wp7_train5_internal_execution import require_completed_steps

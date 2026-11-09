@@ -21,6 +21,7 @@ def signed_fixture():
     payload = {
         "schema": "train5_local_execution_review_v1",
         "purpose": "simulation_only_train5",
+        "source_commit": "c" * 40,
         "protocol_sha256": "a" * 64,
         "manifest_sha256": "b" * 64,
         "cohort": "train5_from_scratch",
@@ -41,18 +42,21 @@ def test_scoped_fake_owner_signature_is_verified_without_granting_training():
     envelope, public_key, now = signed_fixture()
     result = verify_authorization(envelope, public_key,
                                   protocol_sha256="a" * 64, manifest_sha256="b" * 64,
+                                  source_commit="c" * 40,
                                   cohort="train5_from_scratch", replicate=0,
                                   output_root="D:/fixture-output", now=now)
     assert result["signature_verified"] is True
     assert result["training_permitted"] is False
 
 
-@pytest.mark.parametrize("failure", ["signature", "protocol", "manifest", "replicate", "expiry", "output", "nonce", "seed_exception", "c2_exception", "review_pending"])
+@pytest.mark.parametrize("failure", ["signature", "source", "protocol", "manifest", "replicate", "expiry", "output", "nonce", "seed_exception", "c2_exception", "review_pending"])
 def test_forged_expired_or_wrong_scope_signature_is_rejected(failure):
     envelope, public_key, now = signed_fixture()
     payload = envelope["payload"]
     if failure == "signature":
         envelope["signature_hex"] = "00" * 64
+    elif failure == "source":
+        payload["source_commit"] = "d" * 40
     elif failure == "protocol":
         payload["protocol_sha256"] = "c" * 64
     elif failure == "manifest":
@@ -73,7 +77,7 @@ def test_forged_expired_or_wrong_scope_signature_is_rejected(failure):
         payload["accept_missing_c2_replay"] = False
     with pytest.raises(ValueError):
         verify_authorization(envelope, public_key, protocol_sha256="a" * 64,
-                             manifest_sha256="b" * 64, cohort="train5_from_scratch",
+                             manifest_sha256="b" * 64, source_commit="c" * 40, cohort="train5_from_scratch",
                              replicate=0, output_root="D:/fixture-output", now=now)
 
 
@@ -82,7 +86,7 @@ def test_signed_fixture_does_not_unlock_eight_real_track_selectors(tmp_path, mon
     scenarios = preview.preview_registered_factories(ROOT, tmp_path, cohort="train5_from_scratch", replicate=0)
     envelope, public_key, now = signed_fixture()
     receipt = verify_authorization(envelope, public_key, protocol_sha256="a" * 64,
-                                   manifest_sha256="b" * 64, cohort="train5_from_scratch", replicate=0,
+                                   manifest_sha256="b" * 64, source_commit="c" * 40, cohort="train5_from_scratch", replicate=0,
                                    output_root="D:/fixture-output", now=now)
     assert receipt["training_permitted"] is False
     env = make_multi_track_vector_env(scenarios, VectorEnvConfig(n_envs=8), sampling_seed=0)
@@ -100,7 +104,7 @@ def test_runner_still_denies_when_only_untrusted_signature_was_verified(tmp_path
     scenarios = preview.preview_registered_factories(ROOT, tmp_path, cohort="train5_from_scratch", replicate=0)
     envelope, public_key, now = signed_fixture()
     verify_authorization(envelope, public_key, protocol_sha256="a" * 64,
-                         manifest_sha256="b" * 64, cohort="train5_from_scratch", replicate=0,
+                         manifest_sha256="b" * 64, source_commit="c" * 40, cohort="train5_from_scratch", replicate=0,
                          output_root="D:/fixture-output", now=now)
     MockPPOModel.reset()
     monkeypatch.setattr(core_runner, "PPOModel", MockPPOModel)
