@@ -187,6 +187,24 @@ def test_cli_builds_engineering_intent_without_running_training(tmp_path, monkey
     assert 'engineering_only' in capsys.readouterr().out
 
 
+def test_cli_denies_local_execution_without_explicit_engineering_mode(tmp_path, monkeypatch, capsys):
+    cli = importlib.import_module('f1rl.exploratory.cli')
+    from hashlib import sha256
+    from pathlib import Path
+    from f1rl.exploratory import pilot
+    root = Path(__file__).resolve().parents[2]
+    config = root/'config.yml'
+    output = tmp_path/'run'
+    permit = dict(source={'commit_sha':'b'*40}, config_sha256=sha256(config.read_bytes()).hexdigest(),
+        seeds={'training_reset':1234}, output_directory=str(output))
+    permit_path = tmp_path/'permit.json'
+    permit_path.write_text(json.dumps(permit), encoding='utf-8')
+    monkeypatch.setattr(pilot, 'supervise', lambda *args: pytest.fail('execution started without intent'))
+    assert cli.main(['execute', '--permit', str(permit_path), '--source-commit-sha', 'b'*40,
+        '--config', str(config), '--seed', '1234', '--output-directory', str(output)]) == 2
+    assert json.loads(capsys.readouterr().out)['status'] == 'denied'
+
+
 def test_strict_json_rejects_duplicates(tmp_path):
     p = tmp_path/'bad.json'
     p.write_text('{"purpose":false,"purpose":true}', encoding='utf-8')
