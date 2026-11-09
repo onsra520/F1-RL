@@ -1,0 +1,43 @@
+{
+  "candidate_id": "C",
+  "collision_rate": null,
+  "completed_at": "2026-10-23T08:31:35.559195+00:00",
+  "event_log_sha256": "3b849953ef6c5281286bd77a6c51c59d0de084bdcf09303de36e175f87246b52",
+  "expected_episodes": 60,
+  "failure_reasons": {
+    "step_limit": 42
+  },
+  "hard_route_violation_rate": null,
+  "heldout_access": false,
+  "invalid_episode": {
+    "candidate_id": "C",
+    "episode": 42,
+    "error": "terminal flags are inconsistent with unsuccessful episode",
+    "error_type": "ValueError",
+    "model_id": "C-seed2",
+    "model_sha256": "156ee0f2194f3aedb36cce3917cc4121994b53fa0f0c942c2de548b9e2ea32b7",
+    "seed_index": 2,
+    "stratum": "randomized_train",
+    "track_id": "ramp-v1",
+    "valid": false
+  },
+  "invalid_episodes": 1,
+  "mean_collision_count": 0.0,
+  "mean_completed_checkpoints": 0.0,
+  "mean_episode_duration_seconds": 50.0,
+  "mean_route_progress": 0.09356351153230694,
+  "mean_steering_rate_rms_rad_per_s": 9.68825922935093,
+  "model_id": "C-seed2",
+  "model_sha256": "156ee0f2194f3aedb36cce3917cc4121994b53fa0f0c942c2de548b9e2ea32b7",
+  "schema_version": "f1rl_wp3_train_eval_cell_v1",
+  "scientific_evidence": false,
+  "seed_index": 2,
+  "sha256": "8b833ae8c5394b280a7f373b78fdcd01a8d476d199a58c8f69c6cb10aca7d4ff",
+  "status": "invalid_aborted",
+  "stratum": "randomized_train",
+  "success_count": 0,
+  "timeout_rate": null,
+  "track_id": "ramp-v1",
+  "valid_autonomous_finish_rate": null,
+  "valid_episodes": 42
+}

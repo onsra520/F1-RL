@@ -1,0 +1,2 @@
+# Treat evidence as bytes, do not normalize line endings.
+* -text

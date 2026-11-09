@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560">
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="500.0" y="34" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" font-weight="bold">TRAIN Evaluation Outcomes by Candidate</text>
+<rect x="145" y="211.9" width="90" height="218.1" fill="#18845d"/>
+<rect x="145" y="211.9" width="90" height="0.0" fill="#b53030"/>
+<rect x="145" y="203.5" width="90" height="8.4" fill="#cf601b"/>
+<rect x="145" y="203.5" width="90" height="0.0" fill="#6e3ca0"/>
+<rect x="145" y="203.5" width="90" height="0.0" fill="#8b969e"/>
+<text x="190.0" y="452.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#222">A</text>
+<rect x="335" y="252.5" width="90" height="177.5" fill="#18845d"/>
+<rect x="335" y="252.5" width="90" height="0.0" fill="#b53030"/>
+<rect x="335" y="191.6" width="90" height="60.8" fill="#cf601b"/>
+<rect x="335" y="191.6" width="90" height="0.0" fill="#6e3ca0"/>
+<rect x="335" y="191.6" width="90" height="0.0" fill="#8b969e"/>
+<text x="380.0" y="452.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#222">B</text>
+<rect x="525" y="260.4" width="90" height="169.6" fill="#18845d"/>
+<rect x="525" y="260.4" width="90" height="0.0" fill="#b53030"/>
+<rect x="525" y="70.0" width="90" height="190.4" fill="#cf601b"/>
+<rect x="525" y="70.0" width="90" height="0.0" fill="#6e3ca0"/>
+<rect x="525" y="70.0" width="90" height="0.0" fill="#8b969e"/>
+<text x="570.0" y="452.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#222">C</text>
+<rect x="715" y="430.0" width="90" height="0.0" fill="#18845d"/>
+<rect x="715" y="430.0" width="90" height="0.0" fill="#b53030"/>
+<rect x="715" y="190.2" width="90" height="239.8" fill="#cf601b"/>
+<rect x="715" y="190.2" width="90" height="0.0" fill="#6e3ca0"/>
+<rect x="715" y="190.2" width="90" height="0.0" fill="#8b969e"/>
+<text x="760.0" y="452.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#222">D</text>
+<rect x="130" y="473" width="14" height="14" fill="#18845d"/>
+<text x="152.0" y="485.0" text-anchor="start" font-family="Arial,sans-serif" font-size="12" fill="#222">valid_finish</text>
+<rect x="400" y="473" width="14" height="14" fill="#b53030"/>
+<text x="422.0" y="485.0" text-anchor="start" font-family="Arial,sans-serif" font-size="12" fill="#222">hard_route_violation</text>
+<rect x="670" y="473" width="14" height="14" fill="#cf601b"/>
+<text x="692.0" y="485.0" text-anchor="start" font-family="Arial,sans-serif" font-size="12" fill="#222">timeout</text>
+<rect x="130" y="495" width="14" height="14" fill="#6e3ca0"/>
+<text x="152.0" y="507.0" text-anchor="start" font-family="Arial,sans-serif" font-size="12" fill="#222">collision</text>
+<rect x="400" y="495" width="14" height="14" fill="#8b969e"/>
+<text x="422.0" y="507.0" text-anchor="start" font-family="Arial,sans-serif" font-size="12" fill="#222">other</text>
+</svg>
