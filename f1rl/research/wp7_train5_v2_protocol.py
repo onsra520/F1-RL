@@ -10,6 +10,7 @@ from dataclasses import asdict, replace
 from hashlib import sha256
 import json
 from pathlib import Path
+import subprocess
 
 from ..learning.pilot_preflight import TRAIN_IDS
 from ..learning.reconstruction import RecoveryCandidate, build_training_scenarios
@@ -20,8 +21,9 @@ from ..sandbox.independent_suspension_dynamics import SuspensionDynamicsState
 from ..track_assets import load_track_manifest
 from .wp3_eval_only_coordinator import apply_runtime_profile, FULL06_RUNTIME_PROFILE
 
-SCHEMA="wp7_train5_paired_v2_source_bound_proposal_v1"
-REGISTRATION="configs/research/wp7-train5-paired-v2-registration.json"
+SCHEMA="wp7_train5_paired_v2_portable_source_revision_v1"
+REGISTRATION="configs/research/wp7-train5-paired-v2-portable-source-revision-v1.json"
+HISTORICAL_REGISTRATION="configs/research/wp7-train5-paired-v2-registration.json"
 MANIFEST="assets/tracks/manifest-five-track-paired-v2.json"
 CANDIDATE="configs/recovery/wp7-c2-five-track-paired-v2.yml"
 EXPERIMENT="configs/experiments/ppo-generalization-five-track-paired-v2.yml"
@@ -98,6 +100,13 @@ class Train5PreflightError(ValueError):
 
 def _hash_bytes(data:bytes)->str:
     return sha256(data).hexdigest()
+
+
+def _git_blob(root:Path, commit:str, name:str)->bytes:
+    result=subprocess.run(["git","-C",str(root),"show",f"{commit}:{name}"],
+                          capture_output=True,check=False)
+    _assert(result.returncode==0,"source revision Git blob missing: "+name)
+    return result.stdout
 
 
 def _digest(doc:object)->str:
@@ -255,10 +264,12 @@ def validate_preview(root:Path, *, registration_file:Path, evidence_root:Path,
     reg=json.loads(regpath.read_text(encoding="utf8"),object_pairs_hook=_unique)
     required={"schema_version","status","baseline_head","split_identity","train_ids",
               "heldout_ids","candidate","experiment","manifest",
-              "runtime_profile","source_sha256","evidence_sha256",
+              "runtime_profile","source_sha256","git_blob_sha256","evidence_sha256",
               "seed_audit_status","training_permission","smoke_permission",
               "heldout_permission","owner_approval","global_seed_registry_receipt",
-              "proposed_training_seeds","proposed_design","preflight_digest"}
+              "proposed_training_seeds","proposed_design","preflight_digest",
+              "source_binding_contract","source_anchor_commit","parent_registration_sha256",
+              "revision_reason"}
     _assert(set(reg)==required and reg["schema_version"]==SCHEMA
             and reg["status"]=="draft_not_authorized"
             and reg["baseline_head"]=="1de279c37e62a27531d661480d20fa6e095c4e84"
@@ -267,7 +278,9 @@ def validate_preview(root:Path, *, registration_file:Path, evidence_root:Path,
             and reg["manifest"]==MANIFEST
             and reg["train_ids"]==list(TRAIN5_IDS)
             and reg["heldout_ids"]==list(HELDOUT_IDS)
-            and reg["runtime_profile"]==RUNTIME_SPEC,
+            and reg["runtime_profile"]==RUNTIME_SPEC
+            and reg["source_binding_contract"]=="SHA256_OF_GIT_BLOB_BYTES_CANONICAL_LF_V1"
+            and reg["revision_reason"]=="Portable source verification; historical registration remains immutable",
             "TRAIN-5 v2 registration fields/roster/mode drifted")
     _assert(reg["preflight_digest"]==_digest({k:v for k,v in reg.items()
                                            if k!="preflight_digest"}),
@@ -284,12 +297,28 @@ def validate_preview(root:Path, *, registration_file:Path, evidence_root:Path,
               "status":"proposal_only_no_episodes_executed"},
             "train/evaluation design needs a new source-bound revision")
     _assert(type(reg["source_sha256"]) is dict
-            and set(reg["source_sha256"])==set(SOURCE_FILES),
+            and set(reg["source_sha256"])==set(SOURCE_FILES)
+            and type(reg["git_blob_sha256"]) is dict
+            and set(reg["git_blob_sha256"])==set(SOURCE_FILES),
             "source lock missing or contains extra dependencies")
+    anchor=reg["source_anchor_commit"]
+    _assert(type(anchor) is str and len(anchor)==40
+            and all(c in "0123456789abcdef" for c in anchor),
+            "portable source anchor must be a full Git commit")
+    ancestry=subprocess.run(["git","-C",str(root),"merge-base","--is-ancestor",anchor,"HEAD"],
+                            capture_output=True,check=False)
+    _assert(ancestry.returncode==0,"portable source anchor is not in current history")
+    bridge=json.loads(_in_root(root,"configs/research/wp7-train5-paired-v2-git-blob-lock.json")
+                      .read_text(encoding="utf8"),object_pairs_hook=_unique)
+    _assert(reg["parent_registration_sha256"]==bridge.get("registration_git_blob_sha256"),
+            "portable source revision parent does not identify the frozen historical registration")
     for name in SOURCE_FILES:
         p=_in_root(root,name)
-        _assert(_hash_bytes(p.read_bytes())==reg["source_sha256"][name],
-                "locked source hash mismatch: "+name)
+        blob=_git_blob(root,anchor,name)
+        _assert(_hash_bytes(blob)==reg["git_blob_sha256"][name],
+                "locked canonical Git blob hash mismatch: "+name)
+        _assert(p.read_bytes().replace(b"\r\n",b"\n")==blob,
+                "working source differs from anchored Git blob: "+name)
     _manifest_contract(root)
     old_reg=json.loads(_in_root(root,"configs/research/wp7-rotating-owner-protocol-v3.json").read_text("utf8"),
                        object_pairs_hook=_unique)

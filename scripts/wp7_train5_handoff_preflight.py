@@ -185,9 +185,10 @@ def audit(root: Path, evidence_root: Path | None = None) -> dict:
         else:
             _require(record.get("relation") == "CRLF_to_LF_only",
                      f"unexplained source byte mismatch: {relative}")
-            _require(sha256(contents).hexdigest() == record.get("git_blob_sha256"),
-                     f"source checkout not identical to pinned blob: {relative}")
-            _require(contents == git_blob,
+            normalized = contents.replace(b"\r\n", b"\n")
+            _require(sha256(normalized).hexdigest() == record.get("git_blob_sha256"),
+                     f"source checkout differs beyond CRLF/LF: {relative}")
+            _require(normalized == git_blob,
                      f"source content differs from pinned Git blob: {relative}")
             eol_bridge_count += 1
 

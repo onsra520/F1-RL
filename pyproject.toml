@@ -22,17 +22,12 @@ rl = [
 dev = [
     "cryptography>=50.0.2,<51",
     "pytest>=8,<10",
-    "pytest-xdist>=3.6,<4",
     "stable-baselines3>=2.9,<2.10",
     "PyYAML>=6,<7",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["--dist=loadgroup"]
-markers = [
-    "resource_sensitive: tests run in a dedicated serial resource group",
-]
 
 [tool.setuptools.packages.find]
 include = ["f1rl*"]
