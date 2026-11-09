@@ -62,6 +62,7 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             "big",
         )
         self._scenarios = scenarios
+        self._sampling_seed = sampling_seed
         self._selection_rng = random.Random(rank_seed)
         self._rank = rank
         self._reset_sequence = 0
@@ -129,6 +130,8 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         self,
         action: np.ndarray,
     ) -> tuple[np.ndarray, float, bool, bool, dict[str, object]]:
+        from ...research.wp7_train5_internal_execution import check_active_step
+        check_active_step(self)
         if self._active_env is None or self._current_scenario is None:
             raise RuntimeError("reset() must be called before step()")
         observation, reward, terminated, truncated, info = self._active_env.step(action)

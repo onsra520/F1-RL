@@ -12,7 +12,7 @@
 
 The owner nominates GitHub account `onsra520` for an internal scientific/technical review. An actual review or acknowledgement on the exact proposed source and manifest may be recorded through GitHub if the person accepts; do not describe it as independent unless their role and independence are established. Owner review is recorded separately. This draft proposes replacing mandatory external reviewer PKI for this **internal engineering scope only**, not fabricating a review or changing existing scientific freeze or HELD-OUT conditions.
 
-The existing local exploratory path already distinguishes explicit, scope-bound owner acknowledgement from a cryptographic identity claim. A TRAIN-5-specific path could use a similarly explicit, scope-bound local owner acknowledgement if implemented and tested for these six runs. Existing straight-track exploratory permissions do not authorize TRAIN-5 and must not be reused as if they did.
+The existing local exploratory path already distinguishes explicit, scope-bound owner acknowledgement from a cryptographic identity claim. The TRAIN-5 internal path instead uses a separate, exact-run owner signature and a process-local capability; its owner public-key registry is empty until the owner enrolls a key. Existing straight-track exploratory permissions do not authorize TRAIN-5 and are not reused as if they did.
 
 ## Disclosures requiring an explicit owner decision
 
@@ -23,8 +23,8 @@ The existing local exploratory path already distinguishes explicit, scope-bound 
 ## Engineering work before any approval can authorize execution
 
 1. Version and source-bind the amended scope, accepted disclosures, exact scenario factories, checkpoint identities, complete six-run manifests, source revision and output destinations. Retain prior research records unchanged.
-2. Implement a dedicated TRAIN-5 execution authorization and connect it to the registered runner, core training runner and PPO environment guards. Verify actual runtime factory identities, checkpoint hashes immediately before loading, run allocation and model output isolation. The current factory preview and review-manifest checks do not provide this path.
-3. Test with fake models and fake approval material: valid scope; wrong source/manifest/checkpoint; missing or altered approval; duplicate/replayed approval; invalid scenario; out-of-scope track; and attempted HELD-OUT or different budget. Confirm denials occur before model creation or output allocation where applicable. Do not train with fixture material.
+2. The dedicated TRAIN-5 internal path now connects the registered runner, eight-selector environment and PPO guard, with owner signature and source/manifest scope. It validates actual factories, registered configuration and checkpoint hashes and isolates outputs. Review the implementation before enrolling a real owner key.
+3. Fake-key and fake-model tests cover the six registered runs, missing or altered approval/checkpoint, replay, expiry and invalid scenario/roster. Confirm full regression and exact-commit Windows/Linux CI before accepting the implementation. Fixture material does not authorize real training.
 4. Commit the exact candidate and pass Windows/Linux CI. Present the exact revision, manifest hashes, disclosure decisions, six-run budget and output location to the owner before requesting a real signature or local acknowledgement. A real approval must be made by the owner, not synthesized by an assistant.
 
 Until all applicable steps and an explicit owner decision are complete, the existing TRAIN-5 and HELD-OUT guards remain closed.

@@ -1,5 +1,8 @@
 """Final-only v4 runner; the historical training runner remains unchanged."""
 from io import BytesIO
+from contextlib import ExitStack
+from copy import deepcopy
+from threading import Lock
 
 from stable_baselines3.common.save_util import load_from_zip_file
 
@@ -30,6 +33,8 @@ class V4TrainingRunner(TrainingRunner):
         self._model_initializer = model_initializer
         self._initial_checkpoint = initial_checkpoint
         self._registered_run = None
+        self._authorized_context = None
+        self._authorized_lock = Lock()
 
     def run_single(self, factory):
         if self._registered_run is not None:
@@ -53,24 +58,73 @@ class V4TrainingRunner(TrainingRunner):
             require_v4_training_admission(expected["root"])
         return super().run_multi(scenarios)
 
+    def run_authorized_multi(self, scenarios, *, envelope, evidence_root):
+        """Run only a source-bound, owner-signed internal TRAIN-5 request."""
+        if not self._authorized_lock.acquire(blocking=False):
+            raise ValueError("TRAIN-5 runner already has an active execution")
+        try:
+            return self._run_authorized_multi(scenarios, envelope=envelope, evidence_root=evidence_root)
+        finally:
+            self._authorized_lock.release()
+
+    def _run_authorized_multi(self, scenarios, *, envelope, evidence_root):
+        from .wp7_train5_internal_execution import claim, verify_run
+        from .wp7_train5_v4_checkpoint import prepare_v4_registered_runner
+        from scripts.wp7_train5_v4_factory_preview import validate_registered_factories
+
+        if self._registered_run is None or self._authorized_context is not None:
+            raise ValueError("registered TRAIN-5 runner required")
+        envelope = deepcopy(envelope)
+        run = self._registered_run
+        root, cohort, replicate = run["root"], run["cohort"], run["replicate"]
+        output = self._config.artifacts_root.resolve()
+        verify_run(root, output, cohort, replicate, envelope)
+        reference = prepare_v4_registered_runner(root, output, cohort=cohort, replicate=replicate)
+        if (self._config != reference._config or self._initial_checkpoint != reference._initial_checkpoint
+                or self._registered_run != reference._registered_run):
+            raise ValueError("registered TRAIN-5 runner configuration differs")
+        validate_registered_factories(root, evidence_root, scenarios, cohort=cohort, replicate=replicate)
+        claim_token = claim(output, envelope["payload"]["nonce"])
+        self._model_initializer = reference._model_initializer
+        self._final_model_observer = reference._final_model_observer
+        self._authorized_context = dict(root=root, output=output, cohort=cohort, replicate=replicate,
+                                        envelope=envelope, scenarios=scenarios, evidence_root=evidence_root,
+                                        claim_token=claim_token)
+        try:
+            return self._run(mode="multitrack", training_track_ids=tuple(run["track_ids"]),
+                             build_env=lambda: core.make_multi_track_vector_env(
+                                 scenarios, self._config.vector_env, self._config.sampling_seed))
+        finally:
+            self._authorized_context = None
+
     def _run(self, *, mode, training_track_ids, build_env):
         artifacts = core._prepare_run(
             self._config, started_at=core._now(), mode=mode,
             training_track_ids=training_track_ids, provenance_file=None,
         )
         env = model = final_path = None
+        stack = ExitStack()
         primary_error = None
         try:
             if self._initial_checkpoint is not None:
                 core._update_state(artifacts, initial_checkpoint=self._initial_checkpoint)
             if self._registered_run is not None:
                 core._update_state(artifacts, training_reset_seed=self._registered_run["perturbation_seed"])
+            if self._authorized_context is not None:
+                core._update_state(artifacts, execution_scope="INTERNAL_SIMULATION_ONLY",
+                                   internal_authorization=self._authorized_context["envelope"])
             env = build_env()
+            if self._authorized_context is not None:
+                from .wp7_train5_internal_execution import activate
+                stack.enter_context(activate(env, **self._authorized_context))
             model = core.PPOModel.create(env, self._config.ppo)
             if self._model_initializer is not None:
                 self._model_initializer(model)
             model.learn(self._config.total_timesteps)
             actual = model.num_timesteps
+            if self._authorized_context is not None:
+                from .wp7_train5_internal_execution import require_completed_steps
+                require_completed_steps(env, actual)
             final_path = model.save(artifacts.final_model_path)
             self._final_model_observer(final_path, actual)
             core._update_state(artifacts, status="completed", actual_total_timesteps=actual,
@@ -100,6 +154,7 @@ class V4TrainingRunner(TrainingRunner):
                 pass
             raise
         finally:
+            stack.close()
             if env is not None:
                 try:
                     env.close()

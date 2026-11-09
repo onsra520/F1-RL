@@ -19,7 +19,7 @@ def verify_authorization(envelope, public_key, *, protocol_sha256, manifest_sha2
     """Check bytes and scope only; a caller-supplied key is not a trust anchor."""
     _fields(envelope, "payload signature_hex")
     payload = envelope["payload"]
-    _fields(payload, "schema purpose protocol_sha256 manifest_sha256 cohort replicate output_root nonce issued_at_utc expires_at_utc accept_missing_seed_history accept_missing_c2_replay")
+    _fields(payload, "schema purpose protocol_sha256 manifest_sha256 cohort replicate output_root nonce issued_at_utc expires_at_utc accept_missing_seed_history accept_missing_c2_replay accept_internal_review_pending")
     _hex(protocol_sha256, 32)
     _hex(manifest_sha256, 32)
     if (payload["schema"] != "train5_local_execution_review_v1"
@@ -31,7 +31,8 @@ def verify_authorization(envelope, public_key, *, protocol_sha256, manifest_sha2
             or type(payload["replicate"]) is not int or payload["replicate"] != replicate
             or not isinstance(output_root, str) or not output_root or payload["output_root"] != output_root
             or payload["accept_missing_seed_history"] is not True
-            or payload["accept_missing_c2_replay"] is not True):
+            or payload["accept_missing_c2_replay"] is not True
+            or payload["accept_internal_review_pending"] is not True):
         raise ValueError("TRAIN-5 authorization scope differs")
     _hex(payload["nonce"], 16)
     now = datetime.now(timezone.utc) if now is None else now

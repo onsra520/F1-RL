@@ -31,6 +31,7 @@ def signed_fixture():
         "expires_at_utc": "2026-11-09T11:00:00+00:00",
         "accept_missing_seed_history": True,
         "accept_missing_c2_replay": True,
+        "accept_internal_review_pending": True,
     }
     envelope = {"payload": payload, "signature_hex": key.sign(authorization_message(payload)).hex()}
     return envelope, key.public_key().public_bytes_raw(), now
@@ -46,7 +47,7 @@ def test_scoped_fake_owner_signature_is_verified_without_granting_training():
     assert result["training_permitted"] is False
 
 
-@pytest.mark.parametrize("failure", ["signature", "protocol", "manifest", "replicate", "expiry", "output", "nonce", "seed_exception", "c2_exception"])
+@pytest.mark.parametrize("failure", ["signature", "protocol", "manifest", "replicate", "expiry", "output", "nonce", "seed_exception", "c2_exception", "review_pending"])
 def test_forged_expired_or_wrong_scope_signature_is_rejected(failure):
     envelope, public_key, now = signed_fixture()
     payload = envelope["payload"]
@@ -66,6 +67,8 @@ def test_forged_expired_or_wrong_scope_signature_is_rejected(failure):
         payload["nonce"] = "../bad"
     elif failure == "seed_exception":
         payload["accept_missing_seed_history"] = False
+    elif failure == "review_pending":
+        payload["accept_internal_review_pending"] = False
     else:
         payload["accept_missing_c2_replay"] = False
     with pytest.raises(ValueError):

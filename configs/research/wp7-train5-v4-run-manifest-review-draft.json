@@ -4,16 +4,18 @@
   "hash_convention": "sha256; text normalized CRLF to LF; model zip raw bytes",
   "protocol": {
     "path": "configs/research/wp7-train5-v4-simulation-protocol-draft.json",
-    "sha256": "2df3b500df5e50f6153655492f064d9823c6334f2462079bb5d6b5a21ea2531d"
+    "sha256": "5f935c1557f8ecadf7a4319d0e55a8d37b68c83321fffa0417b17e0309367580"
   },
   "review_source_bindings": {
+    "configs/research/wp7-train5-internal-owner-key-v1.json": "5d3b623fbcd2ecfd6f0cce81efab54505c09627a44b30ba73d6ff733ed74428b",
     "scripts/wp7_train5_v4_factory_preview.py": "57867fe5554b3837030abee7edbf206b8b07f0b18d05b262ffd037f97ad3ab3e",
-    "scripts/wp7_train5_execution_authorization.py": "1afdd6af7979c7dca6f48ff3767c0de21b1a8c99113f6d86514216902a047e2e",
-    "scripts/wp7_train5_v4_review_manifest.py": "20d74e593b64ffe8807f9fe5f1ee4909f0971de6ce4881c8919551b690b6129a",
+    "scripts/wp7_train5_execution_authorization.py": "1b87f1cc421b487d3b5190b279b31b7961508c032b293a93f58594ee7bb6da5c",
+    "scripts/wp7_train5_v4_review_manifest.py": "07952f587cec3dc74ba535e0368d81be306484e526b761bc7ff72b4a031514de",
     "tests/research/test_wp7_train5_v4_factory_preview.py": "d9b15f2f88cb14564b52e01379dc5a4019b3c3d272e645e72387efbed8378e3b",
-    "tests/research/test_wp7_train5_execution_authorization.py": "eb6aa5edc7674f8c0343d0ebce1eaf5ddc948ccbecef2e41514e6db5b41ff53a",
+    "tests/research/test_wp7_train5_execution_authorization.py": "6a5f9f1d2be4620afdf63f4951cf2baeca49431833dee092a4635a05e9cdee17",
+    "tests/research/test_wp7_train5_authorized_integration.py": "0e208052742b3f8c31d7a56a8d189ea1a29739cbaf0aec834053d6030bb8008c",
     "tests/research/test_wp7_train5_v4_review_manifest.py": "2d404fa0277f9266d84c4755af7067dd90503e1c9e84502ef8d4a4faf26100d0",
-    ".github/workflows/handoff-train5-engineering-preflight.yml": "e10ccbe0206d91a44826b38c4869e10d1a66cfca45eaf599257417cbc261d891"
+    ".github/workflows/handoff-train5-engineering-preflight.yml": "039730057c4fe2d9dc419eb47fe71acc656ea86e88582624442377aafb8cadd0"
   },
   "claim_scope": "SIMULATION_ONLY_FIVE_TRAIN_TRACKS",
   "track_ids": [

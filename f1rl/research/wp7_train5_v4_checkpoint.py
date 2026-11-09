@@ -112,7 +112,8 @@ def prepare_v4_registered_runner(root: Path, artifacts_root: Path, *, cohort: st
     runner = _prepare_v4_runner(root, artifacts_root, ppo_seed=run["seeds"]["ppo"],
                                 sampling_seed=run["seeds"]["sampling"], frozen_checkpoint=run["initial_checkpoint"])
     runner._registered_run = {"track_ids": tuple(protocol["track_ids"]),
-                              "perturbation_seed": run["seeds"]["perturbation"], "root": Path(root).resolve()}
+                              "perturbation_seed": run["seeds"]["perturbation"], "root": Path(root).resolve(),
+                              "cohort": cohort, "replicate": replicate}
     return runner
 
 

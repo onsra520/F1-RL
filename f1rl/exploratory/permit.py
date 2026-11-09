@@ -181,6 +181,9 @@ class Budget:
 
 def admitted(env):
     """Recognize only live, specifically issued env capabilities, never flags."""
+    from ..research.wp7_train5_internal_execution import admitted as train5_admitted
+    if train5_admitted(env):
+        return True
     from ..learning.gym_environment import F1RLEnv
     from ..learning.algorithms.ppo import single_vec_env_child
     if isinstance(env, F1RLEnv):
