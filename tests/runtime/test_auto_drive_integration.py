@@ -10,6 +10,8 @@ from f1rl.local_demo.runtime.session import RuntimeSessionManager
 ROOT = Path(__file__).resolve().parents[2]
 
 
+@pytest.mark.resource_sensitive
+@pytest.mark.xdist_group("physics_timeout")
 @pytest.mark.parametrize("kind", ["cone", "barrier"])
 def test_auto_accelerates_brakes_and_recovers_speed_around_obstacle(kind):
     from f1rl.local_demo.runtime.custom_tracks import convert_custom_track
@@ -188,6 +190,8 @@ def test_right_vs_centerline_changes_real_physics_trajectory_and_replay_snapshot
     finally:
         manager.shutdown()
 
+@pytest.mark.resource_sensitive
+@pytest.mark.xdist_group("physics_timeout")
 def test_right_hand_track_never_crosses_centerline_on_original_t05_s_curve():
     """Regression: at seed 412 the former auto offset produced -0.105 m at tick 86."""
     import json

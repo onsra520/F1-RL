@@ -18,6 +18,8 @@ ORIGINAL = Path(__file__).parent / "fixtures" / "t05-original-obstacle-track.jso
 ORIGINAL_HASH = "3359bae959535baa40d337ae7677540ab64f022e739acd148fa2f9b65369ec37"
 
 
+@pytest.mark.resource_sensitive
+@pytest.mark.xdist_group("physics_timeout")
 @pytest.mark.parametrize("preset,target", [("normal", 45.0), ("racing", 90.0)])
 def test_t05_original_cone_hitbox_racing_line_finishes_without_contact(preset, target):
     """Reproduces user-reported step-263 failure; hitbox and obstacle unchanged."""
