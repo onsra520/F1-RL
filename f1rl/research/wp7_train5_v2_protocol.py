@@ -323,7 +323,9 @@ def validate_preview(root:Path, *, registration_file:Path, evidence_root:Path,
         blob=_git_blob(root,anchor,name)
         _assert(_hash_bytes(blob)==reg["git_blob_sha256"][name],
                 "locked canonical Git blob hash mismatch: "+name)
-        _assert(p.read_bytes().replace(b"\r\n",b"\n")==blob,
+        working=p.read_bytes()
+        portable_eol=bridge.get("source_blobs",{}).get(name,{}).get("relation")=="CRLF_to_LF_only"
+        _assert(working==blob or (portable_eol and working.replace(b"\r\n",b"\n")==blob),
                 "working source differs from anchored Git blob: "+name)
     _manifest_contract(root)
     old_reg=json.loads(_in_root(root,"configs/research/wp7-rotating-owner-protocol-v3.json").read_text("utf8"),
