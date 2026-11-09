@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import acos,isfinite
 
-from .body_collision import VehicleBodyGeometry,_slerp,obb_separation_lower_bound
+from .body_collision import VehicleBodyGeometry,_slerp,obb_separation_at_most
 from .geometry.vector import Vec3
 from .track.volume import OrientedBoxVolume
 from .vehicle import VehicleState
@@ -54,30 +54,31 @@ def certify_first_linear_body_contact(
     motion_bound=(translation+rotation_arc*body.motion_radius_m+
                   .5*ballistic_gravity_mps2*duration_s*duration_s)
     checks=0
-    def gap(fraction:float)->float:
+    def within_clearance(fraction:float,threshold_m:float)->bool:
         nonlocal checks
         checks+=1
         pose=(start.position+(end.position-start.position)*fraction+
               Vec3(0.,.5*ballistic_gravity_mps2*duration_s**2*fraction*(1.-fraction),0.))
         orientation=_slerp(q0,q1,fraction)
-        return obb_separation_lower_bound(body.box_at(pose,orientation),obstacle)
-    if gap(0.)<=1e-10:
+        return obb_separation_at_most(body.box_at(pose,orientation),obstacle,threshold_m)
+    if within_clearance(0.,1e-10):
         raise ValueError("first contact search starts in an overlapping state")
     def search(lo:float,hi:float,remaining:int):
         center=(lo+hi)/2.
-        if gap(center)>motion_bound*(hi-lo)/2.+1e-10:
+        if not within_clearance(center,motion_bound*(hi-lo)/2.+1e-10):
             return None
         if (hi-lo)*duration_s<=resolution_s:
-            left,right=gap(lo),gap(hi)
-            if left>1e-10 and right<=1e-10:
+            left_contact=within_clearance(lo,1e-10)
+            right_contact=within_clearance(hi,1e-10)
+            if not left_contact and right_contact:
                 return lo,hi
             # A repeated end-clear / grazing interval cannot be declared a
             # valid certified terminal; require witnessed penetration.
-            if left>1e-10 and right>1e-10:
-                if gap(center)<=1e-10:
+            if not left_contact and not right_contact:
+                if within_clearance(center,1e-10):
                     raise ValueError("contact/grazing smaller than certified interval")
                 return None
-            if left<=1e-10 and right<=1e-10:
+            if left_contact and right_contact:
                 raise ValueError("first contact lies before unresolved interval")
             raise ValueError("first linear impact ordering uncertain")
         if remaining==0:

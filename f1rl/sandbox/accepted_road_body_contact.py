@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass,replace
 
 from .accepted_contact_transition import AppliedContactState,apply_certified_face_impulse,_apply_mass_impulse
-from .body_collision import VehicleBodyGeometry,obb_separation_lower_bound,_slerp
+from .body_collision import VehicleBodyGeometry,_slerp
 from .geometry.rotation import Quaternion
 from .geometry.vector import Vec3
 from .rigid_body_impact_response import RigidBodyImpactMass,rigid_body_normal_impact

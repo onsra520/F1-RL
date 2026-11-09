@@ -10,7 +10,7 @@ from math import acos, asin, atan2, ceil, cos, floor, isfinite, pi, sin, tan
 
 from ..learning.pilot_preflight import TRAIN_IDS
 from ..learning.route_navigation import AuthoredRoute
-from ..sandbox.body_collision import VehicleBodyGeometry, obb_separation_lower_bound
+from ..sandbox.body_collision import VehicleBodyGeometry, obb_separation_at_most
 from ..sandbox.geometry.rotation import Quaternion
 from ..sandbox.geometry.vector import Vec3
 from ..sandbox.road_footprint import swept_body_road_union
@@ -181,7 +181,8 @@ def certify_arc_trajectory(asset,path,*,parameters=PARAMETERS,interval_m=.05,max
         pose,body,box = _enclosure(piece,a,b,height)
         if gate is None:
             ok = swept_body_road_union(pose,pose,body,surfaces,ride_height_m=parameters.ride_height).valid
-            ok &= all(obb_separation_lower_bound(box,o.volume)>EPS for o in asset.world.obstacles)
+            ok &= all(not obb_separation_at_most(box,o.volume,EPS)
+                      for o in asset.world.obstacles)
         else:
             section = _plane_section(box,gate)
             ok = section is None or (

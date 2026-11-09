@@ -20,7 +20,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isfinite, sqrt
 
-from .body_collision import VehicleBodyGeometry, obb_separation_lower_bound
+from .body_collision import VehicleBodyGeometry, obb_separation_at_most
 from .geometry.rotation import Quaternion
 from .geometry.vector import Vec3
 from .multi_surface_support import _body_corners, _intersection, _square
@@ -135,10 +135,9 @@ def certify_torque_free_ode_clearance(
         margin=radius+policy.min_clearance_m
         sample=VehicleState(centre,initial.velocity,q,initial.angular_velocity,False)
         for obstacle in obstacles:
-            gap=obb_separation_lower_bound(
-                body.box_at(sample.position,sample.orientation),obstacle,
-            )
-            if gap<=margin:
+            if obb_separation_at_most(
+                body.box_at(sample.position,sample.orientation),obstacle,margin,
+            ):
                 break
         else:
             # Static initial orientation OBB footprint expanded by the

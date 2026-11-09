@@ -8,7 +8,7 @@ from math import isclose
 from ..sandbox.roll_envelope_terminal import RollEnvelopeStop,_roll,VERSION
 from ..sandbox.geometry.vector import Vec3
 from ..sandbox.geometry.rotation import Quaternion
-from ..sandbox.body_collision import obb_separation_lower_bound
+from ..sandbox.body_collision import obb_separation_at_most
 from ..sandbox.track.volume import OrientedBoxVolume
 from ..sandbox.center_trajectory import CenterSegment
 from .physics import PhysicsTransitionError
@@ -92,7 +92,7 @@ def verify_roll_envelope_stop(result,previous,config,*,dt):
         for patch in src.road_atlas[0]:
             road=OrientedBoxVolume(patch.origin,Vec3(patch.width/2.,1e-9,patch.length/2.),
                 Quaternion.from_basis(patch.right,patch.normal,patch.forward))
-            if obb_separation_lower_bound(box,road)<=1e-6:
+            if obb_separation_at_most(box,road,1e-6):
                 raise PhysicsTransitionError("roll-domain event is actually body-road contact")
     prefix=tuple(CenterSegment(a,b,p.position,q.position)
         for a,b,p,q in zip(src.previous_times_s[:-1],src.previous_times_s[1:],

@@ -12,7 +12,12 @@ from math import acos, floor, hypot, inf, isfinite, nextafter, sqrt, ulp
 from types import MappingProxyType
 from typing import Callable, Mapping
 
-from .body_collision import VehicleBodyGeometry, obb_separation_lower_bound
+from .body_collision import (
+    VehicleBodyGeometry,
+    _has_finite_obb_geometry,
+    _obb_roundoff_margin,
+    obb_separation_at_most,
+)
 from .geometry.rotation import Quaternion
 from .geometry.vector import Vec3
 from .independent_suspension_dynamics import SuspensionResolutionError
@@ -41,7 +46,8 @@ class _BoundedPatchIndex:
     def candidate_indices(
         self, body_box: OrientedBoxVolume, clearance_threshold_m: float,
     ) -> tuple[int, ...]:
-        if (not isfinite(clearance_threshold_m) or clearance_threshold_m < 0.
+        if (not _has_finite_obb_geometry(body_box)
+                or not isfinite(clearance_threshold_m) or clearance_threshold_m < 0.
                 or not isfinite(self.cell_size_m) or self.cell_size_m <= 0.):
             return self.all_indices
         body_axes = tuple(body_box.orientation.rotate(axis) for axis in (
@@ -72,7 +78,7 @@ class _BoundedPatchIndex:
                     abs(body_box.center.z))
         if not all(isfinite(value) for value in (*limits, *radii, scale)):
             return all_indices
-        margin = 64. * ulp(scale)
+        margin = 128. * ulp(scale)
         center = body_box.center
         lower = tuple(nextafter(value - radius - margin, -inf)
                       for value, radius in zip((center.x, center.y, center.z), radii, strict=True))
@@ -97,15 +103,23 @@ class _BoundedPatchIndex:
     def has_separation_at_most(
         self, body_box: OrientedBoxVolume, clearance_threshold_m: float,
     ) -> bool:
-        if not isfinite(clearance_threshold_m):
+        if (not _has_finite_obb_geometry(body_box)
+                or not isfinite(clearance_threshold_m) or clearance_threshold_m < 0.):
             return True
-        body_axes = tuple(body_box.orientation.rotate(axis) for axis in (
+        rotated_body_axes = tuple(body_box.orientation.rotate(axis) for axis in (
             Vec3(1., 0., 0.), Vec3(0., 1., 0.), Vec3(0., 0., 1.),
+        ))
+        body_axis_magnitudes = tuple(axis.magnitude for axis in rotated_body_axes)
+        if any(not isfinite(magnitude) or magnitude < 1e-12
+               for magnitude in body_axis_magnitudes):
+            return True
+        body_axes = tuple(axis / magnitude for axis, magnitude in zip(
+            rotated_body_axes, body_axis_magnitudes, strict=True,
         ))
         body_half = (body_box.half_extents.x, body_box.half_extents.y,
                      body_box.half_extents.z)
         candidates = self._candidate_indices_with_axes(
-            body_box, clearance_threshold_m, body_axes,
+            body_box, clearance_threshold_m, rotated_body_axes,
         )
         for index in candidates:
             obstacle = self.obstacles[index]
@@ -115,7 +129,7 @@ class _BoundedPatchIndex:
             body_axis_gaps = tuple(
                 abs(delta.dot(axis))
                 - sum(half * abs(axis.dot(unit)) for half, unit in zip(
-                    body_half, body_axes, strict=True,
+                    body_half, rotated_body_axes, strict=True,
                 ))
                 - sum(half * abs(axis.dot(unit)) for half, unit in zip(
                     (obstacle_half.x, obstacle_half.y, obstacle_half.z),
@@ -123,13 +137,11 @@ class _BoundedPatchIndex:
                 ))
                 for axis in body_axes
             )
+            margin = _obb_roundoff_margin(body_box, obstacle, clearance_threshold_m)
             if (all(isfinite(gap) for gap in body_axis_gaps)
-                    and any(gap > clearance_threshold_m for gap in body_axis_gaps)):
+                    and any(gap > clearance_threshold_m + margin for gap in body_axis_gaps)):
                 continue
-            separation = obb_separation_lower_bound(body_box, obstacle)
-            if separation != separation:
-                return True
-            if separation <= clearance_threshold_m:
+            if obb_separation_at_most(body_box, obstacle, clearance_threshold_m):
                 return True
         return False
 

@@ -628,7 +628,7 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                         or abs(r0.roll_z_rad)>=physics.max_abs_tilt_rad
                         or high-low>1.0001e-10):
                         raise ValueError('unwitnessed first entering roll-envelope boundary')
-                    from .body_collision import obb_separation_lower_bound
+                    from .body_collision import obb_separation_at_most
                     from .track.volume import OrientedBoxVolume
                     for check in (original,pre,rejected):
                         box=body.box_at(check.position,check.orientation)
@@ -637,7 +637,7 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                                 Vec3(road_patch.width/2.,1e-9,road_patch.length/2.),
                                 Quaternion.from_basis(road_patch.right,
                                     road_patch.normal,road_patch.forward))
-                            if obb_separation_lower_bound(box,road_box)<=1e-6:
+                            if obb_separation_at_most(box,road_box,1e-6):
                                 raise ValueError('roll limit lacks distinct road-free witness')
                     weights=(1.,2.,2.,1.)
                     forces=sum((k.force*w for k,w in zip(

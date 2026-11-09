@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isfinite
 
-from .body_collision import VehicleBodyGeometry, _box_axes, _slerp, obb_separation_lower_bound
+from .body_collision import VehicleBodyGeometry, _box_axes, _slerp, obb_separation_at_most
 from .linear_first_body_contact import certify_first_linear_body_contact
 from .geometry.vector import Vec3
 from .rigid_body_impact_response import RigidBodyImpactMass, ImpactResponse, rigid_body_normal_impact
@@ -97,7 +97,7 @@ def certify_unique_linear_edge_impact(
     from .accepted_contact_transition import _interpolate
     state=_interpolate(start,end,ratio)
     car=hull.box_at(state.position,state.orientation)
-    if obb_separation_lower_bound(car,obstacle)>1e-9:
+    if not obb_separation_at_most(car,obstacle,1e-9):
         raise ValueError("edge witness cannot be disjoint")
     ca,ob=_box_axes(car),_box_axes(obstacle)
     cha=(car.half_extents.x,car.half_extents.y,car.half_extents.z)

@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isfinite
 
-from .body_collision import VehicleBodyGeometry, _box_axes, _slerp, obb_separation_lower_bound
+from .body_collision import VehicleBodyGeometry, _box_axes, _slerp, obb_separation_at_most
 from .geometry.rotation import Quaternion
 from .geometry.vector import Vec3
 from .linear_first_body_contact import certify_first_linear_body_contact
@@ -59,7 +59,7 @@ def certify_linear_face_impact(
     ang=start.angular_velocity+(end.angular_velocity-start.angular_velocity)*t
     state=VehicleState(pos,vel,q,ang,start.grounded and end.grounded)
     body=hull.box_at(pos,q)
-    if obb_separation_lower_bound(body,obstacle)>1e-9:
+    if not obb_separation_at_most(body,obstacle,1e-9):
         raise ValueError("event witness not overlapping on the physical obstacle")
     delta=body.center-obstacle.center
     normals=_box_axes(obstacle)

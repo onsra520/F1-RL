@@ -11,7 +11,8 @@ This API is deliberately separate from the legacy sampled-centre simulator.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import acos, isfinite, sin
+from decimal import Decimal, localcontext
+from math import acos, isfinite, sin, ulp
 
 from .geometry.rotation import Quaternion
 from .geometry.vector import Vec3
@@ -82,6 +83,15 @@ def _box_axes(box: OrientedBoxVolume) -> tuple[Vec3, Vec3, Vec3]:
     return tuple(box.orientation.rotate(axis) for axis in _AXES)  # type: ignore[return-value]
 
 
+def _same_rotation(first: Quaternion, second: Quaternion) -> bool:
+    return (
+        (first.w == second.w and first.x == second.x
+         and first.y == second.y and first.z == second.z)
+        or (first.w == -second.w and first.x == -second.x
+            and first.y == -second.y and first.z == -second.z)
+    )
+
+
 def obb_separation_lower_bound(first: OrientedBoxVolume, second: OrientedBoxVolume) -> float:
     """Positive => provably separated; nonpositive => SAT overlap/contact.
 
@@ -96,15 +106,188 @@ def obb_separation_lower_bound(first: OrientedBoxVolume, second: OrientedBoxVolu
     bh = (second.half_extents.x, second.half_extents.y, second.half_extents.z)
     delta = second.center - first.center
     gap = float("-inf")
-    for raw_axis in axes:
+    same_rotation = _same_rotation(first.orientation, second.orientation)
+    for index, raw_axis in enumerate(axes):
         magnitude = raw_axis.magnitude
         if magnitude < 1e-12:
+            if index >= 6 and (magnitude != 0. or not same_rotation):
+                return float(_precise_obb_separation(first, second))
             continue
         axis = raw_axis / magnitude
         a_radius = sum(h * abs(axis.dot(unit)) for h, unit in zip(ah, a, strict=True))
         b_radius = sum(h * abs(axis.dot(unit)) for h, unit in zip(bh, b, strict=True))
         gap = max(gap, abs(delta.dot(axis)) - a_radius - b_radius)
     return gap
+
+
+def _precise_obb_separation(first: OrientedBoxVolume, second: OrientedBoxVolume) -> Decimal:
+    with localcontext() as context:
+        context.prec = 100
+        decimal = Decimal.from_float
+
+        def dot(left, right):
+            return sum((a * b for a, b in zip(left, right)), Decimal(0))
+
+        def cross(left, right):
+            return (
+                left[1] * right[2] - left[2] * right[1],
+                left[2] * right[0] - left[0] * right[2],
+                left[0] * right[1] - left[1] * right[0],
+            )
+
+        def axes(box):
+            quaternion = tuple(decimal(value) for value in (
+                box.orientation.w, box.orientation.x,
+                box.orientation.y, box.orientation.z,
+            ))
+            norm = sum((value * value for value in quaternion), Decimal(0)).sqrt()
+            w, x, y, z = (value / norm for value in quaternion)
+            vector = (x, y, z)
+            norm_squared = dot(vector, vector)
+            result = []
+            for basis in (
+                (1., 0., 0.), (0., 1., 0.), (0., 0., 1.),
+            ):
+                value = tuple(decimal(component) for component in basis)
+                projection = dot(vector, value)
+                perpendicular = cross(vector, value)
+                result.append(tuple(
+                    2 * vector[i] * projection
+                    + value[i] * (w * w - norm_squared)
+                    + 2 * w * perpendicular[i]
+                    for i in range(3)
+                ))
+            return tuple(result)
+
+        first_axes, second_axes = axes(first), axes(second)
+        first_half = tuple(decimal(value) for value in (
+            first.half_extents.x, first.half_extents.y, first.half_extents.z,
+        ))
+        second_half = tuple(decimal(value) for value in (
+            second.half_extents.x, second.half_extents.y, second.half_extents.z,
+        ))
+        offset = tuple(
+            decimal(b) - decimal(a)
+            for a, b in zip(
+                (first.center.x, first.center.y, first.center.z),
+                (second.center.x, second.center.y, second.center.z),
+            )
+        )
+        gaps = []
+        for raw_axis in (
+            *first_axes,
+            *second_axes,
+            *(cross(a, b) for a in first_axes for b in second_axes),
+        ):
+            magnitude_squared = dot(raw_axis, raw_axis)
+            if magnitude_squared == 0:
+                continue
+            magnitude = magnitude_squared.sqrt()
+            axis = tuple(value / magnitude for value in raw_axis)
+            first_radius = sum((
+                extent * abs(dot(axis, unit))
+                for extent, unit in zip(first_half, first_axes)
+            ), Decimal(0))
+            second_radius = sum((
+                extent * abs(dot(axis, unit))
+                for extent, unit in zip(second_half, second_axes)
+            ), Decimal(0))
+            gaps.append(abs(dot(offset, axis)) - first_radius - second_radius)
+        return max(gaps)
+
+
+def _obb_geometry_scale(first: OrientedBoxVolume, second: OrientedBoxVolume) -> float:
+    return max(
+        1., abs(first.center.x), abs(first.center.y), abs(first.center.z),
+        abs(second.center.x), abs(second.center.y), abs(second.center.z),
+        abs(first.half_extents.x), abs(first.half_extents.y), abs(first.half_extents.z),
+        abs(second.half_extents.x), abs(second.half_extents.y), abs(second.half_extents.z),
+    )
+
+
+def _obb_roundoff_margin(
+    first: OrientedBoxVolume, second: OrientedBoxVolume, threshold_m: float,
+) -> float:
+    return 256. * ulp(max(_obb_geometry_scale(first, second), abs(threshold_m)))
+
+
+def _obb_separation_comparisons_from_gap(
+    first: OrientedBoxVolume,
+    second: OrientedBoxVolume,
+    thresholds_m: tuple[float, ...],
+    gap: float,
+) -> tuple[bool, ...]:
+    if any(type(threshold) not in (int, float)
+           or not isfinite(threshold) or threshold < 0.
+           for threshold in thresholds_m):
+        raise ValueError("finite non-negative SAT threshold required")
+    geometry_scale = _obb_geometry_scale(first, second)
+    margins = tuple(256. * ulp(max(geometry_scale, abs(threshold)))
+                    for threshold in thresholds_m)
+    if not isfinite(gap) or any(
+        abs(gap - threshold) <= margin
+        for threshold, margin in zip(thresholds_m, margins, strict=True)
+    ):
+        precise_gap = _precise_obb_separation(first, second)
+        return tuple(
+            precise_gap <= Decimal.from_float(float(threshold))
+            for threshold in thresholds_m
+        )
+    return tuple(gap <= threshold for threshold in thresholds_m)
+
+
+def _has_finite_obb_geometry(box: object) -> bool:
+    if (not isinstance(box, OrientedBoxVolume)
+            or not isinstance(box.center, Vec3)
+            or not isinstance(box.half_extents, Vec3)
+            or not isinstance(box.orientation, Quaternion)):
+        return False
+    return all(
+        value > 0. for value in (
+            box.half_extents.x, box.half_extents.y, box.half_extents.z,
+        )
+    )
+
+
+def obb_separation_at_most(
+    first: OrientedBoxVolume, second: OrientedBoxVolume, threshold_m: float,
+) -> bool:
+    """Conservatively compare the OBB SAT gap to a physical distance threshold.
+
+    The fast float kernel decides queries outside a 256-ULP uncertainty band.
+    Decimal SAT recomputes only queries inside that band. Invalid geometry or
+    threshold input raises so callers cannot score uncertainty as a collision.
+    """
+    if not _has_finite_obb_geometry(first) or not _has_finite_obb_geometry(second):
+        raise ValueError("finite OBB geometry required for SAT comparison")
+    if type(threshold_m) not in (int, float):
+        raise ValueError("finite non-negative SAT threshold required")
+    try:
+        threshold = float(threshold_m)
+    except (OverflowError, ValueError):
+        raise ValueError("finite non-negative SAT threshold required") from None
+    if not isfinite(threshold) or threshold < 0.:
+        raise ValueError("finite non-negative SAT threshold required")
+
+    gap = obb_separation_lower_bound(first, second)
+    return _obb_separation_at_most_from_gap(first, second, threshold, gap)
+
+
+def _obb_separation_at_most_from_gap(
+    first: OrientedBoxVolume,
+    second: OrientedBoxVolume,
+    threshold_m: float,
+    gap: float,
+) -> bool:
+    if (type(threshold_m) not in (int, float)
+            or not isfinite(threshold_m) or threshold_m < 0.):
+        raise ValueError("finite non-negative SAT threshold required")
+    margin = 256. * ulp(max(_obb_geometry_scale(first, second), abs(threshold_m)))
+    if not isfinite(gap) or abs(gap - threshold_m) <= margin:
+        return _precise_obb_separation(first, second) <= Decimal.from_float(
+            float(threshold_m),
+        )
+    return gap <= threshold_m
 
 
 def _slerp(first: Quaternion, second: Quaternion, t: float) -> Quaternion:
@@ -167,27 +350,35 @@ def sweep_body_against_obstacle(
     max_motion = translation + theta * body.motion_radius_m
     checks = 0
 
-    def gap_at(t: float) -> float:
+    def gap_at(t: float) -> tuple[OrientedBoxVolume, float]:
         nonlocal checks
         checks += 1
         position = previous.position + (candidate.position - previous.position) * t
         rotated = _slerp(q0, q1, t)
-        return obb_separation_lower_bound(body.box_at(position, rotated), obstacle)
+        box = body.box_at(position, rotated)
+        return box, obb_separation_lower_bound(box, obstacle)
 
     # Also catch bodies already overlapping at the beginning of a step.
-    if gap_at(0.0) <= _EPS or gap_at(1.0) <= _EPS:
+    first_box, first_gap = gap_at(0.0)
+    if _obb_separation_at_most_from_gap(first_box, obstacle, _EPS, first_gap):
+        return SweptCollisionResult(True, False, checks)
+    last_box, last_gap = gap_at(1.0)
+    if _obb_separation_at_most_from_gap(last_box, obstacle, _EPS, last_gap):
         return SweptCollisionResult(True, False, checks)
 
     def visit(lo: float, hi: float, remaining: int) -> tuple[bool, bool]:
         middle = (lo + hi) / 2.0
-        separation = gap_at(middle)
-        if separation <= _EPS:
-            return True, False
+        middle_box, separation = gap_at(middle)
         # For any t in [lo,hi], every hull point differs from the pose at
         # 'middle' by <= (hi-lo)*(translation+theta*motion_radius)/2.
         # Hence obstacle distance cannot reach zero when gap exceeds bound.
         half_window_motion = (hi - lo) * max_motion / 2.0
-        if separation > half_window_motion + _EPS:
+        contact, may_contact = _obb_separation_comparisons_from_gap(
+            middle_box, obstacle, (_EPS, half_window_motion + _EPS), separation,
+        )
+        if contact:
+            return True, False
+        if not may_contact:
             return False, False
         if remaining == 0:
             return False, True

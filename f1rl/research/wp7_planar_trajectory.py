@@ -9,7 +9,7 @@ from dataclasses import asdict
 from math import atan, ceil, isfinite, sqrt, tan
 
 from ..learning.pilot_preflight import TRAIN_IDS
-from ..sandbox.body_collision import VehicleBodyGeometry, obb_separation_lower_bound
+from ..sandbox.body_collision import VehicleBodyGeometry, obb_separation_at_most
 from ..sandbox.geometry.rotation import Quaternion
 from ..sandbox.geometry.vector import Vec3
 from ..sandbox.road_footprint import swept_body_road_union
@@ -94,7 +94,8 @@ def certify_planar_trajectory(asset, knots, *, parameters=PARAMETERS, interval_m
                     blockers.append(f"continuous_body_road:{road.status}")
                     break
                 box = enclosing.box_at(pose.position,pose.orientation)
-                if any(obb_separation_lower_bound(box,o.volume) <= 1e-9 for o in asset.world.obstacles):
+                if any(obb_separation_at_most(box,o.volume,1e-9)
+                       for o in asset.world.obstacles):
                     blockers.append("continuous_body_obstacle_unresolved")
                     break
                 axes = tuple(box.orientation.rotate(v) for v in (Vec3(1.,0.,0.),UP,Vec3(0.,0.,1.)))

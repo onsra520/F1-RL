@@ -6,7 +6,7 @@ from math import isfinite
 from .body_collision import (
     VehicleBodyGeometry,
     _slerp,
-    obb_separation_lower_bound,
+    obb_separation_at_most,
     sweep_body_against_obstacle,
 )
 from .track.volume import OrientedBoxVolume
@@ -41,7 +41,9 @@ def first_body_impact_bracket(
         raise ValueError("impact bracket requires finite positive duration")
     if type(max_refinements) is not int or not 1 <= max_refinements <= 20:
         raise ValueError("impact bracket refinement count is invalid")
-    if obb_separation_lower_bound(geometry.box_at(previous.position, previous.orientation), obstacle) <= 1e-10:
+    if obb_separation_at_most(
+        geometry.box_at(previous.position, previous.orientation), obstacle, 1e-10,
+    ):
         raise ValueError("impact bracket starts from an already overlapping body")
 
     displacement = candidate.position - previous.position

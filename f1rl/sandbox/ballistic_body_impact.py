@@ -15,7 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import acos,isfinite
 
-from .body_collision import VehicleBodyGeometry,_slerp,obb_separation_lower_bound
+from .body_collision import VehicleBodyGeometry,_slerp,obb_separation_at_most
 from .geometry.vector import Vec3
 from .track.volume import OrientedBoxVolume
 from .vehicle import VehicleState
@@ -69,11 +69,11 @@ def first_ballistic_body_impact(
                 acceleration_world*(.5*t*t))
     def orientation(t:float):
         return _slerp(previous.orientation,candidate.orientation,t/duration_s)
-    def gap(t:float)->float:
+    def within_clearance(t:float,threshold_m:float)->bool:
         nonlocal gap_checks
         gap_checks+=1
-        return obb_separation_lower_bound(
-            geometry.box_at(position(t),orientation(t)),obstacle)
+        return obb_separation_at_most(
+            geometry.box_at(position(t),orientation(t)),obstacle,threshold_m)
     def separated_interval(left:float,right:float)->bool:
         m=(left+right)/2.
         half=(right-left)/2.
@@ -83,8 +83,8 @@ def first_ballistic_body_impact(
         motion=(center_velocity.magnitude*half+
                 .5*acceleration_world.magnitude*half*half+
                 rotational_rate_bound*half*geometry.motion_radius_m)
-        return gap(m)>motion+1e-10
-    if gap(0.)<=1e-10:
+        return not within_clearance(m,motion+1e-10)
+    if within_clearance(0.,1e-10):
         raise ValueError("ballistic interval starts from already overlapping body")
     # Right endpoint may be clear even when trajectory intersects in midair.
     # Need left-to-right *interval* certification, not endpoint-only testing.
@@ -92,7 +92,7 @@ def first_ballistic_body_impact(
         if separated_interval(left,right):
             return None
         if right-left<=time_tolerance_s:
-            if gap(right)<=1e-10 and gap(left)>1e-10:
+            if within_clearance(right,1e-10) and not within_clearance(left,1e-10):
                 return left,right
             # Exact contact may be grazing with no penetration. Reject unknown.
             raise ValueError("ballistic first contact cannot be certified within tolerance")
