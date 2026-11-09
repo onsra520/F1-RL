@@ -7,7 +7,9 @@ from .physics import PhysicsConfig, PhysicsTransitionAudit
 from ..sandbox.ballistic_flight import FlightStep
 from ..sandbox.center_trajectory import CenterSegment
 from ..sandbox.coupled_longitudinal_dynamics import CoupledGroundAudit
-from ..sandbox.spatial_contact_dynamics import SpatialGroundAudit
+from ..sandbox.spatial_contact_dynamics import (
+    SpatialContactGeometry, SpatialGroundAudit, prepare_spatial_contact_geometry,
+)
 from ..sandbox.grounded_yaw_dynamics import GroundedYawAudit
 from ..sandbox.independent_suspension_dynamics import SuspensionDynamicsResult
 from ..sandbox.partial_wheel_release import GroundSupportStep
@@ -83,6 +85,7 @@ class Simulation:
         "_body_geometry",
         "_ramp_support_policy",
         "_physics_config",
+        "_spatial_geometry_context",
         "_state",
         "_snapshot",
     )
@@ -116,6 +119,7 @@ class Simulation:
             if body_geometry is not None or ramp_support_policy is not None:
                 raise ValueError("physics_config cannot be mixed with legacy body/ramp options")
         self._physics_config = physics_config
+        self._spatial_geometry_context: SpatialContactGeometry | None = None
         (physics_config or PhysicsConfig("legacy_v1")).validate_state(initial_state, parameters)
         if physics_config is not None:
             physics_config.validate_track(track)
@@ -134,6 +138,7 @@ class Simulation:
         if self._snapshot.roll_envelope_stop is not None:
             raise RuntimeError('absorbing certified roll-envelope terminal: reset required')
         current = self._state
+        geometry_context = self._spatial_geometry_context_for_step()
         result = step_world(
             self._track,
             current.world,
@@ -144,6 +149,8 @@ class Simulation:
             **({"body_geometry": self._body_geometry} if self._body_geometry is not None else {}),
             **({"ramp_support_policy": self._ramp_support_policy} if self._ramp_support_policy is not None else {}),
             **(self._physics_config.world_options() if self._physics_config is not None else {}),
+            **({"spatial_geometry_context": geometry_context}
+               if geometry_context is not None else {}),
         )
         next_tick = current.tick + 1
         elapsed_time = next_tick * self._config.fixed_dt
@@ -188,6 +195,22 @@ class Simulation:
         self._state = SimulationState(0, 0.0, initial)
         self._snapshot = snapshot
         return self._snapshot
+
+    def _spatial_geometry_context_for_step(self) -> SpatialContactGeometry | None:
+        physics = self._physics_config
+        if (physics is None
+                or physics.ground_motion_version != 'spatial_road_edge_partial_lifecycle_v4'):
+            return None
+        suspension = physics.independent_suspension_policy
+        body = physics.body_geometry
+        if suspension is None or body is None:
+            raise ValueError('Physics v4 geometry context requires registered suspension and body')
+        seam_tolerance = suspension.contact.seam_height_tolerance_m
+        context = self._spatial_geometry_context
+        if context is None or not context.matches(self._track.surfaces,seam_tolerance,body):
+            context = prepare_spatial_contact_geometry(self._track.surfaces,seam_tolerance,body)
+            self._spatial_geometry_context = context
+        return context
 
     def _snapshot_for(self, world: WorldState) -> SimulationSnapshot:
         query = self._track.query_point(

@@ -9,7 +9,7 @@ from .coupled_longitudinal_dynamics import (
     CoupledGroundAudit, LongitudinalContactPolicy, integrate_coupled_longitudinal,
 )
 from .geometry.vector import Vec3
-from .spatial_contact_dynamics import SpatialGroundAudit, SpatialContactPolicy, integrate_spatial_contact, integrate_spatial_lifecycle, integrate_spatial_road_edge_lifecycle, _suspension_state, SpatialRoadCrash, SpatialRoadCrashSource
+from .spatial_contact_dynamics import SpatialContactGeometry, SpatialGroundAudit, SpatialContactPolicy, integrate_spatial_contact, integrate_spatial_lifecycle, integrate_spatial_road_edge_lifecycle, _suspension_state, SpatialRoadCrash, SpatialRoadCrashSource
 from .physical_crash import PhysicalCrash, first_applied_grounded_crash
 from .roll_envelope_terminal import RollEnvelopeStop,CertifiedRollEnvelopeExit
 from .rigid_body_impact_response import RigidBodyImpactMass
@@ -102,9 +102,15 @@ def step_world(
     ground_motion_version: str = 'legacy_euler_v1',
     longitudinal_contact_policy: LongitudinalContactPolicy | None = None,
     spatial_contact_policy: SpatialContactPolicy | None = None,
+    spatial_geometry_context: SpatialContactGeometry | None = None,
 ) -> WorldStepResult:
     if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4'):
         raise ValueError('unregistered ground motion version')
+    if spatial_geometry_context is not None and (
+        ground_motion_version != 'spatial_road_edge_partial_lifecycle_v4'
+        or not isinstance(spatial_geometry_context, SpatialContactGeometry)
+    ):
+        raise ValueError('spatial geometry context requires registered Physics v4')
     coupled = ground_motion_version == 'coupled_longitudinal_v1'
     compliant = ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4')
     spatial = ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4')
@@ -208,6 +214,9 @@ def step_world(
             try:
                 result = integrate_spatial(state.vehicle,independent_suspension_policy,
                     body_geometry,track.surfaces,parameters,control,spatial_contact_policy,dt=dt,modifiers=modifiers,
+                    **({'geometry_context':spatial_geometry_context}
+                       if ground_motion_version=='spatial_road_edge_partial_lifecycle_v4'
+                       else {}),
                     **({} if ground_motion_version=='spatial_road_edge_partial_lifecycle_v4' else {'phase_domain':'atlas_rotating_v3'} if ground_motion_version=='spatial_rotating_compliant_lifecycle_v3'
                        else {'phase_domain':'atlas_gradient_v2'} if ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else {}))
             except CertifiedRollEnvelopeExit as roll_event:

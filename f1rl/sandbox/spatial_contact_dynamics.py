@@ -8,6 +8,8 @@ Every accepted RK4 leaf must pass work/impulse and numerical body/road sweeps.
 """
 from dataclasses import dataclass, replace
 from math import asin, atan2, cos, isfinite, pi, sin, tanh, ulp
+from types import MappingProxyType
+from typing import Mapping
 
 from .body_collision import VehicleBodyGeometry
 from .center_trajectory import CenterSegment
@@ -32,7 +34,8 @@ from .rigid_body_impact_response import RigidBodyImpactMass
 from .accepted_contact_transition import apply_bump_impulse_at_certified_clear_pose
 from .accepted_road_body_contact import apply_first_road_body_contact
 from .physical_crash import PhysicalCrash
-from .swept_surface_clearance import certify_swept_chassis_clearance, certify_swept_chassis_patch_intersection_free, certify_first_bounded_road_contact
+from .swept_surface_clearance import _BoundedPatchIndex, _build_bounded_patch_index, certify_swept_chassis_clearance, certify_swept_chassis_patch_intersection_free, certify_first_bounded_road_contact
+from .track.patch import PlanarSurfacePatch
 from .body_collision import _slerp
 from .vehicle import VehicleControl, VehicleParameters, VehicleState
 
@@ -54,6 +57,45 @@ class SpatialContactPolicy:
             raise ValueError('finite nonnegative spatial contact parameters required')
         if self.yaw_inertia_kg_m2<=0. or not 0.<self.max_angular_speed_radps<=20.:
             raise ValueError('spatial inertia/angular domain must be positive and bounded')
+
+
+@dataclass(frozen=True, slots=True)
+class SpatialContactGeometry:
+    surfaces: tuple
+    seam_height_tolerance_m: float
+    body_geometry: VehicleBodyGeometry
+    atlas: tuple | None
+    patch_index: _BoundedPatchIndex | None
+    patches_by_id: Mapping[str, PlanarSurfacePatch]
+
+    def matches(self, surfaces, seam_height_tolerance_m, body_geometry) -> bool:
+        return (
+            (self.surfaces is surfaces or self.surfaces == surfaces)
+            and self.seam_height_tolerance_m == seam_height_tolerance_m
+            and self.body_geometry == body_geometry
+        )
+
+
+def prepare_spatial_contact_geometry(
+    surfaces: tuple, seam_height_tolerance_m: float,
+    body_geometry: VehicleBodyGeometry,
+) -> SpatialContactGeometry:
+    if not isinstance(body_geometry, VehicleBodyGeometry):
+        raise ValueError('spatial geometry context requires typed body geometry')
+    if (type(seam_height_tolerance_m) not in (int, float)
+            or not isfinite(seam_height_tolerance_m) or seam_height_tolerance_m < 0.):
+        raise ValueError('spatial geometry context requires finite seam tolerance')
+    atlas = _atlas(surfaces, seam_height_tolerance_m)
+    if atlas is None:
+        return SpatialContactGeometry(
+            surfaces, seam_height_tolerance_m, body_geometry, None, None,
+            MappingProxyType({}),
+        )
+    patch_index = _build_bounded_patch_index(atlas, body_geometry)
+    return SpatialContactGeometry(
+        surfaces, seam_height_tolerance_m, body_geometry, atlas, patch_index,
+        MappingProxyType({patch.id: patch for patch in atlas[0]}),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -172,17 +214,20 @@ def integrate_spatial_lifecycle(previous, physics, body, surfaces, parameters, c
 
 
 def integrate_spatial_road_edge_lifecycle(previous, physics, body, surfaces, parameters, control,
-                                         policy, *, dt, modifiers=None):
+                                         policy, *, dt, modifiers=None,
+                                         geometry_context: SpatialContactGeometry | None = None):
     """Opt-in spatial per-wheel release experiment; NEVER legacy v3."""
     if physics.force_model != 'road_relative_unilateral_v3':
         raise ValueError('spatial edge mode requires unilateral contact')
     return _integrate_spatial(previous,physics,body,surfaces,parameters,control,policy,
                               dt=dt,modifiers=modifiers,lifecycle=True,
-                              phase_domain='atlas_rotating_edge_v4')
+                              phase_domain='atlas_rotating_edge_v4',
+                              geometry_context=geometry_context)
 
 
 def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
-                        policy, *, dt, modifiers, lifecycle, phase_domain='horizontal_v1'):
+                        policy, *, dt, modifiers, lifecycle, phase_domain='horizontal_v1',
+                        geometry_context: SpatialContactGeometry | None = None):
     """Force-coupled supported motion; world Hdot=tau prevents hidden yaw projection.
 
     Quaternion RK4 is normalized at each accepted candidate. Work refinement
@@ -195,15 +240,35 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             or not isinstance(control,VehicleControl) or not isinstance(policy,SpatialContactPolicy)
             or type(dt) not in (int,float) or not isfinite(dt) or dt<=0.):
         raise ValueError('registered spatial contact inputs required')
+    if geometry_context is not None and (
+        not isinstance(geometry_context,SpatialContactGeometry)
+        or phase_domain!='atlas_rotating_edge_v4'
+    ):
+        raise ValueError('spatial geometry context requires Physics v4 integration')
     if not lifecycle and not previous.grounded:
         raise SuspensionResolutionError('spatial contact requires four supported reference wheels')
     inertia=Vec3(physics.pitch_inertia_kg_m2,policy.yaw_inertia_kg_m2,physics.roll_inertia_kg_m2)
     if 2.*max(inertia.x,inertia.y,inertia.z)>inertia.x+inertia.y+inertia.z+1e-8:
         raise ValueError('spatial principal inertia violates rigid-body triangle inequality')
-    atlas=_atlas(surfaces,physics.contact.seam_height_tolerance_m)
+    if phase_domain=='atlas_rotating_edge_v4':
+        seam_tolerance=physics.contact.seam_height_tolerance_m
+        if (geometry_context is None
+                or not geometry_context.matches(surfaces,seam_tolerance,body)):
+            geometry_context=prepare_spatial_contact_geometry(surfaces,seam_tolerance,body)
+        atlas=geometry_context.atlas
+    else:
+        atlas=_atlas(surfaces,physics.contact.seam_height_tolerance_m)
     if atlas is None:
         raise SuspensionResolutionError('spatial contact requires continuous 2.5D road atlas')
-    patches={p.id:p for p in atlas[0]}
+    if phase_domain=='atlas_rotating_edge_v4':
+        if (geometry_context is None or geometry_context.patch_index is None
+                or geometry_context.patch_index.source_patches is not atlas[0]):
+            raise SuspensionResolutionError('spatial contact geometry context is incomplete')
+        patch_sweep_index=geometry_context.patch_index
+        patches=geometry_context.patches_by_id
+    else:
+        patch_sweep_index=None
+        patches={p.id:p for p in atlas[0]}
     modifiers=modifiers or MotionModifiers()
     if not isinstance(modifiers,MotionModifiers):
         raise ValueError('motion modifiers required')
@@ -259,7 +324,8 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             # A wheel enters/leaves a finite supporting tire footprint
             # continuously; source the potential gradient from the same
             # smooth road-atlas coverage as the wheel's normal load.
-            footprints=sample_finite_wheel_coverage(state,physics.contact,atlas)
+            footprints=sample_finite_wheel_coverage(
+                state,physics.contact,atlas,patch_index=patch_sweep_index)
             contacts=tuple(f.contact for f in footprints)
         else:
             footprints=None
@@ -813,7 +879,8 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             try:
                 certify_swept_chassis_patch_intersection_free(pose_at,0.,1.,body,atlas,
                     max_subdivisions=14,
-                    gravity_mps2=gravity*h*h if ballistic else 0.)
+                    gravity_mps2=gravity*h*h if ballistic else 0.,
+                    patch_index=patch_sweep_index)
             except SuspensionResolutionError as error:
                 if (phase_domain=='atlas_rotating_edge_v4'
                     and 'bounded chassis witnessed physical road contact' in str(error)

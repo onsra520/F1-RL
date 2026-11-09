@@ -31,7 +31,7 @@ class FootprintWheel:
     coverage_gradient:Vec3
 
 
-def _single_polygon_coverage(x:float,z:float,polygon,radius:float):
+def _single_polygon_coverage(x:float,z:float,polygon,radius:float,*,edge_coefficients=None):
     """C1 product kernel for a convex CCW road footprint polygon.
 
     Each one-sided edge uses smoothstep(signed_distance / (2*radius) + .5).
@@ -40,11 +40,12 @@ def _single_polygon_coverage(x:float,z:float,polygon,radius:float):
     if not polygon or len(polygon)<3 or not 0.<radius<=0.2:
         raise ValueError("bounded physical tire footprint and convex patch required")
     factors=[]
-    for a,b in zip(polygon,polygon[1:]+polygon[:1],strict=True):
-        dx,dz=b[0]-a[0],b[1]-a[1]
-        size=hypot(dx,dz)
+    edges=(edge_coefficients if edge_coefficients is not None else tuple((
+        a[0],a[1],b[0]-a[0],b[1]-a[1],hypot(b[0]-a[0],b[1]-a[1]),
+    ) for a,b in zip(polygon,polygon[1:]+polygon[:1],strict=True)))
+    for ax,az,dx,dz,size in edges:
         if size<=1e-10:raise ValueError("degenerate road boundary")
-        signed=(dx*(z-a[1])-dz*(x-a[0]))/size
+        signed=(dx*(z-az)-dz*(x-ax))/size
         u=(signed+radius)/(2.*radius)
         if u<=0: return 0.,Vec3(0.,0.,0.)
         if u>=1.:
@@ -70,17 +71,28 @@ def _single_polygon_coverage(x:float,z:float,polygon,radius:float):
 def sample_finite_wheel_coverage(
     vehicle:VehicleState, contact_policy, atlas, *,
     radius_m:float=FOOTPRINT_RADIUS_M,
+    patch_index=None,
 )->tuple[FootprintWheel,...]:
     if not isinstance(vehicle,VehicleState) or not 0.<radius_m<=.2:
         raise ValueError("finite spatial tire footprint inputs required")
     patches,polygons=atlas
+    if patch_index is not None and getattr(patch_index,'source_patches',None) is not patches:
+        raise ValueError("finite-tire patch index does not match atlas")
     out=[]
     for name,local in zip(NAMES,contact_policy.wheels.positions,strict=True):
         point=vehicle.position+vehicle.orientation.rotate(local)
         options=[]
         alpha,gradient=0.,Vec3(0.,0.,0.)
-        for patch,polygon in zip(patches,polygons,strict=True):
-            weight,normal=_single_polygon_coverage(point.x,point.z,polygon,radius_m)
+        indices=(range(len(patches)) if patch_index is None else
+                 patch_index.candidate_indices_near_xz(point.x,point.z,radius_m))
+        for patch_id in indices:
+            patch,polygon=patches[patch_id],polygons[patch_id]
+            edge_coefficients=(None if patch_index is None else
+                               patch_index.coverage_edges[patch_id])
+            weight,normal=_single_polygon_coverage(
+                point.x,point.z,polygon,radius_m,
+                edge_coefficients=edge_coefficients,
+            )
             if weight<=0:continue
             height=_height(patch,point.x,point.z)
             deflection=height-point.y

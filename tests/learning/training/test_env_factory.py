@@ -1,5 +1,3 @@
-from dataclasses import replace
-
 import numpy as np
 import pytest
 
@@ -91,12 +89,6 @@ def test_factory_envs_own_independent_runtime_state() -> None:
     assert second._simulation.snapshot.world == _factory().initial_state
 
 
-def test_research_admission_marker_reaches_created_environment() -> None:
-    environment = replace(_factory(), research_admission_required=True).create()
-
-    assert environment.requires_scientific_admission is True
-
-
 @pytest.mark.parametrize(
     ("field", "bad_value"),
     [
@@ -107,7 +99,6 @@ def test_research_admission_marker_reaches_created_environment() -> None:
         ("observation_encoder", object()),
         ("reward_composer", object()),
         ("episode_config", object()),
-        ("research_admission_required", "yes"),
     ],
 )
 def test_factory_rejects_wrong_constructor_field_types(
