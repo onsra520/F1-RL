@@ -18,8 +18,8 @@ REGISTRY=ROOT/"docs/research/WP3-CRASH-TERMINAL-V1-TECHNICAL-REGISTRY-20261024.j
 def registry_payload_validation_only(monkeypatch):
     """Test-only lineage stub to reach all payload/seed/roster validations.
 
-    Never used by training or production. The first test independently proves
-    the *real* unrelated-source ancestry check remains fail-closed.
+    Never used by training or production. A separate test exercises the real
+    ancestry guard against an unrelated Git repository.
     """
     import subprocess
     from f1rl.research import wp3_crash_contract_registration as module
@@ -57,20 +57,44 @@ def test_unaltered_historical_payload_is_valid_only_in_test_scaffold(
     assert observed["full_5760_episode_evaluation_authorized"] is False
     assert observed["source_tree_clean"] is False
 
+def test_registration_rejects_unrelated_source_ancestry(tmp_path):
+    import subprocess
+
+    unrelated=tmp_path/"unrelated-source"
+    unrelated.mkdir()
+    subprocess.run(["git","init","-q",str(unrelated)],check=True)
+    (unrelated/"source.txt").write_text("unrelated source\n",encoding="utf8")
+    subprocess.run(["git","-C",str(unrelated),"add","source.txt"],check=True)
+    subprocess.run([
+        "git","-C",str(unrelated),"-c","user.name=WP3 test",
+        "-c","user.email=wp3@example.invalid","-c","commit.gpgsign=false",
+        "commit","-qm","unrelated source",
+    ],check=True)
+
+    with pytest.raises(ValueError,match="archived handoff source commit is not the current source ancestor"):
+        assemble_registration(unrelated,HISTORY,REPLAY,RECEIPT)
+
 def test_historical_registry_remains_valid_but_not_current_source_approval():
     historical=json.loads(REGISTRY.read_text("utf8"))
-    # Preserve the exact historical checksum and fail-closed scientific status.
-    # The present owner handoff branch is NOT a descendant of the archived
-    # WP3 authoring commit ce0e55d. It must not claim a valid registration
-    # assembled against an unrelated source, even when all six original
-    # historical evidence files have been restored byte-for-byte.
     assert historical["record_sha256"]==_sha({
         k:v for k,v in historical.items() if k!="record_sha256"})
     assert historical["scientific_scoring_approved"] is False
     assert historical["owner_scientific_signoff"] is False
     assert historical["full_5760_episode_evaluation_authorized"] is False
-    with pytest.raises(ValueError,match="archived handoff source commit is not the current source ancestor"):
-        assemble_registration(ROOT,HISTORY,REPLAY,RECEIPT)
+
+    observed=assemble_registration(ROOT,HISTORY,REPLAY,RECEIPT)
+
+    assert observed["source_bundle_sha256"]!=historical["source_bundle_sha256"]
+    assert observed["registered_original_checkpoint_count"]==12
+    assert observed["engineering_regression_passed"]==352
+    assert len(observed["same_build_replay_cases"])==3
+    assert observed["status"]=="ENGINEERING_CONTRACT_REGISTERED_INDEPENDENT_SIGNOFF_PENDING"
+    assert observed["scientific_scoring_approved"] is False
+    assert observed["independent_physics_review_signature"] is None
+    assert observed["owner_scientific_signoff"] is False
+    assert observed["full_5760_episode_evaluation_authorized"] is False
+    assert observed["heldout_access"] is False
+    assert observed["old_evidence_mutated"] is False
 
 @pytest.mark.parametrize(("index","key","value"),[
     (0,"failure_reason",None),
