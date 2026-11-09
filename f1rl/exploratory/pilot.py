@@ -1,4 +1,4 @@
-"""Bounded Straight-only pilot. Called only after independent execution consent."""
+"""Bounded Straight-only local run; outputs are classified engineering-only."""
 from datetime import datetime, timezone
 from hashlib import sha256
 import json
@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+from uuid import uuid4
 
 from ..learning.training.telemetry import TrainingTelemetryRecorder
 from .permit import Budget, PilotStopped, Session, authorize, read_json, _utc
@@ -54,10 +55,22 @@ def supervise(root, permit, envelope):
     wall_seconds = permit['limits']['wall_seconds']
     if time.monotonic()-started >= wall_seconds:
         raise PilotStopped('pilot deadline reached during authorization')
+    trace_id = envelope.get('trace_id') or uuid4().hex
     output = reserve(permit)
+    write_json(output/'engineering-manifest.json', dict(
+        schema_version='f1rl_engineering_run_manifest_v1', execution_mode='engineering_only',
+        engineering_only=True, source_commit_sha=permit['source']['commit_sha'],
+        config_sha256=permit['config_sha256'], seed=permit['seeds']['training_reset'],
+        ppo_seed=permit['seeds']['ppo'], output_directory=str(output.resolve()),
+        scientific_evidence=False, scientific_acceptance=False, heldout_access=False,
+        trace_id=trace_id))
     write_json(output/'permit.json', permit)
     write_json(output/'authorization.json', envelope)
-    write_json(output/'supervisor.json', dict(status='running', training_authorized=False))
+    write_json(output/'execution-trace.json', dict(trace_id=trace_id,
+        module='exploratory', operation='local_ppo_execution', outcome='started',
+        engineering_only=True))
+    write_json(output/'supervisor.json', dict(status='running', training_authorized=False,
+        engineering_only=True, trace_id=trace_id))
     thread_limit = str(permit['limits']['threads'])
     blas_limit = str(permit['limits']['blas_threads'])
     env = dict(os.environ, CUDA_VISIBLE_DEVICES='', OMP_NUM_THREADS=thread_limit, MKL_NUM_THREADS=blas_limit,
@@ -83,7 +96,11 @@ def supervise(root, permit, envelope):
         status = 'learning_completed_evaluation_incomplete'
     write_json(output/'supervisor.json', dict(status=status, returncode=code,
         elapsed_seconds=time.monotonic()-started, training_authorized=False,
-        scientific_acceptance=False))
+        scientific_acceptance=False, engineering_only=True, trace_id=trace_id))
+    write_json(output/'execution-trace.json', dict(trace_id=trace_id,
+        module='exploratory', operation='local_ppo_execution',
+        outcome='completed' if code == 0 else 'failed', returncode=code,
+        engineering_only=True))
     return code
 
 
@@ -120,7 +137,7 @@ def evaluate_episode(session, model, name, episode):
         env.close()
     outcome = (getattr(env, 'last_research_outcome', None) if error else info.get('research_outcome')) or {}
     valid = error is None and outcome.get('valid_sample') is True
-    return dict(policy=name, episode=episode, environment_seed=seed, valid_sample=valid,
+    return dict(engineering_only=True, policy=name, episode=episode, environment_seed=seed, valid_sample=valid,
         success=valid and outcome.get('kind') == 'successful_finish',
         progress=min(1., info.get('route_highwater_meters', 0.)/env._authored_route.total_meters),
         completed_checkpoint_ids=completed_checkpoint_ids, directed_crossings=directed_crossings,
@@ -148,6 +165,7 @@ def save_checkpoint(model, output, name, updates, optimizer_steps):
     append_json(output/'artifacts.jsonl', dict(path=final.name,
         sha256=sha256(final.read_bytes()).hexdigest(), timesteps=model.num_timesteps,
         ppo_epoch_updates=updates, optimizer_steps=optimizer_steps,
+        engineering_only=True,
         serialization_seconds=time.perf_counter()-started))
     return final
 
@@ -167,10 +185,14 @@ def timed_call(function, totals, name):
 
 
 def worker(root, permit, envelope):
-    """No auto-resume. A consumed run requires a fresh owner-bound permit."""
+    """No auto-resume. Each local execution requires a fresh bounded permit."""
     authorize(root, permit, envelope)
     deadline = claim(permit)
-    expiry_remaining = (_utc(envelope['payload']['expires_at_utc'])-datetime.now(timezone.utc)).total_seconds()
+    expiry = envelope.get('payload', {}).get('expires_at_utc')
+    expiry_remaining = ((_utc(expiry)-datetime.now(timezone.utc)).total_seconds()
+                        if expiry else permit['limits']['wall_seconds'])
+    if expiry_remaining <= 0:
+        raise PilotStopped('execution authorization expired')
     budget = Budget(deadline=min(deadline, time.monotonic()+expiry_remaining-.05),
                     learning_limit=permit['limits']['learning_timesteps'])
     from ..learning.algorithms.ppo import PPOConfig, PPOModel, configure_cpu_runtime
@@ -188,10 +210,11 @@ def worker(root, permit, envelope):
         write_json(output/'state.json', dict(status=status, phase=phase,
             learning_timesteps=0 if model is None else model.num_timesteps,
             environment_learning_steps=budget.learning_steps, optimizer_steps=optimizer_steps,
-            training_authorized=False, scientific_evidence=False, **extra))
+            training_authorized=False, scientific_evidence=False, engineering_only=True,
+            trace_id=envelope.get('trace_id'), **extra))
 
     def episode_row(step, reward, info):
-        append_json(output/'learning-episodes.jsonl', dict(step=step, episode_return=reward,
+        append_json(output/'learning-episodes.jsonl', dict(engineering_only=True, step=step, episode_return=reward,
             outcome=info.get('research_outcome'), demo_training=info.get('demo_training'),
             progress_m=info.get('route_highwater_meters')))
 
@@ -271,7 +294,8 @@ def worker(root, permit, envelope):
             initial_weights_sha256=before, final_weights_sha256=after,
             learning_timesteps=model.num_timesteps, optimizer_steps=optimizer_steps,
             ppo_epoch_updates=model._model._n_updates,
-            scientific_evidence=False, autonomous_completion_observed=False))
+            scientific_evidence=False, engineering_only=True,
+            trace_id=envelope.get('trace_id'), autonomous_completion_observed=False))
         learning_completed = True
         phase = 'learning_completed'
         state('learning_completed', final_checkpoint=final.name)
@@ -297,7 +321,8 @@ def worker(root, permit, envelope):
             trained_final=trained_rows, initial_weights_sha256=before, final_weights_sha256=after,
             optimizer_steps=optimizer_steps, ppo_epoch_updates=model._model._n_updates,
             timesteps=model.num_timesteps, training_authorized=False, scientific_evidence=False,
-            learning_proven=True, autonomous_completion_observed=any(r['success'] for r in trained_rows)))
+            engineering_only=True, trace_id=envelope.get('trace_id'), learning_proven=True,
+            autonomous_completion_observed=any(r['success'] for r in trained_rows)))
         state('completed', initial_weights_sha256=before, final_weights_sha256=after)
         return 0
     except BaseException as exc:

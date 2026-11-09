@@ -5,7 +5,6 @@ Owner keys must be authenticated externally and committed before preparation.
 """
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from hashlib import sha256
 from importlib import metadata
 import json
 import os
@@ -94,19 +93,13 @@ def prepare(root, output):
     protocol = build_protocol(root, profile=settings['profile'])
     if protocol['source']['dirty']:
         raise ValueError('clean committed source required for exploratory preparation')
-    path = root / KEYS
-    if path.is_symlink() or not path.resolve(strict=True).is_relative_to(root):
-        raise ValueError('owner registry must be repository bound')
-    registry = read_json(path)
-    if set(registry) != {'schema_version', 'owners'} or registry['schema_version'] != 'straight_exploratory_owner_keys_v1':
-        raise ValueError('invalid owner registry')
     doc = dict(schema_version='straight_exploratory_permit_v1', state='prepared_not_authorized',
         purpose='exploratory_only_not_scientific_evidence', track=settings['track'],
         profile=settings['profile'], policy=settings['policy'],
         config_sha256=settings['config_sha256'], source=protocol['source'],
         protocol_sha256=protocol['sha256'],
         source_files=protocol['source_files'], physics_sha256=protocol['physics_sha256'],
-        runtime=runtime_identity(), owner_registry_sha256=sha256(path.read_bytes()).hexdigest(),
+        runtime=runtime_identity(),
         output_directory=str(output), limits=settings['limits'], seeds=settings['seeds'],
         ppo=settings['ppo'], evaluation=settings['evaluation'],
         execution=settings['execution'], logging=settings['logging'],
@@ -150,10 +143,31 @@ def verify_local_owner_approval(envelope, *, permit_sha256, wall_seconds, now=No
 
 def authorize(root, permit, envelope):
     validate_permit(root, permit)
+    if isinstance(envelope, dict) and envelope.get('execution_mode') == 'engineering_only':
+        return verify_engineering_intent(envelope, permit)
     if isinstance(envelope, dict) and envelope.get('approval_mode') == 'local_owner_consent_v1':
         return verify_local_owner_approval(envelope, permit_sha256=permit['sha256'],
                                            wall_seconds=permit['limits']['wall_seconds'])
     return verify_authorization(envelope, read_json(Path(root)/KEYS), permit_sha256=permit['sha256'])
+
+
+def verify_engineering_intent(envelope, permit):
+    """Validate explicit local intent for a non-scientific exploratory run."""
+    _fields(envelope, 'execution_mode source_commit_sha config_sha256 seed output_directory trace_id')
+    expected = {
+        'execution_mode': 'engineering_only',
+        'source_commit_sha': permit['source']['commit_sha'],
+        'config_sha256': permit['config_sha256'],
+        'seed': permit['seeds']['training_reset'],
+        'output_directory': permit['output_directory'],
+    }
+    if any(envelope.get(key) != value for key, value in expected.items()):
+        raise ValueError('engineering intent does not match prepared source/config/seed/output')
+    if (type(envelope['seed']) is not int or type(envelope['trace_id']) is not str
+            or len(envelope['trace_id']) != 32
+            or any(c not in '0123456789abcdef' for c in envelope['trace_id'])):
+        raise ValueError('engineering intent seed or trace ID is invalid')
+    return dict(envelope)
 
 
 class PilotStopped(RuntimeError):
@@ -248,7 +262,8 @@ class Session:
         def step(action):
             nonlocal episode_return
             self.budget.before_step(learning=learning)
-            if datetime.now(timezone.utc) >= _utc(self.envelope['payload']['expires_at_utc']):
+            expiry = self.envelope.get('payload', {}).get('expires_at_utc')
+            if expiry and datetime.now(timezone.utc) >= _utc(expiry):
                 raise PilotStopped('execution authorization expired')
             result = original_step(action)
             if learning:

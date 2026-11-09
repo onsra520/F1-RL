@@ -112,6 +112,24 @@ def test_local_consent_branch_does_not_require_owner_key_registry(tmp_path, monk
         p.authorize(tmp_path, permit, envelope)
 
 
+def test_engineering_intent_is_exactly_bound_and_needs_no_owner_registry(tmp_path, monkeypatch):
+    p = api()
+    permit = dict(sha256='a'*64, output_directory=str(tmp_path/'run'),
+        source={'commit_sha':'b'*40}, config_sha256='c'*64,
+        seeds={'training_reset':1234, 'ppo':0})
+    envelope = dict(execution_mode='engineering_only', source_commit_sha='b'*40,
+        config_sha256='c'*64, seed=1234, output_directory=str(tmp_path/'run'),
+        trace_id='d'*32)
+    monkeypatch.setattr(p, 'validate_permit', lambda *args: None)
+    assert p.authorize(tmp_path, permit, envelope) == envelope
+    for key, value in (('source_commit_sha','e'*40), ('config_sha256','f'*64),
+                       ('seed',True), ('output_directory',str(tmp_path/'other'))):
+        changed = dict(envelope, **{key:value})
+        with pytest.raises(ValueError): p.authorize(tmp_path, permit, changed)
+    changed = dict(envelope, scientific_approval=True)
+    with pytest.raises(ValueError): p.authorize(tmp_path, permit, changed)
+
+
 def test_budget_stops_before_excess_step():
     budget = api().Budget(deadline=10., learning_limit=2, clock=lambda: 1.)
     budget.before_step(learning=True)
@@ -141,6 +159,32 @@ def test_cli_without_execution_grant_denies_before_worker(tmp_path):
     with pytest.raises(SystemExit) as exc:
         cli.main(['execute', '--permit', str(tmp_path/'absent.json')])
     assert exc.value.code == 2
+
+
+def test_cli_builds_engineering_intent_without_running_training(tmp_path, monkeypatch, capsys):
+    cli = importlib.import_module('f1rl.exploratory.cli')
+    from hashlib import sha256
+    from pathlib import Path
+    from f1rl.exploratory import pilot
+    root = Path(__file__).resolve().parents[2]
+    config = root/'config.yml'
+    output = tmp_path/'run'
+    permit = dict(source={'commit_sha':'b'*40}, config_sha256=sha256(config.read_bytes()).hexdigest(),
+        seeds={'training_reset':1234}, output_directory=str(output))
+    permit_path = tmp_path/'permit.json'
+    permit_path.write_text(json.dumps(permit), encoding='utf-8')
+    observed = {}
+    def supervise(received_root, received_permit, envelope):
+        observed.update(root=received_root, permit=received_permit, envelope=envelope)
+        return 0
+    monkeypatch.setattr(pilot, 'supervise', supervise)
+    assert cli.main(['execute', '--permit', str(permit_path), '--engineering-only',
+        '--source-commit-sha', 'b'*40, '--config', str(config), '--seed', '1234',
+        '--output-directory', str(output)]) == 0
+    assert observed['envelope']['execution_mode'] == 'engineering_only'
+    assert observed['envelope']['seed'] == 1234
+    assert observed['envelope']['trace_id']
+    assert 'engineering_only' in capsys.readouterr().out
 
 
 def test_strict_json_rejects_duplicates(tmp_path):

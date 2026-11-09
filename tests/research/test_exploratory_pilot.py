@@ -38,6 +38,8 @@ def test_worker_claim_is_single_use(tmp_path):
 def test_timeout_marks_supervisor_and_keeps_checkpoint(tmp_path, monkeypatch):
     p = pilot()
     permit = {'sha256': 'a'*64, 'output_directory': str(tmp_path/'run'),
+              'source': {'commit_sha':'b'*40}, 'config_sha256':'c'*64,
+              'seeds': {'training_reset':1234, 'ppo':0},
               'limits': {'threads': 32, 'blas_threads': 16, 'wall_seconds': 3600}}
     monkeypatch.setattr(p, 'authorize', lambda *a: {})
     def timeout(command, **kwargs):
@@ -54,6 +56,9 @@ def test_timeout_marks_supervisor_and_keeps_checkpoint(tmp_path, monkeypatch):
     assert p.supervise(tmp_path, permit, {}) == 124
     root = Path(permit['output_directory'])
     assert json.loads((root/'supervisor.json').read_text())['status'] == 'timeout'
+    manifest = json.loads((root/'engineering-manifest.json').read_text())
+    assert manifest['engineering_only'] is True
+    assert manifest['scientific_acceptance'] is False
     assert (root/'checkpoint-8192.zip').is_file()
 
 
