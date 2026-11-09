@@ -55,6 +55,17 @@ def test_linux_lf_checkout_of_windows_crlf_registered_source_is_accepted(monkeyp
     assert receipt["registered_windows_sha256_via_pinned_eol_bridge"] >= 1
 
 
+def test_portable_source_binding_rejects_non_eol_drift(monkeypatch):
+    original = Path.read_bytes
+    source = ROOT / "f1rl/research/wp7_track_feasibility.py"
+    def bytes_override(path):
+        contents = original(path)
+        return contents + b"# semantic source drift\n" if Path(path) == source else contents
+    monkeypatch.setattr(Path, "read_bytes", bytes_override)
+    with pytest.raises(h.HandoffPreflightError, match="working source differs from anchored Git blob"):
+        h.audit(ROOT)
+
+
 @pytest.mark.parametrize("field,value", [
     ("status", "approved"),
     ("training_permission", True),

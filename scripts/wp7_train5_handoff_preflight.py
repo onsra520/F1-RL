@@ -168,34 +168,34 @@ def audit(root: Path, evidence_root: Path | None = None) -> dict:
         _require(record.get("registered_windows_worktree_sha256") == expected,
                  f"registered Windows receipt mismatch: {relative}")
         path = _file_under(root, relative)
-        contents = path.read_bytes()
-        actual = sha256(contents).hexdigest()
         tracked = subprocess.run(
-            ["git", "-C", str(root), "show", "HEAD:" + relative],
+            ["git", "-C", str(root), "show", bridge["source_commit"] + ":" + relative],
             capture_output=True, check=False,
         )
-        _require(tracked.returncode == 0, f"tracked source missing: {relative}")
+        _require(tracked.returncode == 0, f"historical source blob missing: {relative}")
         git_blob = tracked.stdout
         _require(sha256(git_blob).hexdigest() == record.get("git_blob_sha256"),
-                 f"pinned Git blob SHA mismatch: {relative}")
-        if actual == expected:
-            direct_sha_count += 1
-            _require(contents == git_blob or contents.replace(b"\r\n", b"\n") == git_blob,
-                     f"registered byte source not Git-equivalent: {relative}")
-        else:
-            _require(record.get("relation") == "CRLF_to_LF_only",
-                     f"unexplained source byte mismatch: {relative}")
-            normalized = contents.replace(b"\r\n", b"\n")
-            _require(sha256(normalized).hexdigest() == record.get("git_blob_sha256"),
-                     f"source checkout differs beyond CRLF/LF: {relative}")
-            _require(normalized == git_blob,
-                     f"source content differs from pinned Git blob: {relative}")
+                 f"historical pinned Git blob SHA mismatch: {relative}")
+        if record.get("relation") == "CRLF_to_LF_only":
             eol_bridge_count += 1
+        else:
+            _require(record.get("relation") == "byte_identical"
+                     and sha256(git_blob).hexdigest() == expected,
+                     f"historical source receipt mismatch: {relative}")
+            direct_sha_count += 1
 
-    baseline = _git(root, "merge-base", "--is-ancestor", BASELINE, "HEAD")
-    _require(baseline.returncode == 0, "historical source baseline not an ancestor")
+    baseline = _git(root, "merge-base", "--is-ancestor", BASELINE, REGISTERED_BASELINE)
+    _require(baseline.returncode == 0,
+             "registered historical source baseline does not descend from its pinned anchor")
     head = _git(root, "rev-parse", "HEAD")
     _require(head.returncode == 0, "unable to identify Git HEAD")
+    from f1rl.research.wp7_train5_v2_protocol import Train5PreflightError, validate_preview
+    try:
+        active = validate_preview(root,
+            registration_file=root/"configs/research/wp7-train5-paired-v2-portable-source-revision-v1.json",
+            evidence_root=root, check_evidence=False)
+    except Train5PreflightError as error:
+        raise HandoffPreflightError(str(error)) from error
     witness_status = "NOT_VERIFIED_EXTERNAL_ROOT_NOT_PROVIDED"
     if evidence_root is not None:
         _require(evidence_root.resolve() != root and not root in evidence_root.resolve().parents,
@@ -214,6 +214,8 @@ def audit(root: Path, evidence_root: Path | None = None) -> dict:
         "source_file_git_blob_hashes_verified": len(sources),
         "registered_windows_sha256_direct_matches": direct_sha_count,
         "registered_windows_sha256_via_pinned_eol_bridge": eol_bridge_count,
+        "active_source_revision": "portable_draft_verified",
+        "active_source_anchor_commit": active["source_anchor_commit"],
         "external_witness_status": witness_status,
         "external_witness_count": len(witnesses) if evidence_root else 0,
         "proposed_seed_count": len(seedvalues),

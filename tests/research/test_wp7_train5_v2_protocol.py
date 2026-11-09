@@ -3,6 +3,7 @@ from copy import deepcopy
 from hashlib import sha256
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -37,7 +38,11 @@ def test_source_and_external_real_v4_witness_preflight_valid():
     assert len(reg["evidence_sha256"])==4
     assert reg["runtime_profile"]==p.RUNTIME_SPEC
     for rel,digest in reg["source_sha256"].items():
-        assert digest==sha256((ROOT/rel).read_bytes()).hexdigest()
+        historical=json.loads((ROOT/p.HISTORICAL_REGISTRATION).read_text("utf8"))
+        assert digest==historical["source_sha256"][rel]
+        blob=subprocess.run(["git","-C",str(ROOT),"show",
+            f"{reg['source_anchor_commit']}:{rel}"],check=True,capture_output=True).stdout
+        assert sha256(blob).hexdigest()==reg["git_blob_sha256"][rel]
 
 
 def test_preview_builds_five_source_bound_v4_factories_no_heldout_access(monkeypatch):
@@ -128,7 +133,7 @@ def test_in_memory_proposal_tampering_fails_before_geometry(monkeypatch,field,va
 def test_in_memory_locked_file_hash_mismatch_is_caught_before_geometry(monkeypatch):
     original=Path.read_text
     tampered=json.loads(REG.read_text("utf-8"))
-    tampered["source_sha256"]["assets/tracks/training/right-turn-train-v2.json"]="0"*64
+    tampered["git_blob_sha256"]["assets/tracks/training/right-turn-train-v2.json"]="0"*64
     tampered["preflight_digest"]=p._digest(
        {k:v for k,v in tampered.items() if k!="preflight_digest"})
     def f(path,*args,**kwargs):
@@ -139,7 +144,7 @@ def test_in_memory_locked_file_hash_mismatch_is_caught_before_geometry(monkeypat
     import f1rl.learning.reconstruction as reconstruction
     monkeypatch.setattr(reconstruction,"load_track_asset",
                         lambda *_:pytest.fail("tampered source lock loaded geometry"))
-    with pytest.raises(p.Train5PreflightError,match="locked source hash mismatch"):
+    with pytest.raises(p.Train5PreflightError,match="canonical Git blob hash mismatch"):
         _verify()
 
 

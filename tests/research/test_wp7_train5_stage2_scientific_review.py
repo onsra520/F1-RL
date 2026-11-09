@@ -4,6 +4,7 @@ from hashlib import sha256
 from pathlib import Path
 import json
 import math
+import subprocess
 
 import pytest
 import yaml
@@ -49,7 +50,11 @@ def test_all_science_source_bindings_use_canonical_git_contents():
         candidate=ROOT/path
         assert candidate.is_file()
         assert candidate.resolve().is_relative_to(ROOT)
-        assert sha256(candidate.read_bytes().replace(b"\r\n",b"\n")).hexdigest()==digest
+        result=subprocess.run(
+            ["git","-C",str(ROOT),"show",f"{SOURCE_ANCHOR}:{path}"],
+            check=True,capture_output=True,
+        )
+        assert sha256(result.stdout).hexdigest()==digest
     assert "f1rl/learning/algorithms/ppo.py" in references
     assert "f1rl/learning/training/runner.py" in references
 
