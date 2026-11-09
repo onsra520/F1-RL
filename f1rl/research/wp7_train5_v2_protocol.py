@@ -312,6 +312,12 @@ def validate_preview(root:Path, *, registration_file:Path, evidence_root:Path,
                       .read_text(encoding="utf8"),object_pairs_hook=_unique)
     _assert(reg["parent_registration_sha256"]==bridge.get("registration_git_blob_sha256"),
             "portable source revision parent does not identify the frozen historical registration")
+    historical_blob=_git_blob(root,anchor,HISTORICAL_REGISTRATION)
+    historical=json.loads(_in_root(root,HISTORICAL_REGISTRATION).read_text(encoding="utf8"),
+                          object_pairs_hook=_unique)
+    _assert(_hash_bytes(historical_blob)==reg["parent_registration_sha256"]
+            and historical.get("source_sha256")==reg["source_sha256"],
+            "historical registration bytes or source roster changed")
     for name in SOURCE_FILES:
         p=_in_root(root,name)
         blob=_git_blob(root,anchor,name)
