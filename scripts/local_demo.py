@@ -34,7 +34,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     state = result.get("state") if isinstance(result, dict) else None
-    if not isinstance(state, dict) or state.get("status") != "learning_completed":
+    expected_status = "SMOKE_INTEGRATION_PASS" if args.profile == "smoke" else "learning_completed"
+    if not isinstance(state, dict) or state.get("status") != expected_status:
         print("[LOCAL_DEMO_CHILD] runner did not report learning_completed", file=sys.stderr, flush=True)
         return 1
     return 0

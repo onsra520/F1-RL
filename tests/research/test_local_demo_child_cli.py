@@ -28,7 +28,8 @@ def fake_run_local_demo(root, *, candidate_id, tuning_seed_index, output_directo
         "tuning_seed_index": tuning_seed_index,
         "profile": profile,
     }), encoding="utf-8")
-    return {"state": {"status": "learning_completed"}}
+    return {"state": {"status": "SMOKE_INTEGRATION_PASS" if profile == "smoke"
+                       else "learning_completed"}}
 
 runner.run_local_demo = fake_run_local_demo
 script = sys.argv.pop(1)
@@ -96,6 +97,14 @@ def test_child_cli_forwards_benchmark_profile(tmp_path):
                       "--output", str(output), "--profile", "benchmark")
     assert result.returncode == 0
     assert json.loads((output / "child-result.json").read_text(encoding="utf-8"))["profile"] == "benchmark"
+
+
+def test_child_cli_accepts_smoke_integration_pass(tmp_path):
+    output = tmp_path / "smoke-run"
+    result = _run_cli("train", "--candidate", "C", "--tuning-seed-index", "0",
+                      "--output", str(output), "--profile", "smoke")
+    assert result.returncode == 0
+    assert json.loads((output / "child-result.json").read_text(encoding="utf-8"))["profile"] == "smoke"
 
 
 def test_child_cli_propagates_runner_failure(tmp_path):
