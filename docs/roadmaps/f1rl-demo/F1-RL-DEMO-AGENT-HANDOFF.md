@@ -1,14 +1,14 @@
 # F1-RL — Agent Handoff / Resume Contract
 
-> **Document version:** 1.1 (2026-11-10). **Current state:** `M0_IN_PROGRESS; MERGES_COMPLETE`.
+> **Document version:** 1.5 (2026-11-10). **Current state:** `M0_PASS; M1_PASS; READY_FOR_M2; MERGES_COMPLETE`.
 > This is an actionable **handoff**, not a certification of PPO driving.  
 > **Authoritative goals:** [Master Roadmap](F1-RL-DEMO-COMPLETION-ROADMAP.md) · **Proof/limits:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md).
 
 ## 0. Live takeover snapshot (2026-11-10)
 
 - PR #60 and PR #61 **MERGED**. Local `main` and `origin/main` both at `ab8951a9c68f009d7b2a14127b13c07426a2460a`.
-- Working branch/worktree: `feat/f1rl-demo-completion` / `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion`.
-- M0 **IN_PROGRESS**; no final demo acceptance or new full PPO campaign. Source/Python/RAM/disk/worker absence verified. Extended regression, physics/Track Builder admission and external WP3 evidence classification remain to finish.
+- Working branch/worktree: `feat/f1rl-demo-completion` / `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion`; implementation commit `b578d83`.
+- M0 **PASS** on recorded evidence; M1 **PASS** for simulator/Track Builder readiness. The V5 custom Auto Drive crossing route finished at tick 698 with a valid sample and no physical events. This is not PPO evidence. V5 checkpoint probes establish interface compatibility only; V5 training/smoke and crash/roll terminal acceptance remain closed. No final demo acceptance or new PPO campaign. External WP7 evidence and scientific Gate 2 remain separately blocked/sealed.
 - Previous real smoke/benchmark source: `8582d9d08826074dbd2b6d32609d9d58639f771d`; five model SHA-256 files matched. New merged benchmark metadata fix changes the source hash, without changing past artifacts.
 - Active runtime from all seven historical attempts plus one independently run post-merge smoke: **1,263.031 / 86,400 seconds**, remaining **85,136.969 seconds** (provisional pending any additional earlier workloads). Two improvement cycles remain unused by this demo campaign.
 - On `main` `ab8951a`, independent scoped regression: **121 passed, 2 skipped**. Five historical checkpoints loaded, hashes matched and predicted finite actions. Post-merge new real smoke from `6452517` PASS 256 steps / 10 optimizer updates / checkpoint `09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f5bf`; 90.718 seconds and preserved under `D:\Projects\.archives\F1-RL\wp3-postmerge-real-smoke-20261110`.
@@ -20,8 +20,8 @@
 | Key | Status / fact |
 |---|---|
 | Overall | `NOT_ACCEPTED` — no real Pure PPO acceptance completed |
-| Next milestone | **M0 — Repository/source admission + preflight**, followed by M1 simulator/track coverage |
-| M0-M10 | M0 IN_PROGRESS; M1-M10 PENDING until evidence independently verified |
+| Next milestone | **M2 real PPO smoke planning/admission**; V4 remains the admitted profile |
+| M0-M10 | M0 PASS; M1 PASS; M2-M10 PENDING |
 | Operating permission | Autonomous within owner-approved scope and 24h active workload cap; never merge main |
 | Scientific HELD-OUT | **SEALED**; WP7/Gate 2 **BLOCKED** |
 | Final model freeze | Not created |
@@ -30,7 +30,7 @@
 | Live real-time 1×/30FPS/p95≤150ms | Not measured |
 | Training budget epoch | 2026-11-10 WP3 engineering run + 1 new post-merge smoke: **1,263.031 s** used; **85,136.969 s** remaining (provisional) |
 | Agent improvement cycles | 0 newly used **by this documentation task**; confirm pre-existing active campaign history before charging |
-| Blocking source unknowns | Prior branch mismatch resolved by PR #61 merge; cross-layer regression and external WP3 evidence classification still pending |
+| Remaining gates | M2 admission/smoke and later milestones; V5 remains custom Auto Drive only; seven external WP7 engineering nodes still lack witnesses |
 
 **Do not take the historical 63+3 tests as proof of real PPO driving.** They were scoped code/mock integration tests. Real training must satisfy M2–M4 gates with new evidence.
 
@@ -121,7 +121,30 @@ Note: “replayable procedure” means reproducible launch/test steps using genu
 6. On discrepancy, set `BLOCKED`, write reason/owner action; do not self-repair immutable evidence.
 7. Use new commit/PR for documentation updates. Record **execution source commit** even if docs committed later.
 
-## 7. Agent stop-report template (update this file at every stop)
+## 7. Current stop report (2026-11-10)
+
+```text
+STATUS: READY_FOR_M2
+NEXT_MILESTONE: M2
+EXECUTION_SOURCE_BRANCH/HEAD: feat/f1rl-demo-completion / b578d83 (implementation committed)
+CLEAN_SOURCE: source worktree clean after implementation commit; roadmap docs modified and pending docs commit
+DOCS_BRANCH/HEAD: feat/f1rl-demo-completion / b578d83
+ARTIFACT_ROOT: D:\Projects\.archives\F1-RL\demo-completion
+MODEL_FREEZE_SHA: PENDING
+TRAINED_MODEL_SHA: 09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f5bf (smoke only)
+CONFIG/PHYSICS/OBS/ACTION_SHA: config 8a67db80464dc3b93072c0edc431f7a71b1b271c392b47d0915af0f2cac106e4; Physics V4 `fe6e...`; observation/action manifest recorded in smoke artifact
+BUDGET_EPOCH: 2026-11-10 WP3 engineering run
+ACTIVE_RUNTIME_USED_SECONDS: 1263.031 prior PPO workload ledger; this turn ran no PPO training/smoke/benchmark/evaluation
+ACTIVE_RUNTIME_REMAINING_SECONDS: 85136.969 prior PPO ledger, provisional; M1 engineering Auto Drive probe is not charged as PPO workload
+IMPROVEMENT_CYCLES_USED: 0 by this demo campaign
+LAST_GATE: M1 PASS; route completed at tick 698 / 451.281316836m with no physical events; broad affected Python suite 137 passed; focused Python suite 90 passed; stability test 1 passed; web tests 105 passed and build passed. No PPO training or smoke run.
+BLOCKERS: M2 and later gates remain pending; V5 is not admitted for training/smoke and its crash/roll terminal contract is not versioned; seven external WP7 witness sets remain absent
+OPEN_PR: none
+NEXT_SAFE_COMMAND: begin M2 planning and source-admission review on the V4 profile; no M2 workload has been started as part of this M1 readiness audit
+OWNER_APPROVAL_NEEDED: none for documentation; respect M2 workload/source admission and stop before any work outside the user's explicit M1 scope
+```
+
+## 8. Agent stop-report template (update this file at every stop)
 
 ```text
 STATUS: <PASS | FAIL | BLOCKED | NOT_ACCEPTED | READY_FOR_REVIEW>
@@ -144,7 +167,7 @@ NEXT_SAFE_COMMAND: <exact command with run limits, or NONE>
 OWNER_APPROVAL_NEEDED: <specific action, or NONE>
 ```
 
-## 8. Final handoff at document creation
+## 9. Final handoff at initial document creation (historical)
 
 - **Next action:** M0 reconnaissance; do not start C0 full-length training yet.
 - **Last historical implementation audit:** 4c8808f local parallel candidate, 63 + 3 scoped tests passed, mock campaign passed. No real benchmark or 70-run acceptance.

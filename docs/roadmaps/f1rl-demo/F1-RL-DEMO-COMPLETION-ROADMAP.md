@@ -1,11 +1,11 @@
 # F1-RL — Demo Completion Master Roadmap
 
-> **Document version:** 1.1 (2026-11-10)
-> **Overall state:** `M0_IN_PROGRESS / NOT_ACCEPTED` — this file is an execution contract, NOT proof of working PPO.
+> **Document version:** 1.4 (2026-11-10)
+> **Overall state:** `M0_PASS / M1_PASS / READY_FOR_M2 / NOT_ACCEPTED` — engineering readiness only; this file is NOT proof of working PPO.
 > **Owner:** F1-RL project owner. **Execution:** autonomous coding agent, gate-driven.  
 > **Related:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md) · [Agent Handoff](F1-RL-DEMO-AGENT-HANDOFF.md).
 
-**M0 resume note (2026-11-10):** PR #60 and PR #61 merged; origin/main and local main are at `ab8951a9c68f009d7b2a14127b13c07426a2460a`. New isolated worktree `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion` is at this baseline. M0 is IN_PROGRESS; no new PPO training or final demo acceptance has run on this branch. Historic real smoke/benchmark evidence is chargeable to the 24h active runtime cap (see ledger).
+**Audit note (2026-11-10):** PR #60 and PR #61 merged; main baseline is `ab8951a9c68f009d7b2a14127b13c07426a2460a`. M0 PASS remains as recorded. M1 simulator/Track Builder readiness passes on execution commit `b578d83` in branch `feat/f1rl-demo-completion`: the layered V5 Auto Drive route completes, relevant road seam/clearance regressions pass, existing TRAIN coverage is mapped, and registered V4 checkpoints pass one actual Gym transition each on V4. V5 checkpoint checks establish action/observation interface compatibility only, not physics-semantic compatibility or policy performance. V5 remains custom Auto Drive development only; training and smoke admission remain closed, and V5 crash/roll terminal acceptance remains fail-closed pending a separately versioned contract. No M2 work, final acceptance tracks, held-out access or main merge occurred. See ledger for exact evidence and limits.
 
 ## 0. Mission / definition of done
 
@@ -68,8 +68,8 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 
 | Gate | State at document creation | Required predecessor | Key outcome |
 |---|---|---|---|
-| M0 | IN_PROGRESS | None | Verified source, admissible environment and budget ledger |
-| M1 | PENDING | M0 | Valid custom geometry and training/development coverage |
+| M0 | PASS | None | Clean source, runtime/test paths and budget provenance verified on 2026-11-10 |
+| M1 | PASS | M0 | V5 custom Auto Drive route completes; training remains unauthorized by source admission; compatibility evidence is limited to interfaces |
 | M2 | PENDING | M0–M1 | Actual PPO smoke produces valid weights/telemetry |
 | M3 | PENDING | M2 | Controlled real benchmark chooses safe worker count |
 | M4 | PENDING | M3 | Authenticated real PPO training and validated artifacts |
@@ -82,22 +82,22 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 
 ### M0 — Repository, authority and environment gate
 
-- [ ] Recheck `main`, feature branch, worktrees, local changes, upstream sync, source admission and source commit/tree (do not infer from old handoff).
-- [ ] Verify current Physics V4/SAT/Track Builder/PPO implementation & tests; classify any missing external WP3 evidence separately rather than silently skipping failures.
-- [ ] Find/verify real runtime commands from `--help` and source; confirm the documented parallel-v1 branch exists locally/remote and review committed diff. Never guess CLI flags.
-- [ ] Verify Python/venv, Torch, CPU thread policy, ≥8 GiB free RAM reserve, disk space and archive root permissions; verify output roots outside repo.
-- [ ] Initialize the evidence ledger budget `consumed_active_seconds=0` **only if this is the first actual execution**, or import verified prior runtime charges.
-- [ ] Run focused non-training regression, record failures by source/environment/scientific policy. Treat unverified required safety gates as BLOCKED.
-- **PASS:** clean admissible source and executable test/inference paths; immutable baseline and budget provenance recorded.
+- [x] Recheck `main`, feature branch, worktrees, local changes, upstream sync, source admission and source commit/tree (2026-11-10 audit; main `ab8951a9c68f009d7b2a14127b13c07426a2460a`, clean execution worktree).
+- [x] Verify current Physics V4/SAT/Track Builder/PPO implementation & tests; classify any missing external WP3 evidence separately rather than silently skipping failures. Seven scoped WP7 nodes are BLOCKED_EXTERNAL_EVIDENCE; scientific Gate 2 remains BLOCKED/SEALED.
+- [x] Find/verify real runtime commands from `--help` and source; confirm the documented parallel-v1 branch exists locally/remote and review committed diff. `wp3_campaign.py` exposes sequential run/resume; the real benchmark CLI exposes smoke/sequential/parallel; source/docs differences were recorded. No run was started.
+- [x] Verify Python/venv, Torch, CPU thread policy, ≥8 GiB free RAM reserve, disk space and archive root permissions; verify output roots outside repo. Python 3.12.15 / Torch 2.15 CPU; 24.8 GiB free RAM at snapshot; outputs outside repo.
+- [x] Import verified prior runtime charges; ledger starts at 1,263.031 seconds used / 86,400. M1 feasibility wall-time charge is not captured and remains an accounting caveat.
+- [x] Run focused non-training regression, record failures by source/environment/scientific policy. 337 passed, 1 skipped; local API/frontend health 200; live browser rendering not run. Seven external WP7 engineering evidence nodes remain BLOCKED_EXTERNAL_EVIDENCE and scientific Gate 2 remains BLOCKED/SEALED.
+- **PASS (2026-11-10):** clean admissible source and executable test/inference paths; immutable baseline and budget provenance recorded. Detailed evidence is in the ledger.
 
 ### M1 — Simulator, Track Builder and training coverage gate
 
-- [ ] Inspect route graph, directed checkpoint/finish, lane geometry, left/right steering convention, road width/boundaries, collision contacts, object placement, height/seams/overpasses and bridge intersections.
-- [ ] Demonstrate valid builds for left turn, right turn, successive/S, cone/barrier, slope, bridge, elevated road, true grade-separated overlap and intersection without impossible teleport or hitbox discontinuity.
-- [ ] Validate route reachability by geometry/physics constraints, spawn position, directed finish crossing and reset reproducibility; use a reference controller *only for track feasibility*, **never as PPO success evidence**.
-- [ ] Add separate versioned **TRAIN/development** distributions for left turns and full custom geometry if absent. Do not include future post-freeze acceptance instances or edit frozen WP3 v3.
-- [ ] Establish unit/integration fixtures and source/track/physics contract hashes for cross-layer compatibility.
-- **PASS:** valid, physically feasible Track Builder geometry + evidence that training/dev data can cover left turns and full requested feature families.
+- [x] Inspect route graph, directed checkpoint/finish, lane geometry, left/right steering convention, road width/boundaries, collision contacts, object placement, height/seams/overpasses and bridge intersections. Geometry tests cover route/world adaptation, ramp and bridge heights, obstacle placement, collision/contact and explicit rejection of unsupported crossings.
+- [x] Demonstrate valid registered TRAIN coverage for left/right turns, slalom obstacles, ramp/elevation and route checkpoints, plus a complete custom V5 grade-separated crossing/intersection route. Evidence proves engineering route feasibility only; it does not establish PPO performance. See ledger for exact inventory and run result.
+- [x] Validate route reachability by geometry/physics constraints, spawn position, directed finish crossing and reset reproducibility; use a reference controller *only for track feasibility*, **never as PPO success evidence**. Left/right TRAIN-v2 each finished in 497 steps with ordered checkpoints and exact replay.
+- [x] Add separate versioned **TRAIN/development** distributions for left turns and full custom geometry if absent. Paired left/right turn-v2 exists; full requested intersection coverage is absent. No custom final acceptance geometry was created.
+- [x] Establish unit/integration fixtures and source/track/physics contract hashes for cross-layer compatibility; final broad affected Python suite passed 137 tests, focused suite 90 tests, stability check 1 test, web tests 105 tests, and web build passed on the execution worktree.
+- **PASS (2026-11-10, engineering readiness):** the custom layered crossing Auto Drive run finished successfully at tick 698 (451.281316836m, valid sample, no physical events). Focused and broad regressions pass; details and exact commands are in the evidence ledger. V4 remains the only admitted training/smoke profile. V5 admission is custom Auto Drive only, its terminal crash/roll validators remain fail-closed, and its checkpoint probe proves interface shape/action bounds only. This M1 result permits M2 planning under existing source admission; it does not start or authorize a PPO run by itself.
 
 ### M2 — One-model **real PPO smoke** gate
 
