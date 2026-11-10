@@ -1,43 +1,52 @@
 # F1-RL — Agent Handoff / Resume Contract
 
-> **Document version:** 1.0 (2026-11-10). **Current state:** `ROADMAP_AUTHORED; EXECUTION_NOT_STARTED».  
+> **Document version:** 1.1 (2026-11-10). **Current state:** `M0_IN_PROGRESS; MERGES_COMPLETE`.
 > This is an actionable **handoff**, not a certification of PPO driving.  
 > **Authoritative goals:** [Master Roadmap](F1-RL-DEMO-COMPLETION-ROADMAP.md) · **Proof/limits:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md).
+
+## 0. Live takeover snapshot (2026-11-10)
+
+- PR #60 and PR #61 **MERGED**. Local `main` and `origin/main` both at `ab8951a9c68f009d7b2a14127b13c07426a2460a`.
+- Working branch/worktree: `feat/f1rl-demo-completion` / `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion`.
+- M0 **IN_PROGRESS**; no final demo acceptance or new full PPO campaign. Source/Python/RAM/disk/worker absence verified. Extended regression, physics/Track Builder admission and external WP3 evidence classification remain to finish.
+- Previous real smoke/benchmark source: `8582d9d08826074dbd2b6d32609d9d58639f771d`; five model SHA-256 files matched. New merged benchmark metadata fix changes the source hash, without changing past artifacts.
+- Active runtime used from all seven recorded attempts (including failed smoke): **1,172.313 / 86,400 seconds**, remaining **85,227.687 seconds** subject to discovery of further prior workloads. Two improvement cycles remain unused by this demo campaign.
+- Any historical claims below about unmerged docs/parallel branches are **superseded by this dated snapshot**. No scientific HELD-OUT access.
 
 ## 1. Current operator-readable status
 
 | Key | Status / fact |
 |---|---|
-| Overall | `NOT_ACCEPTED» — no real Pure PPO acceptance completed |
+| Overall | `NOT_ACCEPTED` — no real Pure PPO acceptance completed |
 | Next milestone | **M0 — Repository/source admission + preflight**, followed by M1 simulator/track coverage |
-| M0–M10 | All `PENDING» until evidence independently verified |
+| M0-M10 | M0 IN_PROGRESS; M1-M10 PENDING until evidence independently verified |
 | Operating permission | Autonomous within owner-approved scope and 24h active workload cap; never merge main |
 | Scientific HELD-OUT | **SEALED**; WP7/Gate 2 **BLOCKED** |
 | Final model freeze | Not created |
 | Three custom acceptance tracks | Not created — must only be generated **after** model freeze |
 | 70-run Pure PPO evaluation | Not performed |
 | Live real-time 1×/30FPS/p95≤150ms | Not measured |
-| Training budget epoch | `NOT_INITIALIZED» until M0 audit of prior active execution charges |
+| Training budget epoch | 2026-11-10 WP3 engineering run: 1,172.313 seconds used; 85,227.687 remaining (provisional) |
 | Agent improvement cycles | 0 newly used **by this documentation task**; confirm pre-existing active campaign history before charging |
-| Blocking source unknowns | Local worktree current SHA and presence of unpushed parallel branch; local Windows remote control disconnected during documentation creation |
+| Blocking source unknowns | Prior branch mismatch resolved by PR #61 merge; cross-layer regression and external WP3 evidence classification still pending |
 
 **Do not take the historical 63+3 tests as proof of real PPO driving.** They were scoped code/mock integration tests. Real training must satisfy M2–M4 gates with new evidence.
 
 ## 2. Verified repository context as of handoff
 
-- Repository: **`onsra520/F1-RL»** (private GitHub); remote default branch `main».
-- Remote `main» at last verified check (2026-11-10): `3683981d99f70e1dca2bf600a7d0db93a2280ab9».
-- This documentation was authored on separate branch **`docs/f1rl-demo-master-roadmap-20261110»** from that baseline, at `docs/roadmaps/f1rl-demo/». The docs branch is **not merged into main**. Verify its latest SHA from GitHub; do not hardcode this document's own commit SHA inside itself.
-- Previously independently audited LOCAL parallel-worktree branch: `feat/wp3-parallel-training-campaign», HEAD then `4c8808f39e1cfdbd71c38b26ac5892c7a0719a81». The GitHub branch search for `parallel» returned no branch at documentation creation: **do not assume parallel code exists on origin/main or any remote branch**. On the Windows host confirm local branch/worktree and push/PR only when safe.
-- Known Windows repo: `D:\Projects\F1-RL».
-- Known candidate parallel worktree: `D:\Projects\.worktrees\F1-RL\wp3-parallel-training-campaign».
-- External evidence/artifact storage: `D:\Projects\.archives\F1-RL\demo-completion\».
-- Known Python environment from last scoped audit: `D:\Projects\.venvs\f1rl-wp3-parallel-training\Scripts\python.exe» (check current existence and environment before invoking).
-- Frozen historical config: `configs/research/wp3-ppo-tuning-campaign-v3.json», SHA-256 `8a67db80464dc3b93072c0edc431f7a71b1b271c392b47d0915af0f2cac106e4». Original v3 training: 12 models, 65,536 timesteps each; **full C0 first**.
-- Historical smoke config `configs/research/local-demo-ppo-smoke-v1.json» describes C-seed0, 256 timesteps, CPU n_envs=1; re-verify CLI/profile source.
+- Repository: **`onsra520/F1-RL`** (private GitHub); remote default branch `main`.
+- Remote `main` checked after both merges (2026-11-10): `ab8951a9c68f009d7b2a14127b13c07426a2460a`.
+- PR #60 documentation has been merged into `main`; all three files are present in this worktree.
+- PR #61 integrated parallel supervisor through `d2ee0bc77cfab94e05968f19c7b9cdaef6bb457a` into merged main. The original real PPO artifacts are bound to earlier `8582d9d08826074dbd2b6d32609d9d58639f771d` and remain immutable.
+- Known Windows repo: `D:\Projects\F1-RL`.
+- Known candidate parallel worktree: `D:\Projects\.worktrees\F1-RL\wp3-parallel-training-campaign`.
+- External evidence/artifact storage: `D:\Projects\.archives\F1-RL\demo-completion\`.
+- Known Python environment from last scoped audit: `D:\Projects\.venvs\f1rl-wp3-parallel-training\Scripts\python.exe` (check current existence and environment before invoking).
+- Frozen historical config: `configs/research/wp3-ppo-tuning-campaign-v3.json`, SHA-256 `8a67db80464dc3b93072c0edc431f7a71b1b271c392b47d0915af0f2cac106e4`. Original v3 training: 12 models, 65,536 timesteps each; **full C0 first**.
+- Historical smoke config `configs/research/local-demo-ppo-smoke-v1.json` describes C-seed0, 256 timesteps, CPU n_envs=1; re-verify CLI/profile source.
 - Earlier tests on local parallel branch: **63 targeted PASS + 3 evaluation/report PASS** on Windows, no real PPO training. Docs creation has not rerun any local tests.
 
-**Important discrepancy to resolve:** The docs branch stems from current remote main, whereas parallel engineering lives in an apparently local-only branch. Implementation agent must explicitly reconcile these before code changes, and avoid assuming source admitted/clean or cherry-picking unrelated history.
+**Integration note:** The earlier local-only branch discrepancy was resolved by merging PR #61. Source admission and rollout correctness for later phases must still be checked against their specific worktrees/commits.
 
 ## 3. Required immediate M0 reconnaissance
 
@@ -57,14 +66,14 @@ Get-FileHash "$repo\configs\research\wp3-ppo-tuning-campaign-v3.json" -Algorithm
 Get-PSDrive -Name D
 ```
 
-**Fetching** remote refs does not merge; it is authorized reconnaissance. Do not modify uncommitted work in any other worktree. If `docs/f1rl-demo-master-roadmap-20261110» is only on origin, read canonical documents with `git show origin/docs/f1rl-demo-master-roadmap-20261110:docs/roadmaps/f1rl-demo/<file>» (replace `<file>») or create a new safe docs worktree. **Never force checkout over a dirty tree.**
+**Fetching** remote refs does not merge; it is authorized reconnaissance. Do not modify uncommitted work in any other worktree. If `docs/f1rl-demo-master-roadmap-20261110` is only on origin, read canonical documents with `git show origin/docs/f1rl-demo-master-roadmap-20261110:docs/roadmaps/f1rl-demo/<file>` (replace `<file>`) or create a new safe docs worktree. **Never force checkout over a dirty tree.**
 
 Then:
 
-1. Verify current local source versus `main» and the 4c8808f parallel candidate. Confirm no pending changes or newer patch. Inspect CLI help and tests; inspect simulator and Track Builder UI contract.
-2. Identify actual source branch/worktree for M1–M5. A training branch must be **clean and committed**, not `main», and pass LOCAL_DEMO source admission. Keep documentation branch separate if convenient; coordinate updates through commits/PRs without silently overwriting another agent's work.
-3. Read current `scripts» and training API, not guessed commands. In particular, **`scripts/wp3_campaign.py parallel-run --workers 2» runs the full campaign (C0 first), not a 4,096-step smoke/benchmark.** Short PPO benchmarking requires separately versioned workload support.
-4. Re-run scoped non-training regression, including sample real browser frontend connection health and physics/track correctness checks if available; classify missing external WP3 evaluation evidence as `ENVIRONMENT/BLOCKED_EXTERNAL_EVIDENCE» only when independently proven.
+1. Verify current local source versus `main` and the 4c8808f parallel candidate. Confirm no pending changes or newer patch. Inspect CLI help and tests; inspect simulator and Track Builder UI contract.
+2. Identify actual source branch/worktree for M1–M5. A training branch must be **clean and committed**, not `main`, and pass LOCAL_DEMO source admission. Keep documentation branch separate if convenient; coordinate updates through commits/PRs without silently overwriting another agent's work.
+3. Read current `scripts` and training API, not guessed commands. In particular, **`scripts/wp3_campaign.py parallel-run --workers 2` runs the full campaign (C0 first), not a 4,096-step smoke/benchmark.** Short PPO benchmarking requires separately versioned workload support.
+4. Re-run scoped non-training regression, including sample real browser frontend connection health and physics/track correctness checks if available; classify missing external WP3 evaluation evidence as `ENVIRONMENT/BLOCKED_EXTERNAL_EVIDENCE` only when independently proven.
 5. Verify RAM, CPU/thread count, disk and archives. Confirm monitoring/proc-tree termination and no orphan training processes before starting anything.
 6. Determine if the owner-approved **24-hour budget epoch** starts with this new run or whether active measured attempts already exist. Do **not** set cumulative elapsed=0 blindly.
 7. Update [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md) with source/host/config and real measured/verified facts. Mark M0 PASS only when its prerequisites hold.
@@ -81,7 +90,7 @@ Then:
 
 **Git:** branch/worktree isolation; agent may commit/push/open PR; **owner alone authorizes merge to main**. Do not approve scientific admission by demo completion. Heavy artifacts outside Git.
 
-**When budget or gate fails:** stop training, preserve best development-selected checkpoint and evidence, report `NOT_ACCEPTED» with exactly which per-track/runtime gate failed. Do not fabricate successful percentages or salvage by retrying selected final evaluation episodes.
+**When budget or gate fails:** stop training, preserve best development-selected checkpoint and evidence, report `NOT_ACCEPTED` with exactly which per-track/runtime gate failed. Do not fabricate successful percentages or salvage by retrying selected final evaluation episodes.
 
 ## 5. Specific implementation sequence after M0
 
@@ -107,7 +116,7 @@ Note: “replayable procedure” means reproducible launch/test steps using genu
 3. Compare current clean source/config/model/track contract hashes to those of the last validated attempt.
 4. Resume **completed** jobs via validation and artifact inventory only. Training continuation from a partial checkpoint needs *all* optimizer, RNG, environment/reset/sampler and counter states. If unknown/incomplete, preserve old attempt and create a newly authorized attempt, never pretend seamless continuation.
 5. Ensure cumulative active-runtime accounting includes all prior attempts. Resume at lowest non-PASS milestone; re-verify its prerequisites.
-6. On discrepancy, set `BLOCKED», write reason/owner action; do not self-repair immutable evidence.
+6. On discrepancy, set `BLOCKED`, write reason/owner action; do not self-repair immutable evidence.
 7. Use new commit/PR for documentation updates. Record **execution source commit** even if docs committed later.
 
 ## 7. Agent stop-report template (update this file at every stop)
@@ -139,4 +148,4 @@ OWNER_APPROVAL_NEEDED: <specific action, or NONE>
 - **Last historical implementation audit:** 4c8808f local parallel candidate, 63 + 3 scoped tests passed, mock campaign passed. No real benchmark or 70-run acceptance.
 - **Git requirement:** documentation PR awaiting owner review, not merged; separate parallel branch apparently unpushed. Do not make Git changes to main.
 - **No active training launched by this documentation authoring.** Local Windows control was disconnected during creation; local disk and current worktree state could not be freshly inspected this turn.
-- **No claim of demo readiness.** Current outcome remains `NOT_ACCEPTED / NOT_EVALUATED».
+- **No claim of demo readiness.** Current outcome remains `NOT_ACCEPTED / NOT_EVALUATED`.

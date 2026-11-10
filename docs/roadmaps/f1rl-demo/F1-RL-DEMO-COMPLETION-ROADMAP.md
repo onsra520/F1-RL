@@ -1,9 +1,11 @@
 # F1-RL — Demo Completion Master Roadmap
 
-> **Document version:** 1.0 (2026-11-10)  
-> **Overall state:** `PLANNED / NOT_ACCEPTED» — this file is an execution contract, NOT proof of working PPO.  
+> **Document version:** 1.1 (2026-11-10)
+> **Overall state:** `M0_IN_PROGRESS / NOT_ACCEPTED` — this file is an execution contract, NOT proof of working PPO.
 > **Owner:** F1-RL project owner. **Execution:** autonomous coding agent, gate-driven.  
 > **Related:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md) · [Agent Handoff](F1-RL-DEMO-AGENT-HANDOFF.md).
+
+**M0 resume note (2026-11-10):** PR #60 and PR #61 merged; origin/main and local main are at `ab8951a9c68f009d7b2a14127b13c07426a2460a`. New isolated worktree `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion` is at this baseline. M0 is IN_PROGRESS; no new PPO training or final demo acceptance has run on this branch. Historic real smoke/benchmark evidence is chargeable to the 24h active runtime cap (see ledger).
 
 ## 0. Mission / definition of done
 
@@ -12,15 +14,15 @@ Finish an **interactive, live, Pure-PPO F1-RL demo** for REL301m (~10-minute pre
 The model must drive autonomously, finish the route, turn left/right smoothly, steer stably, brake before demanding sections, accelerate when appropriate, and generalize to new custom tracks **without training again**.
 
 **Engineering demo acceptance — all required:**
-1. Four registered TRAIN tracks: `straight-sprint-v1», `slalom-v1», `right-turn-v1», `ramp-v1». Additional left-turn development coverage is required (these four do not establish left-turn competence alone).
+1. Four registered TRAIN tracks: `straight-sprint-v1`, `slalom-v1`, `right-turn-v1`, `ramp-v1`. Additional left-turn development coverage is required (these four do not establish left-turn competence alone).
 2. At least **three newly generated custom acceptance tracks**, generated **only after final model freeze**; as a suite they must exercise left/right turns, successive/S turns, cones/barriers, ramps, bridges, intersections and elevation changes. No acceptance track may enter training, tuning, curriculum or model selection.
 3. **Exactly 10 pre-registered evaluation attempts per track** × at least 7 tracks = **at least 70 attempts**. **Each track individually must finish ≥8/10** via valid directed finish/checkpoint crossing. Neither pooled averages nor dropped failures count. If more tracks are added, each must satisfy the same gate.
 4. Evaluation in **Pure PPO mode only**: policy predicts steering, throttle and brake; no Auto/Hybrid intervention, fallback or hidden precomputed trajectories. Log raw policy actions, applied actions and any override; override invalidates that attempt for Pure-PPO acceptance.
 5. Live simulation **1× real-time target**, frontend **≥30 FPS target**, backend-state-to-visible-render **p95 ≤150 ms target** with actual instrumentation. Rendering interpolation between authoritative states is permitted; gameplay, physics and action decisions must never be interpolated/fabricated.
 6. Reproducible evidence, model/source/contract compatibility, crash/timeout handling, and an end-to-end live browser check. A successful recorded run alone is not acceptance.
-7. Total **active execution budget ≤24 hours** for smoke, real benchmark, train, evaluation and runtime acceptance; maximum **two improvement cycles** after first baseline training. If unmet at cap, preserve best development checkpoint and report `NOT_ACCEPTED». No automatic extension.
+7. Total **active execution budget ≤24 hours** for smoke, real benchmark, train, evaluation and runtime acceptance; maximum **two improvement cycles** after first baseline training. If unmet at cap, preserve best development checkpoint and report `NOT_ACCEPTED`. No automatic extension.
 
-**Scientific boundary:** WP7/Gate 2 remain BLOCKED; registered scientific `HELD-OUT» stays SEALED. The new custom demo acceptance suite is **not** the registered HELD-OUT set and is not a substitute for scientific acceptance.
+**Scientific boundary:** WP7/Gate 2 remain BLOCKED; registered scientific `HELD-OUT` stays SEALED. The new custom demo acceptance suite is **not** the registered HELD-OUT set and is not a substitute for scientific acceptance.
 
 ## 1. Eighteen recorded owner decisions
 
@@ -35,7 +37,7 @@ The model must drive autonomously, finish the route, turn left/right smoothly, s
 | 07 | Only Pure PPO steering/throttle/brake may count toward finish-rate acceptance. |
 | 08 | Agent generates 3 fresh acceptance tracks **after** model freeze; may not learn/tune from those outcomes. |
 | 09 | Custom suite covers full Track Builder: turns, obstacles, ramp, bridge, intersection, elevation. |
-| 10 | At budget cap stop training, retain best development model, prepare honest demo, report `NOT_ACCEPTED» if any gate fails. |
+| 10 | At budget cap stop training, retain best development model, prepare honest demo, report `NOT_ACCEPTED` if any gate fails. |
 | 11 | Press Run = live, step-driven inference/physics/web state; no recording or replay. |
 | 12 | Agent may commit, push and open PRs. **Merge into main requires owner approval.** |
 | 13 | Real-time target 1×; ≥30 frontend FPS; p95 state-to-render ≤150ms; interpolated rendering only. |
@@ -43,30 +45,30 @@ The model must drive autonomously, finish the route, turn left/right smoothly, s
 | 15 | Local versioned checkpoint/optimizer/RNG/artifact recovery; never pretend a weights-only checkpoint is a resumable training session. |
 | 16 | Compatibility gate + selective fine-tune/retrain; old checkpoints must be reaccepted when contract changes. |
 | 17 | Exactly three coordinated Markdown documents: roadmap, evidence ledger, handoff. |
-| 18 | Store docs in `docs/roadmaps/f1rl-demo/» under Git; large artifacts outside repo at `D:\Projects\.archives\F1-RL». |
+| 18 | Store docs in `docs/roadmaps/f1rl-demo/` under Git; large artifacts outside repo at `D:\Projects\.archives\F1-RL`. |
 
 ## 2. Non-negotiable execution rules
 
-- **Fail closed.** Status vocabulary: `PENDING», `IN_PROGRESS», `PASS», `FAIL», `BLOCKED», `NOT_ACCEPTED». Never mark PASS from a test name, author's statement, mock or missing evidence.
-- **Source admission first.** Before any real training, record current branch, clean committed HEAD, tree/source hashes, configuration hashes, checkpoint provenance and available disk/RAM. Do not train from `main» if LOCAL_DEMO admission forbids it; do not weaken admission.
-- **Do not mutate frozen v3 or scientific registration.** Historical `configs/research/wp3-ppo-tuning-campaign-v3.json» remains immutable (SHA-256 `8a67db80464dc3b93072c0edc431f7a71b1b271c392b47d0915af0f2cac106e4» at 2026-11-10). New workloads require new versioned config/protocol, independent output roots and honest scope labels.
+- **Fail closed.** Status vocabulary: `PENDING`, `IN_PROGRESS`, `PASS`, `FAIL`, `BLOCKED`, `NOT_ACCEPTED`. Never mark PASS from a test name, author's statement, mock or missing evidence.
+- **Source admission first.** Before any real training, record current branch, clean committed HEAD, tree/source hashes, configuration hashes, checkpoint provenance and available disk/RAM. Do not train from `main` if LOCAL_DEMO admission forbids it; do not weaken admission.
+- **Do not mutate frozen v3 or scientific registration.** Historical `configs/research/wp3-ppo-tuning-campaign-v3.json` remains immutable (SHA-256 `8a67db80464dc3b93072c0edc431f7a71b1b271c392b47d0915af0f2cac106e4` at 2026-11-10). New workloads require new versioned config/protocol, independent output roots and honest scope labels.
 - **Budget is cumulative ACTIVE execution time**, not a promise of 24h wall-clock continuous operation; measure actual training/benchmark/smoke/eval/runtime-test durations per attempt, including failed attempts. Never reset the ledger after restart. Docs/code authoring time is not charged unless running measured workload. Cancel tasks before reaching cap, allowing bounded cleanup within the safety reserve.
-- **Hardware envelope:** start ≤2 independent PPO jobs, `n_envs=1»/CPU, process-tree RSS ≤4 GiB/job and ≥8 GiB host available-RAM reserve during admission/monitoring. Existing worker config uses 8 Torch intra-op + 1 inter-op threads/job; changing that is a new versioned runtime contract. Four workers only after 1-vs-2-vs-4 real benchmark supports it AND host memory/CPU/process limits allow it. RSS polling is a watchdog, not a guaranteed hard cap; abort early if unsafe.
+- **Hardware envelope:** start ≤2 independent PPO jobs, `n_envs=1`/CPU, process-tree RSS ≤4 GiB/job and ≥8 GiB host available-RAM reserve during admission/monitoring. Existing worker config uses 8 Torch intra-op + 1 inter-op threads/job; changing that is a new versioned runtime contract. Four workers only after 1-vs-2-vs-4 real benchmark supports it AND host memory/CPU/process limits allow it. RSS polling is a watchdog, not a guaranteed hard cap; abort early if unsafe.
 - **No automatic retries or overwrites.** One attempt = isolated root, logs, immutable manifests, checkpoint hashes, explicit status; resume successful work only after independent validation. Partial jobs preserved. True training resume only if model, optimizer, RNG, sampler/environment and step state are sufficient and verified; otherwise create a new attempt.
 - **Data isolation:** TRAIN/development seeds and tracks are allowed for iteration. Fresh custom acceptance tracks generated after freeze are evaluation-only, may not be redrawn or reused to optimize the same model. Final scientific HELD-OUT must never be read. No Auto/Hybrid success relabelled PPO.
 - **Agent permissions:** create isolated worktrees/branches, commit, push and open PRs; **never merge main**, force push, delete old evidence, clean unrelated worktrees or silently change protected contracts. Source code can evolve; migration is explicit, backward compatibility tested.
 - **Evidence:** for each gate, put executable commands, exact absolute artifact paths, SHA-256, source commit/tree, environment version, measured metrics, PASS/FAIL rationale and time charged in the ledger. Update handoff on every stop/transition.
-- **Source-of-truth separation:** current `main» may not contain the local parallel implementation. Do not assume a branch has been merged or pushed; check refs and select the implementation worktree explicitly. Roadmap/docs may live on a separate docs PR before owner merges it.
+- **Source-of-truth separation:** current `main` may not contain the local parallel implementation. Do not assume a branch has been merged or pushed; check refs and select the implementation worktree explicitly. Roadmap/docs may live on a separate docs PR before owner merges it.
 
 ## 3. Dependency graph and canonical states
 
-`M0 Source & simulator admission → M1 Track/physics coverage → M2 Real PPO smoke → M3 Real concurrency benchmark → M4 Full training → M5 Development evaluation & ≤2 improvement cycles → M6 Model freeze → M7 Post-freeze custom suite → M8 70-attempt Pure PPO acceptance → M9 Live web runtime acceptance → M10 Demo packaging & review»
+`M0 Source & simulator admission → M1 Track/physics coverage → M2 Real PPO smoke → M3 Real concurrency benchmark → M4 Full training → M5 Development evaluation & ≤2 improvement cycles → M6 Model freeze → M7 Post-freeze custom suite → M8 70-attempt Pure PPO acceptance → M9 Live web runtime acceptance → M10 Demo packaging & review`
 
 Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS** still requires the final frozen model and live acceptance test. Do **not** use final custom acceptance outcomes for another development cycle.
 
 | Gate | State at document creation | Required predecessor | Key outcome |
 |---|---|---|---|
-| M0 | PENDING | None | Verified source, admissible environment and budget ledger |
+| M0 | IN_PROGRESS | None | Verified source, admissible environment and budget ledger |
 | M1 | PENDING | M0 | Valid custom geometry and training/development coverage |
 | M2 | PENDING | M0–M1 | Actual PPO smoke produces valid weights/telemetry |
 | M3 | PENDING | M2 | Controlled real benchmark chooses safe worker count |
@@ -80,11 +82,11 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 
 ### M0 — Repository, authority and environment gate
 
-- [ ] Recheck `main», feature branch, worktrees, local changes, upstream sync, source admission and source commit/tree (do not infer from old handoff).
+- [ ] Recheck `main`, feature branch, worktrees, local changes, upstream sync, source admission and source commit/tree (do not infer from old handoff).
 - [ ] Verify current Physics V4/SAT/Track Builder/PPO implementation & tests; classify any missing external WP3 evidence separately rather than silently skipping failures.
-- [ ] Find/verify real runtime commands from `--help» and source; confirm the documented parallel-v1 branch exists locally/remote and review committed diff. Never guess CLI flags.
+- [ ] Find/verify real runtime commands from `--help` and source; confirm the documented parallel-v1 branch exists locally/remote and review committed diff. Never guess CLI flags.
 - [ ] Verify Python/venv, Torch, CPU thread policy, ≥8 GiB free RAM reserve, disk space and archive root permissions; verify output roots outside repo.
-- [ ] Initialize the evidence ledger budget `consumed_active_seconds=0» **only if this is the first actual execution**, or import verified prior runtime charges.
+- [ ] Initialize the evidence ledger budget `consumed_active_seconds=0` **only if this is the first actual execution**, or import verified prior runtime charges.
 - [ ] Run focused non-training regression, record failures by source/environment/scientific policy. Treat unverified required safety gates as BLOCKED.
 - **PASS:** clean admissible source and executable test/inference paths; immutable baseline and budget provenance recorded.
 
@@ -99,15 +101,15 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 
 ### M2 — One-model **real PPO smoke** gate
 
-- [ ] From clean committed source, run authorized LOCAL_DEMO **smoke** for `C-seed0», expected currently **256 timesteps / one rollout / CPU / n_envs=1**, with profile and max wall checked from actual config (historical config: 1,800s maximum).
-- [ ] Confirm that `PPO.learn()» executed with optimizer steps, nonzero/finite gradient, weights changed, model-final checkpoint loadable, source/seed manifests valid and telemetry complete.
+- [ ] From clean committed source, run authorized LOCAL_DEMO **smoke** for `C-seed0`, expected currently **256 timesteps / one rollout / CPU / n_envs=1**, with profile and max wall checked from actual config (historical config: 1,800s maximum).
+- [ ] Confirm that `PPO.learn()` executed with optimizer steps, nonzero/finite gradient, weights changed, model-final checkpoint loadable, source/seed manifests valid and telemetry complete.
 - [ ] Check explicit stop, timeout, cleanup, failure output preservation and no HELD-OUT access.
-- [ ] Do NOT call frozen full `parallel-run» for a 256- or 4,096-step smoke: it enforces full **65,536-step C0 engineering gate**.
+- [ ] Do NOT call frozen full `parallel-run` for a 256- or 4,096-step smoke: it enforces full **65,536-step C0 engineering gate**.
 - **PASS:** actual (not mocked) optimizer/model evidence, no uncaught physics terminal, no integrity mismatch. If blocked, correct root cause before budgeting further training.
 
 ### M3 — Controlled **real PPO concurrency** benchmark
 
-- [ ] If necessary implement a separate, **versioned engineering benchmark profile**, e.g. **4,096 timesteps/job**, aligned to PPO rollout=256, CPU, `n_envs=1»; don't override frozen v3 limits or label benchmark as campaign completion.
+- [ ] If necessary implement a separate, **versioned engineering benchmark profile**, e.g. **4,096 timesteps/job**, aligned to PPO rollout=256, CPU, `n_envs=1`; don't override frozen v3 limits or label benchmark as campaign completion.
 - [ ] Benchmark the **same two jobs/seeds/configs** sequentially (1 worker) versus concurrently (2 workers), both with isolated artifacts. Record total wall-clock, transitions/s, rollout/update cost, aggregate/per-tree RSS, CPU, disk/telemetry, orphan checks and checkpoint integrity. A conservative initial per-job time guard of ~15 minutes may be used if explicitly encoded in the benchmark contract; stop earlier on unsafe resource use.
 - [ ] Test 4 workers **only after** 2-worker safety/throughput evidence and fresh admission; use comparable workloads, declare any thread-budget changes, assess oversubscription and memory reserve.
 - [ ] Choose fastest **safe measured** configuration, not highest count; reject performance claims based on synthetic/mock subprocess timing or vectorized-env benchmark (different experiment).
@@ -129,14 +131,14 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 - [ ] Diagnose behavior from observations, actions, rewards, collisions and policy gradients, not frontend visualization alone.
 - [ ] Agent may edit PPO hyperparameters, reward, curriculum, observation/action mapping, vehicle control or physics; **before each edit** write impact graph, contract/version delta, checkpoint compatibility classification, targeted regression and migration/retrain decision.
 - [ ] Run at most **two complete improvement cycles** (change → smoke/regressions → real train/fine-tune → dev eval). Each consumes remaining active-runtime budget. Never call model compatible solely because the .zip loads.
-- [ ] Choose best **development-evidenced** candidate using declared criteria, including skill on left turns and multi-feature development routes. Respect any frozen-v3 `final_checkpoint_only» selection rule; selecting intermediate checkpoints requires a new versioned development selection contract.
+- [ ] Choose best **development-evidenced** candidate using declared criteria, including skill on left turns and multi-feature development routes. Respect any frozen-v3 `final_checkpoint_only` selection rule; selecting intermediate checkpoints requires a new versioned development selection contract.
 - **PASS:** a model candidate has solid dev evidence for required behaviors and enough remaining budget for final acceptance/runtime. No custom acceptance tracks exist yet.
 
 ### M6 — Model + runtime contract freeze
 
 - [ ] Freeze exact model checkpoint SHA-256, source commit/tree, PPO hyperparameters, reward, feature names/order and normalization, action units/ranges, Physics V4/SAT settings, track-builder semantics, dependency versions and deterministic inference settings.
 - [ ] Run compatibility gates (architecture + semantic + checkpoint IO + authoritative source/track hashes); final frozen policy must drive steering/throttle/brake end-to-end.
-- [ ] Write `MODEL-FREEZE.json» under versioned external artifacts with immutable artifact inventory, timestamps and all reference hashes. Ledger links to it; handoff records freeze identity.
+- [ ] Write `MODEL-FREEZE.json` under versioned external artifacts with immutable artifact inventory, timestamps and all reference hashes. Ledger links to it; handoff records freeze identity.
 - [ ] From now through acceptance **no code/model/config tuning** using custom acceptance outcomes. If model or inference semantics change, this freeze is invalid and a **new** acceptance suite must be generated.
 - **PASS:** independently re-loadable frozen model and signed/hash-checked runtime contract. This is the **temporal boundary** before generating evaluation tracks.
 
@@ -145,7 +147,7 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 - [ ] **After M6 PASS**, generate ≥3 new tracks via the production Track Builder or equivalent same serialization and runtime validation. Fixed generator revision and predeclared seeds; no reuse from any TRAIN/dev trace or track library.
 - [ ] Pre-register feature matrix across ≥3: left/right/S, cone/barrier, ramp, bridge, intersection, elevation; preserve all feature occurrences, geometry, spawn/checkpoints/finish and validation outcomes.
 - [ ] Validate physically realizable geometry **without running the frozen PPO on it**. If a track is geometrically invalid, discard with reason **before seeing any model performance**; log generation attempts and deterministic replacement rule.
-- [ ] Freeze exact track JSON/content hashes, intended episode reset seeds and exactly 10 scheduled attempts per track in `DEMO-ACCEPTANCE-PLAN.json». Do not change roster after viewing PPO results.
+- [ ] Freeze exact track JSON/content hashes, intended episode reset seeds and exactly 10 scheduled attempts per track in `DEMO-ACCEPTANCE-PLAN.json`. Do not change roster after viewing PPO results.
 - **PASS:** three sealed, feasible, new evaluation-only custom tracks created **after** model freeze, fully hash-bound to model and plan. Never access scientific HELD-OUT.
 
 ### M8 — Final Pure PPO acceptance (TRAIN + custom)
@@ -160,7 +162,7 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 ### M9 — Live frontend/backend **real-time** demo gate
 
 - [ ] Track Builder → validate/save → click **Run** → spawn on correct starting surface → initialize frozen PPO, observation, controller, Physics V4 → step authoritative simulation continuously → stream authoritative sequence-numbered car/state snapshots to frontend.
-- [ ] For every authoritative decision step log `track_id», `step_id», `sim_time», observation hash, PPO action, applied action, physics result, checkpoint/finish/terminal state, monotonic emission order. Do not use prerecorded path, replay buffers or Auto Drive to steer the car.
+- [ ] For every authoritative decision step log `track_id`, `step_id`, `sim_time`, observation hash, PPO action, applied action, physics result, checkpoint/finish/terminal state, monotonic emission order. Do not use prerecorded path, replay buffers or Auto Drive to steer the car.
 - [ ] The browser renders new state as it arrives. May interpolate **display only** between real snapshots; cannot fabricate physics, checkpoint progression or steering. Keep UI visually stable (no map jitter, no wrong-lane anchoring) and show speed/steer/brake/telemetry.
 - [ ] Verify pause/restart, new custom track loading, crash/off-road/timeout, finish, post-finish state, backend disconnect/reconnect, frontend stale-packet handling, monotonic state and no ghost car/duplicate simulation loop.
 - [ ] On target presentation hardware, instrument **1× real-time** pace (simulated dt / wall time), **frontend ≥30 FPS**, **p95 backend-state-to-painted-frame ≤150ms** over a representative ≥10-minute interactive soak/demo rehearsal, with synchronized timestamps/clock offsets and raw per-sample evidence. Report average/p95/max and dropped/out-of-order updates. No prerecorded video backup or replay accepted as the main demo.
@@ -170,8 +172,8 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 ### M10 — Completion packaging, independent review and Git delivery
 
 - [ ] Make repeatable local demo launch/stop instructions; verify clean startup, freeze checkpoint load, Track Builder→Run→finish, fallback **error reporting** (not fallback controller), and short 10-minute presentation script.
-- [ ] Produce `DEMO-ACCEPTANCE-RESULT.json», timing/benchmark tables, per-track confusion/failure breakdown, frozen model/track manifests and live session log. Freeze final hashes.
-- [ ] Check all gates with evidence ledger links; refresh this roadmap and handoff. Label final `DEMO_READY» **only if M0–M9 PASS** and 7/7 per-track acceptance PASS; else `NOT_ACCEPTED» and list deficits.
+- [ ] Produce `DEMO-ACCEPTANCE-RESULT.json`, timing/benchmark tables, per-track confusion/failure breakdown, frozen model/track manifests and live session log. Freeze final hashes.
+- [ ] Check all gates with evidence ledger links; refresh this roadmap and handoff. Label final `DEMO_READY` **only if M0–M9 PASS** and 7/7 per-track acceptance PASS; else `NOT_ACCEPTED` and list deficits.
 - [ ] Agent may commit, push and open focused PR(s) with reproducible evidence and red/green test summary. **No merge into main until explicit owner approval.**
 - [ ] Conduct independent read-only review after agent self-tests. This review may accept the engineering demo but **cannot authorize WP7/Gate 2 or scientific HELD-OUT**.
 - **PASS:** independently inspectable finished demo package, no unsupported claims, owner decision pending on PR merge.
@@ -180,37 +182,37 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 
 1. Start every session by reading **all three documents**, fetching current source/evidence refs, checking pending PRs and validating handoff against actual repository and hashes.
 2. Identify the lowest numbered non-PASS milestone with satisfied dependencies. Create isolated branch/worktree for its source changes; log any cross-branch integration prerequisites.
-3. Before execution, write `IN_PROGRESS», acceptance plan and remaining budget to handoff. Obtain measured preflight host resources and training authorization boundaries.
-4. Run bounded tests/workload. Collect real logs/artifacts. Set `PASS» **only** if all specific assertions are independently verified, source SHA and evidence manifest exist. Update ledger/handoff together in a Git commit.
+3. Before execution, write `IN_PROGRESS`, acceptance plan and remaining budget to handoff. Obtain measured preflight host resources and training authorization boundaries.
+4. Run bounded tests/workload. Collect real logs/artifacts. Set `PASS` **only** if all specific assertions are independently verified, source SHA and evidence manifest exist. Update ledger/handoff together in a Git commit.
 5. If failure is fixable within scope/budget, create versioned attempt and retry according to explicit policy; no destructive reset. If contract changes, run compatibility gate and regressions first.
-6. On `FAIL/BLOCKED», cap breach, source discrepancy, evidence corruption or new permissions requirement: **stop**, preserve state and artifacts, document exact next command and owner action needed. Do not advance milestone.
-7. On workload budget exhaustion: stop all new train jobs, gracefully terminate active ones, preserve best dev-approved checkpoint, label `NOT_ACCEPTED» if not all required gates pass; package demo *with disclosed limitations*, not fake PASS.
-8. Owner approval is required for any `main» merge, budget extension, scientific protocol change or opening HELD-OUT.
+6. On `FAIL/BLOCKED`, cap breach, source discrepancy, evidence corruption or new permissions requirement: **stop**, preserve state and artifacts, document exact next command and owner action needed. Do not advance milestone.
+7. On workload budget exhaustion: stop all new train jobs, gracefully terminate active ones, preserve best dev-approved checkpoint, label `NOT_ACCEPTED` if not all required gates pass; package demo *with disclosed limitations*, not fake PASS.
+8. Owner approval is required for any `main` merge, budget extension, scientific protocol change or opening HELD-OUT.
 
 ## 5. Mandatory evidence contract
 
 For **each milestone** the evidence ledger must contain:
-`milestone_id», `attempt_id», `status», `scope», `source_branch», `source_commit», `source_tree_hash», `config_hashes», `model_hash», `track_hashes», `host_snapshot», `commands», `exit_codes», `tests/results», `metric_definitions», `measured_values», `artifact_paths», `artifact_SHA256», `time_charged_seconds», `cumulative_seconds», `blockers», `reviewer», `verified_at».
+`milestone_id`, `attempt_id`, `status`, `scope`, `source_branch`, `source_commit`, `source_tree_hash`, `config_hashes`, `model_hash`, `track_hashes`, `host_snapshot`, `commands`, `exit_codes`, `tests/results`, `metric_definitions`, `measured_values`, `artifact_paths`, `artifact_SHA256`, `time_charged_seconds`, `cumulative_seconds`, `blockers`, `reviewer`, `verified_at`.
 
-Tests are not interchangeable with training: tag every item `STATIC», `MOCK», `REAL_SMOKE», `REAL_TRAIN», `REAL_EVAL», `LIVE_BROWSER» or `INDEPENDENT_AUDIT». Never claim mock timings as PPO speedups.
+Tests are not interchangeable with training: tag every item `STATIC`, `MOCK`, `REAL_SMOKE`, `REAL_TRAIN`, `REAL_EVAL`, `LIVE_BROWSER` or `INDEPENDENT_AUDIT`. Never claim mock timings as PPO speedups.
 
-The ledger stores only lightweight metadata/links. Actual multi-GB artifacts belong in `D:\Projects\.archives\F1-RL\demo-completion\<campaign-id>\<milestone>\<attempt>\» with immutable hashes. No large binaries, sensitive credentials or scientific HELD-OUT data in Git.
+The ledger stores only lightweight metadata/links. Actual multi-GB artifacts belong in `D:\Projects\.archives\F1-RL\demo-completion\<campaign-id>\<milestone>\<attempt>\` with immutable hashes. No large binaries, sensitive credentials or scientific HELD-OUT data in Git.
 
 ## 6. Stop conditions and honest terminal verdict
 
-- `DEMO_READY»: M0–M9 PASS, ≥8/10 on **each** 7+ tracks, Pure PPO end-to-end live runtime targets PASS, evidence complete.
-- `NOT_ACCEPTED»: budget exhausted, no valid model, any per-track finish threshold misses, live FPS/latency below target or provenance incomplete. Preserve highest-ranked development model and explain visible demo limitations.
-- `BLOCKED»: external missing evidence/permission, invalid source compatibility, unsafe memory/disk, orphan child, disputed scientific isolation, or unresolved engineering regression. Explain and do not silently bypass.
-- `READY_FOR_REVIEW»: agent implementation/tests finished, independent reviewer has **not** independently signed off.
-- **Neither** `DEMO_READY» nor `READY_FOR_REVIEW» means permission to merge main; **neither** opens scientific HELD-OUT.
+- `DEMO_READY`: M0–M9 PASS, ≥8/10 on **each** 7+ tracks, Pure PPO end-to-end live runtime targets PASS, evidence complete.
+- `NOT_ACCEPTED`: budget exhausted, no valid model, any per-track finish threshold misses, live FPS/latency below target or provenance incomplete. Preserve highest-ranked development model and explain visible demo limitations.
+- `BLOCKED`: external missing evidence/permission, invalid source compatibility, unsafe memory/disk, orphan child, disputed scientific isolation, or unresolved engineering regression. Explain and do not silently bypass.
+- `READY_FOR_REVIEW`: agent implementation/tests finished, independent reviewer has **not** independently signed off.
+- **Neither** `DEMO_READY` nor `READY_FOR_REVIEW` means permission to merge main; **neither** opens scientific HELD-OUT.
 
 ## 7. Agent bootstrap
 
 Read in this order:
-1. `docs/roadmaps/f1rl-demo/F1-RL-DEMO-COMPLETION-ROADMAP.md»
-2. `docs/roadmaps/f1rl-demo/F1-RL-DEMO-EVIDENCE-LEDGER.md»
-3. `docs/roadmaps/f1rl-demo/F1-RL-DEMO-AGENT-HANDOFF.md»
+1. `docs/roadmaps/f1rl-demo/F1-RL-DEMO-COMPLETION-ROADMAP.md`
+2. `docs/roadmaps/f1rl-demo/F1-RL-DEMO-EVIDENCE-LEDGER.md`
+3. `docs/roadmaps/f1rl-demo/F1-RL-DEMO-AGENT-HANDOFF.md`
 
 Then independently verify repository HEAD/worktrees, existing source admission policy, protected research registration, relevant tests and external artifact inventory. Do **not** assume docs-branch availability in other worktrees before the owner merges the documentation PR. Source and GitHub refs must be re-resolved at the start of each session.
 
-**Current baseline note (documentation creation only):** remote `main» reported `3683981d99f70e1dca2bf600a7d0db93a2280ab9» on 2026-11-10. A separate, not-yet-merged parallel implementation was previously audited at local commit `4c8808f39e1cfdbd71c38b26ac5892c7a0719a81», with 63 targeted and 3 evaluation/report tests passing. This is **historical code/mock evidence only**. No PPO real smoke, concurrency training, 70-run acceptance or live-performance pass is claimed.
+**Current baseline note (documentation creation only):** remote `main` reported `3683981d99f70e1dca2bf600a7d0db93a2280ab9` on 2026-11-10. A separate, not-yet-merged parallel implementation was previously audited at local commit `4c8808f39e1cfdbd71c38b26ac5892c7a0719a81`, with 63 targeted and 3 evaluation/report tests passing. This is **historical code/mock evidence only**. No PPO real smoke, concurrency training, 70-run acceptance or live-performance pass is claimed.
