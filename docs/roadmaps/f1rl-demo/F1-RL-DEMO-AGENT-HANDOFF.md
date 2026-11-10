@@ -1,6 +1,6 @@
 # F1-RL — Agent Handoff / Resume Contract
 
-> **Document version:** 1.5 (2026-11-10). **Current state:** `M0_PASS; M1_PASS; READY_FOR_M2; MERGES_COMPLETE`.
+> **Document version:** 1.6 (2026-11-10). **Current state:** `M0_PASS; M1_PASS; READY_FOR_M2; MERGES_COMPLETE`.
 > This is an actionable **handoff**, not a certification of PPO driving.  
 > **Authoritative goals:** [Master Roadmap](F1-RL-DEMO-COMPLETION-ROADMAP.md) · **Proof/limits:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md).
 
@@ -127,8 +127,8 @@ Note: “replayable procedure” means reproducible launch/test steps using genu
 STATUS: READY_FOR_M2
 NEXT_MILESTONE: M2
 EXECUTION_SOURCE_BRANCH/HEAD: feat/f1rl-demo-completion / b578d83 (implementation committed)
-CLEAN_SOURCE: source worktree clean after implementation commit; roadmap docs modified and pending docs commit
-DOCS_BRANCH/HEAD: feat/f1rl-demo-completion / b578d83
+CLEAN_SOURCE: clean committed source and roadmap docs
+DOCS_BRANCH/HEAD: feat/f1rl-demo-completion / 162f95a (roadmap evidence commit)
 ARTIFACT_ROOT: D:\Projects\.archives\F1-RL\demo-completion
 MODEL_FREEZE_SHA: PENDING
 TRAINED_MODEL_SHA: 09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f5bf (smoke only)
