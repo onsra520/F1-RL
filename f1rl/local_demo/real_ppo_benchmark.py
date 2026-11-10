@@ -163,10 +163,12 @@ def _verify_smoke_attempt(root: Path, attempt: Path, source_commit: str, seed_bu
         header = _read_json(attempt / "attempt.json")
         result = _read_json(attempt / "result.json")
         profile, profile_hash = _load_smoke_profile(root / "configs/research/local-demo-ppo-smoke-v1.json")
+        resource_profile, _ = _load_benchmark_profile(root / "configs/research/local-demo-ppo-benchmark-v1.json")
         output = attempt / "C-seed0"
         if (header.get("mode") != "smoke" or header.get("attempt_id") != attempt.name
                 or header.get("source_commit") != source_commit
                 or header.get("smoke_profile_sha256") != profile_hash
+                or header.get("max_processes_per_worker") != resource_profile["max_processes_per_worker"]
                 or result.get("status") != "SMOKE_INTEGRATION_PASS"
                 or result.get("source_commit") != source_commit
                 or result.get("smoke_profile_sha256") != profile_hash
@@ -214,6 +216,9 @@ def _verify_sequential_attempt(root: Path, attempt: Path, source_commit: str,
         profile, _ = _load_benchmark_profile(root / "configs/research/local-demo-ppo-benchmark-v1.json")
         if (header.get("mode") != "sequential" or header.get("attempt_id") != attempt.name
                 or header.get("concurrency") != 1
+                or header.get("max_processes_per_worker") != profile["max_processes_per_worker"]
+                or header.get("total_process_budget_including_supervisor")
+                    != profile["max_processes_per_worker"] + 1
                 or header.get("source_commit") != source_commit
                 or header.get("benchmark_profile_sha256") != profile_hash
                 or result.get("status") != "ENGINEERING_PASS"
@@ -266,7 +271,8 @@ def _verify_sequential_attempt(root: Path, attempt: Path, source_commit: str,
                         "peak_process_tree_rss_bytes", profile["max_process_tree_rss_bytes"] + 1)
                     > profile["max_process_tree_rss_bytes"]
                     or result["completed_jobs"][model_id].get("resource_usage", {}).get(
-                        "maximum_process_count", 2) > 1
+                        "maximum_process_count", profile["max_processes_per_worker"] + 1)
+                    > profile["max_processes_per_worker"]
                     or process.get("model_id") != model_id
                     or process.get("source_commit") != source_commit
                     or process.get("parallel_manifest_sha256") != profile_hash
@@ -283,6 +289,7 @@ def _verify_sequential_attempt(root: Path, attempt: Path, source_commit: str,
 
 def _run_smoke(root: Path, artifact_root: Path) -> dict:
     profile, profile_hash = _load_smoke_profile(root / "configs/research/local-demo-ppo-smoke-v1.json")
+    benchmark_profile, _ = _load_benchmark_profile(root / "configs/research/local-demo-ppo-benchmark-v1.json")
     source_commit = _git(root, "rev-parse", "HEAD")
     if _git(root, "status", "--porcelain"):
         raise RuntimeError("real PPO smoke source admission requires a clean worktree")
@@ -296,13 +303,15 @@ def _run_smoke(root: Path, artifact_root: Path) -> dict:
              "attempt_id": uuid4().hex, "source_commit": source_commit,
              "profile": "smoke", "parallel_manifest_sha256": profile_hash}
     resources = {"per_worker_process_tree_rss_limit_bytes": 4 * 1024**3,
-                 "max_processes_per_worker": 1, "memory_poll_interval_seconds": 1,
+                 "max_processes_per_worker": benchmark_profile["max_processes_per_worker"],
+                 "memory_poll_interval_seconds": 1,
                  "shutdown_grace_seconds": 10, "cleanup_timeout_seconds": 30}
     header = {"schema_version": "f1rl_real_ppo_benchmark_attempt_v1", "mode": "smoke",
               "attempt_id": attempt.name, "source_commit": source_commit,
               "source_tree_sha256": _git(root, "rev-parse", "HEAD^{tree}"),
               "smoke_profile_sha256": profile_hash, "candidate_id": "C",
               "tuning_seed_index": 0, "timesteps": 256, "concurrency": 1,
+              "max_processes_per_worker": benchmark_profile["max_processes_per_worker"],
               "invocation": [sys.executable, "scripts/local_demo.py", "train", "--candidate", "C",
                              "--tuning-seed-index", "0", "--output", os.fspath(output),
                              "--profile", "smoke"],
@@ -386,7 +395,8 @@ def run_real_ppo_benchmark(root: str | Path, artifact_root: str | Path, mode: st
     attempt.mkdir(parents=False, exist_ok=False)
     resources = {
         "per_worker_process_tree_rss_limit_bytes": profile["max_process_tree_rss_bytes"],
-        "max_processes_per_worker": 1, "memory_poll_interval_seconds": 1,
+        "max_processes_per_worker": profile["max_processes_per_worker"],
+        "memory_poll_interval_seconds": 1,
         "shutdown_grace_seconds": 10, "cleanup_timeout_seconds": 30,
     }
     jobs = []
@@ -409,7 +419,9 @@ def run_real_ppo_benchmark(root: str | Path, artifact_root: str | Path, mode: st
               "concurrency": concurrency, "torch_threads": profile["torch_threads"],
               "torch_interop_threads": profile["torch_interop_threads"],
               "logical_processors": logical_processors,
-              "total_process_budget_including_supervisor": concurrency + 1,
+              "max_processes_per_worker": profile["max_processes_per_worker"],
+              "total_process_budget_including_supervisor": (
+                  concurrency * profile["max_processes_per_worker"] + 1),
               "invocation": [sys.executable, "scripts/wp3_real_ppo_benchmark.py",
                              mode, "--output-root", os.fspath(artifact_root)],
               "child_invocations": [[sys.executable, "scripts/local_demo.py", "train",
@@ -468,7 +480,8 @@ def run_real_ppo_benchmark(root: str | Path, artifact_root: str | Path, mode: st
         stats["aggregate_peak_rss_bytes"] = max(stats["aggregate_peak_rss_bytes"], rss)
         stats["peak_simultaneous_process_tree_cpu_seconds"] = max(
             stats["peak_simultaneous_process_tree_cpu_seconds"], cpu)
-        if processes > concurrency or rss > concurrency * profile["max_process_tree_rss_bytes"]:
+        if (processes > concurrency * profile["max_processes_per_worker"]
+                or rss > concurrency * profile["max_process_tree_rss_bytes"]):
             return "benchmark process or aggregate RSS budget exceeded"
         return None
 

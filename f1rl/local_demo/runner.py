@@ -123,6 +123,7 @@ def _load_benchmark_profile(path: str | Path) -> tuple[dict, str]:
         "rollout_batches": 1, "device": "cpu",
         "tracks": list(TRAIN_IDS), "checkpoint_interval": 4096,
         "max_wall_seconds": 900, "max_process_tree_rss_bytes": 4294967296,
+        "max_processes_per_worker": 2,
         "minimum_available_memory_bytes": 8589934592,
         "torch_threads": 8, "torch_interop_threads": 1,
         "heldout_access": False, "scientific_evaluation": False,

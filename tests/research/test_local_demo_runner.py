@@ -14,6 +14,7 @@ def test_benchmark_profile_is_fixed_and_rejects_scope_changes(tmp_path):
     assert profile["timesteps"] == 4096
     assert profile["candidates"] == ["A", "B"]
     assert profile["torch_threads"] == 8
+    assert profile["max_processes_per_worker"] == 2
     assert len(digest) == 64
 
     profile["timesteps"] = 65536
