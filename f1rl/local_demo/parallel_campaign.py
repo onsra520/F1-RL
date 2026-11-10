@@ -17,7 +17,7 @@ from .campaign import (
     CAMPAIGN_CONFIG, _CampaignLock, _atomic_json, _canonical, _inside,
     _iter_jsonl, _load_campaign_config, _run_child, _sha256, _strict_json,
     _verify_evidence_manifest, _write_evidence_manifest, _write_immutable_json,
-    _write_independent_review, _write_new_json, _write_training_deliverables,
+    _write_new_json, _write_training_deliverables,
     build_campaign_manifest, validate_training_run,
 )
 
@@ -693,6 +693,19 @@ def _parallel_write_activation(output: Path, state: dict, intent: dict,
     _atomic_json(output / "parallel-campaign-state.json", state)
 
 
+def _write_parallel_review_status(output: Path, state: dict, evaluation: dict) -> None:
+    status = _parallel_document({
+        "schema_version": "f1rl_wp3_parallel_review_status_v1",
+        "engineering_status": "ENGINEERING_VALIDATION_COMPLETE",
+        "independent_review_status": "PENDING_INDEPENDENT_REVIEW",
+        "evaluation_status": evaluation["status"],
+        "completed_model_ids": state["completed_model_ids"],
+        "scientific_evidence": False, "heldout_access": False,
+        "wp7_status": "BLOCKED", "gate2_status": "BLOCKED",
+    })
+    _write_new_json(output / "WP3-PARALLEL-REVIEW-STATUS.json", status)
+
+
 def _verify_parallel_activation(root: Path, output: Path, state: dict, intent: dict,
                                 base_manifest: dict, campaign_config: dict,
                                 schedule: list[dict]) -> tuple[dict, dict]:
@@ -924,8 +937,14 @@ def _parallel_mark_interrupted(output: Path, state: dict, event_path: Path) -> N
         if attempt_id:
             attempt = _parallel_find_attempt(state, model_id, attempt_id)
             attempt.update(status="INTERRUPTED", interrupted_at=timestamp)
+            if attempt.get("attempt_kind") == "RETRY":
+                state["recovery"] = {
+                    "status": "RETRY_INTERRUPTED", "model_id": model_id,
+                    "attempt_id": attempt_id,
+                }
             _append_parallel_event(event_path, {
-                "event": "job_interrupted", "model_id": model_id,
+                "event": "retry_interrupted" if attempt.get("attempt_kind") == "RETRY" else "job_interrupted",
+                "model_id": model_id,
                 "attempt_id": attempt_id, "timestamp": timestamp,
             })
     state.update(status="INTERRUPTED", phase="INTERRUPTED_PRESERVED", current_model_id=None)
@@ -942,10 +961,17 @@ def _parallel_mark_failed(output: Path, state: dict, event_path: Path,
         entry["status"] = "FAILED"
         attempt_id = entry.get("latest_attempt_id")
         if attempt_id:
-            _parallel_find_attempt(state, model_id, attempt_id).update(
+            attempt = _parallel_find_attempt(state, model_id, attempt_id)
+            attempt.update(
                 status="FAILED", error=message, completed_at=timestamp)
+            if attempt.get("attempt_kind") == "RETRY":
+                state["recovery"] = {
+                    "status": "RETRY_FAILED", "model_id": model_id,
+                    "attempt_id": attempt_id, "error": message,
+                }
             _append_parallel_event(event_path, {
-                "event": "job_failed", "model_id": model_id,
+                "event": "retry_failed" if attempt.get("attempt_kind") == "RETRY" else "job_failed",
+                "model_id": model_id,
                 "attempt_id": attempt_id, "detail": message, "timestamp": timestamp,
             })
     state.update(status="ENGINEERING_FAILED", phase="STOPPED_ON_FAILURE", failure=message)
@@ -985,7 +1011,8 @@ def _parallel_prepare_attempt(output: Path, state: dict, intent: dict,
     }
     attempt = {
         "attempt_id": attempt_id, "job_identity_sha256": entry["job_identity_sha256"],
-        "status": "LAUNCHING", "run_relative_path": run_relative_path,
+        "status": "LAUNCHING", "attempt_kind": "RETRY" if allow_retry else "INITIAL",
+        "run_relative_path": run_relative_path,
         "log_relative_path": log_relative_path,
         "attempt_record_path": f"attempt-meta/{model_id}/{attempt_id}.json",
         "started_at": datetime.now(timezone.utc).isoformat(),
@@ -1004,9 +1031,15 @@ def _parallel_prepare_attempt(output: Path, state: dict, intent: dict,
     attempts.append(attempt)
     entry.update(status="RUNNING", latest_attempt_id=attempt_id)
     state.update(status="RUNNING", current_model_id=model_id)
+    if allow_retry:
+        state["recovery"] = {
+            "status": "RETRY_RUNNING", "model_id": model_id,
+            "attempt_id": attempt_id,
+        }
     _atomic_json(output / "parallel-campaign-state.json", state)
     _append_parallel_event(output / "parallel-campaign-events.jsonl", {
-        "event": "job_dispatched", "model_id": model_id, "attempt_id": attempt_id,
+        "event": "retry_running" if allow_retry else "job_dispatched",
+        "model_id": model_id, "attempt_id": attempt_id,
         "job_identity_sha256": entry["job_identity_sha256"],
         "source_commit": base_manifest["source_commit"],
         "timestamp": attempt["started_at"],
@@ -1082,6 +1115,11 @@ def _parallel_run_campaign_stage(root: Path, output: Path, state: dict, intent: 
                 )
                 entry.update(status="ENGINEERING_PASS", latest_attempt_id=job["attempt_id"],
                              validation=validation, output_path=job["run_relative_path"])
+                if attempt.get("attempt_kind") == "RETRY":
+                    state["recovery"] = {
+                        "status": "RETRY_PASSED", "model_id": model_id,
+                        "attempt_id": job["attempt_id"],
+                    }
                 if model_id not in state["completed_model_ids"]:
                     state["completed_model_ids"].append(model_id)
                 state["completed_training_timesteps"] = (
@@ -1092,12 +1130,22 @@ def _parallel_run_campaign_stage(root: Path, output: Path, state: dict, intent: 
             elif event == "job_failed":
                 attempt.update(status="FAILED", error=str(detail), completed_at=timestamp)
                 entry.update(status="FAILED", latest_attempt_id=job["attempt_id"], last_error=str(detail))
+                if attempt.get("attempt_kind") == "RETRY":
+                    state["recovery"] = {
+                        "status": "RETRY_FAILED", "model_id": model_id,
+                        "attempt_id": job["attempt_id"], "error": str(detail),
+                    }
             elif event == "job_cancelled":
                 attempt.update(status="CANCELLED", completed_at=timestamp,
                                elapsed_seconds=detail.get("elapsed_seconds"),
                                cleanup_seconds=detail.get("cleanup_seconds"),
                                resource_usage=detail.get("resource_usage"))
                 entry.update(status="CANCELLED", latest_attempt_id=job["attempt_id"])
+                if attempt.get("attempt_kind") == "RETRY":
+                    state["recovery"] = {
+                        "status": "RETRY_FAILED", "model_id": model_id,
+                        "attempt_id": job["attempt_id"], "error": "retry attempt cancelled",
+                    }
                 stats["process_cleanup_seconds"] += detail.get("cleanup_seconds", 0.0)
                 stats["aggregate_cpu_seconds_total"] += (
                     detail.get("resource_usage", {}).get("final_process_tree_cpu_seconds") or 0.0)
@@ -1278,6 +1326,8 @@ def run_parallel_campaign(repository_root: str | Path, output_directory: str | P
         _parallel_assert_no_live_children(output, state)
         _parallel_revalidate_state(root, output, state, base_manifest, campaign_config, schedule)
         if state.get("status") in ("COMPLETE", "EVALUATION_WITH_INVALID_CELLS"):
+            if retry_model_id is not None:
+                raise RuntimeError("a fully validated parallel job cannot be retried")
             if (output / "WP3-EVIDENCE-MANIFEST.json").is_file():
                 _verify_evidence_manifest(output)
                 return state
@@ -1306,6 +1356,15 @@ def run_parallel_campaign(repository_root: str | Path, output_directory: str | P
             has_activation = False
         if has_activation and gate and gate["status"] == "ENGINEERING_PASS" and retry_model_id == "C-seed0":
             raise RuntimeError("C0 already passed its immutable gate and cannot be retried")
+        if retry_model_id == "C-seed0":
+            state["recovery"] = {"status": "RETRY_REQUESTED", "model_id": "C-seed0",
+                                 "unresolved_model_ids": ["C-seed0"]}
+            _atomic_json(output / "parallel-campaign-state.json", state)
+            _append_parallel_event(event_path, {
+                "event": "retry_requested", "model_id": "C-seed0",
+                "unresolved_model_ids": ["C-seed0"],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
 
         needs_worker_preflight = (not has_activation or retry_model_id is not None or any(
             entry.get("status") == "PENDING" for entry in state["models"].values()))
@@ -1335,7 +1394,17 @@ def run_parallel_campaign(repository_root: str | Path, output_directory: str | P
             gate, decision = _verify_parallel_activation(root, output, state, intent,
                                                          base_manifest, campaign_config, schedule)
             if gate["status"] != "ENGINEERING_PASS":
+                if state.get("recovery", {}).get("model_id") == "C-seed0":
+                    state["recovery"].update(status="RETRY_FAILED", unresolved_model_ids=["C-seed0"])
+                    _atomic_json(output / "parallel-campaign-state.json", state)
                 return state
+            if state.get("recovery", {}).get("model_id") == "C-seed0":
+                state["recovery"].update(status="SAFE_TO_RESUME_PENDING_QUEUE", unresolved_model_ids=[])
+                _atomic_json(output / "parallel-campaign-state.json", state)
+                _append_parallel_event(event_path, {
+                    "event": "pending_queue_resumption_allowed", "model_id": "C-seed0",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                })
             preflight = _parallel_preflight(root, output, parallel_config, campaign_config, workers)
             state["host_preflight_latest"] = preflight
             _atomic_json(output / "parallel-campaign-state.json", state)
@@ -1354,30 +1423,68 @@ def run_parallel_campaign(repository_root: str | Path, output_directory: str | P
                 raise RuntimeError("explicit retry requires one failed, cancelled, or interrupted attempt")
             if len(retry_entry["attempts"]) >= 1 + intent["maximum_manual_retries_per_model"]:
                 raise RuntimeError("parallel job has reached its one-manual-retry limit")
-            other_failures = [model_id for model_id, entry in state["models"].items()
-                              if model_id != retry_model_id
-                              and entry.get("status") in {"FAILED", "CANCELLED", "CANCELLATION_REQUESTED", "INTERRUPTED", "RUNNING"}]
-            if other_failures:
-                raise RuntimeError(f"other failed jobs require explicit retries first: {other_failures}")
+            unresolved_ids = [model_id for model_id, entry in state["models"].items()
+                              if entry.get("status") in {"FAILED", "CANCELLED", "CANCELLATION_REQUESTED", "INTERRUPTED", "RUNNING"}]
+            state["recovery"] = {
+                "status": "RETRY_REQUESTED", "model_id": retry_model_id,
+                "unresolved_model_ids": unresolved_ids,
+            }
+            _atomic_json(output / "parallel-campaign-state.json", state)
+            _append_parallel_event(event_path, {
+                "event": "retry_requested", "model_id": retry_model_id,
+                "unresolved_model_ids": unresolved_ids,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
         else:
             unresolved = [model_id for model_id, entry in state["models"].items()
                           if entry.get("status") in {"FAILED", "CANCELLED", "CANCELLATION_REQUESTED", "INTERRUPTED", "RUNNING"}]
             if unresolved:
                 raise RuntimeError(f"parallel resume requires explicit retries for failed attempts: {unresolved}")
 
-        pending_jobs = []
-        for row in schedule:
-            if row["model_id"] == "C-seed0":
-                continue
-            status = state["models"][row["model_id"]].get("status")
-            if status == "PENDING" or row["model_id"] == retry_model_id:
-                pending_jobs.append(dict(row))
-        if retry_model_id and retry_model_id != "C-seed0":
-            pending_jobs.sort(key=lambda row: (row["model_id"] != retry_model_id, row["order"]))
+        if retry_model_id:
+            retry_job = next(row for row in schedule if row["model_id"] == retry_model_id)
+            stage_result = _parallel_run_campaign_stage(
+                root, output, state, intent, base_manifest, campaign_config,
+                parallel_config, [dict(retry_job)], workers,
+                retry_model_id=retry_model_id,
+            )
+            if stage_result["status"] != "ENGINEERING_PASS":
+                state.update(status="ENGINEERING_FAILED", phase="STOPPED_ON_FAILURE")
+                _atomic_json(output / "parallel-campaign-state.json", state)
+                return state
+            unresolved_ids = [model_id for model_id, entry in state["models"].items()
+                              if entry.get("status") in {"FAILED", "CANCELLED", "CANCELLATION_REQUESTED", "INTERRUPTED", "RUNNING"}]
+            if unresolved_ids:
+                state["recovery"] = {
+                    "status": "UNRESOLVED_FAILURES_REMAIN",
+                    "model_id": retry_model_id, "unresolved_model_ids": unresolved_ids,
+                }
+                state.update(status="WAITING_FOR_EXPLICIT_RETRY",
+                             phase="WAITING_FOR_EXPLICIT_RETRY", current_model_id=None)
+                _atomic_json(output / "parallel-campaign-state.json", state)
+                _append_parallel_event(event_path, {
+                    "event": "unresolved_failures_remain", "model_id": retry_model_id,
+                    "unresolved_model_ids": unresolved_ids,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                })
+                return state
+            state["recovery"] = {
+                "status": "SAFE_TO_RESUME_PENDING_QUEUE", "model_id": retry_model_id,
+                "unresolved_model_ids": [],
+            }
+            _atomic_json(output / "parallel-campaign-state.json", state)
+            _append_parallel_event(event_path, {
+                "event": "pending_queue_resumption_allowed", "model_id": retry_model_id,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+
+        pending_jobs = [dict(row) for row in schedule
+                        if row["model_id"] != "C-seed0"
+                        and state["models"][row["model_id"]].get("status") == "PENDING"]
         if pending_jobs:
             stage_result = _parallel_run_campaign_stage(
                 root, output, state, intent, base_manifest, campaign_config,
-                parallel_config, pending_jobs, workers, retry_model_id=retry_model_id,
+                parallel_config, pending_jobs, workers,
             )
             if stage_result["status"] != "ENGINEERING_PASS":
                 state.update(status="ENGINEERING_FAILED", phase="STOPPED_ON_FAILURE")
@@ -1408,7 +1515,7 @@ def run_parallel_campaign(repository_root: str | Path, output_directory: str | P
             evaluation=evaluation, current_model_id=None,
         )
         _atomic_json(output / "parallel-campaign-state.json", state)
-        _write_independent_review(output, effective_schedule, state, evaluation)
+        _write_parallel_review_status(output, state, evaluation)
         _write_evidence_manifest(output, allow_incomplete_attempt_artifacts=True)
         return state
 

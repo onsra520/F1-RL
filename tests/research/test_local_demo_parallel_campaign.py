@@ -8,9 +8,11 @@ import subprocess
 import sys
 import threading
 import time
+from types import SimpleNamespace
 
 import pytest
 
+import f1rl.local_demo.evaluation as evaluation
 import f1rl.local_demo.parallel_campaign as campaign
 import f1rl.local_demo.process_resources as process_resources
 from f1rl.local_demo.parallel_campaign import (
@@ -30,6 +32,63 @@ ROOT = Path(__file__).parents[2]
 GIB = 1024 ** 3
 BASE_CAMPAIGN_SHA256 = "8a67db80464dc3b93072c0edc431f7a71b1b271c392b47d0915af0f2cac106e4"
 TRAIN_TRACKS = ("straight-sprint-v1", "slalom-v1", "right-turn-v1", "ramp-v1")
+
+
+def _write_chart_run(root: Path, relative: str, loss: float, *, telemetry_override: bytes | None = None) -> Path:
+    run_dir = root / relative
+    run_dir.mkdir(parents=True)
+    payload = telemetry_override or (
+        json.dumps({"event_type": "ppo_update", "metrics": {"train/loss": loss}}) + "\n"
+    ).encode("utf-8")
+    telemetry = run_dir / "training-telemetry.jsonl"
+    telemetry.write_bytes(payload)
+    (run_dir / "engineering-validation.json").write_text(json.dumps({
+        "status": "ENGINEERING_PASS", "model_id": "A-seed0",
+        "telemetry": {"path": telemetry.name, "bytes": len(payload), "sha256": sha256(payload).hexdigest()},
+    }), encoding="utf-8")
+    return run_dir
+
+
+@pytest.mark.parametrize("run_relative_path", ["runs/A-seed0", "runs/A-seed0/attempt-0001"])
+def test_learning_chart_reads_sequential_and_parallel_run_paths(tmp_path, run_relative_path):
+    _write_chart_run(tmp_path, run_relative_path, 2.5)
+    model = {"model_id": "A-seed0", "candidate_id": "A",
+             "run_relative_path": run_relative_path}
+
+    evaluation._write_learning_chart(tmp_path, [model], {"models": [model]})
+
+    chart = (tmp_path / "WP3-LEARNING-PROGRESS.svg").read_text(encoding="utf-8")
+    assert ">2.5<" in chart
+
+
+def test_learning_chart_uses_only_the_validated_retry_attempt(tmp_path):
+    _write_chart_run(tmp_path, "runs/A-seed0/attempt-0001", 99.0)
+    _write_chart_run(tmp_path, "runs/A-seed0/attempt-0002", 2.5)
+    model = {"model_id": "A-seed0", "candidate_id": "A",
+             "run_relative_path": "runs/A-seed0/attempt-0002"}
+
+    evaluation._write_learning_chart(tmp_path, [model], {"models": [model]})
+
+    chart = (tmp_path / "WP3-LEARNING-PROGRESS.svg").read_text(encoding="utf-8")
+    assert ">2.5<" in chart
+    assert ">99<" not in chart
+
+
+@pytest.mark.parametrize("telemetry_override", [None, b'{"event_type":"ppo_update"}\n'])
+def test_learning_chart_fails_closed_on_missing_or_mismatched_telemetry(tmp_path, telemetry_override):
+    relative = "runs/A-seed0/attempt-0001"
+    run_dir = _write_chart_run(tmp_path, relative, 2.5)
+    telemetry = run_dir / "training-telemetry.jsonl"
+    if telemetry_override is None:
+        telemetry.unlink()
+        expected = FileNotFoundError
+    else:
+        telemetry.write_bytes(telemetry_override)
+        expected = ValueError
+    model = {"model_id": "A-seed0", "candidate_id": "A", "run_relative_path": relative}
+
+    with pytest.raises(expected):
+        evaluation._write_learning_chart(tmp_path, [model], {"models": [model]})
 
 
 def test_parallel_contract_pins_v3_without_changing_its_bytes():
@@ -345,6 +404,8 @@ def test_campaign_level_c0_pass_binds_queue_and_resume_revalidates_artifacts(tmp
     assert decision["decision"] == "OPEN_11_JOB_QUEUE"
     assert len(decision["queued_model_ids"]) == 11
     assert started == ["C-seed0", "A-seed0"]
+    with pytest.raises(RuntimeError, match="C0 already passed"):
+        campaign.run_parallel_campaign(ROOT, output, resume=True, retry_model_id="C-seed0")
 
     c0_validation_path = output / gate["run_relative_path"] / "engineering-validation.json"
     validation = json.loads(c0_validation_path.read_text(encoding="utf-8"))
@@ -530,6 +591,334 @@ def test_mock_subprocess_benchmark_compares_1_2_4_without_campaign_completion(tm
         source_digest.update(relative.encode("utf-8"))
         source_digest.update((ROOT / relative).read_bytes())
     assert report["source"]["scheduler_source_sha256"] == source_digest.hexdigest()
+
+
+def _install_mock_campaign_dependencies(monkeypatch):
+    config, _raw, config_sha = campaign._load_campaign_config(ROOT)
+    schedule = _full_test_schedule()
+    base_manifest = {
+        "schema_version": "f1rl_wp3_campaign_manifest_v2",
+        "sha256": "mock-base-campaign-manifest-sha256",
+        "source_commit": "mock-source-commit", "source_tree_sha256": "mock-source-tree-sha256",
+        "campaign_config_sha256": config_sha, "training": config["training"],
+        "simulation_only_config_sha256": "mock-simulation-config-sha256",
+        "registration_sha256": "mock-registration-sha256",
+        "track_manifest_sha256": "mock-track-manifest-sha256",
+        "execution_order": [{key: row[key] for key in ("model_id", "candidate_id", "seed_index")}
+                             for row in schedule],
+    }
+    parallel_config = _expected_parallel_campaign_config()
+    parallel_sha = sha256((ROOT / PARALLEL_CAMPAIGN_CONFIG).read_bytes()).hexdigest()
+    monkeypatch.setattr(campaign, "build_campaign_manifest",
+                        lambda _root: (base_manifest, config, schedule))
+    monkeypatch.setattr(campaign, "load_parallel_contract",
+                        lambda _root: (parallel_config, parallel_sha))
+    monkeypatch.setattr(campaign, "_parallel_preflight", lambda *_args: {
+        "logical_processors": 32, "available_memory_bytes": 40 * GIB,
+        "host_cpu_load_percent": 2.0,
+    })
+
+    def validate_training_run(_root, run_dir, job, manifest, _config):
+        telemetry_path = run_dir / "training-telemetry.jsonl"
+        telemetry = telemetry_path.read_bytes()
+        checkpoint_path = run_dir / "model-final.zip"
+        checkpoint_sha256 = sha256(checkpoint_path.read_bytes()).hexdigest()
+        return {
+            "schema_version": "f1rl_wp3_model_engineering_validation_v1",
+            "status": "ENGINEERING_PASS", "model_id": job["model_id"],
+            "candidate_id": job["candidate_id"], "seed_index": job["seed_index"],
+            "source_commit": manifest["source_commit"], "learning_timesteps": 65536,
+            "optimizer_steps": 1, "initial_policy_weights_sha256": "mock-initial-weights",
+            "final_policy_weights_sha256": "mock-final-weights", "weights_changed": True,
+            "telemetry": {"path": telemetry_path.name, "bytes": len(telemetry),
+                          "sha256": sha256(telemetry).hexdigest(), "events": 1,
+                          "step_rows": 0, "update_rows": 1, "optimizer_steps": 1},
+            "checkpoints": [{"path": checkpoint_path.name, "timesteps": 65536,
+                              "sha256": checkpoint_sha256, "size_bytes": checkpoint_path.stat().st_size}],
+            "lifecycle": {
+                "episode_count": 1, "terminal_transitions": 1,
+                "automatic_resets_verified": 1,
+                "natural_terminations": 1, "physics_abort_terminations": 0,
+                "curriculum_terminations": 0, "truncations": 0,
+                "track_episode_counts": {track: 1 for track in TRAIN_TRACKS},
+                "track_timestep_counts": {track: 1 for track in TRAIN_TRACKS},
+            },
+            "episodes": 1,
+        }
+
+    monkeypatch.setattr(campaign, "validate_training_run", validate_training_run)
+    return config, schedule, base_manifest
+
+
+def _write_mock_training_artifacts(run_dir: Path, model_id: str) -> None:
+    run_dir.mkdir(parents=True, exist_ok=False)
+    telemetry = json.dumps({"event_type": "ppo_update", "metrics": {"train/loss": 2.5}}) + "\n"
+    (run_dir / "training-telemetry.jsonl").write_text(telemetry, encoding="utf-8")
+    checkpoint = f"mock-checkpoint:{model_id}".encode("utf-8")
+    checkpoint_path = run_dir / "model-final.zip"
+    checkpoint_path.write_bytes(checkpoint)
+    (run_dir / "state.json").write_text(json.dumps({
+        "final_model": {"path": checkpoint_path.name, "sha256": sha256(checkpoint).hexdigest()},
+    }), encoding="utf-8")
+
+
+def _install_mock_evaluation(monkeypatch, *, capture_checkpoints=None) -> None:
+    class MockPolicy:
+        num_timesteps = 65536
+
+    monkeypatch.setattr(evaluation.PPOModel, "load", staticmethod(
+        lambda path, device: (capture_checkpoints.append(Path(path)) if capture_checkpoints is not None else None)
+        or MockPolicy()))
+    monkeypatch.setattr(evaluation, "replace", lambda value, **changes: SimpleNamespace(
+        **{**vars(value), **changes}))
+    monkeypatch.setattr(evaluation, "_evaluation_factories", lambda _root, _protocol, _seed, tracks, strata: {
+        (track, stratum): SimpleNamespace(
+            race_config=SimpleNamespace(hard_corridor_m=4.0),
+            reset_config=SimpleNamespace(seed=123),
+            simulation_config=SimpleNamespace(fixed_dt=0.02),
+        ) for track in tracks for stratum in strata
+    })
+    def evaluate_mock(_policy, _factory, _track_id, environment_seed, policy_seed, _fixed_dt):
+        return {
+            "success": True, "final_normalized_route_progress": 1.0,
+            "completed_checkpoints": 4, "collision_count": 0,
+            "hard_route_violation": False, "timeout": False,
+            "steering_rate_rms_rad_per_s": 0.0, "episode_time": 1.0,
+            "failure_reason": None, "environment_seed": environment_seed,
+            "policy_seed": policy_seed,
+        }
+
+    monkeypatch.setattr(evaluation, "_evaluate_episode", evaluate_mock)
+
+
+def test_full_mock_parallel_campaign_evaluates_attempts_writes_reports_and_resumes(tmp_path, monkeypatch):
+    _install_mock_campaign_dependencies(monkeypatch)
+    loaded_checkpoints = []
+    _install_mock_evaluation(monkeypatch, capture_checkpoints=loaded_checkpoints)
+    started = []
+    active = 0
+    max_active = 0
+    lock = threading.Lock()
+
+    def fake_child(_root, run_dir, log_path, job, _training, *, abort_event, **_kwargs):
+        nonlocal active, max_active
+        with lock:
+            active += 1
+            max_active = max(max_active, active)
+            started.append(job["model_id"])
+        try:
+            _write_mock_training_artifacts(run_dir, job["model_id"])
+            log_path.write_text("mock child passed\n", encoding="utf-8")
+            abort_event.wait(0.002)
+            return {"returncode": 0, "cancelled": False, "elapsed_seconds": 0.002,
+                    "cleanup_seconds": 0.0, "resource_usage": {}}
+        finally:
+            with lock:
+                active -= 1
+
+    monkeypatch.setattr(campaign, "_run_child", fake_child)
+    output = tmp_path / "full-mock-campaign"
+
+    state = campaign.run_parallel_campaign(ROOT, output, workers=2)
+
+    assert state["status"] == "COMPLETE"
+    assert len(started) == 12 and len(set(started)) == 12
+    assert started[0] == "C-seed0" and max_active <= 2
+    assert all(entry["attempts"][0]["run_relative_path"] ==
+               f"runs/{model_id}/attempt-0001" for model_id, entry in state["models"].items())
+    assert len(loaded_checkpoints) == 12
+    assert all(path.parent.as_posix().endswith(f"{path.parent.parent.name}/attempt-0001")
+               for path in loaded_checkpoints)
+    assert state["evaluation"]["status"] == "PASS"
+    assert (output / "WP3-LEARNING-PROGRESS.svg").is_file()
+    status_doc = json.loads((output / "WP3-PARALLEL-REVIEW-STATUS.json").read_text(encoding="utf-8"))
+    assert status_doc["engineering_status"] == "ENGINEERING_VALIDATION_COMPLETE"
+    assert status_doc["independent_review_status"] == "PENDING_INDEPENDENT_REVIEW"
+    assert not (output / "WP3-INDEPENDENT-REVIEW.md").exists()
+    campaign._verify_evidence_manifest(output)
+    manifest = json.loads((output / "WP3-EVIDENCE-MANIFEST.json").read_text(encoding="utf-8"))
+    assert "WP3-LEARNING-PROGRESS.svg" in {row["path"] for row in manifest["files"]}
+    assert "runs/A-seed0/attempt-0001/training-telemetry.jsonl" in {
+        row["path"] for row in manifest["files"]
+    }
+
+    resumed = campaign.run_parallel_campaign(ROOT, output, resume=True)
+
+    assert resumed["status"] == "COMPLETE"
+    assert len(started) == 12
+    with pytest.raises(RuntimeError, match="fully validated parallel job"):
+        campaign.run_parallel_campaign(ROOT, output, resume=True, retry_model_id="A-seed0")
+    assert len(started) == 12
+    with pytest.raises(RuntimeError, match="fully validated parallel job"):
+        campaign.run_parallel_campaign(ROOT, output, resume=True, retry_model_id="A-seed0")
+    assert len(started) == 12
+
+
+def test_multiple_failed_jobs_can_be_retried_one_at_a_time_before_queue_resumes(tmp_path, monkeypatch):
+    _install_mock_campaign_dependencies(monkeypatch)
+    monkeypatch.setattr(evaluation, "run_evaluation", lambda *_args: {
+        "status": "PASS", "scientific_evidence": False, "heldout_access": False,
+    })
+    started = []
+
+    def fake_child(_root, run_dir, log_path, job, _training, *, abort_event, **_kwargs):
+        model_id, attempt_id = job["model_id"], job["attempt_id"]
+        started.append((model_id, attempt_id))
+        if attempt_id == "attempt-0001" and model_id in {"A-seed0", "B-seed0"}:
+            run_dir.mkdir(parents=True, exist_ok=False)
+            log_path.write_text("preserved failed attempt\n", encoding="utf-8")
+            if model_id == "B-seed0":
+                abort_event.wait(1)
+                return {"returncode": -1, "cancelled": True, "elapsed_seconds": 0.01}
+            return {"returncode": 9, "cancelled": False, "elapsed_seconds": 0.01}
+        _write_mock_training_artifacts(run_dir, model_id)
+        log_path.write_text("mock child passed\n", encoding="utf-8")
+        return {"returncode": 0, "cancelled": False, "elapsed_seconds": 0.01,
+                "cleanup_seconds": 0.0, "resource_usage": {}}
+
+    monkeypatch.setattr(campaign, "_run_child", fake_child)
+    output = tmp_path / "retry-mock-campaign"
+    failed = campaign.run_parallel_campaign(ROOT, output, workers=2)
+    assert failed["models"]["A-seed0"]["status"] == "FAILED"
+    assert failed["models"]["B-seed0"]["status"] == "CANCELLED"
+    assert len(started) == 3 and "D-seed0" not in {model for model, _ in started}
+    with pytest.raises(RuntimeError, match="explicit retries"):
+        campaign.run_parallel_campaign(ROOT, output, workers=2, resume=True)
+    assert len(started) == 3
+
+    retried_a = campaign.run_parallel_campaign(
+        ROOT, output, workers=2, resume=True, retry_model_id="A-seed0")
+    assert retried_a["status"] == "WAITING_FOR_EXPLICIT_RETRY"
+    assert retried_a["recovery"]["status"] == "UNRESOLVED_FAILURES_REMAIN"
+    assert len(started) == 4 and started[-1] == ("A-seed0", "attempt-0002")
+    assert retried_a["models"]["A-seed0"]["attempts"][0]["status"] == "FAILED"
+    assert retried_a["models"]["A-seed0"]["attempts"][1]["status"] == "ENGINEERING_PASS"
+    assert not any(model not in {"C-seed0", "A-seed0", "B-seed0"} for model, _ in started)
+
+    with pytest.raises(RuntimeError, match="fully validated parallel job"):
+        campaign.run_parallel_campaign(
+            ROOT, output, workers=2, resume=True, retry_model_id="A-seed0")
+    resumed = campaign.run_parallel_campaign(
+        ROOT, output, workers=2, resume=True, retry_model_id="B-seed0")
+    assert resumed["status"] == "COMPLETE"
+    assert resumed["recovery"]["status"] == "SAFE_TO_RESUME_PENDING_QUEUE"
+    assert started.count(("A-seed0", "attempt-0001")) == 1
+    assert started.count(("A-seed0", "attempt-0002")) == 1
+    assert started.count(("B-seed0", "attempt-0001")) == 1
+    assert started.count(("B-seed0", "attempt-0002")) == 1
+    assert len(started) == 14
+    assert (output / "runs/A-seed0/attempt-0001").is_dir()
+    assert (output / "runs/A-seed0/attempt-0002").is_dir()
+    assert (output / "runs/B-seed0/attempt-0001").is_dir()
+    assert (output / "runs/B-seed0/attempt-0002").is_dir()
+
+
+def test_c0_retry_must_pass_full_gate_before_opening_queue(tmp_path, monkeypatch):
+    _install_mock_campaign_dependencies(monkeypatch)
+    validator = campaign.validate_training_run
+
+    def validate_with_c0_attempt_lifecycle(root, run_dir, job, manifest, config):
+        result = validator(root, run_dir, job, manifest, config)
+        if job["model_id"] == "C-seed0" and run_dir.name == "attempt-0001":
+            result["lifecycle"]["automatic_resets_verified"] = 0
+        return result
+
+    monkeypatch.setattr(campaign, "validate_training_run", validate_with_c0_attempt_lifecycle)
+    monkeypatch.setattr(evaluation, "run_evaluation", lambda *_args: {
+        "status": "PASS", "scientific_evidence": False, "heldout_access": False,
+    })
+    started = []
+
+    def fake_child(_root, run_dir, log_path, job, _training, **_kwargs):
+        if job["model_id"] != "C-seed0":
+            gate_path = sorted((output / "gates").glob("C0-ENGINEERING-GATE-*.json"))[-1]
+            gate = json.loads(gate_path.read_text(encoding="utf-8"))
+            assert gate["status"] == "ENGINEERING_PASS"
+            assert gate["learning_timesteps"] == 65536
+        started.append((job["model_id"], job.get("attempt_id")))
+        _write_mock_training_artifacts(run_dir, job["model_id"])
+        log_path.write_text("mock child passed\n", encoding="utf-8")
+        return {"returncode": 0, "cancelled": False, "elapsed_seconds": 0.01,
+                "cleanup_seconds": 0.0, "resource_usage": {}}
+
+    monkeypatch.setattr(campaign, "_run_child", fake_child)
+    output = tmp_path / "c0-retry-campaign"
+
+    failed = campaign.run_parallel_campaign(ROOT, output, workers=2)
+    assert failed["status"] == "C0_ENGINEERING_FAILED"
+    assert started == [("C-seed0", "attempt-0001")]
+
+    passed = campaign.run_parallel_campaign(
+        ROOT, output, workers=2, resume=True, retry_model_id="C-seed0")
+
+    assert passed["status"] == "COMPLETE"
+    assert passed["recovery"]["status"] == "SAFE_TO_RESUME_PENDING_QUEUE"
+    assert len(started) == 13 and started[0] == ("C-seed0", "attempt-0001")
+    assert started[1] == ("C-seed0", "attempt-0002")
+    assert len({model_id for model_id, _attempt in started[1:]}) == 12
+    gate = json.loads((output / passed["active_c0_gate_path"]).read_text(encoding="utf-8"))
+    assert gate["status"] == "ENGINEERING_PASS"
+    assert gate["run_relative_path"] == "runs/C-seed0/attempt-0002"
+
+
+def test_failed_retry_keeps_pending_queue_closed_and_retry_budget_bounded(tmp_path, monkeypatch):
+    _install_mock_campaign_dependencies(monkeypatch)
+    started = []
+
+    def fake_child(_root, run_dir, log_path, job, _training, *, abort_event, **_kwargs):
+        model_id, attempt_id = job["model_id"], job["attempt_id"]
+        started.append((model_id, attempt_id))
+        if attempt_id == "attempt-0001" and model_id == "A-seed0":
+            run_dir.mkdir(parents=True, exist_ok=False)
+            log_path.write_text("initial failure\n", encoding="utf-8")
+            return {"returncode": 9, "cancelled": False, "elapsed_seconds": 0.01}
+        if attempt_id == "attempt-0001" and model_id == "B-seed0":
+            run_dir.mkdir(parents=True, exist_ok=False)
+            log_path.write_text("cancelled sibling\n", encoding="utf-8")
+            abort_event.wait(1)
+            return {"returncode": -1, "cancelled": True, "elapsed_seconds": 0.01}
+        if model_id == "A-seed0" and attempt_id == "attempt-0002":
+            run_dir.mkdir(parents=True, exist_ok=False)
+            log_path.write_text("retry failure\n", encoding="utf-8")
+            return {"returncode": 8, "cancelled": False, "elapsed_seconds": 0.01}
+        _write_mock_training_artifacts(run_dir, model_id)
+        log_path.write_text("mock child passed\n", encoding="utf-8")
+        return {"returncode": 0, "cancelled": False, "elapsed_seconds": 0.01,
+                "cleanup_seconds": 0.0, "resource_usage": {}}
+
+    monkeypatch.setattr(campaign, "_run_child", fake_child)
+    output = tmp_path / "failed-retry-campaign"
+    campaign.run_parallel_campaign(ROOT, output, workers=2)
+    retried = campaign.run_parallel_campaign(
+        ROOT, output, workers=2, resume=True, retry_model_id="A-seed0")
+
+    assert retried["status"] == "ENGINEERING_FAILED"
+    assert retried["recovery"]["status"] == "RETRY_FAILED"
+    assert started == [("C-seed0", "attempt-0001"),
+                       ("A-seed0", "attempt-0001"), ("B-seed0", "attempt-0001"),
+                       ("A-seed0", "attempt-0002")]
+    assert retried["models"]["A-seed0"]["attempts"][0]["status"] == "FAILED"
+    assert retried["models"]["A-seed0"]["attempts"][1]["status"] == "FAILED"
+    with pytest.raises(RuntimeError, match="one-manual-retry limit"):
+        campaign.run_parallel_campaign(
+            ROOT, output, workers=2, resume=True, retry_model_id="A-seed0")
+    assert len(started) == 4
+
+
+def test_parallel_retry_rejects_a_still_live_child(tmp_path, monkeypatch):
+    identity_path = tmp_path / "attempt-meta" / "A-seed0" / "attempt-0001" / "process-identity.json"
+    identity_path.parent.mkdir(parents=True)
+    identity_path.write_text(json.dumps({
+        "model_id": "A-seed0", "attempt_id": "attempt-0001",
+        "pid": 123, "creation_time_100ns": 456,
+    }), encoding="utf-8")
+    monkeypatch.setattr(process_resources, "sample_process_tree", lambda _pid: {
+        "processes": [{"pid": 123, "creation_time_100ns": 456}],
+    })
+    state = {"models": {"A-seed0": {"attempts": [{"attempt_id": "attempt-0001"}]}}}
+
+    with pytest.raises(RuntimeError, match="still alive"):
+        campaign._parallel_assert_no_live_children(tmp_path, state)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows Job Object behavior is platform-specific")

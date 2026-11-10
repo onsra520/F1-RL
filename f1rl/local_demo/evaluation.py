@@ -15,7 +15,7 @@ from ..learning.algorithms.ppo import PPOModel
 from ..learning.evaluation.evaluator import evaluate_episode
 from ..learning.pilot_preflight import TRAIN_IDS
 from ..research.wp7_protocol import build_protocol, prepare_evaluation_factory
-from .campaign import _canonical, _sha256, _strict_json, _write_new_json, _atomic_json
+from .campaign import _canonical, _inside, _sha256, _strict_json, _write_new_json, _atomic_json
 
 
 def _digest(value: object) -> str:
@@ -593,9 +593,23 @@ def _svg_text(lines: list[str], x: float, y: float, value: str, *, size: int = 1
 
 def _write_learning_chart(campaign_root: Path, schedule: list[dict], evaluation_result: dict) -> None:
     grouped: dict[str, list[list[float]]] = {c: [] for c in ("A", "B", "C", "D")}
-    run_root = campaign_root / "runs"
+    evaluated_models = {row["model_id"]: row["run_relative_path"]
+                        for row in evaluation_result.get("models", [])}
+    if len(evaluated_models) != len(evaluation_result.get("models", [])):
+        raise ValueError("evaluation result contains duplicate model identities")
     for model in schedule:
-        path = run_root / model["model_id"] / "training-telemetry.jsonl"
+        run_relative_path = model.get("run_relative_path")
+        if evaluated_models.get(model.get("model_id")) != run_relative_path:
+            raise ValueError("learning chart schedule differs from evaluated model attempt paths")
+        run_dir = _inside(campaign_root, run_relative_path)
+        validation, _ = _strict_json(run_dir / "engineering-validation.json")
+        telemetry = validation.get("telemetry", {})
+        path = _inside(run_dir, telemetry.get("path", ""))
+        if (validation.get("status") != "ENGINEERING_PASS"
+                or validation.get("model_id") != model["model_id"]
+                or _sha256(path) != telemetry.get("sha256")
+                or path.stat().st_size != telemetry.get("bytes")):
+            raise ValueError(f"learning chart telemetry differs from validated attempt: {model['model_id']}")
         losses = []
         with path.open("r", encoding="utf-8") as stream:
             for line in stream:
@@ -770,7 +784,7 @@ def _write_evaluation_reports(campaign_root: Path, result: dict,
            f"Current evaluation status: **{result['status']}**. Invalid cells: {len(result['invalid_cells'])}.\n\n"
            "No inference here grants scientific acceptance or changes WP7/Gate 2, both of which remain **BLOCKED**.\n")
     _write_new_or_match(campaign_root/"WP3-STATISTICAL-READINESS.md",stats)
-    _write_learning_chart(campaign_root,[{"model_id":r["model_id"],"candidate_id":r["candidate_id"],"run_relative_path":f"runs/{r['model_id']}"} for r in models],result)
+    _write_learning_chart(campaign_root, models, result)
     _write_comparison_chart(campaign_root,comparison)
     _write_failure_chart(campaign_root,cells)
     final=("# WP3 Final Status\n\n"
