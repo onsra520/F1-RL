@@ -1,0 +1,118 @@
+{
+  "type": "TRAIN-only engineering independent controller in real Physics-v4 Gym",
+  "run_id": "right-v2-portable-attempt02",
+  "track_id": "right-turn-train-v2",
+  "source_bindings": {
+    "assets/tracks/training/right-turn-train-v2.json": "5f285238821c869fd2e47e95576074b6a1ba1c7c618fa9c30c5b9f89e9103f30",
+    "assets/tracks/training/left-turn-train-v2.json": "4ab3d10759b8cebb8e89414e378de04249cf1de59f83fc8fb3804a8c1acabeea",
+    "assets/tracks/manifest-five-track-paired-v2.json": "882b6df04b3145dcf154a3dc710fc63ec9312e167db7a85dec72d7626d27c371",
+    "configs/experiments/ppo-generalization-five-track-paired-v2.yml": "834a77a867f801bd7b565c01e55443af9fdb62bbbe37125033dfadbe2f6c4349",
+    "configs/recovery/wp7-c2-five-track-paired-v2.yml": "c4c2f6cbf3e8a63bb51d4a3fcfbe9cb8cd49c264ad21c0f64f98760ba26a5558",
+    "f1rl/research/wp7_protocol.py": "546a3b45aabbb0fa144f51bbe0f6d8e5e2893f50f0eb45edbe762579ebcd76b4",
+    "f1rl/research/wp3_eval_only_coordinator.py": "a6e63d8d8551f9deaa00cc3672d060103f829b373b4b868e362771ae2f768864",
+    "f1rl/research/wp7_executed_feasibility.py": "b826ec2f652133d9436cf32c6bcfc7e36aad7b1585d381f8d62752d210fb026e"
+  },
+  "git_head": "1de279c37e62a27531d661480d20fa6e095c4e84",
+  "runtime_profile": {
+    "requested_profile": "wp3_full06_physics_v4",
+    "effective": {
+      "physics_version": "spatial_road_edge_partial_lifecycle_v4",
+      "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+      "terminal_contract": "wp3_physical_crash_terminal_v1",
+      "max_abs_tilt_rad": 0.7
+    }
+  },
+  "factory_origin": "registered four-track owner-v3 physics/action/race overlay + separately parsed paired TRAIN-5 v2 track, no scientific admission",
+  "controller_source": "f1rl.research.wp7_executed_feasibility._arc_control",
+  "controller_parameters": {
+    "version": "arc_center_gate_speed_stop_v1",
+    "speed_mps": 3.0,
+    "heading_gain_per_m": 0.8,
+    "lateral_gain_per_m2": 0.3,
+    "brake_after_finish_m": 1.0
+  },
+  "path_signed_arc": {
+    "start_xz_m": [
+      -3.0,
+      5.0
+    ],
+    "start_yaw_rad": 0.0,
+    "segments_length_curvature": [
+      [
+        60.0,
+        0.0
+      ],
+      [
+        15.707963267948966,
+        0.1
+      ],
+      [
+        73.0,
+        0.0
+      ]
+    ]
+  },
+  "seed": 20261106,
+  "limit": 1100,
+  "ppo_models_loaded": false,
+  "heldout_geometry_file_opened": false,
+  "training_authorized": false,
+  "scientific_evidence": false,
+  "controller_episode": {
+    "research_outcome": {
+      "version": "wp7_episode_outcome_v1",
+      "kind": "successful_finish",
+      "valid_sample": true,
+      "reason": "finish"
+    },
+    "mode": "controller",
+    "episode_steps": 497,
+    "action_count": 497,
+    "ended": true,
+    "finished": true,
+    "checkpoints_completed": [
+      "checkpoint-0",
+      "checkpoint-1"
+    ],
+    "finish_tick": 497,
+    "termination": null,
+    "exception": null,
+    "tick_rows_sha256": "afee5ceab327534dfa4eb79690e3133806ff265780d5e886d01486314fabf236",
+    "controller_controls_sha256": "2d791721357aa3c61d60f2c099873fc9c697785e07ce84fb0f5225602be7b685",
+    "last_position": [
+      80.02902330582849,
+      0.4999981420973607,
+      74.99999999997678
+    ],
+    "last_speed_mps": 2.999999996354741
+  },
+  "replay_episode": {
+    "research_outcome": {
+      "version": "wp7_episode_outcome_v1",
+      "kind": "successful_finish",
+      "valid_sample": true,
+      "reason": "finish"
+    },
+    "mode": "replay",
+    "episode_steps": 497,
+    "action_count": 497,
+    "ended": true,
+    "finished": true,
+    "checkpoints_completed": [
+      "checkpoint-0",
+      "checkpoint-1"
+    ],
+    "finish_tick": 497,
+    "termination": null,
+    "exception": null,
+    "tick_rows_sha256": "afee5ceab327534dfa4eb79690e3133806ff265780d5e886d01486314fabf236",
+    "controller_controls_sha256": "2d791721357aa3c61d60f2c099873fc9c697785e07ce84fb0f5225602be7b685",
+    "last_position": [
+      80.02902330582849,
+      0.4999981420973607,
+      74.99999999997678
+    ],
+    "last_speed_mps": 2.999999996354741
+  },
+  "replay_exact_match": true
+}
