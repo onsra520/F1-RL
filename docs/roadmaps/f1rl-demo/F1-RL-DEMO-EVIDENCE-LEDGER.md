@@ -68,6 +68,13 @@
 - M0 local HTTP evidence archive: `D:\Projects\.archives\F1-RL\demo-completion\m0-audit-20261110\local-runtime-health.json`, SHA-256 `105D3988635283E96A2BD3D62F9A69F2713B835729311BB31FCB95BAA48C3541`. Server process was stopped and ports verified closed. Browser visual rendering remains NOT RUN.
 - Independent docs/source reconciliation inventoried 103 tracked documentation/evidence files on main. Historical artifacts retain conflicting source/checkpoint eras; prioritize dated source-bound evidence and exact immutable attempt manifests. `f1rl/learning/README.md` action wording is stale against current v2 manifest and source. These are documentation drift, not a basis for changing frozen contracts.
 
+## 0.3 Historical V4 dual-turn witness restore (2026-11-11)
+
+- The four named JSON witnesses were absent from this worktree and were recovered byte-for-byte from GitHub branch `handoff/physics-v4-khanh-bang-20261106`, exact remote HEAD `6e30ebd78b010d3f20d120b936c0283eab6ca78a`. `git ls-remote` confirmed that branch head. The documents declare Physics `spatial_road_edge_partial_lifecycle_v4`, the directed lifecycle v4 race contract and TRAIN-only nominal left/right finishes; their summary hashes agree with references in the acceptance witness.
+- Restored outside Git to `D:\Projects\.archives\F1-RL\demo-completion\source-witnesses-6e30ebd7`. `RESTORE-MANIFEST.json` SHA-256: `d77a60294dda8c7d5281521fc0d2724216c6c5c054bf910309e70a314f9c3480`.
+- Restored file SHA-256: `STEP3-PHYSICS-V4-DUAL-TURN-ACCEPTANCE.json` `0bbc1636fdb330d58d0808ad83c2b0d73e7d1b686d597d87796510c6788bd5d4`; `STEP3-DUAL-TURN-PHYSICS-V4-PORTABLE-WITNESS.json` `a2b2676011edc97278653e8eecd476c7138c5b4cb4090479f95d174a70e667fc`; right summary `6f7bb46a0ce6aad87edd547c1be1809022db8b24c228990c8cedd295707ac0bd`; left summary `6dea077e3bd4a47a4f8d75309f75b9824496a8dbaaccbca597737e52d0a12004`.
+- Scope limit: the remote commit contains only these four JSON witnesses, not the referenced control tapes, episode JSONL files or tick traces. Their declared digests can be checked for internal consistency but the raw replay evidence cannot be rehashed or independently replayed from this restore. Preserve this as historical source evidence, not a current-source runtime test.
+
 ## 1. Evidence integrity rules
 
 - **Evidence classes:** `SOURCE_VERIFIED`, `STATIC_TEST`, `MOCK_TEST`, `REAL_SMOKE`, `REAL_BENCHMARK`, `REAL_TRAIN`, `REAL_DEV_EVAL`, `REAL_ACCEPTANCE`, `LIVE_BROWSER`, `INDEPENDENT_REVIEW`. Do not equate one class with another.
@@ -111,8 +118,8 @@
 |---|---|---|---|---|---|
 | M0 Source admission | PASS | clean refs/worktree; 337/1 regression; web tests/build/HTTP health; checkpoint API compatibility; resource/budget snapshot | `161320216572cb736a1a7922f3656bc4f943ec4a` (source diff empty from smoke source `6452517`) | `m0-audit-20261110` | independent local audit |
 | M1 V5 feasibility + full engineering coverage | PASS / READY_FOR_M2 | Versioned development intersection/overpass and combined-feature fixtures finish with reference Auto Drive; bounded API/WebSocket E2E, Physics V4/PPO contract regressions and controlled V5 benchmark pass. V5 remains Auto Drive only; PPO/final acceptance unclaimed | execution base `8e7b99c4d462bdbfdf6d010e068404e03e717a08`; worktree source-tree digest in §0.2 | `m1-hardening-20261111` | agent self-verification; independent review pending |
-| M2 Real smoke | PENDING | run/state, weight delta, optimizer/gradients, final checkpoint SHA, 256-step telemetry | — | — | — |
-| M3 PPO benchmark | PENDING | same-job 1 vs 2 workers (optionally 4), real CPU/RSS/wall/throughput raw data and cleanup | — | — | — |
+| M2 Real smoke | PASS / REUSED_COMPATIBLE | 256 transitions, 10 optimizer updates, finite gradients and changed weights; exact checkpoint/telemetry/profile hashes and cleanup verified | `6452517e3e887ee83f9d98b3323e3e5089d4c187` | `smoke-20261110T133738Z-a02802b3` | independent artifact/hash audit, 2026-11-11 |
+| M3 PPO benchmark | IN_PROGRESS | Historical attempts retained but profile SHA `1b9f…` does not match profile at claimed source; fresh same-job 1-vs-2 run required | planned current source `f4b57a12428b8749db8c11d87fb00e95866df7f8` | planned root `m3-real-benchmark-20261111` | pending |
 | M4 PPO training | PENDING | full C0 gate if v3, individual model attempts, periodic checkpoints, training integrity, source/seed linkage | — | — | — |
 | M5 Dev evaluation | PENDING | TRAIN/dev-only roster, per-track rates, steering/speed/braking diagnostics, change/regression/compatibility reports | — | — | — |
 | M6 Model freeze | PENDING | exact frozen checkpoint SHA, model/obs/action/physics/source/version manifest | — | — | — |
@@ -161,6 +168,9 @@ The above is a **schema example**, not an executed M2 record.
 | 2026-11-10 WP3 real PPO smoke + benchmark | M0 prior-workload reconciliation | 7 attempt directories incl. failed smoke | **1,172.313** | **1,172.313** | **85,227.687** | VERIFIED_FROM_RESULT_JSON | `D:\Projects\.archives\F1-RL\wp3-real-ppo-benchmark` |
 | 2026-11-10 post-merge 256-step smoke | M0 independent integration test, NOT M2 gate acceptance | 2026-11-10T13:37:38Z to 13:39:09Z | **90.718** | **1,263.031** | **85,136.969** | REAL_SMOKE_PASS, model/inference verified | `D:\Projects\.archives\F1-RL\wp3-postmerge-real-smoke-20261110` |
 | 2026-11-10 M1 V5 development benchmark | M1 physics benchmark, no PPO | 2026-11-10T18:09:56Z–18:11:39Z | **102.765** | **1,365.796** | **85,034.204** | REAL_BENCHMARK_PASS, one bounded run | `D:\Projects\.archives\F1-RL\demo-completion\m1-hardening-20261111\v5-benchmark.json` |
+| 2026-11-11 M2 smoke evidence reuse | M2 gate reuse; no new execution | Historical source-bound artifact; no active time added | **0.000** | **1,365.796** | **85,034.204** | REUSED_COMPATIBLE; checkpoint/telemetry SHA independently verified | `D:\Projects\.archives\F1-RL\wp3-postmerge-real-smoke-20261110` |
+
+Historical M3 benchmark records are excluded from current M3 acceptance because both runs bind profile SHA `1b9f787b…`, while the profile at their claimed source commit has Git blob SHA-256 `60cd298d…`. New M3 attempts use current profile bytes and a clean committed source; charge measured elapsed wall time only after attempt completion and verified cleanup.
 
 * **Charge breakdown** (seconds from immutable result.json): smoke attempts 0.016 + 37.453 + 22.328 + 26.438 + 22.328 = **108.563**; sequential **696.250**; parallel **367.500**. Historical subtotal **1,172.313 s** (~19m32.313s). Including post-merge smoke, **1,263.031 s** (~21m03.031s); including the M1 benchmark, **1,365.796 s** (~22m45.796s). All prior attempts, including failed smoke, count; the budget must never reset between sessions.
 * **Budget epoch:** WP3 real-PPO engineering run dated 2026-11-10 UTC, adopted for demo-completion budget accounting. This amount is a lower bound if other real workloads are later found; re-audit before expensive training.

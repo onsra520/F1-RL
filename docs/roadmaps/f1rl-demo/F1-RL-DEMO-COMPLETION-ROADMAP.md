@@ -1,7 +1,7 @@
 # F1-RL — Demo Completion Master Roadmap
 
 > **Document version:** 1.6 (2026-11-11)
-> **Overall state:** `M0_PASS / M1_PASS_READY_FOR_M2 / M2_PENDING / NOT_ACCEPTED` — M1 engineering gates pass; no new PPO evidence or final demo acceptance is claimed.
+> **Overall state:** `M0_PASS / M1_PASS / M2_PASS_REUSED / M3_IN_PROGRESS / NOT_ACCEPTED` — M2 is reused from compatible source-bound smoke evidence; M3 requires a fresh run because its historical profile digest is unreconciled.
 > **Owner:** F1-RL project owner. **Execution:** autonomous coding agent, gate-driven.  
 > **Related:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md) · [Agent Handoff](F1-RL-DEMO-AGENT-HANDOFF.md).
 
@@ -75,8 +75,8 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 | M0 | PASS | None | Clean source, runtime/test paths and budget provenance verified on 2026-11-10 |
 | M1 V5 feasibility | PASS | M0 | One custom layered crossing route completes under Auto Drive; no PPO claim |
 | M1 full coverage | PASS | M0 | Versioned development geometry fixtures, Physics/reference-controller finishes, bounded API/WebSocket E2E, regressions and controlled V5 benchmark |
-| M2 | PENDING | M0–M1 | Actual PPO smoke produces valid weights/telemetry |
-| M3 | PENDING | M2 | Controlled real benchmark chooses safe worker count |
+| M2 | PASS / REUSED_COMPATIBLE | M0–M1 | Actual PPO smoke produces valid weights/telemetry; source-bound historical evidence is compatible |
+| M3 | IN_PROGRESS | M2 | Fresh controlled real benchmark required due historical profile hash mismatch |
 | M4 | PENDING | M3 | Authenticated real PPO training and validated artifacts |
 | M5 | PENDING | M4 | Development-evidenced Pure PPO candidate selection |
 | M6 | PENDING | M5 | Immutable model/source/contract freeze |
@@ -104,24 +104,25 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 - [x] Add separate versioned **TRAIN/development** fixtures without changing the official TRAIN roster or producing custom final acceptance tracks. The fixture schema is `f1rl_m1_development_geometry_v1`, version 1, scope `TRAIN_DEVELOPMENT_ONLY`.
 - [x] Verify geometry, Physics profile, ordered checkpoints, collision-free reference-controller finishes; harden API/WebSocket E2E with bounded receive/wall timeout, progress diagnostics and cleanup. Run affected Python and Physics V4/PPO contract regressions, web tests and production build.
 - [x] Benchmark V5 on a low-load host; capture wall/CPU, Physics-step mean/p95 and realtime factor. Physics stepping is the measured bottleneck; no optimization was justified or made.
-- **M1 PASS / READY_FOR_M2 (2026-11-11):** all M1 engineering acceptance checks pass. V5 remains custom Auto Drive only; its crash/roll validators remain fail-closed, and checkpoint probes establish interface shape/action bounds only. This status is not PPO training or final demo acceptance. M2 remains pending and is outside this task.
+- **M1 PASS / READY_FOR_M2 (2026-11-11):** all M1 engineering acceptance checks pass. V5 remains custom Auto Drive only; its crash/roll validators remain fail-closed, and checkpoint probes establish interface shape/action bounds only. This status is not final demo acceptance.
+
+**M2/M3 continuation audit (2026-11-11, current source HEAD `f4b57a12428b8749db8c11d87fb00e95866df7f8`):** M2 smoke was independently rechecked and reused: current smoke-profile SHA, unchanged TRAIN roster and Physics V4 configuration, 256 real transitions, 10 optimizer updates, finite changed weights, exact checkpoint and telemetry SHA matches, and cleanup verified. The execution source remains `6452517e3e887ee83f9d98b3323e3e5089d4c187`; provenance is not relabeled. Historical M3 attempts record benchmark-profile SHA `1b9f…`, which does not match the profile in their claimed source commit or current worktree. Those timings are retained as historical only. M3 is IN_PROGRESS pending a fresh same-job 1-vs-2 benchmark under current committed source.
 
 ### M2 — One-model **real PPO smoke** gate
 
-- [ ] From clean committed source, run authorized LOCAL_DEMO **smoke** for `C-seed0`, expected currently **256 timesteps / one rollout / CPU / n_envs=1**, with profile and max wall checked from actual config (historical config: 1,800s maximum).
-- [ ] Confirm that `PPO.learn()` executed with optimizer steps, nonzero/finite gradient, weights changed, model-final checkpoint loadable, source/seed manifests valid and telemetry complete.
-- [ ] Check explicit stop, timeout, cleanup, failure output preservation and no HELD-OUT access.
-- [ ] Do NOT call frozen full `parallel-run` for a 256- or 4,096-step smoke: it enforces full **65,536-step C0 engineering gate**.
-- **PASS:** actual (not mocked) optimizer/model evidence, no uncaught physics terminal, no integrity mismatch. If blocked, correct root cause before budgeting further training.
+- [x] Reuse compatible clean-source LOCAL_DEMO smoke evidence for `C-seed0`, **256 timesteps / one rollout / CPU / n_envs=1**. Preserve its exact historical execution source.
+- [x] Confirm `PPO.learn()` execution: 10 optimizer updates, finite nonzero gradients, changed weights, reloadable final checkpoint, current smoke-profile SHA, exact checkpoint/telemetry SHA matches, cleanup verified and HELD-OUT access false.
+- [x] Do NOT call frozen full `parallel-run` for a 256- or 4,096-step smoke: it enforces full **65,536-step C0 engineering gate**.
+- **PASS / REUSED_COMPATIBLE (2026-11-11):** run `smoke-20261110T133738Z-a02802b3`; source `6452517e3e887ee83f9d98b3323e3e5089d4c187`; profile SHA `3d078a4bc45718407fb8a58cdb2f2dd856df101510deb6c9327ebff61c43ee36`; checkpoint SHA `09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f`; artifact root `D:\Projects\.archives\F1-RL\wp3-postmerge-real-smoke-20261110`.
 
 ### M3 — Controlled **real PPO concurrency** benchmark
 
 - [ ] If necessary implement a separate, **versioned engineering benchmark profile**, e.g. **4,096 timesteps/job**, aligned to PPO rollout=256, CPU, `n_envs=1`; don't override frozen v3 limits or label benchmark as campaign completion.
-- [ ] Benchmark the **same two jobs/seeds/configs** sequentially (1 worker) versus concurrently (2 workers), both with isolated artifacts. Record total wall-clock, transitions/s, rollout/update cost, aggregate/per-tree RSS, CPU, disk/telemetry, orphan checks and checkpoint integrity. A conservative initial per-job time guard of ~15 minutes may be used if explicitly encoded in the benchmark contract; stop earlier on unsafe resource use.
+- [ ] Re-run the **same two jobs/seeds/configs** sequentially (1 worker) versus concurrently (2 workers) under current clean committed source, both with isolated artifacts. Record total wall-clock, transitions/s, rollout/update cost, aggregate/per-tree RSS, CPU, disk/telemetry, orphan checks and checkpoint integrity. A conservative initial per-job time guard of ~15 minutes may be used if explicitly encoded in the benchmark contract; stop earlier on unsafe resource use.
 - [ ] Test 4 workers **only after** 2-worker safety/throughput evidence and fresh admission; use comparable workloads, declare any thread-budget changes, assess oversubscription and memory reserve.
 - [ ] Choose fastest **safe measured** configuration, not highest count; reject performance claims based on synthetic/mock subprocess timing or vectorized-env benchmark (different experiment).
 - [ ] Reserve sufficient remaining 24h budget for M4–M9; if estimated training cannot fit, prefer a versioned smaller development plan or stop for owner review—do not silently start full campaign.
-- **PASS:** independently verified real PPO jobs executing concurrently with comparable baselines, safe cleanup and selected worker count.
+- **IN_PROGRESS:** historical benchmark results were 696.250s sequential and 367.500s parallel, but their profile SHA `1b9f787b…` cannot be reproduced from their claimed source/config. They are not admitted for worker selection. Fresh attempt root: `D:\Projects\.archives\F1-RL\demo-completion\m3-real-benchmark-20261111`.
 
 ### M4 — Real PPO training campaign gate
 
