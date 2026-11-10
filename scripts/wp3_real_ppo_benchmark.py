@@ -21,7 +21,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[WP3_REAL_PPO_BENCHMARK] {type(error).__name__}: {error}", file=sys.stderr, flush=True)
         return 1
     print(result, flush=True)
-    return 0 if result.get("status") == "ENGINEERING_PASS" else 1
+    expected_status = "SMOKE_INTEGRATION_PASS" if args.mode == "smoke" else "ENGINEERING_PASS"
+    return 0 if result.get("status") == expected_status else 1
 
 
 if __name__ == "__main__":

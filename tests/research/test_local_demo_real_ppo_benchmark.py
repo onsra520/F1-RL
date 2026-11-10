@@ -1,5 +1,6 @@
 import json
 from hashlib import sha256
+import importlib.util
 from pathlib import Path
 
 import pytest
@@ -119,6 +120,20 @@ def test_concurrent_process_sample_rejects_process_exiting_between_samples():
 def test_training_timing_rejects_missing_zero_or_nonfinite_values(timing):
     with pytest.raises(ValueError, match="must be finite and positive"):
         _validate_timing(timing)
+
+
+@pytest.mark.parametrize(("mode", "status"), [
+    ("smoke", "SMOKE_INTEGRATION_PASS"),
+    ("sequential", "ENGINEERING_PASS"),
+    ("parallel", "ENGINEERING_PASS"),
+])
+def test_benchmark_cli_returns_success_for_each_stage_pass(tmp_path, mode, status):
+    path = Path(__file__).parents[2] / "scripts/wp3_real_ppo_benchmark.py"
+    spec = importlib.util.spec_from_file_location("wp3_real_ppo_benchmark_cli", path)
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+    cli.run_real_ppo_benchmark = lambda _root, _output, _mode: {"status": status}
+    assert cli.main([mode, "--output-root", str(tmp_path)]) == 0
 
 
 def test_run_manifest_seed_is_checked_against_independent_expected_bundle(tmp_path):
