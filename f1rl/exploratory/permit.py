@@ -181,6 +181,9 @@ class Budget:
 
 def admitted(env):
     """Recognize only live, specifically issued env capabilities, never flags."""
+    from scripts.wp7_penalty_trial_capability import admitted as penalty_trial_admitted
+    if penalty_trial_admitted(env):
+        return True
     from ..research.wp7_train5_internal_execution import admitted as train5_admitted
     if train5_admitted(env):
         return True

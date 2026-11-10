@@ -169,7 +169,7 @@
     "f1rl/exploratory/abcd.py": "6260b5113abed184b0daf7cfa9a68a4158cabec9647ec500058dac20b1b0ddfb",
     "f1rl/exploratory/cli.py": "05c821983586eb0ad1e1e9673ae51964361febbf296af095726121be9cc5f7eb",
     "f1rl/exploratory/config.py": "2c19e4a7842b71b551a0ea8164e52adbd65cabb25929a29f97954b65031e1bc9",
-    "f1rl/exploratory/permit.py": "f43b8cd501b5646823a5e72cd2ef355578263080bf750469516bb0b9dc3ee424",
+    "f1rl/exploratory/permit.py": "37da7913dd4c0dd637f4c6b004cac0a31ea40fa063495f98b22d7e280b66a47c",
     "f1rl/exploratory/pilot.py": "772ab1f4382a55d764ce8252cec687351b1b825d856f28b8705e31f90ba2bddc",
     "f1rl/exploratory/reward.py": "87126661633b7704252dbd8a301df270e5c5f0d8678bbb1ea990aa9b44259006",
     "f1rl/learning/__init__.py": "353a1804d4784b0903428a4a745bc9b547d5e072ca8efcb77058f94be1b06399",

@@ -1,0 +1,22 @@
+{
+  "schema": "train5_terminal_crash_penalty_trial_draft_v1",
+  "status": "DRAFT_NOT_AUTHORIZED",
+  "scope": "INTERNAL_SIMULATION_TRAIN_ONLY",
+  "baseline_reward": "existing_registered_preimpact_reward",
+  "candidate": {
+    "terminal_physical_crash_penalty": 5.0,
+    "application": "once_on_validated_absorbing_physical_crash_after_preimpact_reward",
+    "other_terminal_outcomes": "unchanged",
+    "wrapper": "scripts/wp7_terminal_crash_penalty.py"
+  },
+  "track_sampling": "unchanged_uniform_five_registered_train_tracks",
+  "comparison": "paired_baseline_and_candidate_with_independent_training_runs_and_shared_paired_seeds",
+  "seed_registry": null,
+  "source_commit": null,
+  "output_root": null,
+  "step_budget": null,
+  "owner_signature": null,
+  "execution_permitted": false,
+  "heldout_permitted": false,
+  "note": "Draft only; no training authorization. Complete seed checks, budget, source bindings and guard integration before signing."
+}
