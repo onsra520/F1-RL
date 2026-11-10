@@ -90,6 +90,14 @@ def test_child_cli_rejects_invalid_arguments_before_runner(tmp_path):
     assert not output.exists()
 
 
+def test_child_cli_forwards_benchmark_profile(tmp_path):
+    output = tmp_path / "benchmark-run"
+    result = _run_cli("train", "--candidate", "A", "--tuning-seed-index", "0",
+                      "--output", str(output), "--profile", "benchmark")
+    assert result.returncode == 0
+    assert json.loads((output / "child-result.json").read_text(encoding="utf-8"))["profile"] == "benchmark"
+
+
 def test_child_cli_propagates_runner_failure(tmp_path):
     output = tmp_path / "failed-run"
 

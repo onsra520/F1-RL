@@ -337,7 +337,7 @@ def _run_parallel_child(root: Path, output: Path, log_path: Path, model: dict,
     command = [sys.executable, "scripts/local_demo.py", "train",
                "--candidate", model["candidate_id"],
                "--tuning-seed-index", str(model["seed_index"]),
-               "--output", str(output)]
+               "--output", str(output), "--profile", model.get("profile", "tuning")]
     started = time.monotonic()
     deadline = started + training["max_wall_seconds_per_model"] + 120
     poll_seconds = resources.get("memory_poll_interval_seconds", 1)
@@ -348,11 +348,13 @@ def _run_parallel_child(root: Path, output: Path, log_path: Path, model: dict,
     final_sample = None
     root_identity = None
     startup_seconds = None
+    process_started_at = None
     cleanup_started = None
     with log_path.open("x", encoding="utf-8", newline="\n") as log:
         proc = subprocess.Popen(command, cwd=root, env=os.environ.copy(), stdin=subprocess.DEVNULL,
                                 stdout=log, stderr=subprocess.STDOUT,
                                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+        process_started_at = datetime.now(timezone.utc).isoformat()
         job = None
         try:
             job = WindowsKillJob()
@@ -384,6 +386,7 @@ def _run_parallel_child(root: Path, output: Path, log_path: Path, model: dict,
 
                 returncode = proc.poll()
                 if returncode is not None:
+                    process_exit_observed_at = datetime.now(timezone.utc).isoformat()
                     break
                 if abort_event.is_set():
                     cleanup_started = time.monotonic()
@@ -400,11 +403,14 @@ def _run_parallel_child(root: Path, output: Path, log_path: Path, model: dict,
                             proc.wait(timeout=resources["cleanup_timeout_seconds"])
                         except subprocess.TimeoutExpired as error:
                             raise TimeoutError("cancelled training process tree did not terminate") from error
+                    process_exit_observed_at = datetime.now(timezone.utc).isoformat()
                     if not job.wait_empty(resources["cleanup_timeout_seconds"]):
                         raise TimeoutError("cancelled training process tree cleanup did not finish")
                     cleanup_seconds = time.monotonic() - cleanup_started
                     return {"returncode": proc.returncode, "cancelled": True,
                             "elapsed_seconds": time.monotonic() - started,
+                            "process_started_at": process_started_at,
+                            "process_exit_observed_at": process_exit_observed_at,
                             "startup_seconds": startup_seconds,
                             "cleanup_seconds": cleanup_seconds,
                             "resource_usage": _parallel_resource_usage(final_sample, peak_rss_bytes,
@@ -428,6 +434,8 @@ def _run_parallel_child(root: Path, output: Path, log_path: Path, model: dict,
             return {
                 "returncode": returncode, "cancelled": False,
                 "elapsed_seconds": time.monotonic() - started,
+                "process_started_at": process_started_at,
+                "process_exit_observed_at": process_exit_observed_at,
                 "startup_seconds": startup_seconds,
                 "cleanup_seconds": cleanup_seconds,
                 "process_identity": root_identity,

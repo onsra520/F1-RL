@@ -109,6 +109,31 @@ def _load_smoke_profile(path: str | Path) -> tuple[dict, str]:
     return profile, sha256(raw_bytes).hexdigest()
 
 
+def _load_benchmark_profile(path: str | Path) -> tuple[dict, str]:
+    path = Path(path)
+    try:
+        raw_bytes = path.read_bytes()
+        profile = json.loads(raw_bytes)
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError("LOCAL_DEMO benchmark profile could not be loaded") from error
+    expected = {
+        "schema_version": "f1rl_local_demo_ppo_benchmark_v1",
+        "candidates": ["A", "B"], "tuning_seed_index": 0, "split": "TRAIN",
+        "timesteps": 4096, "rollout_length": 256, "n_envs": 1,
+        "rollout_batches": 1, "device": "cpu",
+        "tracks": list(TRAIN_IDS), "checkpoint_interval": 4096,
+        "max_wall_seconds": 900, "max_process_tree_rss_bytes": 4294967296,
+        "minimum_available_memory_bytes": 8589934592,
+        "torch_threads": 8, "torch_interop_threads": 1,
+        "heldout_access": False, "scientific_evaluation": False,
+    }
+    if (not isinstance(profile, dict) or set(profile) != set(expected)
+            or any(type(profile[key]) is not type(value) or profile[key] != value
+                   for key, value in expected.items())):
+        raise ValueError("LOCAL_DEMO benchmark profile is invalid or exceeds its fixed scope")
+    return profile, sha256(raw_bytes).hexdigest()
+
+
 def _validate_smoke_telemetry(path: Path, run_id: str) -> dict:
     events = []
     with path.open("r", encoding="utf-8") as stream:
@@ -213,15 +238,21 @@ def _preflight(root: Path, candidate_id: str, tuning_seed_index: int, *, profile
         raise ValueError("LOCAL_DEMO is supported on local Windows only")
     if type(tuning_seed_index) is not int or not 0 <= tuning_seed_index < 3:
         raise ValueError("LOCAL_DEMO may use only one of the three reserved tuning seed bundles")
-    if not isinstance(profile, str) or profile not in {"tuning", "smoke"}:
-        raise ValueError("LOCAL_DEMO profile must be tuning or smoke")
-    smoke_profile = smoke_profile_sha256 = None
+    if not isinstance(profile, str) or profile not in {"tuning", "smoke", "benchmark"}:
+        raise ValueError("LOCAL_DEMO profile must be tuning, smoke, or benchmark")
+    smoke_profile = smoke_profile_sha256 = benchmark_profile = benchmark_profile_sha256 = None
     if profile == "smoke":
         smoke_profile, smoke_profile_sha256 = _load_smoke_profile(
             root / "configs/research/local-demo-ppo-smoke-v1.json"
         )
         if candidate_id != smoke_profile["candidate"] or tuning_seed_index != smoke_profile["tuning_seed_index"]:
             raise ValueError("LOCAL_DEMO smoke profile requires candidate C and tuning seed index 0")
+    if profile == "benchmark":
+        benchmark_profile, benchmark_profile_sha256 = _load_benchmark_profile(
+            root / "configs/research/local-demo-ppo-benchmark-v1.json"
+        )
+        if candidate_id not in benchmark_profile["candidates"] or tuning_seed_index != 0:
+            raise ValueError("LOCAL_DEMO benchmark profile requires A/B and tuning seed index 0")
     source_commit, source_tree_sha256 = _source_identity(root)
     manifest, experiment_sha256 = load_simulation_only_manifest(root)
     candidate, reward = _candidate_reward(manifest, candidate_id)
@@ -243,16 +274,17 @@ def _preflight(root: Path, candidate_id: str, tuning_seed_index: int, *, profile
         raise ValueError("LOCAL_DEMO seed bundle differs from the simulation-only tuning roster")
     ppo = replace(base.ppo, seed=seed_row["ppo"], device="cpu")
     config = manifest["training"]
-    if smoke_profile is not None:
-        if (smoke_profile["tracks"] != list(TRAIN_IDS)
-                or smoke_profile["rollout_length"] % smoke_profile["rollout_batches"]):
-            raise ValueError("LOCAL_DEMO smoke rollout or TRAIN track roster is invalid")
-        ppo = replace(ppo, n_steps=smoke_profile["rollout_length"],
-                      batch_size=smoke_profile["rollout_length"] // smoke_profile["rollout_batches"],
-                      device=smoke_profile["device"])
-        timesteps = smoke_profile["timesteps"]
-        checkpoint_every = smoke_profile["checkpoint_interval"]
-        max_wall_seconds = smoke_profile["max_wall_seconds"]
+    fixed_profile = smoke_profile or benchmark_profile
+    if fixed_profile is not None:
+        if (fixed_profile["tracks"] != list(TRAIN_IDS)
+                or fixed_profile["rollout_length"] % fixed_profile["rollout_batches"]):
+            raise ValueError("LOCAL_DEMO rollout or TRAIN track roster is invalid")
+        ppo = replace(ppo, n_steps=fixed_profile["rollout_length"],
+                      batch_size=fixed_profile["rollout_length"] // fixed_profile["rollout_batches"],
+                      device=fixed_profile["device"])
+        timesteps = fixed_profile["timesteps"]
+        checkpoint_every = fixed_profile["checkpoint_interval"]
+        max_wall_seconds = fixed_profile["max_wall_seconds"]
     else:
         timesteps = config["timesteps_per_candidate_seed"]
         checkpoint_every = config["checkpoint_every_timesteps"]
@@ -281,7 +313,10 @@ def _preflight(root: Path, candidate_id: str, tuning_seed_index: int, *, profile
         "max_wall_seconds": max_wall_seconds,
         "profile": profile, "smoke_profile": smoke_profile,
         "smoke_profile_sha256": smoke_profile_sha256,
-        "threads": config["torch_threads"], "interop_threads": config["torch_interop_threads"],
+        "benchmark_profile": benchmark_profile,
+        "benchmark_profile_sha256": benchmark_profile_sha256,
+        "threads": (benchmark_profile["torch_threads"] if benchmark_profile else config["torch_threads"]),
+        "interop_threads": (benchmark_profile["torch_interop_threads"] if benchmark_profile else config["torch_interop_threads"]),
         "sampling_seed": seed_row["sampling"], "reset_seed": reset_seed,
         "track_rows": track_rows, "reset_contracts": reset_contracts,
         "registration_sha256": _hash_file(root / "configs/research/wp7-rotating-owner-protocol-v3.json"),
@@ -419,6 +454,10 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
         manifest.update(schema_version="f1rl_local_demo_smoke_run_v1",
                         classification="LOCAL_DEMO_SMOKE_NOT_SCIENTIFIC",
                         profile="smoke", smoke_profile_sha256=preflight["smoke_profile_sha256"])
+    elif profile == "benchmark":
+        manifest.update(schema_version="f1rl_local_demo_benchmark_run_v1",
+                        classification="LOCAL_DEMO_BENCHMARK_NOT_SCIENTIFIC",
+                        profile="benchmark", benchmark_profile_sha256=preflight["benchmark_profile_sha256"])
     else:
         manifest["schema_version"] = "f1rl_local_demo_run_v2"
     manifest["sha256"] = sha256(json.dumps(manifest, sort_keys=True, separators=(",", ":"),
@@ -468,7 +507,7 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
             "run_id": run_id, "source_commit": preflight["source_commit"],
             "policy_id": (f"local-demo-smoke-{candidate_id}-seed-{tuning_seed_index}"
                           if profile == "smoke"
-                          else f"local-demo-{candidate_id}-tuning-{tuning_seed_index}"),
+                          else f"local-demo-{candidate_id}-{profile}-{tuning_seed_index}"),
             "split": "TRAIN", "track_ids": list(TRAIN_IDS),
             "seed_identity": {"ppo": preflight["ppo"].seed,
                               "sampling": preflight["sampling_seed"],
@@ -542,6 +581,10 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
         model.learn(preflight["timesteps"], progress_hook=progress,
                     telemetry_observer=telemetry,
                     optimizer_step_hook=record_gradient_activity)
+        _write_json(output / "ppo-runtime-timings.json", {
+            "collect_rollouts_seconds": model._model.runtime_timings.get("collect_rollouts", 0.0),
+            "optimizer_updates_seconds": model._model.runtime_timings.get("optimizer_updates", 0.0),
+        })
         if profile == "smoke":
             session.check(model.num_timesteps)
         if model.num_timesteps != preflight["timesteps"] or telemetry.optimizer_steps <= 0:

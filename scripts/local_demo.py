@@ -14,6 +14,7 @@ def main(argv: list[str] | None = None) -> int:
     train.add_argument("--candidate", choices=("A", "B", "C", "D"), required=True)
     train.add_argument("--tuning-seed-index", type=int, choices=(0, 1, 2), required=True)
     train.add_argument("--output", type=Path, required=True)
+    train.add_argument("--profile", choices=("tuning", "smoke", "benchmark"), default="tuning")
     args = parser.parse_args(argv)
     if not args.output.is_absolute():
         parser.error("--output must be an absolute path")
@@ -26,7 +27,7 @@ def main(argv: list[str] | None = None) -> int:
             tuning_seed_index=args.tuning_seed_index,
             output_directory=args.output,
             dry_run=False,
-            profile="tuning",
+            profile=args.profile,
         )
     except Exception as error:
         print(f"[LOCAL_DEMO_CHILD] {type(error).__name__}: {error}", file=sys.stderr, flush=True)
