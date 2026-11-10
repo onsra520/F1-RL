@@ -1,0 +1,747 @@
+{
+  "schema_version": 1,
+  "trace_id": "8397d00f7e9b41218485826378c6e4dd",
+  "kind": "engineering_acceptance_exception_manifest",
+  "scope": {
+    "repository": "D:/Projects/F1-RL",
+    "branch": "fix/engineering-auth-source-verification-20261110",
+    "source_head": "9b6a45d4cd50289a2ab5ce0d3ff078c6a161a2eb",
+    "applies_to_this_candidate_only": true
+  },
+  "owner_decision": {
+    "status": "APPROVED",
+    "basis": "Owner decision in the task instruction",
+    "effect": "Engineering release exception only; not test PASS, scientific approval, WP7 acceptance, or training admission."
+  },
+  "blocked_external_evidence": {
+    "status": "BLOCKED_EXTERNAL_EVIDENCE",
+    "count": 7,
+    "root": "D:\\F1-RL-PHYSICS-V4-EVIDENCE-20261106",
+    "root_cause": "The registered external witness root is absent; focused execution raised FileNotFoundError before witness validation or geometry work.",
+    "closure_condition": "Recover the original four files, verify each SHA-256 below, and rerun only these seven nodes. Do not regenerate, replace, or alter registration hashes.",
+    "required_witnesses": [
+      {
+        "path": "STEP3-PHYSICS-V4-DUAL-TURN-ACCEPTANCE.json",
+        "sha256": "0bbc1636fdb330d58d0808ad83c2b0d73e7d1b686d597d87796510c6788bd5d4"
+      },
+      {
+        "path": "STEP3-DUAL-TURN-PHYSICS-V4-PORTABLE-WITNESS.json",
+        "sha256": "a2b2676011edc97278653e8eecd476c7138c5b4cb4090479f95d174a70e667fc"
+      },
+      {
+        "path": "STEP3-INDEPENDENT-V4-CONTROLS/right-v2-portable-attempt02/summary.json",
+        "sha256": "6f7bb46a0ce6aad87edd547c1be1809022db8b24c228990c8cedd295707ac0bd"
+      },
+      {
+        "path": "STEP3-INDEPENDENT-V4-CONTROLS/left-v2-portable-attempt02/summary.json",
+        "sha256": "6dea077e3bd4a47a4f8d75309f75b9824496a8dbaaccbca597737e52d0a12004"
+      }
+    ],
+    "node_ids": [
+      "tests/research/test_wp7_train5_reset_perturbation_v3.py::test_five_train_factories_have_registered_lifecycle_reset_not_training_admission",
+      "tests/research/test_wp7_train5_reset_perturbation_v3.py::test_actual_five_track_perturbed_reset_deterministic_and_independent",
+      "tests/research/test_wp7_train5_reset_perturbation_v3.py::test_reset_sequence_changes_independent_draws_without_consuming_training_seeds",
+      "tests/research/test_wp7_train5_reset_perturbation_v3.py::test_fixture_identity_is_non_authorizing_and_source_bound",
+      "tests/research/test_wp7_train5_v2_protocol.py::test_source_and_external_real_v4_witness_preflight_valid",
+      "tests/research/test_wp7_train5_v2_protocol.py::test_preview_builds_five_source_bound_v4_factories_no_heldout_access",
+      "tests/research/test_wp7_train5_v2_protocol.py::test_dev_seed_proposals_are_disjoint_and_never_misrepresented_as_unused_globally"
+    ]
+  },
+  "blocked_by_policy": {
+    "status": "BLOCKED_BY_POLICY",
+    "count": 101,
+    "rule": "Do not invoke TrainingRunner, any .learn() call, a checkpoint-producing .save() call, or saved-policy evaluation fixture in this audit. No test source was modified.",
+    "source_manifest": "D:\\Projects\\.archives\\F1-RL-sat-workers-20261109\\policy_blocked_nodes.json",
+    "source_manifest_sha256": "2dd3625d2ad40bdf307a1621aa4404c09478dd59b6c148a53ea32574328c9588",
+    "candidate_node_ids": [
+      {
+        "node_id": "tests/integration/test_hard_route_terminal_v2.py::test_approved_outcome_does_not_admit_training_or_allocate_artifacts",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/integration/test_ppo_baseline_integration.py::test_short_real_learning_is_cumulative",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/integration/test_ppo_baseline_integration.py::test_real_training_save_load_prediction_and_continue_round_trip",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH",
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/integration/test_ppo_baseline_integration.py::test_generated_policy_archive_is_ignored_and_untracked",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH"
+        ]
+      },
+      {
+        "node_id": "tests/integration/test_training_orchestration_integration.py::test_real_multi_track_training_orchestration_writes_reproducible_artifacts",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/integration/test_vectorized_ppo_integration.py::test_real_vectorized_ppo_training_save_load_and_continue",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH",
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/integration/test_vectorized_ppo_integration.py::test_real_multi_track_ppo_training_smoke",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/integration/test_versioned_braking_control.py::test_legacy_saved_model_cannot_silently_migrate_to_three_actions",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH"
+        ]
+      },
+      {
+        "node_id": "tests/integration/test_wp7_lifecycle_race.py::test_new_lifecycle_registration_still_blocks_all_training",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/integration/test_wp7_physics_integration.py::test_new_physics_cannot_bypass_runner_admission[False]",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/integration/test_wp7_physics_integration.py::test_new_physics_cannot_bypass_runner_admission[True]",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/integration/test_wp7_physics_integration.py::test_attached_research_environment_cannot_bypass_ppo_learn_admission",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/integration/test_wp7_train_reset.py::test_reset_preparation_does_not_open_training_admission",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_learn_rejects_invalid_total_timesteps_before_backend[True]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_learn_rejects_invalid_total_timesteps_before_backend[False]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_learn_rejects_invalid_total_timesteps_before_backend[0]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_learn_rejects_invalid_total_timesteps_before_backend[-1]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_learn_rejects_invalid_total_timesteps_before_backend[1.5]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_learn_rejects_invalid_total_timesteps_before_backend[8]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_learn_rejects_invalid_total_timesteps_before_backend[None]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_learn_uses_cumulative_backend_semantics",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_save_normalizes_zip_suffix_and_returns_archive",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_load_rejects_invalid_env_type",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_load_rejects_invalid_device[]",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_load_rejects_invalid_device[gpu]",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_load_rejects_invalid_device[CUDA]",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_load_rejects_invalid_device[1]",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_load_rejects_invalid_device[None]",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_inference_only_load_predicts_but_cannot_learn",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH",
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_load_validates_bound_vector_env_rollout_size",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_learn_progress_hook_reports_actual_cumulative_timesteps",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_checkpoint_can_be_saved_while_telemetry_observer_is_active",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH",
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_learn_none_progress_hook_preserves_existing_behavior",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_learn_progress_hook_exception_propagates_unchanged",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/algorithms/test_ppo_model.py::test_learn_rejects_non_callable_progress_hook",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/evaluation/test_isolated_ppo_cell.py::test_real_saved_ppo_stochastic_cell_replays_without_mutating_parent_rng",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH",
+          "SCIENTIFIC_EVAL_ENTRYPOINT"
+        ]
+      },
+      {
+        "node_id": "tests/learning/evaluation/test_isolated_ppo_cell.py::test_wrong_model_identity_rejected_before_worker_start",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH",
+          "SCIENTIFIC_EVAL_ENTRYPOINT"
+        ]
+      },
+      {
+        "node_id": "tests/learning/evaluation/test_isolated_ppo_cell.py::test_research_factory_rejected_before_model_access_even_if_subclass_lies",
+        "reason_tags": [
+          "SCIENTIFIC_EVAL_ENTRYPOINT"
+        ]
+      },
+      {
+        "node_id": "tests/learning/evaluation/test_isolated_ppo_cell.py::test_invalid_saved_model_aborts_once_and_preserves_evidence",
+        "reason_tags": [
+          "SCIENTIFIC_EVAL_ENTRYPOINT"
+        ]
+      },
+      {
+        "node_id": "tests/learning/evaluation/test_isolated_ppo_cell.py::test_unavailable_explicit_cuda_never_silently_falls_back",
+        "reason_tags": [
+          "SCIENTIFIC_EVAL_ENTRYPOINT"
+        ]
+      },
+      {
+        "node_id": "tests/learning/evaluation/test_isolated_ppo_cell.py::test_different_reward_implementations_with_same_fields_have_distinct_identity",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH",
+          "SCIENTIFIC_EVAL_ENTRYPOINT"
+        ]
+      },
+      {
+        "node_id": "tests/learning/test_gym_environment.py::test_learning_observer_enables_training_info_only_during_learn",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_checkpoint_observer_reconstruction.py::test_checkpoint_observer_runs_after_each_durable_model_save",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_checkpoint_observer_reconstruction.py::test_checkpoint_observer_failure_aborts_and_preserves_failure_state",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_checkpoint_observer_reconstruction.py::test_checkpoint_observer_invalid_configuration_is_rejected",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_checkpoint_observer_reconstruction.py::test_no_observer_keeps_previous_runner_behavior",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_final_observer_reconstruction.py::test_final_observer_sees_archive_before_runner_completes",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_final_observer_reconstruction.py::test_final_observer_error_aborts_success_and_removes_unverified_final",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_final_observer_reconstruction.py::test_final_observer_invalid_input_rejected",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_fullbody_training_gate.py::test_singletrack_fullbody_cannot_train_without_scientific_approval",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_fullbody_training_gate.py::test_multitrack_fullbody_cannot_train_without_scientific_approval",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_fullbody_training_gate.py::test_fullbody_with_ramp_policy_still_cannot_train",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pilot_milestone_recorder_reconstruction.py::test_complete_200k_mock_collects_8_verified_reports_and_manifest",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pilot_milestone_recorder_reconstruction.py::test_failed_checkpoint_evaluator_leaves_failed_run_without_false_report",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pilot_milestone_recorder_reconstruction.py::test_tampered_archive_hash_rejected_before_publishing",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pilot_milestone_recorder_reconstruction.py::test_missing_200k_final_milestone_rejected",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pilot_milestone_recorder_reconstruction.py::test_modified_earlier_checkpoint_rejected_before_next_report",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pilot_milestone_recorder_reconstruction.py::test_modified_prior_report_rejected_before_next_report",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pilot_milestone_recorder_reconstruction.py::test_mock_final_actual_timesteps_can_overshoot_200k_by_rollout",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pilot_milestone_recorder_reconstruction.py::test_finished_mock_run_can_be_verified_after_copy_and_detects_tampering",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pv5_backend_admission.py::test_raw_backend_learn_rechecks_reattached_env_without_collecting_samples",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pv5_backend_admission.py::test_prediction_only_load_cannot_later_train_research_env",
+        "reason_tags": [
+          "CHECKPOINT_CREATE_OR_SAVE_PATH",
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pv5_backend_admission.py::test_real_vector_backend_cannot_bypass_any_project_learning_entrypoint[create-dummy]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pv5_backend_admission.py::test_real_vector_backend_cannot_bypass_any_project_learning_entrypoint[create-subproc]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pv5_backend_admission.py::test_real_vector_backend_cannot_bypass_any_project_learning_entrypoint[backend_create-dummy]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pv5_backend_admission.py::test_real_vector_backend_cannot_bypass_any_project_learning_entrypoint[backend_create-subproc]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pv5_backend_admission.py::test_real_vector_backend_cannot_bypass_any_project_learning_entrypoint[raw_learn-dummy]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_pv5_backend_admission.py::test_real_vector_backend_cannot_bypass_any_project_learning_entrypoint[raw_learn-subproc]",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_run_single_writes_checkpoint_final_state_and_closes_vec_env",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_run_single_seed_none_uses_seednone_and_serializable_state",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_run_single_rejects_non_factory_before_creating_artifacts",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_run_multi_derives_track_ids_and_uses_both_seeds",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_run_multi_coalesces_crossed_thresholds_at_actual_step",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_run_single_records_actual_200704_final_step_without_live_ppo",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_run_failure_marks_state_failed_and_closes_env",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_checkpoint_save_failure_keeps_latest_state_truthful",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_state_update_failure_marks_failed_and_preserves_checkpoint_file",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_completed_state_write_failure_removes_uncommitted_final_model",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_final_model_cleanup_failure_preserves_completed_state_error",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_cleanup_failure_after_success_propagates_but_keeps_completed_state",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_training_error_remains_primary_when_cleanup_also_fails",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_initial_state_write_failure_retries_failed_snapshot_before_propagating",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_training_runner_accepts_optional_provenance_and_rejects_wrong_type",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_run_single_persists_supplied_provenance_before_env_creation",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_run_multi_rejects_provenance_track_order_mismatch_before_artifacts",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_run_multi_rejects_missing_or_extra_provenance_tracks_before_artifacts",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_provenance_write_failure_prevents_env_and_marks_state_failed",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/learning/training/test_training_runner.py::test_training_failure_preserves_written_provenance_bytes",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_exploratory_permit.py::test_cuda_loaded_model_cannot_learn_in_exploratory_context",
+        "reason_tags": [
+          "PPO_LEARN_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_wp7_admission_resolution.py::test_registered_runner_denial_carries_its_verified_run_identity_before_allocation",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_wp7_admission_resolution.py::test_registered_runner_reuses_prepared_identity_and_rejects_other_policy",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_wp7_admission_resolution.py::test_registered_runner_checks_actual_runtime_of_prepared_manifest",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_wp7_execution_binding.py::test_mismatch_denied_before_artifact_creation[ppo]",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_wp7_execution_binding.py::test_mismatch_denied_before_artifact_creation[sampling]",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_wp7_execution_binding.py::test_mismatch_denied_before_artifact_creation[roster]",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_wp7_execution_binding.py::test_mismatch_denied_before_artifact_creation[receipt]",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_wp7_execution_binding.py::test_exact_binding_does_not_grant_permission",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_wp7_owner_profile.py::test_owner_run_manifest_and_denied_runner_keep_exact_profile_before_artifacts",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_wp7_rotating_owner_profile.py::test_binding_rejects_profile_migration_and_training_stays_closed",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_wp7_run_manifest.py::test_runner_captures_preexecution_manifest_but_denies_research_before_artifacts",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      },
+      {
+        "node_id": "tests/research/test_wp7_spatial_profile.py::test_spatial_run_manifest_and_denial_keep_the_actual_profile_before_allocation",
+        "reason_tags": [
+          "TRAINING_RUNNER_CALL"
+        ]
+      }
+    ],
+    "candidate_inventory_reconciliation": {
+      "candidate_collected": 3348,
+      "policy_nodes_present": 101,
+      "missing_node_ids": []
+    }
+  },
+  "resource_sensitive_serial_verification": {
+    "status": "PASS",
+    "count": 5,
+    "node_ids": [
+      "tests/runtime/test_auto_drive_integration.py::test_auto_accelerates_brakes_and_recovers_speed_around_obstacle[cone]",
+      "tests/runtime/test_auto_drive_integration.py::test_auto_accelerates_brakes_and_recovers_speed_around_obstacle[barrier]",
+      "tests/runtime/test_auto_drive_integration.py::test_right_hand_track_never_crosses_centerline_on_original_t05_s_curve",
+      "tests/runtime/test_t05_hitbox_regression.py::test_t05_original_cone_hitbox_racing_line_finishes_without_contact[normal-45.0]",
+      "tests/runtime/test_t05_hitbox_regression.py::test_t05_original_cone_hitbox_racing_line_finishes_without_contact[racing-90.0]"
+    ],
+    "timeout_contract_seconds": 120,
+    "result": "5 passed in 177.67 seconds, sequential in one pytest process.",
+    "junit": {
+      "path": "D:\\Projects\\.archives\\F1-RL-engineering-acceptance-20261110-9b6a45d\\auto-drive-t05-serial.junit.xml",
+      "sha256": "1e1bd60bc54c29f16d67a8e35bf18e2a91373a38b1e0e817dd8f58cc0b9161f7"
+    },
+    "source_sha256": {
+      "f1rl/sandbox/swept_surface_clearance.py": "01fa6855f54765e0ecbc8c85f6d91b3021b5a040c79acf8ffd07997e97c14bd7",
+      "f1rl/sandbox/body_collision.py": "65dafadb9f95346aecb9ed81d202c4f2af090ff6590b39e73d2fab1156a936a4",
+      "f1rl/sandbox/world.py": "5d56640d7efb2c91c5d71f101c227f4c5fbeec549f0bd46087d8375ae92ef218",
+      "f1rl/sandbox/physical_crash.py": "87cc7ccecdbdb1f0560cbb128940295785a5c28c37b2bc35ce73303244c25c3e",
+      "f1rl/sandbox/spatial_contact_dynamics.py": "055fa38ca41fb20355683d2c5dc2152e9650e8bf608ae100cfd3e7d368513260",
+      "f1rl/sandbox/certified_face_impact.py": "0e2f7a2d25acc3df64e42923dae68293b5ce798d691a419c631a158cdb5aeb12",
+      "f1rl/local_demo/runtime/session.py": "f88ac07fecd9cf8904189c70a4ef27278cf84ec42f39886b725ec560d952157b",
+      "tests/runtime/test_auto_drive_integration.py": "13e17c7a1df5c4dd1264fe0ffba7b7ab02382383bbcb59346da70ad1930ac605",
+      "tests/runtime/test_t05_hitbox_regression.py": "f6fedc996c0104c2f4adb3011795fe570fefc5cf1a7fed4aa80ba1f05c7c7763"
+    }
+  },
+  "full_regression": {
+    "source_head": "9b6a45d4cd50289a2ab5ce0d3ff078c6a161a2eb",
+    "collection_count": 3348,
+    "excluded_counts": {
+      "BLOCKED_BY_POLICY": 101,
+      "BLOCKED_EXTERNAL_EVIDENCE": 7,
+      "serial_resource_nodes_preverified": 5
+    },
+    "executed": {
+      "passed": 3232,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 3,
+      "wall_seconds": 557.2,
+      "workers": 4,
+      "distribution": "loadgroup"
+    },
+    "junit": {
+      "path": "D:\\Projects\\.archives\\F1-RL-engineering-acceptance-20261110-9b6a45d\\final-policy-regression.junit.xml",
+      "sha256": "e2166b351c4e42c82444ff7ca6f724e0a865de456c1e4fb4a32e11879780c7fa"
+    },
+    "accounting": "3232 PASS + 3 SKIP + 101 BLOCKED_BY_POLICY + 7 BLOCKED_EXTERNAL_EVIDENCE + 5 serial PASS = 3348 collected."
+  },
+  "focused_authorization_source_and_guard_tests": {
+    "status": "PASS_WITH_APPROVED_EXTERNAL_EVIDENCE_EXCEPTION",
+    "collected": 146,
+    "passed": 139,
+    "blocked_external_evidence": 7,
+    "unexpected_failures": 0,
+    "junit": {
+      "path": "D:\\Projects\\.archives\\F1-RL-engineering-acceptance-20261110-9b6a45d\\focused-auth-source-binding.junit.xml",
+      "sha256": "89a39d0a880635af37a6ee81330bf81a5b44ea15169c48ac2bb9f3c921a08352"
+    }
+  },
+  "scientific_integrity": {
+    "historical_registration_modified": false,
+    "scientific_admission_open": false,
+    "heldout_accessed": false,
+    "ppo_learn_called": false,
+    "checkpoint_generated": false
+  }
+}
