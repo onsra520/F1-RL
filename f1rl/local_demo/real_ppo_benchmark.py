@@ -153,7 +153,8 @@ def _verify_run_manifest(output: Path, *, source_commit: str, profile: str,
             or manifest.get("training_seed_bundle") != seed_bundle
             or manifest.get("split") != "TRAIN"
             or manifest.get("heldout_access") is not False
-            or manifest.get("scientific_evaluation") is not False):
+            or manifest.get("scientific_evidence") is not False
+            or manifest.get("scientific_training_authorized") is not False):
         raise ValueError("run manifest does not match the admitted benchmark identity")
     return manifest
 

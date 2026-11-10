@@ -142,8 +142,16 @@ def test_run_manifest_seed_is_checked_against_independent_expected_bundle(tmp_pa
     seed_bundle = {"ppo": 0, "sampling": 0, "training_reset": 1000}
     manifest = {"source_commit": "source", "profile": "benchmark",
                 "benchmark_profile_sha256": "profile", "candidate": {"candidate_id": "A"},
-                "training_seed_bundle": {**seed_bundle, "ppo": 9}, "split": "TRAIN",
-                "heldout_access": False, "scientific_evaluation": False}
+                "training_seed_bundle": seed_bundle, "split": "TRAIN",
+                "heldout_access": False, "scientific_evidence": False,
+                "scientific_training_authorized": False}
+    manifest["sha256"] = sha256(json.dumps(manifest, sort_keys=True, separators=(",", ":"),
+                                 allow_nan=False).encode()).hexdigest()
+    _write(output / "run-manifest.json", manifest)
+    assert _verify_run_manifest(output, source_commit="source", profile="benchmark",
+                                profile_hash="profile", candidate="A", seed_bundle=seed_bundle)
+    manifest["training_seed_bundle"] = {**seed_bundle, "ppo": 9}
+    manifest.pop("sha256")
     manifest["sha256"] = sha256(json.dumps(manifest, sort_keys=True, separators=(",", ":"),
                                  allow_nan=False).encode()).hexdigest()
     _write(output / "run-manifest.json", manifest)
