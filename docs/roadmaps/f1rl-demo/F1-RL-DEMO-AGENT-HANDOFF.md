@@ -10,7 +10,9 @@
 - Working branch/worktree: `feat/f1rl-demo-completion` / `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion`.
 - M0 **IN_PROGRESS**; no final demo acceptance or new full PPO campaign. Source/Python/RAM/disk/worker absence verified. Extended regression, physics/Track Builder admission and external WP3 evidence classification remain to finish.
 - Previous real smoke/benchmark source: `8582d9d08826074dbd2b6d32609d9d58639f771d`; five model SHA-256 files matched. New merged benchmark metadata fix changes the source hash, without changing past artifacts.
-- Active runtime used from all seven recorded attempts (including failed smoke): **1,172.313 / 86,400 seconds**, remaining **85,227.687 seconds** subject to discovery of further prior workloads. Two improvement cycles remain unused by this demo campaign.
+- Active runtime from all seven historical attempts plus one independently run post-merge smoke: **1,263.031 / 86,400 seconds**, remaining **85,136.969 seconds** (provisional pending any additional earlier workloads). Two improvement cycles remain unused by this demo campaign.
+- On `main` `ab8951a`, independent scoped regression: **121 passed, 2 skipped**. Five historical checkpoints loaded, hashes matched and predicted finite actions. Post-merge new real smoke from `6452517` PASS 256 steps / 10 optimizer updates / checkpoint `09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f5bf`; 90.718 seconds and preserved under `D:\Projects\.archives\F1-RL\wp3-postmerge-real-smoke-20261110`.
+- **Perf observation:** new smoke rollout 85.255 seconds vs historical 18.040 seconds; cause unknown, avoid speedup/ETA claim and investigate in M0/M3 as needed.
 - Any historical claims below about unmerged docs/parallel branches are **superseded by this dated snapshot**. No scientific HELD-OUT access.
 
 ## 1. Current operator-readable status
@@ -26,7 +28,7 @@
 | Three custom acceptance tracks | Not created — must only be generated **after** model freeze |
 | 70-run Pure PPO evaluation | Not performed |
 | Live real-time 1×/30FPS/p95≤150ms | Not measured |
-| Training budget epoch | 2026-11-10 WP3 engineering run: 1,172.313 seconds used; 85,227.687 remaining (provisional) |
+| Training budget epoch | 2026-11-10 WP3 engineering run + 1 new post-merge smoke: **1,263.031 s** used; **85,136.969 s** remaining (provisional) |
 | Agent improvement cycles | 0 newly used **by this documentation task**; confirm pre-existing active campaign history before charging |
 | Blocking source unknowns | Prior branch mismatch resolved by PR #61 merge; cross-layer regression and external WP3 evidence classification still pending |
 
