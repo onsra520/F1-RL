@@ -523,6 +523,13 @@ def test_mock_subprocess_benchmark_compares_1_2_4_without_campaign_completion(tm
     assert all(not row["campaign_completion"] for row in report["comparisons"])
     assert all((tmp_path / "mock-benchmark" / f"workers-{worker}" /
                 "raw-measurements.jsonl").is_file() for worker in (1, 2, 4))
+    source_digest = sha256()
+    for relative in ("f1rl/local_demo/campaign.py", "f1rl/local_demo/parallel_campaign.py",
+                     "f1rl/local_demo/process_resources.py",
+                     "f1rl/local_demo/parallel_benchmark.py"):
+        source_digest.update(relative.encode("utf-8"))
+        source_digest.update((ROOT / relative).read_bytes())
+    assert report["source"]["scheduler_source_sha256"] == source_digest.hexdigest()
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows Job Object behavior is platform-specific")

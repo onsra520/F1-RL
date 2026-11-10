@@ -232,7 +232,8 @@ def run_mock_subprocess_benchmark(output_directory: str | Path, *,
     dirty = bool(subprocess.run(["git", "status", "--porcelain"], cwd=repository_root,
                                 check=True, capture_output=True, text=True).stdout.strip())
     source_digest = sha256()
-    for relative in ("f1rl/local_demo/campaign.py", "f1rl/local_demo/process_resources.py",
+    for relative in ("f1rl/local_demo/campaign.py", "f1rl/local_demo/parallel_campaign.py",
+                     "f1rl/local_demo/process_resources.py",
                      "f1rl/local_demo/parallel_benchmark.py"):
         source_digest.update(relative.encode("utf-8"))
         source_digest.update((repository_root / relative).read_bytes())
