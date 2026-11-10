@@ -22,6 +22,7 @@ export type RuntimeCustomTrack = {
   preview: RuntimeTrack['preview'];
   road_samples: RuntimeTrack['road_samples'];
   auto_bridge_count: number;
+  requires_layered_road_support: boolean;
   ppo_compatible: boolean;
   surface_count: number;
   checkpoint_count: number;
@@ -220,11 +221,11 @@ export class RuntimeClient {
       body: JSON.stringify({ mode: 'hybrid', model_id: modelId, track_id: trackId, seed, ...(config ? { auto_drive_config: config } : {}) }),
     });
   }
-  createCustomSession(track: unknown, mode: 'auto' | 'manual' | 'ppo' | 'hybrid', seed: number, modelId?: string, traceId?: string, config?: AutoDriveConfig, experimentalV4 = false): Promise<RuntimeSessionStatus> {
+  createCustomSession(track: unknown, mode: 'auto' | 'manual' | 'ppo' | 'hybrid', seed: number, modelId?: string, traceId?: string, config?: AutoDriveConfig, physicsProfile?: 'experimental_v4' | 'experimental_v5_layered'): Promise<RuntimeSessionStatus> {
     const body: Record<string, unknown> = { mode, seed, custom_track: track };
     if (modelId) body.model_id = modelId;
     if ((mode === 'auto' || mode === 'hybrid') && config) body.auto_drive_config = config;
-    if (mode === 'auto' && experimentalV4) body.physics_profile = 'experimental_v4';
+    if (mode === 'auto' && physicsProfile) body.physics_profile = physicsProfile;
     return request(this.baseUrl, '/api/v1/sessions', {
       method: 'POST', headers: { 'content-type': 'application/json', ...(traceId ? { 'x-trace-id': traceId } : {}) }, body: JSON.stringify(body),
     });

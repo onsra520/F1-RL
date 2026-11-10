@@ -28,7 +28,9 @@ from ..sandbox.geometry.rotation import Quaternion
 from ..sandbox.partial_wheel_release import AutomaticTakeoffPolicy
 from ..sandbox.interactions.events import ObstacleHit
 from ..sandbox.vehicle import VehicleParameters
-from ..sandbox.spatial_contact_dynamics import SpatialContactPolicy, _suspension_state
+from ..sandbox.spatial_contact_dynamics import (
+    LAYERED_ROAD_EDGE_LIFECYCLE_V5, SpatialContactPolicy, _suspension_state,
+)
 from ..sandbox.world import WorldState, WorldStepResult
 from ..sandbox.track.model import TrackWorld
 
@@ -63,16 +65,23 @@ class PhysicsConfig:
     longitudinal_contact_policy: LongitudinalContactPolicy | None = None
     spatial_contact_policy: SpatialContactPolicy | None = None
 
+    @property
+    def uses_road_edge_lifecycle(self) -> bool:
+        return self.ground_motion_version in (
+            'spatial_road_edge_partial_lifecycle_v4',
+            LAYERED_ROAD_EDGE_LIFECYCLE_V5,
+        )
+
     def __post_init__(self) -> None:
         if (self.spawn_reference not in ('legacy_vehicle_position_v1','authored_horizontal_road_v1')
                 or self.spawn_reference!='legacy_vehicle_position_v1' and self.mode=='legacy_v1'):
             raise ValueError('unregistered research spawn reference')
-        if (self.ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4')
+        if (self.ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4',LAYERED_ROAD_EDGE_LIFECYCLE_V5)
                 or self.ground_motion_version=='arc_distance_v1' and self.mode not in ('wp7_suspension_v1','wp7_lifecycle_v1')):
             raise ValueError('unregistered research ground motion version/mode')
         coupled = self.ground_motion_version == 'coupled_longitudinal_v1'
-        compliant = self.ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4')
-        spatial = self.ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4')
+        compliant = self.ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4',LAYERED_ROAD_EDGE_LIFECYCLE_V5)
+        spatial = self.ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4',LAYERED_ROAD_EDGE_LIFECYCLE_V5)
         if (spatial != (self.spatial_contact_policy is not None)
                 or spatial and (self.mode!=('wp7_lifecycle_v1' if compliant else 'wp7_suspension_v1')
                     or not isinstance(self.spatial_contact_policy,SpatialContactPolicy)
@@ -157,7 +166,7 @@ class PhysicsConfig:
             _distance_ground_frame(initial.vehicle,parameters)
         if self.ground_motion_version=='coupled_longitudinal_v1':
             _longitudinal_frame(initial.vehicle,initial.suspension)
-        if self.ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4'):
+        if self.ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3') or self.uses_road_edge_lifecycle:
             derived = _suspension_state(initial.vehicle)
             if any(abs(getattr(derived,key)-getattr(initial.suspension,key))>1e-8
                    for key in derived.__dataclass_fields__):
@@ -167,7 +176,7 @@ class PhysicsConfig:
             initial.vehicle.position.y, initial.suspension.height_m, rel_tol=0., abs_tol=1e-8,
         ):
             raise ValueError("initial suspension height disagrees with vehicle")
-        if self.ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4'):
+        if self.ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3') or self.uses_road_edge_lifecycle:
             if (not isinstance(initial.flight,FlightState) or initial.flight.phase=='takeoff'
                     or initial.vehicle.grounded!=(initial.flight.phase=='grounded')):
                 raise ValueError('compliant lifecycle requires consistent persistent phase')
@@ -226,7 +235,7 @@ class PhysicsConfig:
             not track.surfaces or any(abs(p.normal.x)>1e-10 for p in track.surfaces)
         ):
             raise ValueError('coupled longitudinal contact requires world-Z road slopes')
-        if self.mode == "wp7_lifecycle_v1" and self.ground_motion_version not in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4') and (
+        if self.mode == "wp7_lifecycle_v1" and self.ground_motion_version not in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3') and not self.uses_road_edge_lifecycle and (
             not track.surfaces or any(p.normal != Vec3(0., 1., 0.) for p in track.surfaces)
             or len({p.origin.y for p in track.surfaces}) != 1
         ):
@@ -258,6 +267,8 @@ class PhysicsConfig:
                     previous.flight.phase if previous.flight is not None else "grounded",
                     result.state.flight.phase,start_time_s,end_time_s,
                     ("spatial_road_edge_partial_lifecycle_rk4_v4",
+                     *(('layered_road_atlas_v1',)
+                       if self.ground_motion_version==LAYERED_ROAD_EDGE_LIFECYCLE_V5 else ()),
                      "grounded_wheel_hard_stop_absorbing_v4_development"
                      if result.crash.contact.kind=="wheel_hard_stop" else
                      "grounded_wheel_edge_hard_stop_absorbing_v4_development"
@@ -268,7 +279,7 @@ class PhysicsConfig:
             # Fully revalidate the pre-impact RK4 tick against its unchanged
             # momenta and work audit, then separately audit the accepted
             # instantaneous impulse and absorbing center/event prefix.
-            if (self.ground_motion_version!='spatial_road_edge_partial_lifecycle_v4'
+            if (not self.uses_road_edge_lifecycle
                 or result.precrash_result is None
                 or result.precrash_result.crash is not None
                 or result.precrash_result.precrash_result is not None
@@ -328,12 +339,12 @@ class PhysicsConfig:
             # previous suspension rates; it is not a registered impulse/recovery.
             raise PhysicsTransitionError("WP7 collision recovery is unregistered; step rejected")
         events = tuple(e for e in result.events if isinstance(e, FlightTransition))
-        compliant = self.ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4')
-        if self.ground_motion_version in ('coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4'):
-            spatial = self.ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4')
+        compliant = self.ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3') or self.uses_road_edge_lifecycle
+        if self.ground_motion_version in ('coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3') or self.uses_road_edge_lifecycle:
+            spatial = self.ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3') or self.uses_road_edge_lifecycle
             audit = result.spatial_ground_telemetry if spatial else result.coupled_ground_telemetry
             segments = result.center_segments
-            expected_version = 'spatial_road_edge_partial_lifecycle_rk4_v4' if self.ground_motion_version=='spatial_road_edge_partial_lifecycle_v4' else 'spatial_rotating_compliant_lifecycle_rk4_v3' if self.ground_motion_version=='spatial_rotating_compliant_lifecycle_v3' else 'spatial_compliant_atlas_lifecycle_rk4_v2' if self.ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else 'spatial_compliant_lifecycle_rk4_v1' if compliant else 'spatial_contact_world_momentum_rk4_v1' if spatial else 'coupled_longitudinal_rk4_work_v1'
+            expected_version = 'spatial_road_edge_partial_lifecycle_rk4_v4' if self.uses_road_edge_lifecycle else 'spatial_rotating_compliant_lifecycle_rk4_v3' if self.ground_motion_version=='spatial_rotating_compliant_lifecycle_v3' else 'spatial_compliant_atlas_lifecycle_rk4_v2' if self.ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else 'spatial_compliant_lifecycle_rk4_v1' if compliant else 'spatial_contact_world_momentum_rk4_v1' if spatial else 'coupled_longitudinal_rk4_work_v1'
             if audit is not None and any(
                 any(type(v) not in (int,float) or not isfinite(v) for v in
                     (leaf.initial_energy_j,leaf.final_energy_j,leaf.actuator_work_j,leaf.dissipation_j,
@@ -378,8 +389,9 @@ class PhysicsConfig:
                                 segment.gravity_mps2!=parameters.gravity
                                 or (segment.initial_velocity-first.velocity).magnitude>1e-9
                                 or (last.velocity-first.velocity-Vec3(0.,-parameters.gravity*h,0.)).magnitude>1e-9
-                                or self.ground_motion_version not in ('spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4') and max(first.angular_velocity.magnitude,last.angular_velocity.magnitude)>1e-9
-                                or self.ground_motion_version in ('spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4') and (leaf.torque_impulse_nms.magnitude>1e-9
+                                or self.ground_motion_version!='spatial_rotating_compliant_lifecycle_v3' and not self.uses_road_edge_lifecycle and max(first.angular_velocity.magnitude,last.angular_velocity.magnitude)>1e-9
+                                or (self.ground_motion_version=='spatial_rotating_compliant_lifecycle_v3' or self.uses_road_edge_lifecycle)
+                                    and (leaf.torque_impulse_nms.magnitude>1e-9
                                     or leaf.actuator_work_j!=0. or leaf.dissipation_j!=0.))):
                             raise PhysicsTransitionError('compliant ballistic law differs from accepted states')
                     linear = ((last.velocity-first.velocity)*suspension.mass_kg-leaf.force_impulse_ns).magnitude
@@ -404,7 +416,7 @@ class PhysicsConfig:
             self.validate_state(result.state, parameters)
             first = _horizontal_yaw(previous.vehicle.orientation).rotate(Vec3(0.,0.,1.))
             last = _horizontal_yaw(result.state.vehicle.orientation).rotate(Vec3(0.,0.,1.))
-            if self.ground_motion_version not in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4') and (first-last).magnitude > 1e-8:
+            if self.ground_motion_version not in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3') and not self.uses_road_edge_lifecycle and (first-last).magnitude > 1e-8:
                 raise PhysicsTransitionError('road-relative reduced driving cannot change yaw')
         distance_yaw_rate = None
         if (self.ground_motion_version=='arc_distance_v1' and previous.vehicle.grounded
@@ -543,9 +555,9 @@ class PhysicsConfig:
         if self.spawn_reference=='legacy_vehicle_position_v1':
             configuration.pop('spawn_reference')
         return {
-            "schema_version": 9 if self.ground_motion_version=='spatial_road_edge_partial_lifecycle_v4' else 8 if self.ground_motion_version=='spatial_rotating_compliant_lifecycle_v3' else 7 if self.ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else 6 if self.ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4') else 5 if spatial else 4 if coupled else 3 if road_relative else 1 if self.ground_motion_version=='legacy_euler_v1' and self.spawn_reference=='legacy_vehicle_position_v1' else 2,
+            "schema_version": 10 if self.ground_motion_version==LAYERED_ROAD_EDGE_LIFECYCLE_V5 else 9 if self.ground_motion_version=='spatial_road_edge_partial_lifecycle_v4' else 8 if self.ground_motion_version=='spatial_rotating_compliant_lifecycle_v3' else 7 if self.ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else 6 if self.ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4') else 5 if spatial else 4 if coupled else 3 if road_relative else 1 if self.ground_motion_version=='legacy_euler_v1' and self.spawn_reference=='legacy_vehicle_position_v1' else 2,
             "validation_scope": "software_research_only",
-            "longitudinal_model": 'spatial_road_edge_partial_lifecycle_rk4_v4' if self.ground_motion_version=='spatial_road_edge_partial_lifecycle_v4' else 'spatial_rotating_compliant_lifecycle_rk4_v3' if self.ground_motion_version=='spatial_rotating_compliant_lifecycle_v3' else 'spatial_compliant_atlas_lifecycle_rk4_v2' if self.ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else 'spatial_compliant_lifecycle_rk4_v1' if self.ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4') else 'spatial_contact_world_momentum_rk4_v1' if spatial else 'coupled_contact_force_rk4_v1' if coupled else "legacy_prescribed_v1" if self.ground_motion_version=='legacy_euler_v1' else 'force_frozen_distance_bicycle_v1',
+            "longitudinal_model": 'spatial_layered_road_edge_lifecycle_rk4_v5' if self.ground_motion_version==LAYERED_ROAD_EDGE_LIFECYCLE_V5 else 'spatial_road_edge_partial_lifecycle_rk4_v4' if self.ground_motion_version=='spatial_road_edge_partial_lifecycle_v4' else 'spatial_rotating_compliant_lifecycle_rk4_v3' if self.ground_motion_version=='spatial_rotating_compliant_lifecycle_v3' else 'spatial_compliant_atlas_lifecycle_rk4_v2' if self.ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else 'spatial_compliant_lifecycle_rk4_v1' if self.ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4',LAYERED_ROAD_EDGE_LIFECYCLE_V5) else 'spatial_contact_world_momentum_rk4_v1' if spatial else 'coupled_contact_force_rk4_v1' if coupled else "legacy_prescribed_v1" if self.ground_motion_version=='legacy_euler_v1' else 'force_frozen_distance_bicycle_v1',
             **configuration,
             **({'body_clearance_version': 'bounded_patch_planes_v2'} if road_relative else {}),
         }

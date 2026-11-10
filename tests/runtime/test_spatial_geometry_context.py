@@ -107,3 +107,19 @@ def test_invalid_atlas_geometry_context_remains_unavailable() -> None:
     assert context.atlas is None
     assert context.patch_index is None
     assert not context.patches_by_id
+
+
+def test_layered_geometry_context_is_opt_in_and_body_clearance_bounded() -> None:
+    lower = PlanarSurfacePatch(
+        "lower", Vec3(0., 0., 0.), Vec3(0., 0., 1.), Vec3(0., 1., 0.), 8., 20.,
+    )
+    upper = replace(lower, id="upper", origin=Vec3(0., 5., 0.))
+    body = VehicleBodyGeometry(1.8, 1.2, 4.0, Vec3(0., 0., 0.))
+
+    assert prepare_spatial_contact_geometry((lower, upper), 1e-6, body).atlas is None
+    layered = prepare_spatial_contact_geometry(
+        (lower, upper), 1e-6, body, layered_road_support=True,
+    )
+    assert layered.atlas is not None
+    assert layered.matches((lower, upper), 1e-6, body, True)
+    assert not layered.matches((lower, upper), 1e-6, body, False)

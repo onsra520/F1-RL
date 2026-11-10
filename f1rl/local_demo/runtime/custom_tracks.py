@@ -20,7 +20,9 @@ from f1rl.sandbox.geometry.rotation import Quaternion
 from f1rl.sandbox.geometry.vector import Vec3
 from f1rl.sandbox.independent_suspension_dynamics import SuspensionDynamicsState
 from f1rl.sandbox.interactions.state import InteractionState
-from f1rl.sandbox.multi_surface_support import _atlas
+from f1rl.sandbox.multi_surface_support import (
+    _atlas, has_separated_surface_layers, minimum_layer_clearance_m,
+)
 from f1rl.sandbox.rules.scoring import ScoreState
 from f1rl.sandbox.track.model import TrackWorld
 from f1rl.sandbox.track.patch import PlanarSurfacePatch
@@ -63,6 +65,7 @@ class ConvertedTrack:
     factory: object
     road_samples: tuple[dict[str, float], ...]
     auto_bridge_count: int
+    requires_layered_road_support: bool
     ppo_compatible: bool
     warnings: tuple[str, ...]
 
@@ -633,11 +636,22 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         5.0,
     )
     road_surfaces = (start_support, *surfaces, finish_support)
-    if _atlas(tuple(road_surfaces), 1e-6) is None:
+    body_geometry = base.physics_config.body_geometry if base.physics_config is not None else None
+    layered_clearance = (minimum_layer_clearance_m(body_geometry)
+                         if body_geometry is not None else None)
+    if _atlas(tuple(road_surfaces), 1e-6, layered_clearance_m=layered_clearance,
+              continuous_seam_tolerance_m=0.01) is None:
         raise TrackValidationError(
             "unsupported_surface_intersection",
             "road surfaces could not be certified; reshape turns and keep crossings separated",
         )
+    requires_layered_road_support = (
+        layered_clearance is not None
+        and has_separated_surface_layers(
+            tuple(road_surfaces), layered_clearance,
+            continuous_seam_tolerance_m=0.01,
+        )
+    )
     world = TrackWorld(
         surfaces=tuple(road_surfaces),
         obstacles=tuple(obstacles),
@@ -705,6 +719,7 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         factory,
         tuple(road_samples),
         len(bridges) + len(tier_ramps),
+        requires_layered_road_support,
         ppo_compatible,
         warnings,
     )

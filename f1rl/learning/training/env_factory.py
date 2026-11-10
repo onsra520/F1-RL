@@ -8,6 +8,7 @@ import numpy as np
 from ...runtime.simulation import SimulationConfig
 from ...runtime.physics import PhysicsConfig
 from ...sandbox.body_collision import VehicleBodyGeometry
+from ...sandbox.spatial_contact_dynamics import LAYERED_ROAD_EDGE_LIFECYCLE_V5
 from ...sandbox.ramp_support import PlanarRampPolicy
 from ...sandbox.track.model import TrackWorld
 from ...sandbox.vehicle import VehicleParameters
@@ -73,7 +74,7 @@ class F1RLEnvFactory:
             self.physics_config.validate_state(self.initial_state, self.vehicle_parameters)
         if (self.requires_scientific_admission and self.action_contract is not None
                 and self.action_contract.version=='steering-throttle-brake-v2'
-                and (self.physics_config is None or self.physics_config.ground_motion_version not in ('arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4'))):
+                and (self.physics_config is None or self.physics_config.ground_motion_version not in ('arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4',LAYERED_ROAD_EDGE_LIFECYCLE_V5))):
             raise ValueError('research braking requires distance ground integration')
         if self.race_config is not None:
             if not isinstance(self.race_config, WP7RaceConfig):

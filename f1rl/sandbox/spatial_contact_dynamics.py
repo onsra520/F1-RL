@@ -21,7 +21,10 @@ from .independent_suspension_dynamics import (
     IndependentSuspensionDynamicsPolicy, SuspensionDynamicsResult,
     SuspensionDynamicsState, SuspensionResolutionError, WheelForceSample,
 )
-from .multi_surface_support import _atlas, _contacts, _intersection, _square, certify_multisurface_support
+from .multi_surface_support import (
+    _atlas, _contacts, _intersection, _square, certify_multisurface_support,
+    minimum_layer_clearance_m,
+)
 from .spatial_partial_wheel_contact import sample_spatial_partial_wheels
 from .finite_tire_footprint_v4 import sample_finite_wheel_coverage
 from .wheel_edge_release_energy import certify_wheel_edge_release_energy
@@ -40,6 +43,8 @@ from .body_collision import _slerp
 from .vehicle import VehicleControl, VehicleParameters, VehicleState
 
 UP, RIGHT, FORWARD = Vec3(0.,1.,0.), Vec3(1.,0.,0.), Vec3(0.,0.,1.)
+LAYERED_ROAD_EDGE_LIFECYCLE_V5 = 'spatial_layered_road_edge_lifecycle_v5'
+_LAYERED_SEAM_TOLERANCE_M = 0.01
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,36 +69,52 @@ class SpatialContactGeometry:
     surfaces: tuple
     seam_height_tolerance_m: float
     body_geometry: VehicleBodyGeometry
+    layered_road_support: bool
     atlas: tuple | None
     patch_index: _BoundedPatchIndex | None
     patches_by_id: Mapping[str, PlanarSurfacePatch]
 
-    def matches(self, surfaces, seam_height_tolerance_m, body_geometry) -> bool:
+    def matches(self, surfaces, seam_height_tolerance_m, body_geometry,
+                layered_road_support=False) -> bool:
         return (
             (self.surfaces is surfaces or self.surfaces == surfaces)
             and self.seam_height_tolerance_m == seam_height_tolerance_m
             and self.body_geometry == body_geometry
+            and self.layered_road_support is layered_road_support
         )
 
 
 def prepare_spatial_contact_geometry(
     surfaces: tuple, seam_height_tolerance_m: float,
     body_geometry: VehicleBodyGeometry,
+    *, layered_road_support: bool = False,
 ) -> SpatialContactGeometry:
     if not isinstance(body_geometry, VehicleBodyGeometry):
         raise ValueError('spatial geometry context requires typed body geometry')
     if (type(seam_height_tolerance_m) not in (int, float)
             or not isfinite(seam_height_tolerance_m) or seam_height_tolerance_m < 0.):
         raise ValueError('spatial geometry context requires finite seam tolerance')
-    atlas = _atlas(surfaces, seam_height_tolerance_m)
+    if type(layered_road_support) is not bool:
+        raise ValueError('layered road support must be explicitly boolean')
+    layered_clearance = (minimum_layer_clearance_m(body_geometry)
+                         if layered_road_support else None)
+    atlas = _atlas(
+        surfaces, seam_height_tolerance_m,
+        layered_clearance_m=layered_clearance,
+        continuous_seam_tolerance_m=(
+            _LAYERED_SEAM_TOLERANCE_M if layered_road_support else None
+        ),
+    )
     if atlas is None:
         return SpatialContactGeometry(
-            surfaces, seam_height_tolerance_m, body_geometry, None, None,
+            surfaces, seam_height_tolerance_m, body_geometry,
+            layered_road_support, None, None,
             MappingProxyType({}),
         )
     patch_index = _build_bounded_patch_index(atlas, body_geometry)
     return SpatialContactGeometry(
-        surfaces, seam_height_tolerance_m, body_geometry, atlas, patch_index,
+        surfaces, seam_height_tolerance_m, body_geometry,
+        layered_road_support, atlas, patch_index,
         MappingProxyType({patch.id: patch for patch in atlas[0]}),
     )
 
@@ -215,19 +236,22 @@ def integrate_spatial_lifecycle(previous, physics, body, surfaces, parameters, c
 
 def integrate_spatial_road_edge_lifecycle(previous, physics, body, surfaces, parameters, control,
                                          policy, *, dt, modifiers=None,
-                                         geometry_context: SpatialContactGeometry | None = None):
+                                         geometry_context: SpatialContactGeometry | None = None,
+                                         layered_road_support: bool = False):
     """Opt-in spatial per-wheel release experiment; NEVER legacy v3."""
     if physics.force_model != 'road_relative_unilateral_v3':
         raise ValueError('spatial edge mode requires unilateral contact')
     return _integrate_spatial(previous,physics,body,surfaces,parameters,control,policy,
                               dt=dt,modifiers=modifiers,lifecycle=True,
                               phase_domain='atlas_rotating_edge_v4',
-                              geometry_context=geometry_context)
+                              geometry_context=geometry_context,
+                              layered_road_support=layered_road_support)
 
 
 def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
                         policy, *, dt, modifiers, lifecycle, phase_domain='horizontal_v1',
-                        geometry_context: SpatialContactGeometry | None = None):
+                        geometry_context: SpatialContactGeometry | None = None,
+                        layered_road_support: bool = False):
     """Force-coupled supported motion; world Hdot=tau prevents hidden yaw projection.
 
     Quaternion RK4 is normalized at each accepted candidate. Work refinement
@@ -244,7 +268,7 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
         not isinstance(geometry_context,SpatialContactGeometry)
         or phase_domain!='atlas_rotating_edge_v4'
     ):
-        raise ValueError('spatial geometry context requires Physics v4 integration')
+        raise ValueError('spatial geometry context requires road-edge integration')
     if not lifecycle and not previous.grounded:
         raise SuspensionResolutionError('spatial contact requires four supported reference wheels')
     inertia=Vec3(physics.pitch_inertia_kg_m2,policy.yaw_inertia_kg_m2,physics.roll_inertia_kg_m2)
@@ -253,8 +277,11 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
     if phase_domain=='atlas_rotating_edge_v4':
         seam_tolerance=physics.contact.seam_height_tolerance_m
         if (geometry_context is None
-                or not geometry_context.matches(surfaces,seam_tolerance,body)):
-            geometry_context=prepare_spatial_contact_geometry(surfaces,seam_tolerance,body)
+                or not geometry_context.matches(surfaces,seam_tolerance,body,layered_road_support)):
+            geometry_context=prepare_spatial_contact_geometry(
+                surfaces,seam_tolerance,body,
+                layered_road_support=layered_road_support,
+            )
         atlas=geometry_context.atlas
     else:
         atlas=_atlas(surfaces,physics.contact.seam_height_tolerance_m)
@@ -325,7 +352,10 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             # continuously; source the potential gradient from the same
             # smooth road-atlas coverage as the wheel's normal load.
             footprints=sample_finite_wheel_coverage(
-                state,physics.contact,atlas,patch_index=patch_sweep_index)
+                state,physics.contact,atlas,patch_index=patch_sweep_index,
+                layered_clearance_m=(minimum_layer_clearance_m(body)
+                                     if layered_road_support else None),
+                blend_surface_support=layered_road_support)
             contacts=tuple(f.contact for f in footprints)
         else:
             footprints=None
@@ -352,7 +382,9 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             patch=patches[contact.patch_id]
             arm=state.orientation.rotate(local)
             point_velocity=state.velocity+state.angular_velocity.cross(arm)
-            gradient=patch.normal/patch.normal.y
+            gradient=(footprints[index].surface_gradient
+                      if footprints is not None else patch.normal/patch.normal.y)
+            normal=gradient.normalized() if layered_road_support else patch.normal
             gap_rate=gradient.dot(point_velocity)
             raw_elastic=preload+physics.spring_stiffness_npm*contact.deflection_m
             elastic=max(0.,raw_elastic)
@@ -368,13 +400,14 @@ def _integrate_spatial(previous, physics, body, surfaces, parameters, control,
             coverage=footprints[index].coverage if footprints is not None else 1.
             edge_gradient=(footprints[index].coverage_gradient
                            if footprints is not None else Vec3(0.,0.,0.))
-            normal_force=coverage*load/patch.normal.y
+            normal_force=(coverage*load*gradient.magnitude if layered_road_support
+                          else coverage*load/patch.normal.y)
             angle=control.steering*parameters.max_steering_angle if local.z>0. and ground_effect else 0.
-            heading=state.orientation.rotate(Vec3(sin(angle),0.,cos(angle))).reject_from(patch.normal)
+            heading=state.orientation.rotate(Vec3(sin(angle),0.,cos(angle))).reject_from(normal)
             if heading.magnitude<1e-8:
                 raise SuspensionResolutionError('wheel tangent direction unresolved')
             tangent=heading.normalized()
-            lateral=patch.normal.cross(tangent)
+            lateral=normal.cross(tangent)
             speed,slip=point_velocity.dot(tangent),point_velocity.dot(lateral)
             longitudinal=coverage*mass*(control.throttle*parameters.max_acceleration
                 -control.brake*parameters.max_braking*tanh(speed/traction.brake_speed_scale_mps))/4.
