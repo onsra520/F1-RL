@@ -1,0 +1,21 @@
+{
+  "schema_version": "f1rl_local_demo_ppo_benchmark_v1",
+  "candidates": ["A", "B"],
+  "tuning_seed_index": 0,
+  "split": "TRAIN",
+  "timesteps": 4096,
+  "rollout_length": 256,
+  "n_envs": 1,
+  "rollout_batches": 1,
+  "device": "cpu",
+  "tracks": ["straight-sprint-v1", "slalom-v1", "right-turn-v1", "ramp-v1"],
+  "checkpoint_interval": 4096,
+  "max_wall_seconds": 900,
+  "max_process_tree_rss_bytes": 4294967296,
+  "max_processes_per_worker": 2,
+  "minimum_available_memory_bytes": 8589934592,
+  "torch_threads": 8,
+  "torch_interop_threads": 1,
+  "heldout_access": false,
+  "scientific_evaluation": false
+}

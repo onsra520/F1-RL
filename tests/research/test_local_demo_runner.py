@@ -8,6 +8,22 @@ from f1rl.sandbox.independent_suspension_dynamics import SuspensionResolutionErr
 from f1rl.exploratory.reward import apply_training_physics_failure
 
 
+def test_benchmark_profile_is_fixed_and_rejects_scope_changes(tmp_path):
+    profile_path = Path(__file__).parents[2] / "configs/research/local-demo-ppo-benchmark-v1.json"
+    profile, digest = runner._load_benchmark_profile(profile_path)
+    assert profile["timesteps"] == 4096
+    assert profile["candidates"] == ["A", "B"]
+    assert profile["torch_threads"] == 8
+    assert profile["max_processes_per_worker"] == 2
+    assert len(digest) == 64
+
+    profile["timesteps"] = 65536
+    invalid = tmp_path / "invalid.json"
+    invalid.write_text(__import__("json").dumps(profile), encoding="utf-8")
+    with pytest.raises(ValueError, match="invalid or exceeds its fixed scope"):
+        runner._load_benchmark_profile(invalid)
+
+
 class _Environment:
     def __init__(self, *, close_error=False):
         self.closed = False

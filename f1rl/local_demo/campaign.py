@@ -754,7 +754,13 @@ def _state_update(path: Path, state: dict, **updates) -> dict:
 
 
 def _run_child(root: Path, output: Path, log_path: Path, model: dict,
-               training: dict) -> tuple[int, float, dict]:
+               training: dict, *, abort_event=None, resources: dict | None = None,
+               process_record_path: Path | None = None) -> tuple[int, float, dict] | dict:
+    if abort_event is not None:
+        from .parallel_campaign import _run_parallel_child
+        return _run_parallel_child(root, output, log_path, model, training,
+                                   abort_event=abort_event, resources=resources or {},
+                                   process_record_path=process_record_path)
     command = [sys.executable, "scripts/local_demo.py", "train",
                "--candidate", model["candidate_id"],
                "--tuning-seed-index", str(model["seed_index"]),
@@ -1006,12 +1012,12 @@ def _write_independent_review(output: Path, schedule: list[dict], state: dict,
         os.fsync(stream.fileno())
 
 
-def _write_evidence_manifest(output: Path) -> None:
+def _write_evidence_manifest(output: Path, *, allow_incomplete_attempt_artifacts: bool = False) -> None:
     files = []
     for path in sorted(output.rglob("*")):
         if not path.is_file() or path.name in {"WP3-EVIDENCE-MANIFEST.json", ".campaign.lock"}:
             continue
-        if path.suffix == ".tmp" or path.name.endswith(".pending.zip"):
+        if (path.suffix == ".tmp" or path.name.endswith(".pending.zip")) and not allow_incomplete_attempt_artifacts:
             raise ValueError(f"temporary or incomplete artifact remains in campaign evidence: {path}")
         files.append({"path": path.relative_to(output).as_posix(),
                       "bytes": path.stat().st_size, "sha256": _sha256(path)})
@@ -1226,7 +1232,7 @@ def run_campaign(repository_root: str | Path, output_directory: str | Path,
 
 def main(argv: list[str] | None = None) -> int:
     import argparse
-    parser = argparse.ArgumentParser(description="Sequential frozen WP3 local TRAIN PPO tuning campaign")
+    parser = argparse.ArgumentParser(description="Sequential frozen WP3 LOCAL_DEMO campaign")
     parser.add_argument("command", choices=("run", "resume"))
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)

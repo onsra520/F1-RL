@@ -1,6 +1,7 @@
 """Synthetic report-only regression; never touches campaign evidence or real evaluation."""
 from __future__ import annotations
 import json
+from hashlib import sha256
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -18,10 +19,21 @@ def test_all_report_chart_writers_complete_and_are_idempotent():
         for c in "ABCD":
             for seed in range(3):
                 model_id=f"{c}-seed{seed}"
-                models.append({"model_id":model_id,"candidate_id":c,"seed_index":seed})
+                model = {"model_id":model_id,"candidate_id":c,"seed_index":seed,
+                         "run_relative_path":f"runs/{model_id}"}
+                models.append(model)
                 telemetry=root/"runs"/model_id/"training-telemetry.jsonl"
                 telemetry.parent.mkdir(parents=True)
-                telemetry.write_text("".join(json.dumps({"event_type":"ppo_update","metrics":{"train/loss":float(k)/10}})+"\n" for k in range(1,4)),encoding="utf-8")
+                telemetry_bytes = "".join(
+                    json.dumps({"event_type":"ppo_update","metrics":{"train/loss":float(k)/10}})+"\n"
+                    for k in range(1,4)
+                ).encode("utf-8")
+                telemetry.write_bytes(telemetry_bytes)
+                (telemetry.parent/"engineering-validation.json").write_text(json.dumps({
+                    "status":"ENGINEERING_PASS", "model_id":model_id,
+                    "telemetry":{"path":telemetry.name,"bytes":len(telemetry_bytes),
+                                 "sha256":sha256(telemetry_bytes).hexdigest()},
+                }),encoding="utf-8")
                 for track in evaluation["tracks"]:
                     for stratum in evaluation["strata"]:
                         cell={"model_id":model_id,"candidate_id":c,"seed_index":seed,
@@ -38,7 +50,7 @@ def test_all_report_chart_writers_complete_and_are_idempotent():
                         p.parent.mkdir(parents=True,exist_ok=True)
                         p.write_text(json.dumps({"schema_version":"f1rl_wp3_train_eval_event_v1","event":"episode_completed","record":{"valid":True,"metrics":{"success":True}}})+"\n",encoding="utf-8")
         assert len(cells)==96
-        result={"status":"PASS","comparison":_summarize(models,cells,evaluation),
+        result={"status":"PASS","models":models,"comparison":_summarize(models,cells,evaluation),
                 "invalid_cells":[],"total_valid_episode_rows":5760,"completed_cells":96}
         _write_evaluation_reports(root,result,models,cells,evaluation)
         expected=("WP3-CANDIDATE-COMPARISON.md",
