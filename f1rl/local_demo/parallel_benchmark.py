@@ -10,7 +10,8 @@ import sys
 import threading
 import time
 
-from .campaign import _atomic_json, _canonical, _run_bounded_stage, _write_new_json
+from .campaign import _atomic_json, _canonical, _write_new_json
+from .parallel_campaign import _run_bounded_stage
 from .process_resources import (WindowsKillJob, _process_rows, sample_process_tree,
                                 windows_cpu_load_percent)
 
@@ -29,7 +30,6 @@ payload = bytearray(memory_mib * 1024 * 1024)
 for index in range(0, len(payload), 4096):
     payload[index] = index % 251
 ready_path.write_text('ready', encoding='utf-8')
-started = time.monotonic()
 time.sleep(duration)
 result_path.write_text(json.dumps({'mock_operations': len(payload) // 4096}), encoding='utf-8')
 """
@@ -130,7 +130,7 @@ def run_mock_subprocess_benchmark(output_directory: str | Path, *,
     if (len(durations) < 4 or any(type(value) not in (int, float) or value <= 0 for value in durations)
             or any(value > 60 for value in durations)
             or type(memory_mib_per_job) is not int or not 1 <= memory_mib_per_job <= 64):
-        raise ValueError("mock workload requires four positive durations and 1-256 MiB per child")
+        raise ValueError("mock workload requires four positive durations and 1-64 MiB per child")
     output.mkdir(parents=True, exist_ok=False)
     cpu_before = windows_cpu_load_percent()
     measurements = []

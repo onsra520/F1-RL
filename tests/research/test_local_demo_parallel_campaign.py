@@ -11,8 +11,9 @@ import time
 
 import pytest
 
-import f1rl.local_demo.campaign as campaign
-from f1rl.local_demo.campaign import (
+import f1rl.local_demo.parallel_campaign as campaign
+import f1rl.local_demo.process_resources as process_resources
+from f1rl.local_demo.parallel_campaign import (
     PARALLEL_CAMPAIGN_CONFIG,
     _expected_parallel_campaign_config,
     load_parallel_contract,
@@ -22,6 +23,7 @@ from f1rl.local_demo.campaign import (
 )
 from f1rl.local_demo.process_resources import WindowsKillJob, _process_rows, process_tree_pids
 from f1rl.local_demo.parallel_benchmark import run_mock_subprocess_benchmark
+from f1rl.local_demo.admission import _source_identity
 
 
 ROOT = Path(__file__).parents[2]
@@ -289,6 +291,211 @@ def test_campaign_level_c0_failure_writes_no_queue_decision(tmp_path, monkeypatc
             ROOT, output, workers=4, resume=True, retry_model_id="C-seed0"
         )
     assert started == ["C-seed0", "C-seed0"]
+
+
+def test_campaign_level_c0_pass_binds_queue_and_resume_revalidates_artifacts(tmp_path, monkeypatch):
+    config, _raw, config_sha = campaign._load_campaign_config(ROOT)
+    schedule = _full_test_schedule()
+    base_manifest = {
+        "schema_version": "f1rl_wp3_campaign_manifest_v2",
+        "sha256": "base-manifest-pass-test", "source_commit": "test-source-commit",
+        "source_tree_sha256": "test-source-tree-sha256",
+        "campaign_config_sha256": config_sha, "training": config["training"],
+    }
+    parallel_config = _expected_parallel_campaign_config()
+    parallel_sha = sha256((ROOT / PARALLEL_CAMPAIGN_CONFIG).read_bytes()).hexdigest()
+    monkeypatch.setattr(campaign, "build_campaign_manifest",
+                        lambda _root: (base_manifest, config, schedule))
+    monkeypatch.setattr(campaign, "load_parallel_contract",
+                        lambda _root: (parallel_config, parallel_sha))
+    monkeypatch.setattr(campaign, "_parallel_preflight",
+                        lambda *_args: {"logical_processors": 32, "available_memory_bytes": 40 * GIB,
+                                        "host_cpu_load_percent": 2.0})
+    monkeypatch.setattr(campaign, "validate_training_run", lambda _root, _run, job, *_args: {
+        "schema_version": "f1rl_wp3_model_engineering_validation_v1",
+        "status": "ENGINEERING_PASS", "model_id": job["model_id"],
+        "learning_timesteps": 65536, "lifecycle": {
+            "track_timestep_counts": {track: 1 for track in TRAIN_TRACKS},
+            "automatic_resets_verified": 1,
+        },
+    })
+    started = []
+
+    def fake_child(_root, run_path, log_path, job, _training, **_kwargs):
+        started.append(job["model_id"])
+        run_path.mkdir(parents=True, exist_ok=False)
+        log_path.write_text("simulated child\n", encoding="utf-8")
+        result = {"returncode": 0, "cancelled": False, "elapsed_seconds": 0.01,
+                  "cleanup_seconds": 0.0, "resource_usage": {}}
+        if job["model_id"] == "A-seed0":
+            result["returncode"] = 7
+        return result
+
+    monkeypatch.setattr(campaign, "_run_child", fake_child)
+    import f1rl.local_demo.evaluation as evaluation
+    monkeypatch.setattr(evaluation, "build_evaluation_roster", lambda *_args: {"sha256": "pass-roster"})
+    output = tmp_path / "parallel-c0-pass"
+
+    state = campaign.run_parallel_campaign(ROOT, output, workers=1)
+
+    gate = json.loads((output / state["active_c0_gate_path"]).read_text(encoding="utf-8"))
+    decision = json.loads((output / state["active_scheduling_decision_path"]).read_text(encoding="utf-8"))
+    assert gate["status"] == "ENGINEERING_PASS"
+    assert gate["learning_timesteps"] == 65536
+    assert decision["decision"] == "OPEN_11_JOB_QUEUE"
+    assert len(decision["queued_model_ids"]) == 11
+    assert started == ["C-seed0", "A-seed0"]
+
+    c0_validation_path = output / gate["run_relative_path"] / "engineering-validation.json"
+    validation = json.loads(c0_validation_path.read_text(encoding="utf-8"))
+    validation["learning_timesteps"] = 4096
+    c0_validation_path.write_text(json.dumps(validation), encoding="utf-8")
+    with pytest.raises(ValueError, match="self-checksum mismatch"):
+        campaign.run_parallel_campaign(ROOT, output, resume=True)
+
+
+def test_bounded_scheduler_stops_dispatch_when_global_memory_monitor_fails():
+    started = []
+
+    def child(job, *, abort_event):
+        started.append(job["model_id"])
+        abort_event.wait(1)
+        return {"returncode": -1, "cancelled": True}
+
+    outcome = campaign._run_bounded_stage(
+        _schedule("A-seed0", "B-seed0", "C-seed0"), 2, child,
+        lambda _job, _result: {"status": "ENGINEERING_PASS"},
+        on_tick=lambda _active, _delta: "aggregate process-tree RSS exceeded budget",
+        tick_interval_seconds=0.01,
+    )
+
+    assert outcome["status"] == "ENGINEERING_FAILED"
+    assert "resource_budget" in outcome["failures"]
+    assert set(started) == {"A-seed0", "B-seed0"}
+    assert "C-seed0" in outcome["not_started_model_ids"]
+
+
+def test_parallel_scheduler_rejects_duplicate_job_identity_before_launch():
+    started = []
+
+    with pytest.raises(ValueError, match="duplicate model identities"):
+        campaign._run_bounded_stage(
+            _schedule("A-seed0", "A-seed0"), 2,
+            lambda job, **_kwargs: started.append(job["model_id"]),
+            lambda _job, _result: {"status": "ENGINEERING_PASS"},
+        )
+    assert started == []
+
+
+def test_parallel_source_admission_rejects_dirty_worktree(tmp_path):
+    subprocess.run(["git", "init", "--quiet", "-b", "feature"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.email", "codex@example.invalid"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.name", "Codex Test"], cwd=tmp_path, check=True)
+    source_file = tmp_path / "source.py"
+    source_file.write_text("value = 1\n", encoding="utf-8")
+    subprocess.run(["git", "add", "source.py"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "--quiet", "-m", "test source"], cwd=tmp_path, check=True)
+
+    commit, source_sha = _source_identity(tmp_path)
+    assert len(commit) == 40
+    assert len(source_sha) == 64
+    (tmp_path / "untracked.txt").write_text("dirty\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="clean committed source tree"):
+        _source_identity(tmp_path)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="child process cleanup uses Windows process controls")
+@pytest.mark.parametrize("failure", ["timeout", "crash", "rss"])
+def test_parallel_child_timeout_crash_and_rss_failure_cleanup(tmp_path, monkeypatch, failure):
+    class FakeProcess:
+        pid = 12345
+
+        def __init__(self):
+            self.returncode = 7 if failure == "crash" else None
+
+        def poll(self):
+            return self.returncode
+
+        def send_signal(self, _signal):
+            self.returncode = 1
+
+        def wait(self, timeout=None):
+            if self.returncode is None:
+                self.returncode = 1
+            return self.returncode
+
+        def kill(self):
+            self.returncode = 1
+
+    child_process = FakeProcess()
+
+    class FakeJob:
+        def __init__(self):
+            self.terminated = False
+            self.closed = False
+
+        def assign(self, _pid):
+            return None
+
+        def terminate(self):
+            self.terminated = True
+            if child_process.returncode is None:
+                child_process.returncode = 1
+
+        def wait_empty(self, _timeout):
+            return True
+
+        def close(self):
+            self.closed = True
+
+    job = FakeJob()
+    monkeypatch.setattr(campaign.subprocess, "Popen", lambda *_args, **_kwargs: child_process)
+    monkeypatch.setattr(process_resources, "WindowsKillJob", lambda: job)
+    if failure == "timeout":
+        clock_values = iter([0.0, 122.0, 122.0, 122.0, 122.0])
+        monkeypatch.setattr(campaign.time, "monotonic", lambda: next(clock_values, 122.0))
+        monkeypatch.setattr(process_resources, "sample_process_tree", lambda _pid: None)
+    elif failure == "crash":
+        monkeypatch.setattr(process_resources, "sample_process_tree", lambda _pid: None)
+    else:
+        monkeypatch.setattr(process_resources, "sample_process_tree", lambda _pid: {
+            "rss_bytes": 101, "process_count": 1, "cpu_seconds": 0.01,
+            "processes": [{"pid": 12345, "creation_time_100ns": 1}],
+        })
+
+    log_path = tmp_path / f"{failure}.log"
+    record_path = tmp_path / f"{failure}.process.json"
+    model = {"model_id": "A-seed0", "candidate_id": "A", "seed_index": 0,
+             "attempt_id": "attempt-0001", "source_commit": "test",
+             "parallel_manifest_sha256": "test"}
+    training = {"max_wall_seconds_per_model": 1}
+    resources = {"memory_poll_interval_seconds": 0.01,
+                 "per_worker_process_tree_rss_limit_bytes": 100,
+                 "max_processes_per_worker": 1,
+                 "shutdown_grace_seconds": 1, "cleanup_timeout_seconds": 1}
+    if failure == "timeout":
+        with pytest.raises(TimeoutError, match="wall-time guard"):
+            campaign._run_parallel_child(
+                ROOT, tmp_path / "run", log_path, model, training,
+                abort_event=threading.Event(), resources=resources,
+                process_record_path=record_path,
+            )
+    elif failure == "crash":
+        result = campaign._run_parallel_child(
+            ROOT, tmp_path / "run", log_path, model, training,
+            abort_event=threading.Event(), resources=resources,
+            process_record_path=record_path,
+        )
+        assert result["returncode"] == 7
+    else:
+        with pytest.raises(RuntimeError, match="RSS budget"):
+            campaign._run_parallel_child(
+                ROOT, tmp_path / "run", log_path, model, training,
+                abort_event=threading.Event(), resources=resources,
+                process_record_path=record_path,
+            )
+    assert job.terminated
+    assert job.closed
 
 
 def test_process_tree_expansion_uses_parent_identity():
