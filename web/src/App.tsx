@@ -707,7 +707,13 @@ export default function App() {
                     <span>PYTHON VALIDATED CUSTOM TRACK</span><strong>{runtimeTrackSelection.validated.preview.name}</strong>
                     <small>{runtimeTrackSelection.validated.surface_count} road surfaces · {runtimeTrackSelection.validated.checkpoint_count} checkpoints · {runtimeTrackSelection.validated.auto_bridge_count} auto overpasses</small>
                     {runtimeTrackSelection.validated.warnings.map((warning) => <small key={warning}>{warning}</small>)}
-                    {(driveMode === 'ppo' || driveMode === 'hybrid') && !runtimeTrackSelection.validated.ppo_compatible && <small className="runtime-error">PPO observation/action contract is incompatible.</small>}
+                    {(driveMode === 'ppo' || driveMode === 'hybrid') && !runtimeTrackSelection.validated.compatibility.pure_ppo_runtime && <small className="runtime-error">
+                      {!runtimeTrackSelection.validated.compatibility.observation_action
+                        ? 'The track observation/action contract is incompatible with PPO.'
+                        : !runtimeTrackSelection.validated.compatibility.physics_profile
+                          ? `The track requires ${runtimeTrackSelection.validated.compatibility.required_physics_profile}; this profile is not admitted for Pure PPO.`
+                          : 'This track is not admitted for Pure PPO runtime.'}
+                    </small>}
                   </> : <>
                     <span>CUSTOM TRACK SELECTED</span>
                     <small className="runtime-error">{trackValidationBusy ? 'Validating current map…' : 'Validate the current map before running.'}</small>
@@ -737,7 +743,7 @@ export default function App() {
                   <input aria-label="Experimental Layered Physics V5" type="checkbox"
                     checked={experimentalLayeredPhysicsV5} disabled={runtimeBusy || experimentalPhysicsV4}
                     onChange={(event) => setExperimentalLayeredPhysicsV5(event.target.checked)}/>
-                  Layered road Physics V5 / Race V4 (development only; separated decks required)
+                  Layered road Physics V5 / Race V4 (experimental; custom Auto Drive only)
                 </label>}
                 <label>SEED<input aria-label="Episode seed" type="number" min="0" max="4294967295" step="1" value={runtimeSeed} onChange={(event) => setRuntimeSeed(Number(event.target.value))} disabled={runtimeBusy}/></label>
                 {catalogError ? <p className="runtime-error"><TriangleAlert size={15}/><span>{catalogError}. Start the Python runtime to run episodes.</span><button onClick={() => setCatalogError('')}>Retry connection</button></p> : !runtimeCatalog ?

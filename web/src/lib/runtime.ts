@@ -24,6 +24,12 @@ export type RuntimeCustomTrack = {
   auto_bridge_count: number;
   requires_layered_road_support: boolean;
   ppo_compatible: boolean;
+  compatibility: {
+    observation_action: boolean;
+    physics_profile: boolean;
+    pure_ppo_runtime: boolean;
+    required_physics_profile: 'experimental_v4' | 'experimental_v5_layered' | null;
+  };
   surface_count: number;
   checkpoint_count: number;
   obstacle_count: number;

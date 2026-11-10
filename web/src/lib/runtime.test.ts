@@ -25,6 +25,7 @@ const customTrack: RuntimeCustomTrack = {
   requires_layered_road_support: false,
   track_id: 'sandbox-custom', track_sha256: 'c'.repeat(64), preview: track.preview,
   road_samples: track.road_samples, auto_bridge_count: 0, ppo_compatible: true,
+  compatibility: { observation_action: true, physics_profile: true, pure_ppo_runtime: true, required_physics_profile: null },
   surface_count: 10, checkpoint_count: 1, obstacle_count: 0, boost_pad_count: 0, warnings: [],
 };
 
@@ -156,6 +157,7 @@ describe('Python runtime HTTP client', () => {
       schema_version: 'f1rl_custom_track_conversion_v1', development_only: true,
       track_id: 'sandbox-123', track_sha256: 'c'.repeat(64), preview: track.preview,
       road_samples: track.road_samples, auto_bridge_count: 0, ppo_compatible: true,
+      compatibility: { observation_action: true, physics_profile: true, pure_ppo_runtime: true, required_physics_profile: null },
       surface_count: 10, checkpoint_count: 1, obstacle_count: 0, boost_pad_count: 0, warnings: [],
     };
     const fetchMock = vi.fn()

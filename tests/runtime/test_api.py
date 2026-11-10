@@ -432,6 +432,23 @@ def test_custom_auto_layered_profile_is_explicit_and_source_bound():
         "props": [],
     }
     with TestClient(create_app(repository_root=ROOT)) as client:
+        validation = client.post("/api/v1/tracks/validate", json={"track": crossing})
+        assert validation.status_code == 200, validation.text
+        compatibility = validation.json()["compatibility"]
+        assert compatibility == {
+            "observation_action": True,
+            "physics_profile": False,
+            "pure_ppo_runtime": False,
+            "required_physics_profile": "experimental_v5_layered",
+        }
+        assert validation.json()["ppo_compatible"] is False
+        rejected_ppo = client.post("/api/v1/sessions", json={
+            "mode": "ppo", "model_id": "A-seed0", "seed": 412,
+            "custom_track": crossing,
+        })
+        assert rejected_ppo.status_code == 422
+        assert rejected_ppo.json()["error"]["code"] == "incompatible_physics"
+
         rejected = client.post("/api/v1/sessions", json={
             "mode": "auto", "seed": 412, "custom_track": crossing,
         })

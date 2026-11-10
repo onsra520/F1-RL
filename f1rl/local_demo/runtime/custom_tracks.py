@@ -66,6 +66,9 @@ class ConvertedTrack:
     road_samples: tuple[dict[str, float], ...]
     auto_bridge_count: int
     requires_layered_road_support: bool
+    observation_action_compatible: bool
+    physics_profile_compatible: bool
+    required_physics_profile: str | None
     ppo_compatible: bool
     warnings: tuple[str, ...]
 
@@ -688,10 +691,17 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         custom_env = factory.create()
         reference_env = base.create()
         try:
-            if not _spaces_match(custom_env.action_space, reference_env.action_space) or not _spaces_match(custom_env.observation_space, reference_env.observation_space):
-                ppo_compatible = False
-            else:
-                ppo_compatible = not bool(gap_bounds)
+            observation_action_compatible = (
+                _spaces_match(custom_env.action_space, reference_env.action_space)
+                and _spaces_match(custom_env.observation_space, reference_env.observation_space)
+            )
+            physics_profile_compatible = not requires_layered_road_support and not bool(gap_bounds)
+            required_physics_profile = (
+                "experimental_v5_layered" if requires_layered_road_support
+                else "experimental_v4" if gap_bounds
+                else None
+            )
+            ppo_compatible = observation_action_compatible and physics_profile_compatible
             observation, _ = custom_env.reset(seed=0)
             if not np.isfinite(observation).all() or RuntimeEnvironmentAdapter(custom_env).runtime_snapshot()["tick"] != 0:
                 raise TrackValidationError("invalid_spawn", "custom Gym environment did not reset to a finite initial state")
@@ -720,6 +730,9 @@ def convert_custom_track(raw: object, catalog: RuntimeCatalog, *, reference_trac
         tuple(road_samples),
         len(bridges) + len(tier_ramps),
         requires_layered_road_support,
+        observation_action_compatible,
+        physics_profile_compatible,
+        required_physics_profile,
         ppo_compatible,
         warnings,
     )
