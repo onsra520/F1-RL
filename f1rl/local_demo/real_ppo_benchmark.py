@@ -11,6 +11,7 @@ import sys
 import time
 from uuid import uuid4
 
+from .admission import _source_identity
 from .parallel_campaign import _run_bounded_stage, _run_parallel_child
 from .process_resources import sample_process_tree, windows_cpu_load_percent, windows_host_resources
 from .runner import _load_benchmark_profile, _load_smoke_profile
@@ -33,6 +34,11 @@ def _read_json(path: Path) -> dict:
 def _git(root: Path, *args: str) -> str:
     return subprocess.run(["git", *args], cwd=root, check=True, capture_output=True,
                           text=True, encoding="utf-8").stdout.strip()
+
+
+def _source_tree_digest(root: Path) -> str:
+    # Match LOCAL_DEMO admission: SHA-256 of domain-separated Git tree object ID.
+    return _source_identity(root)[1]
 
 
 def _resolve_artifact_root(root: Path, path: str | Path) -> Path:
@@ -309,7 +315,7 @@ def _run_smoke(root: Path, artifact_root: Path) -> dict:
                  "shutdown_grace_seconds": 10, "cleanup_timeout_seconds": 30}
     header = {"schema_version": "f1rl_real_ppo_benchmark_attempt_v1", "mode": "smoke",
               "attempt_id": attempt.name, "source_commit": source_commit,
-              "source_tree_sha256": _git(root, "rev-parse", "HEAD^{tree}"),
+              "source_tree_sha256": _source_tree_digest(root),
               "smoke_profile_sha256": profile_hash, "candidate_id": "C",
               "tuning_seed_index": 0, "timesteps": 256, "concurrency": 1,
               "max_processes_per_worker": benchmark_profile["max_processes_per_worker"],
@@ -414,7 +420,7 @@ def run_real_ppo_benchmark(root: str | Path, artifact_root: str | Path, mode: st
     # Seed identity is pinned by the existing registered tuning roster and recorded by the child.
     header = {"schema_version": "f1rl_real_ppo_benchmark_attempt_v1", "mode": mode,
               "attempt_id": attempt.name, "source_commit": source_commit,
-              "source_tree_sha256": _git(root, "rev-parse", "HEAD^{tree}"),
+              "source_tree_sha256": _source_tree_digest(root),
               "benchmark_profile_sha256": profile_hash, "candidate_ids": profile["candidates"],
               "timesteps_per_job": profile["timesteps"], "seed_index": 0,
               "concurrency": concurrency, "torch_threads": profile["torch_threads"],

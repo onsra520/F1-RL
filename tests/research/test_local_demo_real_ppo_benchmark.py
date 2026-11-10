@@ -1,6 +1,7 @@
 import json
 from hashlib import sha256
 import importlib.util
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ from f1rl.local_demo.real_ppo_benchmark import (
     _resolve_artifact_root,
     _sample_skew_seconds,
     _sequential_intervals_are_disjoint,
+    _source_tree_digest,
     _summarize_process_cpu,
     _validate_timing,
     _verify_run_manifest,
@@ -20,6 +22,24 @@ from f1rl.local_demo.real_ppo_benchmark import (
 def _write(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value), encoding="utf-8")
+
+
+def test_benchmark_source_tree_digest_matches_local_demo_admission(tmp_path):
+    repo = tmp_path / "source"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-b", "feature/test"], cwd=repo,
+                   check=True, capture_output=True)
+    (repo / "sample.txt").write_text("source integrity\n", encoding="utf-8")
+    subprocess.run(["git", "add", "sample.txt"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "-c", "user.email=test@example.invalid",
+                    "-c", "user.name=Test", "commit", "-m", "initial"],
+                   cwd=repo, check=True, capture_output=True)
+    tree = subprocess.run(["git", "rev-parse", "HEAD^{tree}"], cwd=repo,
+                          check=True, capture_output=True, text=True).stdout.strip()
+    expected = sha256(b"f1rl-local-demo-git-tree-v1\x00" + bytes.fromhex(tree)).hexdigest()
+    assert len(tree) == 40
+    assert _source_tree_digest(repo) == expected
+    assert len(expected) == 64
 
 
 def test_sequential_benchmark_rejects_missing_or_forged_smoke_evidence(tmp_path):
