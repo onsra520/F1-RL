@@ -1,13 +1,15 @@
 # F1-RL — Demo Completion Master Roadmap
 
-> **Document version:** 1.5 (2026-11-11)
-> **Overall state:** `M0_PASS / M1_V5_FEASIBILITY_PASS / M1_FULL_ACCEPTANCE_BLOCKED / M2_PENDING / NOT_ACCEPTED` — V5 feasibility only; full geometry coverage and PPO are not accepted.
+> **Document version:** 1.6 (2026-11-11)
+> **Overall state:** `M0_PASS / M1_PASS_READY_FOR_M2 / M2_PENDING / NOT_ACCEPTED` — M1 engineering gates pass; no new PPO evidence or final demo acceptance is claimed.
 > **Owner:** F1-RL project owner. **Execution:** autonomous coding agent, gate-driven.  
 > **Related:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md) · [Agent Handoff](F1-RL-DEMO-AGENT-HANDOFF.md).
 
 **Audit note (2026-11-10):** PR #60 and PR #61 merged; main baseline is `ab8951a9c68f009d7b2a14127b13c07426a2460a`. M0 PASS remains as recorded. V5 Auto Drive feasibility passes on execution commit `b578d83` in branch `feat/f1rl-demo-completion`: one layered crossing route completes and relevant seam/clearance regressions pass. Independent audit found the registered TRAIN/development distribution still lacks intersection/overpass coverage, so M1 full acceptance is BLOCKED and M2 remains pending. V5 checkpoint checks establish action/observation interface compatibility only, not physics-semantic compatibility or policy performance. V5 remains custom Auto Drive development only; training and smoke admission remain closed, and V5 crash/roll terminal acceptance remains fail-closed pending a separately versioned contract. No M2 work, final acceptance tracks, held-out access or main merge occurred. See ledger for exact evidence and limits.
 
 **Independent audit follow-up (2026-11-11, source commit `afcc26e`):** P1-01 is resolved by separating `V5 feasibility PASS` from `M1 full acceptance BLOCKED`; missing TRAIN/development intersection/overpass coverage remains an explicit unchecked gate. P1-02 is fixed: validation distinguishes observation/action, physics-profile, and Pure PPO runtime compatibility, and layered tracks no longer claim full PPO compatibility. P2-01/P2-02 API-to-WebSocket route evidence passes with a barrier and cone. P2-03 profile points to simulator physics stepping as the bottleneck, but the reported full-suite timing variance is not explained; profiling was affinity-pinned while another CPU workload was active. M2 remains pending; no held-out access or main merge occurred.
+
+**M1 final hardening (2026-11-11, execution base `8e7b99c`):** versioned `TRAIN_DEVELOPMENT_ONLY` geometry fixtures cover a grade-separated intersection/overpass and a combined left/right/S-turn course with cone, barrier, ramp/elevation and checkpoints. Geometry/Physics assertions and reference Auto Drive completion pass; the API/WebSocket E2E uses the versioned crossing fixture, has bounded event/wall waits, progress/status diagnostics and session cleanup. Controlled V5 benchmark, Physics V4/PPO contract regressions, Python regression, web tests and build pass. M1 is `PASS / READY_FOR_M2`; this is engineering readiness only. M2 remains pending and was not run. Evidence and hashes are in the ledger.
 
 ## 0. Mission / definition of done
 
@@ -72,7 +74,7 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 |---|---|---|---|
 | M0 | PASS | None | Clean source, runtime/test paths and budget provenance verified on 2026-11-10 |
 | M1 V5 feasibility | PASS | M0 | One custom layered crossing route completes under Auto Drive; no PPO claim |
-| M1 full coverage | BLOCKED | M0 | TRAIN/development distribution lacks full intersection/overpass and complex custom geometry coverage |
+| M1 full coverage | PASS | M0 | Versioned development geometry fixtures, Physics/reference-controller finishes, bounded API/WebSocket E2E, regressions and controlled V5 benchmark |
 | M2 | PENDING | M0–M1 | Actual PPO smoke produces valid weights/telemetry |
 | M3 | PENDING | M2 | Controlled real benchmark chooses safe worker count |
 | M4 | PENDING | M3 | Authenticated real PPO training and validated artifacts |
@@ -97,11 +99,12 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 
 - [x] Inspect route graph, directed checkpoint/finish, lane geometry, left/right steering convention, road width/boundaries, collision contacts, object placement, height/seams/overpasses and bridge intersections. Geometry tests cover route/world adaptation, ramp and bridge heights, obstacle placement, collision/contact and explicit rejection of unsupported crossings.
 - [x] Demonstrate one complete custom V5 grade-separated crossing/intersection route under Auto Drive. This is feasibility evidence only.
-- [ ] Expand TRAIN/development coverage to include intersections/overpasses and a representative combined-feature route. Current registered coverage includes turns, slalom obstacles, ramp/elevation and checkpoints, but not intersections/overpasses. Keep M1 full acceptance blocked until this distribution and its evidence are added.
+- [x] Add versioned development fixtures for a grade-separated intersection/overpass and a combined left/right/S-turn route with cone, barrier, ramp/elevation and checkpoints. Keep these TRAIN/development-only; do not add final acceptance tracks or access HELD-OUT.
 - [x] Validate route reachability by geometry/physics constraints, spawn position, directed finish crossing and reset reproducibility; use a reference controller *only for track feasibility*, **never as PPO success evidence**. Left/right TRAIN-v2 each finished in 497 steps with ordered checkpoints and exact replay.
-- [x] Add separate versioned **TRAIN/development** distributions for left turns and full custom geometry if absent. Paired left/right turn-v2 exists; full requested intersection coverage is absent. No custom final acceptance geometry was created.
-- [x] Establish unit/integration fixtures and source/track/physics contract hashes for cross-layer compatibility; final broad affected Python suite passed 137 tests, focused suite 90 tests, stability check 1 test, web tests 105 tests, and web build passed on the execution worktree.
-- **V5 FEASIBILITY PASS / M1 FULL ACCEPTANCE BLOCKED (2026-11-10):** the custom layered crossing Auto Drive run finished successfully at tick 698 (451.281316836m, valid sample, no physical events). Regression and registered-route evidence is limited to the feature inventory above; intersection/overpass is not in the TRAIN/development distribution. Complete that coverage before marking M1 full acceptance or starting M2. V4 remains the only admitted training/smoke profile. V5 admission is custom Auto Drive only; its terminal crash/roll validators remain fail-closed, and its checkpoint probe proves interface shape/action bounds only.
+- [x] Add separate versioned **TRAIN/development** fixtures without changing the official TRAIN roster or producing custom final acceptance tracks. The fixture schema is `f1rl_m1_development_geometry_v1`, version 1, scope `TRAIN_DEVELOPMENT_ONLY`.
+- [x] Verify geometry, Physics profile, ordered checkpoints, collision-free reference-controller finishes; harden API/WebSocket E2E with bounded receive/wall timeout, progress diagnostics and cleanup. Run affected Python and Physics V4/PPO contract regressions, web tests and production build.
+- [x] Benchmark V5 on a low-load host; capture wall/CPU, Physics-step mean/p95 and realtime factor. Physics stepping is the measured bottleneck; no optimization was justified or made.
+- **M1 PASS / READY_FOR_M2 (2026-11-11):** all M1 engineering acceptance checks pass. V5 remains custom Auto Drive only; its crash/roll validators remain fail-closed, and checkpoint probes establish interface shape/action bounds only. This status is not PPO training or final demo acceptance. M2 remains pending and is outside this task.
 
 ### M2 — One-model **real PPO smoke** gate
 

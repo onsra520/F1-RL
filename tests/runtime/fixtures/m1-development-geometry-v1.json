@@ -1,0 +1,50 @@
+{
+  "schema": "f1rl_m1_development_geometry_v1",
+  "version": 1,
+  "scope": "TRAIN_DEVELOPMENT_ONLY",
+  "fixtures": [
+    {
+      "id": "m1-intersection-overpass-v1",
+      "features": ["intersection", "overpass", "checkpoints", "cone", "barrier"],
+      "track": {
+        "schema": "f1rl_racing_sandbox_draft_v1",
+        "id": "m1-intersection-overpass-v1",
+        "name": "M1 intersection and overpass development route",
+        "width": 11,
+        "points": [
+          {"x": 0, "z": 0}, {"x": 100, "z": 100},
+          {"x": 0, "z": 100}, {"x": 100, "z": 0}, {"x": 160, "z": 0}
+        ],
+        "props": [
+          {"id": "approach-barrier", "kind": "barrier", "t": 0.3, "offset": 3.6, "rotation": 0},
+          {"id": "exit-cone", "kind": "cone", "t": 0.72, "offset": -3.6, "rotation": 0},
+          {"id": "checkpoint-a", "kind": "checkpoint", "t": 0.35, "offset": 0, "rotation": 0},
+          {"id": "checkpoint-b", "kind": "checkpoint", "t": 0.7, "offset": 0, "rotation": 0}
+        ]
+      }
+    },
+    {
+      "id": "m1-combined-turns-obstacles-elevation-v1",
+      "features": ["left_turn", "right_turn", "s_turn", "cone", "barrier", "ramp", "elevation", "checkpoint"],
+      "track": {
+        "schema": "f1rl_racing_sandbox_draft_v1",
+        "id": "m1-combined-turns-obstacles-elevation-v1",
+        "name": "M1 combined turns, obstacles and elevation development route",
+        "width": 12,
+        "points": [
+          {"x": 0, "z": 0}, {"x": 0, "z": 140},
+          {"x": 70, "z": 210}, {"x": 160, "z": 210},
+          {"x": 230, "z": 140}, {"x": 230, "z": 0},
+          {"x": 160, "z": -70}, {"x": 70, "z": -70},
+          {"x": 0, "z": -140}, {"x": -70, "z": -70}
+        ],
+        "props": [
+          {"id": "barrier-turn-in", "kind": "barrier", "t": 0.19, "offset": 3.7, "rotation": 0},
+          {"id": "cone-exit", "kind": "cone", "t": 0.54, "offset": -3.7, "rotation": 0},
+          {"id": "ramp-elevation", "kind": "ramp", "t": 0.08, "offset": 0, "rotation": 0},
+          {"id": "checkpoint-mid", "kind": "checkpoint", "t": 0.45, "offset": 0, "rotation": 0}
+        ]
+      }
+    }
+  ]
+}

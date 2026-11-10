@@ -1,6 +1,6 @@
 # F1-RL — Agent Handoff / Resume Contract
 
-> **Document version:** 2.2 (2026-11-11). **Current state:** `M0_PASS; M1_V5_FEASIBILITY_PASS; M1_FULL_ACCEPTANCE_BLOCKED; M2_PENDING`.
+> **Document version:** 2.3 (2026-11-11). **Current state:** `M0_PASS; M1_PASS_READY_FOR_M2; M2_PENDING; OVERALL_NOT_ACCEPTED`.
 > This is an actionable **handoff**, not a certification of PPO driving.  
 > **Authoritative goals:** [Master Roadmap](F1-RL-DEMO-COMPLETION-ROADMAP.md) · **Proof/limits:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md).
 
@@ -8,7 +8,7 @@
 
 - PR #60 and PR #61 **MERGED**. Local `main` and `origin/main` both at `ab8951a9c68f009d7b2a14127b13c07426a2460a`.
 - Working branch/worktree: `feat/f1rl-demo-completion` / `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion`; M1 implementation `b578d83`; audit remediation source commit `afcc26e`.
-- M0 **PASS** on recorded evidence; V5 Auto Drive feasibility **PASS**; M1 full coverage **BLOCKED** because the TRAIN/development distribution lacks intersections/overpasses and combined custom geometry. The API/WebSocket V5 route with a barrier and cone finished successfully at tick 787 with zero collision IDs; this is not PPO evidence. Validation now separates observation/action, physics-profile, and Pure PPO runtime compatibility. V5 checkpoint probes establish interface compatibility only; V5 training/smoke and crash/roll terminal acceptance remain closed. P2-03 isolated-route timing/profile found physics stepping dominant, but the reported full-suite timing variance remains unexplained. No final demo acceptance or new PPO campaign. External WP7 evidence and scientific Gate 2 remain separately blocked/sealed.
+- M0 **PASS** on recorded evidence; M1 engineering **PASS / READY_FOR_M2** after versioned development geometry, reference Auto Drive, bounded API/WebSocket finish, Physics V4/PPO regressions, web tests/build and a low-load V5 benchmark. M1 does not imply PPO driving or final demo acceptance. V5 remains custom Auto Drive only; crash/roll terminal acceptance and training/smoke admission remain closed. No M2 run, final acceptance tracks, held-out access or main merge occurred. External WP7 evidence and scientific Gate 2 remain separately blocked/sealed.
 - Previous real smoke/benchmark source: `8582d9d08826074dbd2b6d32609d9d58639f771d`; five model SHA-256 files matched. New merged benchmark metadata fix changes the source hash, without changing past artifacts.
 - Active runtime from all seven historical attempts plus one independently run post-merge smoke: **1,263.031 / 86,400 seconds**, remaining **85,136.969 seconds** (provisional pending any additional earlier workloads). Two improvement cycles remain unused by this demo campaign.
 - On `main` `ab8951a`, independent scoped regression: **121 passed, 2 skipped**. Five historical checkpoints loaded, hashes matched and predicted finite actions. Post-merge new real smoke from `6452517` PASS 256 steps / 10 optimizer updates / checkpoint `09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f5bf`; 90.718 seconds and preserved under `D:\Projects\.archives\F1-RL\wp3-postmerge-real-smoke-20261110`.
@@ -19,9 +19,9 @@
 
 | Key | Status / fact |
 |---|---|
-| Overall | `NOT_ACCEPTED` — M1 full coverage and real Pure PPO acceptance are incomplete |
-| Next milestone | **Complete M1 TRAIN/development geometry coverage**; M2 remains pending |
-| M0-M10 | M0 PASS; M1 V5 feasibility PASS; M1 full coverage BLOCKED; M2-M10 PENDING |
+| Overall | `NOT_ACCEPTED` — M1 is ready; real Pure PPO and final demo acceptance remain incomplete |
+| Next milestone | **M2 real PPO smoke is pending**; this task stops at the M1 gate |
+| M0-M10 | M0 PASS; M1 PASS / READY_FOR_M2; M2-M10 PENDING |
 | Operating permission | Autonomous within owner-approved scope and 24h active workload cap; never merge main |
 | Scientific HELD-OUT | **SEALED**; WP7/Gate 2 **BLOCKED** |
 | Final model freeze | Not created |
@@ -30,7 +30,7 @@
 | Live real-time 1×/30FPS/p95≤150ms | Not measured |
 | Training budget epoch | 2026-11-10 WP3 engineering run + 1 new post-merge smoke: **1,263.031 s** used; **85,136.969 s** remaining (provisional) |
 | Agent improvement cycles | 0 newly used **by this documentation task**; confirm pre-existing active campaign history before charging |
-| Remaining gates | M1 intersection/overpass TRAIN/development coverage; reconcile broad-suite performance variance; then M2 admission/smoke and later milestones; V5 remains custom Auto Drive only; seven external WP7 engineering nodes still lack witnesses |
+| Remaining gates | M2 admission/smoke and later milestones; V5 remains custom Auto Drive only; seven external WP7 engineering nodes still lack witnesses |
 
 **Do not take the historical 63+3 tests as proof of real PPO driving.** They were scoped code/mock integration tests. Real training must satisfy M2–M4 gates with new evidence.
 
@@ -124,23 +124,23 @@ Note: “replayable procedure” means reproducible launch/test steps using genu
 ## 7. Current stop report (2026-11-11)
 
 ```text
-STATUS: BLOCKED
-NEXT_MILESTONE: M1 full geometry coverage
-EXECUTION_SOURCE_BRANCH/HEAD: feat/f1rl-demo-completion / afcc26e (audit remediation source commit)
-CLEAN_SOURCE: clean after source commit afcc26e and the documentation commit containing this handoff
-DOCS_BRANCH/HEAD: feat/f1rl-demo-completion (this handoff is in the latest documentation commit)
+STATUS: READY_FOR_M2
+NEXT_MILESTONE: M2 pending (not run; this task stopped at M1)
+EXECUTION_SOURCE_BRANCH/HEAD: feat/f1rl-demo-completion / 8e7b99c4d462bdbfdf6d010e068404e03e717a08 (execution base)
+CLEAN_SOURCE: true at delivery after the scoped feature-branch commit; no unrelated worktree changes
+DOCS_BRANCH/HEAD: feat/f1rl-demo-completion (roadmap, evidence ledger and handoff included in the delivery commit)
 ARTIFACT_ROOT: D:\Projects\.archives\F1-RL\demo-completion
 MODEL_FREEZE_SHA: PENDING
 TRAINED_MODEL_SHA: 09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f5bf (smoke only)
-CONFIG/PHYSICS/OBS/ACTION_SHA: config 8a67db80464dc3b93072c0edc431f7a71b1b271c392b47d0915af0f2cac106e4; Physics V4 `fe6e...`; observation/action manifest recorded in smoke artifact
+CONFIG/PHYSICS/OBS/ACTION_SHA: frozen PPO config 8a67db80464dc3b93072c0edc431f7a71b1b271c392b47d0915af0f2cac106e4; Physics V4 `c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37`; Physics V5 `52e6cbca398f2132bcb96f99e77556f443bdd48338dd7c65f987b5d68c64ea68`; observation/action contracts covered by the hashed source inventory
 BUDGET_EPOCH: 2026-11-10 WP3 engineering run
-ACTIVE_RUNTIME_USED_SECONDS: 1263.031 prior PPO workload ledger; this turn ran no PPO training/smoke/benchmark/evaluation
-ACTIVE_RUNTIME_REMAINING_SECONDS: 85136.969 prior PPO ledger, provisional; M1 engineering Auto Drive probe is not charged as PPO workload
+ACTIVE_RUNTIME_USED_SECONDS: 1365.796 provisional; prior PPO ledger 1263.031 + M1 benchmark 102.765; no PPO training/smoke/evaluation ran
+ACTIVE_RUNTIME_REMAINING_SECONDS: 85034.204 provisional after charging the 102.765s M1 real benchmark; no PPO training/smoke/evaluation ran
 IMPROVEMENT_CYCLES_USED: 0 by this demo campaign
-LAST_GATE: V5 Auto Drive feasibility PASS; M1 full coverage BLOCKED. P1-02 compatibility regression passed; layered API/WebSocket route with cone/barrier passed to finish and had zero collision IDs; 52 focused Python tests and 105 web tests passed; build passed. One-core route timing: 787 ticks, 107.726s wall, 101.391s process CPU; mean environment step 135.431ms, p95 236.396ms. Physics integration dominates; broad-suite timing variance remains unexplained. No PPO training or smoke run.
-BLOCKERS: TRAIN/development intersection/overpass and combined custom geometry coverage is absent; broad-suite performance variance is not attributed; V5 is not admitted for training/smoke and its crash/roll terminal contract is not versioned; seven external WP7 witness sets remain absent
+LAST_GATE: M1 PASS / READY_FOR_M2. Versioned geometry/reference finish 2 passed; bounded API/WebSocket E2E and timeout regression passed; Python Physics V4/API regression 136 passed; observation/action plus Physics stability 44 passed; PPO runtime adapter 3 passed; web 105 passed; build passed. Low-load V5 benchmark: 787 ticks, 102.765s wall, 100.984s process CPU, Physics-step wall mean/p95 98.271/185.254ms, realtime factor 0.766×. No source Physics/PPO contract changed and no PPO workload ran.
+BLOCKERS: None for M1 engineering gate. M2 is pending and outside this task; V5 is not admitted for training/smoke and its crash/roll terminal contract is not versioned; seven external WP7 witness sets remain absent
 OPEN_PR: none
-NEXT_SAFE_COMMAND: add a versioned TRAIN/development intersection/overpass geometry fixture and validate a combined-feature route; do not start M2 until M1 full acceptance is met. If pursuing P2-03, rerun the exact broad suite in an otherwise idle host and compare CPU time against the archived one-core route profile.
+NEXT_SAFE_COMMAND: independently review `D:\Projects\.archives\F1-RL\demo-completion\m1-hardening-20261111\SHA256SUMS.json` (SHA-256 `0330c4cc74b87ef7e43a317fa6f1c003da3e5a3abc47e5b66404742f89027628`); only then begin the separately authorized M2 smoke. Do not access HELD-OUT or merge main.
 OWNER_APPROVAL_NEEDED: none for this M1 remediation; stop before M2 workload, held-out evaluation, or main merge
 ```
 
