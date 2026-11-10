@@ -1,7 +1,7 @@
 # F1-RL — Demo Completion Master Roadmap
 
 > **Document version:** 1.6 (2026-11-11)
-> **Overall state:** `M0_PASS / M1_PASS / M2_PASS_REUSED / M3_IN_PROGRESS / NOT_ACCEPTED` — M2 is reused from compatible source-bound smoke evidence; M3 requires a fresh run because its historical profile digest is unreconciled.
+> **Overall state:** `M0_PASS / M1_PASS / M2_IN_PROGRESS / M3_BLOCKED_ON_M2 / NOT_ACCEPTED` — historical smoke evidence is valid for its source but the supervisor requires a passing smoke on the exact current source before M3.
 > **Owner:** F1-RL project owner. **Execution:** autonomous coding agent, gate-driven.  
 > **Related:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md) · [Agent Handoff](F1-RL-DEMO-AGENT-HANDOFF.md).
 
@@ -75,8 +75,8 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 | M0 | PASS | None | Clean source, runtime/test paths and budget provenance verified on 2026-11-10 |
 | M1 V5 feasibility | PASS | M0 | One custom layered crossing route completes under Auto Drive; no PPO claim |
 | M1 full coverage | PASS | M0 | Versioned development geometry fixtures, Physics/reference-controller finishes, bounded API/WebSocket E2E, regressions and controlled V5 benchmark |
-| M2 | PASS / REUSED_COMPATIBLE | M0–M1 | Actual PPO smoke produces valid weights/telemetry; source-bound historical evidence is compatible |
-| M3 | IN_PROGRESS | M2 | Fresh controlled real benchmark required due historical profile hash mismatch |
+| M2 | IN_PROGRESS | M0–M1 | Fresh actual PPO smoke required on current clean source |
+| M3 | BLOCKED_ON_M2 | M2 | Fresh controlled real benchmark required due historical profile hash mismatch and source-admission prerequisite |
 | M4 | PENDING | M3 | Authenticated real PPO training and validated artifacts |
 | M5 | PENDING | M4 | Development-evidenced Pure PPO candidate selection |
 | M6 | PENDING | M5 | Immutable model/source/contract freeze |
@@ -106,14 +106,14 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 - [x] Benchmark V5 on a low-load host; capture wall/CPU, Physics-step mean/p95 and realtime factor. Physics stepping is the measured bottleneck; no optimization was justified or made.
 - **M1 PASS / READY_FOR_M2 (2026-11-11):** all M1 engineering acceptance checks pass. V5 remains custom Auto Drive only; its crash/roll validators remain fail-closed, and checkpoint probes establish interface shape/action bounds only. This status is not final demo acceptance.
 
-**M2/M3 continuation audit (2026-11-11, current source HEAD `f4b57a12428b8749db8c11d87fb00e95866df7f8`):** M2 smoke was independently rechecked and reused: current smoke-profile SHA, unchanged TRAIN roster and Physics V4 configuration, 256 real transitions, 10 optimizer updates, finite changed weights, exact checkpoint and telemetry SHA matches, and cleanup verified. The execution source remains `6452517e3e887ee83f9d98b3323e3e5089d4c187`; provenance is not relabeled. Historical M3 attempts record benchmark-profile SHA `1b9f…`, which does not match the profile in their claimed source commit or current worktree. Those timings are retained as historical only. M3 is IN_PROGRESS pending a fresh same-job 1-vs-2 benchmark under current committed source.
+**M2/M3 continuation audit (2026-11-11, source HEAD `90bfe06`):** the historical M2 smoke hashes and configuration were verified, but its source is `6452517e3e887ee83f9d98b3323e3e5089d4c187`, not the current source. The M3 supervisor requires a passing smoke on the exact current source, so M2 remains IN_PROGRESS pending one fresh bounded smoke. The first M3 preflight started no PPO child and exited 1 after 2.268 seconds; raw record SHA-256 `50ef77509963ee872aa5df7eae30e1dd7705f5493b6da2bfd9c90935e5e91284`. Historical M3 attempts also bind profile SHA `1b9f…`, unreconciled with their claimed source/config. Their timings remain historical only.
 
 ### M2 — One-model **real PPO smoke** gate
 
-- [x] Reuse compatible clean-source LOCAL_DEMO smoke evidence for `C-seed0`, **256 timesteps / one rollout / CPU / n_envs=1**. Preserve its exact historical execution source.
-- [x] Confirm `PPO.learn()` execution: 10 optimizer updates, finite nonzero gradients, changed weights, reloadable final checkpoint, current smoke-profile SHA, exact checkpoint/telemetry SHA matches, cleanup verified and HELD-OUT access false.
+- [ ] Run LOCAL_DEMO smoke for `C-seed0` on the current clean committed source, **256 timesteps / one rollout / CPU / n_envs=1**. The existing smoke is source-bound to `6452517e` and cannot satisfy current-source admission.
+- [ ] Confirm `PPO.learn()` execution: 10 optimizer updates, finite nonzero gradients, changed weights, reloadable final checkpoint, current smoke-profile SHA, exact checkpoint/telemetry SHA matches, cleanup verified and HELD-OUT access false.
 - [x] Do NOT call frozen full `parallel-run` for a 256- or 4,096-step smoke: it enforces full **65,536-step C0 engineering gate**.
-- **PASS / REUSED_COMPATIBLE (2026-11-11):** run `smoke-20261110T133738Z-a02802b3`; source `6452517e3e887ee83f9d98b3323e3e5089d4c187`; profile SHA `3d078a4bc45718407fb8a58cdb2f2dd856df101510deb6c9327ebff61c43ee36`; checkpoint SHA `09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f`; artifact root `D:\Projects\.archives\F1-RL\wp3-postmerge-real-smoke-20261110`.
+- **IN_PROGRESS:** historical run `smoke-20261110T133738Z-a02802b3` is internally valid but bound to source `6452517e`; it is retained as historical integration evidence and does not fulfill current-source M2 admission. Current-source smoke required.
 
 ### M3 — Controlled **real PPO concurrency** benchmark
 
@@ -122,7 +122,7 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 - [ ] Test 4 workers **only after** 2-worker safety/throughput evidence and fresh admission; use comparable workloads, declare any thread-budget changes, assess oversubscription and memory reserve.
 - [ ] Choose fastest **safe measured** configuration, not highest count; reject performance claims based on synthetic/mock subprocess timing or vectorized-env benchmark (different experiment).
 - [ ] Reserve sufficient remaining 24h budget for M4–M9; if estimated training cannot fit, prefer a versioned smaller development plan or stop for owner review—do not silently start full campaign.
-- **IN_PROGRESS:** historical benchmark results were 696.250s sequential and 367.500s parallel, but their profile SHA `1b9f787b…` cannot be reproduced from their claimed source/config. They are not admitted for worker selection. Fresh attempt root: `D:\Projects\.archives\F1-RL\demo-completion\m3-real-benchmark-20261111`.
+- **BLOCKED_ON_M2:** historical benchmark results were 696.250s sequential and 367.500s parallel, but their profile SHA `1b9f787b…` cannot be reproduced from their claimed source/config. A current-source sequential preflight required M2 current-source smoke and launched no PPO child. Preflight record: `D:\Projects\.archives\F1-RL\demo-completion\m3-real-benchmark-20261111\m3-sequential-preflight-blocked.json`; SHA-256 `50ef77509963ee872aa5df7eae30e1dd7705f5493b6da2bfd9c90935e5e91284`.
 
 ### M4 — Real PPO training campaign gate
 

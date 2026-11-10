@@ -1,6 +1,6 @@
 # F1-RL — Agent Handoff / Resume Contract
 
-> **Document version:** 2.4 (2026-11-11). **Current state:** `M0_PASS; M1_PASS; M2_PASS_REUSED_COMPATIBLE; M3_IN_PROGRESS; OVERALL_NOT_ACCEPTED`.
+> **Document version:** 2.5 (2026-11-11). **Current state:** `M0_PASS; M1_PASS; M2_IN_PROGRESS; M3_BLOCKED_ON_M2; OVERALL_NOT_ACCEPTED`.
 > This is an actionable **handoff**, not a certification of PPO driving.  
 > **Authoritative goals:** [Master Roadmap](F1-RL-DEMO-COMPLETION-ROADMAP.md) · **Proof/limits:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md).
 
@@ -20,15 +20,15 @@
 | Key | Status / fact |
 |---|---|
 | Overall | `NOT_ACCEPTED` — M1 and M2 are ready; M3, full PPO training and final demo acceptance remain incomplete |
-| Next milestone | **M3 fresh real PPO benchmark**; prior benchmark hashes do not reconcile |
-| M0-M10 | M0 PASS; M1 PASS; M2 PASS / REUSED_COMPATIBLE; M3 IN_PROGRESS; M4-M10 PENDING |
+| Next milestone | **M2 current-source real PPO smoke**; historical source cannot satisfy current-source admission |
+| M0-M10 | M0 PASS; M1 PASS; M2 IN_PROGRESS; M3 BLOCKED_ON_M2; M4-M10 PENDING |
 | Operating permission | Autonomous within owner-approved scope and 24h active workload cap; never merge main |
 | Scientific HELD-OUT | **SEALED**; WP7/Gate 2 **BLOCKED** |
 | Final model freeze | Not created |
 | Three custom acceptance tracks | Not created — must only be generated **after** model freeze |
 | 70-run Pure PPO evaluation | Not performed |
 | Live real-time 1×/30FPS/p95≤150ms | Not measured |
-| Training budget epoch | 2026-11-10 WP3 engineering run + M1 V5 benchmark: **1,365.796 s** used; **85,034.204 s** remaining (provisional) |
+| Training budget epoch | 2026-11-10 WP3 engineering run + M1 V5 benchmark + M3 preflight: **1,368.064 s** used; **85,031.936 s** remaining (provisional) |
 | Agent improvement cycles | 0 newly used **by this documentation task**; confirm pre-existing active campaign history before charging |
 | Remaining gates | Fresh M3 benchmark, M4 training, M5 development evaluation and later milestones; V5 remains custom Auto Drive only; seven external WP7 engineering nodes still lack witnesses |
 
@@ -170,8 +170,8 @@ OWNER_APPROVAL_NEEDED: <specific action, or NONE>
 ## 10. M2–M3 continuation audit (2026-11-11)
 
 ```text
-STATUS: M2_PASS_REUSED / M3_IN_PROGRESS / NOT_ACCEPTED
-NEXT_MILESTONE: M3 fresh real benchmark, then M4 plan/admission
+STATUS: M2_IN_PROGRESS / M3_BLOCKED_ON_M2 / NOT_ACCEPTED
+NEXT_MILESTONE: current-source M2 real smoke, then M3 fresh benchmark
 EXECUTION_SOURCE_BRANCH/HEAD: feat/f1rl-demo-completion / f4b57a12428b8749db8c11d87fb00e95866df7f8
 CLEAN_SOURCE: true at audit start; no active matching PPO processes
 ARTIFACT_ROOT: D:\Projects\.archives\F1-RL\demo-completion\m3-real-benchmark-20261111
@@ -179,13 +179,13 @@ MODEL_FREEZE_SHA: PENDING
 TRAINED_MODEL_SHA: smoke-only 09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f
 CONFIG/PHYSICS/OBS/ACTION_SHA: smoke profile 3d078a4bc45718407fb8a58cdb2f2dd856df101510deb6c9327ebff61c43ee36; Physics V4 c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37; frozen v3 config 8a67db80464dc3b93072c0edc431f7a71b1b271c392b47d0915af0f2cac106e4
 BUDGET_EPOCH: 2026-11-10 WP3 engineering run
-ACTIVE_RUNTIME_USED_SECONDS: 1365.796 verified previous-workload lower bound; M2 reused with zero new charge
-ACTIVE_RUNTIME_REMAINING_SECONDS: 85034.204 provisional
+ACTIVE_RUNTIME_USED_SECONDS: 1368.064 verified previous-workload lower bound including 2.268s failed M3 preflight
+ACTIVE_RUNTIME_REMAINING_SECONDS: 85031.936 provisional
 IMPROVEMENT_CYCLES_USED: 0
-LAST_GATE: M2 PASS / REUSED_COMPATIBLE. Actual 256-step PPO smoke has 10 optimizer updates, finite changed weights, exact checkpoint SHA 09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f, exact telemetry SHA 55c09d6ff8a87a064ff5b8c69db996836eb1853a934851fddba129199d0a2755, matching current profile SHA and verified cleanup. Source remains historical `6452517e3e887ee83f9d98b3323e3e5089d4c187`.
-BLOCKERS: Old M3 evidence profile SHA 1b9f787b… is inconsistent with the benchmark profile at its declared source commit; old timing claims are historical and excluded from M3 acceptance. V5 remains inadmissible for PPO.
+LAST_GATE: Prior 256-step smoke artifact is internally valid: 10 optimizer updates, finite changed weights, checkpoint SHA 09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f and telemetry SHA 55c09d6ff8a87a064ff5b8c69db996836eb1853a934851fddba129199d0a2755. It is bound to historical source `6452517e` and does not satisfy current-source M2 admission. First M3 preflight correctly rejected without starting a child; raw preflight SHA 50ef77509963ee872aa5df7eae30e1dd7705f5493b6da2bfd9c90935e5e91284.
+BLOCKERS: M2 current-source smoke is required before M3. Old M3 profile SHA 1b9f787b… is inconsistent with the benchmark profile at its declared source commit; old timing claims are historical and excluded from worker admission. V5 remains inadmissible for PPO.
 OPEN_PR: none
-NEXT_SAFE_COMMAND: run a fresh M3 sequential 1-worker and parallel 2-worker benchmark under the clean current feature-branch commit; immutable output root above. Confirm low CPU load, ≥8 GiB available RAM and ≥1 GiB output disk reserve before launch. Do not run 4 workers.
+NEXT_SAFE_COMMAND: run `.venv\Scripts\python.exe scripts\wp3_real_ppo_benchmark.py smoke --output-root D:\Projects\.archives\F1-RL\demo-completion\m2-m3-current-source-20261111` from the clean feature branch at `90bfe06`. Preserve the failed M3 preflight and do not run 4 workers.
 OWNER_APPROVAL_NEEDED: none for M2 reuse or bounded M3 rerun; stop before M6, HELD-OUT, or main merge
 ```
 
