@@ -1,6 +1,6 @@
 # F1-RL — Agent Handoff / Resume Contract
 
-> **Document version:** 2.5 (2026-11-11). **Current state:** `M0_PASS; M1_PASS; M2_IN_PROGRESS; M3_BLOCKED_ON_M2; OVERALL_NOT_ACCEPTED`.
+> **Document version:** 2.6 (2026-11-11). **Current state:** `M0_PASS; M1_PASS; M2_IN_PROGRESS; M3_BLOCKED_ON_M2; OVERALL_NOT_ACCEPTED`.
 > This is an actionable **handoff**, not a certification of PPO driving.  
 > **Authoritative goals:** [Master Roadmap](F1-RL-DEMO-COMPLETION-ROADMAP.md) · **Proof/limits:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md).
 
@@ -28,7 +28,7 @@
 | Three custom acceptance tracks | Not created — must only be generated **after** model freeze |
 | 70-run Pure PPO evaluation | Not performed |
 | Live real-time 1×/30FPS/p95≤150ms | Not measured |
-| Training budget epoch | 2026-11-10 WP3 engineering run + M1 V5 benchmark + M3 preflight: **1,368.064 s** used; **85,031.936 s** remaining (provisional) |
+| Training budget epoch | 2026-11-10 WP3 engineering run + M1 V5 benchmark + blocked M3/M2 attempts: **1,371.220 s** used; **85,028.780 s** remaining (provisional) |
 | Agent improvement cycles | 0 newly used **by this documentation task**; confirm pre-existing active campaign history before charging |
 | Remaining gates | Fresh M3 benchmark, M4 training, M5 development evaluation and later milestones; V5 remains custom Auto Drive only; seven external WP7 engineering nodes still lack witnesses |
 
@@ -171,7 +171,7 @@ OWNER_APPROVAL_NEEDED: <specific action, or NONE>
 
 ```text
 STATUS: M2_IN_PROGRESS / M3_BLOCKED_ON_M2 / NOT_ACCEPTED
-NEXT_MILESTONE: current-source M2 real smoke, then M3 fresh benchmark
+NEXT_MILESTONE: current-source M2 real smoke with process-safe executable/PATH, then M3 fresh benchmark
 EXECUTION_SOURCE_BRANCH/HEAD: feat/f1rl-demo-completion / f4b57a12428b8749db8c11d87fb00e95866df7f8
 CLEAN_SOURCE: true at audit start; no active matching PPO processes
 ARTIFACT_ROOT: D:\Projects\.archives\F1-RL\demo-completion\m3-real-benchmark-20261111
@@ -179,13 +179,13 @@ MODEL_FREEZE_SHA: PENDING
 TRAINED_MODEL_SHA: smoke-only 09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f
 CONFIG/PHYSICS/OBS/ACTION_SHA: smoke profile 3d078a4bc45718407fb8a58cdb2f2dd856df101510deb6c9327ebff61c43ee36; Physics V4 c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37; frozen v3 config 8a67db80464dc3b93072c0edc431f7a71b1b271c392b47d0915af0f2cac106e4
 BUDGET_EPOCH: 2026-11-10 WP3 engineering run
-ACTIVE_RUNTIME_USED_SECONDS: 1368.064 verified previous-workload lower bound including 2.268s failed M3 preflight
-ACTIVE_RUNTIME_REMAINING_SECONDS: 85031.936 provisional
+ACTIVE_RUNTIME_USED_SECONDS: 1371.220 verified previous-workload lower bound including 2.268s failed M3 preflight and 3.156s failed M2 launch
+ACTIVE_RUNTIME_REMAINING_SECONDS: 85028.780 provisional
 IMPROVEMENT_CYCLES_USED: 0
-LAST_GATE: Prior 256-step smoke artifact is internally valid: 10 optimizer updates, finite changed weights, checkpoint SHA 09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f and telemetry SHA 55c09d6ff8a87a064ff5b8c69db996836eb1853a934851fddba129199d0a2755. It is bound to historical source `6452517e` and does not satisfy current-source M2 admission. First M3 preflight correctly rejected without starting a child; raw preflight SHA 50ef77509963ee872aa5df7eae30e1dd7705f5493b6da2bfd9c90935e5e91284.
-BLOCKERS: M2 current-source smoke is required before M3. Old M3 profile SHA 1b9f787b… is inconsistent with the benchmark profile at its declared source commit; old timing claims are historical and excluded from worker admission. V5 remains inadmissible for PPO.
+LAST_GATE: Historical 256-step smoke is internally valid but source-bound to `6452517e` and does not satisfy current-source M2 admission. Current-source attempt `smoke-20261110T230720Z-524ac611` failed before training: 0 timesteps, 0 updates, process-count watchdog; result SHA 76a5663f7596e3613e94cb983b338d6147002dda50121ed0eb4bf8b244b5493b. Dry-run diagnosis found nested Python/Git launcher processes (max tree 4 under worktree venv); direct base Python + direct Git executable stayed at max 2 under unchanged profile.
+BLOCKERS: Fresh current-source M2 smoke required before M3. Dry-run process-tree summary is archived at `D:\Projects\.archives\F1-RL\demo-completion\m2-m3-current-source-20261111\process-tree-diagnostic\process-tree-diagnostic-summary.json`, SHA-256 `76e4ae850764064a95e4d43ba06cffa7622854621da3bf95c5cc34f2127ad86a`. Old M3 profile SHA 1b9f787b… is inconsistent with the benchmark profile at its declared source commit; old timing claims are historical and excluded from worker admission. V5 remains inadmissible for PPO.
 OPEN_PR: none
-NEXT_SAFE_COMMAND: run `.venv\Scripts\python.exe scripts\wp3_real_ppo_benchmark.py smoke --output-root D:\Projects\.archives\F1-RL\demo-completion\m2-m3-current-source-20261111` from the clean feature branch at `90bfe06`. Preserve the failed M3 preflight and do not run 4 workers.
+NEXT_SAFE_COMMAND: from the clean feature branch, set `PYTHONPATH` to `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion;D:\Projects\.worktrees\F1-RL\f1rl-demo-completion\.venv\Lib\site-packages`, prepend `.venv\Scripts` and `C:\Program Files\Git\ucrt64\bin` to `PATH`, then run `C:\Users\TranTien\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\python.exe scripts\wp3_real_ppo_benchmark.py smoke --output-root D:\Projects\.archives\F1-RL\demo-completion\m3-real-benchmark-20261111`. This preserves the 2-process profile and uses the shared M3 root so sequential admission can verify the smoke. Do not run 4 workers.
 OWNER_APPROVAL_NEEDED: none for M2 reuse or bounded M3 rerun; stop before M6, HELD-OUT, or main merge
 ```
 
