@@ -7,6 +7,7 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
+import subprocess
 import time
 from uuid import uuid4
 
