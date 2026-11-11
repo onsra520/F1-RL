@@ -1,10 +1,12 @@
 # F1-RL — Agent Handoff / Resume Contract
 
-> **Document version:** 2.8 (2026-11-11). **Current state:** `M0_PASS; M1_PASS; M2_PASS; M3_PASS_2_WORKERS; M4_ENGINEERING_PASS; M5_CYCLE1_DIAG_COMPLETE_CANDIDATE_NOT_ACCEPTED; OVERALL_NOT_ACCEPTED`.
+> **Document version:** 2.9 (2026-11-11). **Current state:** `M0_PASS; M1_PASS; M2_PASS; M3_PASS_2_WORKERS; M4_ENGINEERING_PASS; M5_CYCLE2_FINE_TUNE_TARGET_NOT_MET; OVERALL_NOT_ACCEPTED`.
 > This is an actionable **handoff**, not a certification of PPO driving.  
 > **Authoritative goals:** [Master Roadmap](F1-RL-DEMO-COMPLETION-ROADMAP.md) · **Proof/limits:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md).
 
-## 0. Live takeover snapshot — M5 Cycle 1 ablation (2026-11-11)
+## 0. Historical takeover snapshot — M5 Cycle 1 ablation (2026-11-11)
+
+This snapshot records the state before Cycle 2. The current Cycle 2 closeout and status are in §17.
 
 - PR #60 and PR #61 **MERGED**. Local `main` and `origin/main` both at `ab8951a9c68f009d7b2a14127b13c07426a2460a`.
 - Working branch/worktree: `feat/f1rl-demo-completion` / `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion`; Cycle 1 evidence source HEAD `e3b7f749186d676cbd1a63796e68d0930866cbfe`, source-tree SHA `8030081db7fedd253d306cc6a31c8a365aa3d56f`. Cycle 1 scripts are committed; result, limitations and artifact hashes are recorded in sections 0 and 15 and the linked Evidence Ledger.
@@ -19,9 +21,9 @@
 
 | Key | Status / fact |
 |---|---|
-| Overall | `NOT_ACCEPTED` — Ramp ablation improved, but Slalom regressed against its fixed-roster baseline; M6+ and final acceptance remain pending |
-| Next milestone | **Review Cycle 1 evidence and the Slalom trade-off**; no additional training cycle was opened |
-| M0-M10 | M0 PASS; M1 PASS; M2 PASS; M3 PASS (2-worker scope); M4 ENGINEERING_PASS; M5 Cycle 1 diagnosis complete / candidate NOT_ACCEPTED; M6-M10 PENDING |
+| Overall | `NOT_ACCEPTED` — Cycle 2's only checkpoint regressed Slalom stochastic finish from 12/15 to 11/15; no candidate passed selection |
+| Next milestone | **Review Cycle 2 evidence and the Slalom failure**; Cycle 2 is closed and no further training is authorized by this result |
+| M0-M10 | M0 PASS; M1 PASS; M2 PASS; M3 PASS (2-worker scope); M4 ENGINEERING_PASS; M5 Cycle 2 `FINE_TUNE_TARGET_NOT_MET`; M6-M10 PENDING |
 | Operating permission | Autonomous within owner-approved scope and 24h active workload cap; never merge main |
 | Scientific HELD-OUT | **SEALED**; WP7/Gate 2 **BLOCKED** |
 | Final model freeze | Not created |
@@ -29,8 +31,8 @@
 | 70-run Pure PPO evaluation | Not performed |
 | Live real-time 1×/30FPS/p95≤150ms | Not measured |
 | Training budget epoch | See Evidence Ledger §0.4 for M2–M5 campaign accounting; the 1,371.220 s figure in older handoff snapshots predates those runs |
-| Agent improvement cycles | Cycle 1 non-training ablation complete; no PPO fine-tuning or additional training cycle |
-| Remaining gates | Review stochastic Slalom regression and candidate acceptance; later M6+ gates remain pending; V5 remains custom Auto Drive only; seven external WP7 engineering nodes still lack witnesses |
+| Agent improvement cycles | Cycle 1 non-training ablation complete; Cycle 2 stopped after 4,096 PPO steps on a predeclared Slalom regression gate; no eligible checkpoint |
+| Remaining gates | No M5 candidate acceptance or fresh-roster candidate audit; later M6+ gates remain pending; V5 remains custom Auto Drive only; seven external WP7 engineering nodes still lack witnesses |
 
 **Do not take the historical 63+3 tests as proof of real PPO driving.** They were scoped code/mock integration tests. Real training must satisfy M2–M4 gates with new evidence.
 
@@ -333,4 +335,31 @@ EVIDENCE_ROOT: D:\Projects\.archives\F1-RL\demo-completion\m5-multicandidate-scr
 MANIFEST_FILE_SHA256: 1a4e9f811d0b6131012024cc179c80bfe9a52acb26703fadce98922310f99ffe (1533 evidence files)
 HELD_OUT: SEALED; M2/M3 rerun, M6+, U-turn, main merge: NOT RUN
 NEXT: review proposed baseline/fine-tune plan; do not declare M5 acceptance or DEMO_READY
+```
+
+## 17. M5 Improvement Cycle 2 closeout (2026-11-11)
+
+```text
+STATUS: FINE_TUNE_TARGET_NOT_MET / M5_NOT_ACCEPTED / OVERALL_NOT_ACCEPTED
+BRANCH: feat/m5-cycle2-c0-slalom-recovery-20261111
+WORKTREE: D:\Projects\.worktrees\F1-RL\m5-cycle2-c0-slalom-recovery
+EXECUTION_SOURCE_HEAD: e8f50e066a15ea848d08321ff1b59bf006fa63e0
+SOURCE_TREE_SHA256: a784bf414be3012f6df3a2da247788e2469ffa381fb27900401b91807c90dd60
+TRAINING: 4,096 additional PPO timesteps; 16 updates; 640 finite, nonzero optimizer steps; one checkpoint; stopped on material Slalom regression
+PARENT_STD050_SHA256: b6de69382523b9dc5309a6cffb230afd31f9b0206d3381dff723abc69ebffa86
+CHECKPOINT_69632_SHA256: 8fdf18451a67da2d040f325b5c5c23cc6d8caca667f167bf4e89f625d43d7051
+PAIRED_ROSTER: 85 cases; same locked environment/policy seed pairs on parent and checkpoint
+STOCHASTIC: Straight 15/15; Slalom 12/15 -> 11/15 (fixed 8/10 -> 7/10; fresh 4/5 -> 4/5); Right Turn V2 15/15; Ramp V1 15/15; Left Turn V2 15/15
+DETERMINISTIC_SLALOM: 0/10 parent and 0/10 checkpoint; each cell repeats identical trajectory, not robustness evidence
+ROOT_CAUSE: late/rightward-transition policy steering correction overshoots and contacts road edge; deterministic checkpoint did not recover. No Physics/action mapping defect demonstrated; speed not isolated as a cause.
+EVALUATION_REPORT_SHA256: 222530e103cb2992084ee7e6e5171b656825bcc6c5b7061cb539a2a014155110
+SELECTION_REPORT_SHA256: ab5b83892e3198774ebebb346afba19d3e5db7525c17031f89467d8a229b17db
+INDEPENDENT_AUDIT: Cycle 2 report/traces 85/85 PASS; prior Stage B summaries, raw/normalized hashes, CSV and scorecard reconciled
+FRESH_ROSTER_AUDIT: NOT RUN / BLOCKED; no eligible candidate
+TESTS: Python focused 89 PASS; web 105 PASS; TypeScript/Vite build PASS (large-chunk advisory)
+EVIDENCE_ROOT: D:\Projects\.archives\F1-RL\demo-completion\m5-cycle2-c0-slalom-recovery-20261111
+MANIFEST: docs/m5-cycle2/SHA256-MANIFEST.json; 394 entries; canonical SHA-256 77386042f7f498745b366f54b517ae76f74f380ef76d444c3253741dcb05800d
+HELD_OUT: SEALED
+M2/M3 RERUN / M6+ / U_TURN / CYCLE_3 / MAIN_MERGE: NOT RUN
+NEXT_SAFE_ACTION: owner review of the failed Slalom intervention and evidence; do not extend this training cycle or claim READY_FOR_M5_ACCEPTANCE_REVIEW
 ```

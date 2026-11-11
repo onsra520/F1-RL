@@ -1,0 +1,1616 @@
+{
+  "campaign_id": "M5-CYCLE2-C0-SLALOM-RECOVERY-20261111",
+  "execution_source": {
+    "branch": "feat/m5-cycle2-c0-slalom-recovery-20261111",
+    "commit": "e8f50e066a15ea848d08321ff1b59bf006fa63e0",
+    "tree_sha256": "a784bf414be3012f6df3a2da247788e2469ffa381fb27900401b91807c90dd60"
+  },
+  "files": {
+    "archive/M4-C-seed0-original-comparator.zip": {
+      "bytes": 158370,
+      "sha256": "600e6eb3a781af66e34ea56f8f65e20f46d4a4318a77aeebceceacef3ffa7fd4"
+    },
+    "archive/M4-C-seed0-std050-parent.zip": {
+      "bytes": 158370,
+      "sha256": "b6de69382523b9dc5309a6cffb230afd31f9b0206d3381dff723abc69ebffa86"
+    },
+    "archive/STAGEB-INDEPENDENT-AUDIT.json": {
+      "bytes": 593,
+      "sha256": "c6b100cb5bea91a3564896ee3685b4c39619e4bb05dbb1565fffe123cb9a308e"
+    },
+    "archive/VALIDATION-RESULTS.json": {
+      "bytes": 1955,
+      "sha256": "e36603d24544bcec83b84cc0f8ff3e3c5667d851593a761a15252368673e20ab"
+    },
+    "archive/baseline-slalom-deterministic-final-v2/DIAGNOSTIC-REPORT.json": {
+      "bytes": 39489,
+      "sha256": "e7409eb27de7c08af7fd4eb1bacc13558ac9c2e855acab5f516e5f5639ee47f6"
+    },
+    "archive/baseline-slalom-deterministic-final-v2/steps/std050__slalom__00__det.jsonl": {
+      "bytes": 163335,
+      "sha256": "d642e811460215291178e09914c601f7abe8f0d116fa557e8fc8db26087dcbdc"
+    },
+    "archive/baseline-slalom-deterministic-final-v2/steps/std050__slalom__01__det.jsonl": {
+      "bytes": 163335,
+      "sha256": "d642e811460215291178e09914c601f7abe8f0d116fa557e8fc8db26087dcbdc"
+    },
+    "archive/baseline-slalom-deterministic-final-v2/steps/std050__slalom__02__det.jsonl": {
+      "bytes": 163335,
+      "sha256": "d642e811460215291178e09914c601f7abe8f0d116fa557e8fc8db26087dcbdc"
+    },
+    "archive/baseline-slalom-deterministic-final-v2/steps/std050__slalom__03__det.jsonl": {
+      "bytes": 163335,
+      "sha256": "d642e811460215291178e09914c601f7abe8f0d116fa557e8fc8db26087dcbdc"
+    },
+    "archive/baseline-slalom-deterministic-final-v2/steps/std050__slalom__04__det.jsonl": {
+      "bytes": 163335,
+      "sha256": "d642e811460215291178e09914c601f7abe8f0d116fa557e8fc8db26087dcbdc"
+    },
+    "archive/baseline-slalom-deterministic-final-v2/steps/std050__slalom__05__det.jsonl": {
+      "bytes": 163335,
+      "sha256": "d642e811460215291178e09914c601f7abe8f0d116fa557e8fc8db26087dcbdc"
+    },
+    "archive/baseline-slalom-deterministic-final-v2/steps/std050__slalom__06__det.jsonl": {
+      "bytes": 163335,
+      "sha256": "d642e811460215291178e09914c601f7abe8f0d116fa557e8fc8db26087dcbdc"
+    },
+    "archive/baseline-slalom-deterministic-final-v2/steps/std050__slalom__07__det.jsonl": {
+      "bytes": 163335,
+      "sha256": "d642e811460215291178e09914c601f7abe8f0d116fa557e8fc8db26087dcbdc"
+    },
+    "archive/baseline-slalom-deterministic-final-v2/steps/std050__slalom__08__det.jsonl": {
+      "bytes": 163335,
+      "sha256": "d642e811460215291178e09914c601f7abe8f0d116fa557e8fc8db26087dcbdc"
+    },
+    "archive/baseline-slalom-deterministic-final-v2/steps/std050__slalom__09__det.jsonl": {
+      "bytes": 163335,
+      "sha256": "d642e811460215291178e09914c601f7abe8f0d116fa557e8fc8db26087dcbdc"
+    },
+    "archive/paired-evaluation-plan-v5.json": {
+      "bytes": 10698,
+      "sha256": "4b99d43911fdeab8e2ca3bf4991ca91c0eae92c9f474ba6cfe7a9d265fbb0929"
+    },
+    "archive/reports/C0-BASELINE-LOCK.md": {
+      "bytes": 2355,
+      "sha256": "b37549d05c6d80dd07e0e728f8431d8546823d1ff77dc15a5d5abbc73908e105"
+    },
+    "archive/reports/FINE-TUNING-CYCLE2-REPORT.md": {
+      "bytes": 4876,
+      "sha256": "92e4962b2e8a57530768dd6fdf53cc81388138db0cadbc761b43ff19f977d175"
+    },
+    "archive/reports/INDEPENDENT-AUDIT-REPORT.md": {
+      "bytes": 3324,
+      "sha256": "01cb52a27d6a46670a8a757c5f02392246b587e85dfa770f48af016c4a3e808d"
+    },
+    "archive/reports/PARENT-VS-FINETUNED-SCORECARD.md": {
+      "bytes": 1610,
+      "sha256": "2c61f2fe2c1421b1d858f6c101823a19044a59b6825e50310d953622821656c4"
+    },
+    "archive/reports/SLALOM-ROOT-CAUSE-REPORT.md": {
+      "bytes": 4482,
+      "sha256": "566c7d3e23038d3eaafa26db305a8c3d88270af1739c1d8f49610d5628060fea"
+    },
+    "archive/training-attempt-v5/CYCLE2-TRAINING-RESULT.json": {
+      "bytes": 2782,
+      "sha256": "f521252c42b4d93705efb8bea6f4d7cabd37c3aa53cfc1b890b4cd19529702c9"
+    },
+    "archive/training-attempt-v5/INDEPENDENT-AUDIT.json": {
+      "bytes": 1782,
+      "sha256": "3ef52443ef7ad7188f1e9b96992e0ef8e65a2747f12b81174577a56743e8ebb8"
+    },
+    "archive/training-attempt-v5/SELECTION-RESULT.json": {
+      "bytes": 1230,
+      "sha256": "3a70f34423ce4cc5da28ccc09b2c5ca19258da9850a5ec6f70915e394bdd0662"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/EVALUATION-REPORT.json": {
+      "bytes": 213653,
+      "sha256": "ca7cf32d1106ea429007b272c7ca431e3a1ea056a0e4c1d5d6cb1daff87b0094"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep00__stochastic.json": {
+      "bytes": 1929,
+      "sha256": "40dcc61eb6628d640712831d75e63ae0c63749be10c4bb81a63cd9b37d18b6ad"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep01__stochastic.json": {
+      "bytes": 1963,
+      "sha256": "37925a7a45029eb1342ea1fa523390ae55fb4ef20882f035f75d5455fd7faf7c"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep02__stochastic.json": {
+      "bytes": 1934,
+      "sha256": "af545177365b1d513ef9c7111a0137977f7929ee765b4d82ae0db18deb5b17bf"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep03__stochastic.json": {
+      "bytes": 1932,
+      "sha256": "504f19c12d5ae9fccc374098a57dee20bd3fecf61c21b631780ab2e156d595a3"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep04__stochastic.json": {
+      "bytes": 1934,
+      "sha256": "a5d000aed749609bd01eec82ebe27ae6a4156c1d98cc214fa26034cd9d415e6e"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep05__stochastic.json": {
+      "bytes": 1959,
+      "sha256": "fc53a71393c548a7fe35dd11d7d7aa0decd909ff68248565913ad3f977dc074f"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep06__stochastic.json": {
+      "bytes": 1933,
+      "sha256": "d4c446f7be05132894cc3cb30acfcab65d3ced9df0961dd66619b87a5386814e"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep07__stochastic.json": {
+      "bytes": 1933,
+      "sha256": "c17da6a762abbc88e15f620042462ee85b243497261bb12ae450c5b418035d90"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep08__stochastic.json": {
+      "bytes": 1960,
+      "sha256": "3785b6cbe51c8631d5fe42d419fde151495430005701e252bbef3d15757b668b"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep09__stochastic.json": {
+      "bytes": 1935,
+      "sha256": "638ff60d98844e39393a57d094d09ea02824b08e9457af5d374b401b49104095"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep10__stochastic.json": {
+      "bytes": 1964,
+      "sha256": "86bf6ed53458e971836bdf69d7835f653d94768ae771c1c73f23dab3c67a36f7"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep11__stochastic.json": {
+      "bytes": 1934,
+      "sha256": "f8abf1ed90b50ca965c3ff2a58200819e4a56856483a07e73484f530fe4fe5c4"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep12__stochastic.json": {
+      "bytes": 1960,
+      "sha256": "6f84d4a44ea4ad0ade535b8635ccbc74f1a73b84b7da776d8142cc7e9db6b8a2"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep13__stochastic.json": {
+      "bytes": 1964,
+      "sha256": "a3fba8e92c5431c057213f61e39651cc8b76f0d4ebd9e98297c478ff48ff53ae"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__left-turn-train-v2__ep14__stochastic.json": {
+      "bytes": 1960,
+      "sha256": "582c8d83ed1460ece4a2884456404fc8513bcf421c7af0cb3181a1d503ecf1a7"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep00__stochastic.json": {
+      "bytes": 1889,
+      "sha256": "fa169f1bf80577e6b87459cef0d30cda8c6986d51236a01230dfe8604736d352"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep01__stochastic.json": {
+      "bytes": 1885,
+      "sha256": "5bb1f4764cf10d4f25a17c952b341a6f477a9b6067ef9442b3f3b2e8902e7ed6"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep02__stochastic.json": {
+      "bytes": 1888,
+      "sha256": "9e7bb9078940f38ae7b2273cabe116edcbab37bb3eb18e42ee79391467097b90"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep03__stochastic.json": {
+      "bytes": 1890,
+      "sha256": "577f8eeb05cff1a8250de8e2f02617421202713c671027d0921b69231ee1ee00"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep04__stochastic.json": {
+      "bytes": 1914,
+      "sha256": "32e698d9bfbbb8b1449eab874f8f116665dbcff17cce3d18363031b95ff08a76"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep05__stochastic.json": {
+      "bytes": 1886,
+      "sha256": "dfbee93b13d2283e04c11944ccce6bbc8fbb0f1c556b63792ad8516d20358365"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep06__stochastic.json": {
+      "bytes": 1892,
+      "sha256": "a05a22a722261d2999da4d50612d60ed27dbdd32bf2ce102e655a313dde8f6a3"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep07__stochastic.json": {
+      "bytes": 1886,
+      "sha256": "e74d570334f334bf1182a31c869645c72899282ba111d3e382f0c6da2d906177"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep08__stochastic.json": {
+      "bytes": 1886,
+      "sha256": "0b48f1c6b43a24487e4014e8d4708cd10588570cdce7227ce7d3e3603cd9862a"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep09__stochastic.json": {
+      "bytes": 1914,
+      "sha256": "f81b6fe9d1aed96f8b7107012d487f3ce9cf5e81fe6958c328d935d02c9b98cb"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep10__stochastic.json": {
+      "bytes": 1887,
+      "sha256": "e32be85ff5c7ead0907e1659e6506b4841c059d81b4f0a18b88061440e347523"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep11__stochastic.json": {
+      "bytes": 1919,
+      "sha256": "f512e8ea3357419d9dc05dd56d9597f2dbdf821959cd8382b3aee5dac08cc037"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep12__stochastic.json": {
+      "bytes": 1889,
+      "sha256": "f617b9af09cc94734c27f1e7b2752704445eeb5658e00d6f0568d366b82ee75c"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep13__stochastic.json": {
+      "bytes": 1916,
+      "sha256": "254bc7c3d857dc12beba70df7210cc3d9e4fa68ca33c88f4b7f390f59e565f72"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__ramp-v1__ep14__stochastic.json": {
+      "bytes": 1890,
+      "sha256": "6f513a563ba5974bada6aa9e36c4202b2e7e3c0e9f7d6918da8970206e1e5fd3"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep00__stochastic.json": {
+      "bytes": 1937,
+      "sha256": "43e95137628ec61f6592b51b06be691e0de32e798776b63bcafe87adc75da64b"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep01__stochastic.json": {
+      "bytes": 1967,
+      "sha256": "534609eaccc6c1249afd4f52ae11444b1eba55c975c4663d4ac47d64fd3c1f54"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep02__stochastic.json": {
+      "bytes": 1933,
+      "sha256": "9918b82cc358d6c4cea5f5c0dd1cbb82953be98038775180dec1baa27577af48"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep03__stochastic.json": {
+      "bytes": 1937,
+      "sha256": "e346a6a49855020271a008cc5ab2f113945934940c2dd69ae3a41f83a7c5c090"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep04__stochastic.json": {
+      "bytes": 1935,
+      "sha256": "6c239c2e96c6ce161889f7c158327bfc7cb9a02d4dc4892c349e1972d1f5d5fd"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep05__stochastic.json": {
+      "bytes": 1938,
+      "sha256": "e5c05821e896c7290ef9cd4bcf60092fd531eae1a97dc06581b9922a838f9099"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep06__stochastic.json": {
+      "bytes": 1936,
+      "sha256": "1b399ac41be646501e5d6045489bde4707adf0c99d6d2cb7ae3d8581bcf74b11"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep07__stochastic.json": {
+      "bytes": 1936,
+      "sha256": "38110fd6a88a6783691bc4c2c6728e521562348bcd1e3ae4925a1a81887f27b1"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep08__stochastic.json": {
+      "bytes": 1963,
+      "sha256": "dfcb80b845c92beb76efcecd7181e413afe251f1b38502d563abdfd250ffeeb9"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep09__stochastic.json": {
+      "bytes": 1934,
+      "sha256": "9f814cd4c4eac8c4cc8a86858519a5c27051d962f5e2ec0d40fff7a130889e4a"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep10__stochastic.json": {
+      "bytes": 1965,
+      "sha256": "e559fa8d99a50d81a45a45befa43a1e224f606046f96d1590c60b3f7142b69cf"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep11__stochastic.json": {
+      "bytes": 1934,
+      "sha256": "7fdc15b5bf6a1d1a247df5e2f6551df70c58375910d78426d95540ea97fcf892"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep12__stochastic.json": {
+      "bytes": 1964,
+      "sha256": "0fa3118a4156355c179eb593f59f107829c1094e857b7ed924256e87312dd29e"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep13__stochastic.json": {
+      "bytes": 1934,
+      "sha256": "7e1c8c1a1f6f0ff3361250b847a04982026fe23778ab4d3cba0c7a2b58d9180b"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__right-turn-train-v2__ep14__stochastic.json": {
+      "bytes": 1966,
+      "sha256": "0facacf82f3967de61959f2a7517e989ac9fe788d002d9fa307b990295ed5546"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep00__deterministic.json": {
+      "bytes": 3710,
+      "sha256": "ac5e93b44f79c779076018d1eb61593b68e8ebb3b58f9ad66bf202503998d69c"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep00__stochastic.json": {
+      "bytes": 1894,
+      "sha256": "ffcac1d0a0ab3c0dc8618988ab7652ef2f3ac9a84148633644afc83f28ca4d53"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep01__deterministic.json": {
+      "bytes": 3710,
+      "sha256": "eb9eb6cf43005e33d2ccda05ee82583eba5eeab1d992f1b7f11204cb2747a6f0"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep01__stochastic.json": {
+      "bytes": 1923,
+      "sha256": "9eaa6b2978d780ab48235b654a0d7067844d3dc876d78050dd1e034cca57b352"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep02__deterministic.json": {
+      "bytes": 3709,
+      "sha256": "ab0f5cf2c52fe988e3a9d61326e5d4c757493e8bf6d935c9ba64ffb03a4bc130"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep02__stochastic.json": {
+      "bytes": 1896,
+      "sha256": "43035ea80e0078b72160cdd8d3ba8a666c4f527cba6c97fd2540471754536bd5"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep03__deterministic.json": {
+      "bytes": 3711,
+      "sha256": "dcd22a794516b0cfe9d59cc178aa632a9510c2f984a5d1fc1cd3c68125e6a005"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep03__stochastic.json": {
+      "bytes": 3666,
+      "sha256": "483829d43306a6750314542e4f9e3c1fbc43698656ccba409f157d55dfbdf2ed"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep04__deterministic.json": {
+      "bytes": 3711,
+      "sha256": "e4cd714b062085f8549d6e2b4daefa74d299135c5e286eaba6dc98d684653448"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep04__stochastic.json": {
+      "bytes": 1900,
+      "sha256": "5ab3e411722b526f89ec1e2476b67a0552098f498f9c192661bfd45e1fbad214"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep05__deterministic.json": {
+      "bytes": 3709,
+      "sha256": "2e88edf7935ed0f5c39ac7c5b7a9025cb50050aa48668b54cf77eb90c288f30f"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep05__stochastic.json": {
+      "bytes": 1924,
+      "sha256": "20d484a3d5776b9301142ab8880ece8709ddd0e29ecabf7c806d1d1c4f24d5d2"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep06__deterministic.json": {
+      "bytes": 3710,
+      "sha256": "03ae2b4a11047e254b7a18dc9d4d1d65e95c7075bf44e17d839f5cf43026ec80"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep06__stochastic.json": {
+      "bytes": 1894,
+      "sha256": "859a472c7cf67d988b886807a5466d432edaa2aa2867e1d22ea6419fd7879e84"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep07__deterministic.json": {
+      "bytes": 3710,
+      "sha256": "8bd9b78d1d13893dbb6c4c79545555f4030bcd4b10ebf6ef2a94d5148fd1ca3a"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep07__stochastic.json": {
+      "bytes": 3648,
+      "sha256": "e5f7bf434f6737ab3da6597e085198fcf9edacacbc5b0b373cf6915084e45bf7"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep08__deterministic.json": {
+      "bytes": 3710,
+      "sha256": "e4f182e2f60563a7b1597c70bcc61cd092e7c6c293dfce73cb7db26bdda57870"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep08__stochastic.json": {
+      "bytes": 1898,
+      "sha256": "ff08a4a51614c5afd5341338b52049306939696af1014d11580d00356e3fc2dd"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep09__deterministic.json": {
+      "bytes": 3710,
+      "sha256": "5e26992f44f374cb8dd78bdec3cfe128b52e12990239886ea0227a6520b43bcf"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep09__stochastic.json": {
+      "bytes": 3663,
+      "sha256": "59e5649ea67daeb4b395c1bc3f81ccab97e53b86195d73da55f087e6f57e2244"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep10__stochastic.json": {
+      "bytes": 1925,
+      "sha256": "edc3de94149bc8d5d9231d5d32be06a1a2135ceca6ebe83fa2be256354ec98cd"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep11__stochastic.json": {
+      "bytes": 1927,
+      "sha256": "42f42896695ef34eea0e5e81bd17bd626837e427c4cb5593f9a093adb8670e8a"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep12__stochastic.json": {
+      "bytes": 1927,
+      "sha256": "2de031c44798925fecf7b56a2b91aa72610ad57024823b1bec0d2b7c9bb26e47"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep13__stochastic.json": {
+      "bytes": 1899,
+      "sha256": "964df6bdedba97d38df3bfb71354b07679b532b7e664f08df46595237a42fa03"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__slalom-v1__ep14__stochastic.json": {
+      "bytes": 3653,
+      "sha256": "8016bf4f09f9a2ce1f56ba9a2ffbc4d47d8a030a25f5fbca0dd600c1aaf282d1"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep00__stochastic.json": {
+      "bytes": 1920,
+      "sha256": "02b8fda71e0e634c15eb5021e4df28df3aebb578438953ce1ba259fb3924d987"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep01__stochastic.json": {
+      "bytes": 1923,
+      "sha256": "e7303ecf7ac37a76f50d8172aaae299c6ba3611a76b112190a60ec9ba7477e7f"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep02__stochastic.json": {
+      "bytes": 1920,
+      "sha256": "e3b3610ea88874a6660f6c74b3b65fab9d287e3b024e37d6e6d78f161de99f74"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep03__stochastic.json": {
+      "bytes": 1918,
+      "sha256": "ee085a38f7e89b2a1a6ed4776844068b6a23bacd7dd4841b9a55fdae914cf4f1"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep04__stochastic.json": {
+      "bytes": 1921,
+      "sha256": "6aa6bb0a5baed72508fda5778fae0f92c7a2266d9e838bc4f1fef86a774957b8"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep05__stochastic.json": {
+      "bytes": 1919,
+      "sha256": "0fe7a37c59804999693555002b1799b3bd3d4a306af48063b227208e72d73f77"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep06__stochastic.json": {
+      "bytes": 1919,
+      "sha256": "4957daa36eb5e68afb78f6071e65355a447ab9ae78f71e564f18aa70fd0c3ca1"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep07__stochastic.json": {
+      "bytes": 1921,
+      "sha256": "6989713a1d8f3a533cfa2402c5ba73177de187c5cbdea6b33be6fc767d5818d9"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep08__stochastic.json": {
+      "bytes": 1919,
+      "sha256": "eae3b89f17057107b0437a60068f722c5ad0c178eb88f187b98deec181d14745"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep09__stochastic.json": {
+      "bytes": 1947,
+      "sha256": "c66d3b23a8e0edeeca370b865944a876ccdc5ea2e9fcf999726f0204de742929"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep10__stochastic.json": {
+      "bytes": 1919,
+      "sha256": "faf0c5db76fb73ec5a8563ee0e901193b39a19c823ed9fed186b04b6d02c327c"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep11__stochastic.json": {
+      "bytes": 1948,
+      "sha256": "7a72d12c0e459972439ee8060af06abe028f71e9eacd4f5fb5d47b1245ca9824"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep12__stochastic.json": {
+      "bytes": 1920,
+      "sha256": "8b66de53dbf1fb83102fecdf1726da53cd30d9fd69ea456c3c15f4485098ebf3"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep13__stochastic.json": {
+      "bytes": 1945,
+      "sha256": "ffb20ea1892b1ff500906b5551b6b0d2b8b5d889ce65f40bb05a73291a5af5d6"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/episodes/checkpoint-69632__straight-sprint-v1__ep14__stochastic.json": {
+      "bytes": 1919,
+      "sha256": "09aa04d5f0a0a4089f7a4f26bf57a80da51773e9767a82646aa009e35edbddec"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep00__stochastic.jsonl": {
+      "bytes": 459941,
+      "sha256": "0795ac623754a7d8eb214ce401d1f1c902ef2ab8869540aff5342d9f996efa97"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep01__stochastic.jsonl": {
+      "bytes": 461316,
+      "sha256": "b5a3e92c6574d9bbf1f01a89fb5faf037d409f559b54d9698ee79eb01d985945"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep02__stochastic.jsonl": {
+      "bytes": 448993,
+      "sha256": "398dd5479ee452048ce1cd61a07ca923f69c2dfe52ec2ab3a1fcbfe800dbae2e"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep03__stochastic.jsonl": {
+      "bytes": 470278,
+      "sha256": "64fcf2edd3d20b8ceceefb3dfdbd525f98a222083829ff4acffe824f0df9b1ba"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep04__stochastic.jsonl": {
+      "bytes": 452335,
+      "sha256": "0cee7ef62b6079bbf2092f6e75ad4f14f5df5b7a63a92e5c6877464aceae8955"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep05__stochastic.jsonl": {
+      "bytes": 465754,
+      "sha256": "370b04413188332cb04b4d26dfb3ff62d9a6756ac298c1ae0a13982535ada437"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep06__stochastic.jsonl": {
+      "bytes": 448632,
+      "sha256": "5ed616157f2f744518dc2f73c4f73006873d58e3420364b3eea494d4f2ff2f84"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep07__stochastic.jsonl": {
+      "bytes": 466966,
+      "sha256": "a1f9a8626cf6b78d979021a62cdbb87b414713876fb76c22d6fd415fe5a1bfea"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep08__stochastic.jsonl": {
+      "bytes": 450466,
+      "sha256": "bdc097cccbdc322b10b0e8e0f52cf22b5bdfc32ac9cae48e15ebaf9744fdd8f2"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep09__stochastic.jsonl": {
+      "bytes": 444670,
+      "sha256": "fe80cc977050be63deb2e07c6b1b52ad8e5b37f9770d31409020c108380b8c62"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep10__stochastic.jsonl": {
+      "bytes": 458133,
+      "sha256": "abdc2180f33b08f04b9b1a7fd49819c0644c6324f683bc1be857d4540f9fb29a"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep11__stochastic.jsonl": {
+      "bytes": 446129,
+      "sha256": "32b1329286f077d5194e59e909bcc39f42973cd7275270a7c7e66daf522256a7"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep12__stochastic.jsonl": {
+      "bytes": 453181,
+      "sha256": "28916a8fc0fdf0ebdd7835d6e61fef2bb2ba0afbee9ff4d8cb33233732fdcca3"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep13__stochastic.jsonl": {
+      "bytes": 458376,
+      "sha256": "3ab50074436864b4c1cfc5833e2c9f2664206b91e1666114ffbcec5a9b014543"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__left-turn-train-v2__ep14__stochastic.jsonl": {
+      "bytes": 453299,
+      "sha256": "5c0926f76bc34fb80f748b1b725b8991ed9195807c7d6e7ec27ae5dd9950a212"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep00__stochastic.jsonl": {
+      "bytes": 466049,
+      "sha256": "7008b417beacbb704662c8db53b4fa8923f829445e21f41e622177e0678b7ad7"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep01__stochastic.jsonl": {
+      "bytes": 460326,
+      "sha256": "bde155c18cb4ed9c56a44bb202950d5a714ae4542abd98e2a38b6cb1714ca623"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep02__stochastic.jsonl": {
+      "bytes": 509050,
+      "sha256": "5cce3a9f8b8b85ff50bb69b957c24f13237da64c9b4b43f8ab4450e37559a809"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep03__stochastic.jsonl": {
+      "bytes": 460527,
+      "sha256": "87aa0a10a86082785b8d76173b69977da89552702ff295e6efba09058b0d15e6"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep04__stochastic.jsonl": {
+      "bytes": 475208,
+      "sha256": "6e8cc3ce724cb5237d56933a086ef588f3c3aad24fcc6052c3b7618f808291a1"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep05__stochastic.jsonl": {
+      "bytes": 465365,
+      "sha256": "ef235e4d948ad85ca7e1dead4a1bff26bc1622e07243f6802e0a017430178959"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep06__stochastic.jsonl": {
+      "bytes": 468178,
+      "sha256": "f88968916ea89653dd47c2c320ee8e15b9b077d09a4573c4ecd6ba40071fbcfe"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep07__stochastic.jsonl": {
+      "bytes": 439748,
+      "sha256": "e469361c142e9fc7d512e80f18054fbbe87bb35a6b554f4d9b53accca44d510e"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep08__stochastic.jsonl": {
+      "bytes": 473418,
+      "sha256": "2474fc24062466dff3008f1fe68bc7f422165fb8147993b8ab847235c620d2e3"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep09__stochastic.jsonl": {
+      "bytes": 443142,
+      "sha256": "5018471df1cfc807f4489b6f73100c4e9c8551a9c7fb5afa60aec34932aba069"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep10__stochastic.jsonl": {
+      "bytes": 469120,
+      "sha256": "486c07f7944ab4accca7bcc50a9de1c4bcf38aaa0870d2cadad7b8631e2a8a6e"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep11__stochastic.jsonl": {
+      "bytes": 462366,
+      "sha256": "77ceac75508fceaeb2fc8a70d59df52ea9e16b447b6cbcbf7bcfc18ffc25e1d6"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep12__stochastic.jsonl": {
+      "bytes": 472487,
+      "sha256": "1d35f34837f38f32e06c2ad1d1c24dccc954b5d0b231ef54132acb16e1c95e0d"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep13__stochastic.jsonl": {
+      "bytes": 470504,
+      "sha256": "c1bb27cafc27c473312146443697b6734d93c971646c897ac7bd1e0bc39c1c15"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__ramp-v1__ep14__stochastic.jsonl": {
+      "bytes": 488891,
+      "sha256": "49548f9c3efcedaa06fa86629cca186e9847b7ef283a06fc59d51cef073eb4d4"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep00__stochastic.jsonl": {
+      "bytes": 454252,
+      "sha256": "c32a56fb1627b431e1db53aa850f6156fbc94da8d4548a2525ea1002d9611ceb"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep01__stochastic.jsonl": {
+      "bytes": 461641,
+      "sha256": "5205c18af1a768d843f012b01a767e8128bffb63b47db1f7afceb90cdc9123c2"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep02__stochastic.jsonl": {
+      "bytes": 439832,
+      "sha256": "438a8c528868a7a2f0475368965359cbe1d5f483a7253f20e0d65dcdeb6fbd76"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep03__stochastic.jsonl": {
+      "bytes": 418416,
+      "sha256": "0c4d6d4295d60ad3d0fdbbc4cdf594943cd3843d5fd2d3ee2189f5f893bdacea"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep04__stochastic.jsonl": {
+      "bytes": 445951,
+      "sha256": "0f67a55f036418d51f085841a9c64c51318ddaf8290e05811167f8f840e7cf8e"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep05__stochastic.jsonl": {
+      "bytes": 455518,
+      "sha256": "87fe31631c3877a66e0af13b2b51caf7c2d0ddb0511b41d8c5ee67a6d1e9ef9c"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep06__stochastic.jsonl": {
+      "bytes": 453260,
+      "sha256": "c6e949c179d7bdd7534e28115a9f237c3341dd80643532a3e5fdadeef79aa872"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep07__stochastic.jsonl": {
+      "bytes": 447405,
+      "sha256": "b31f3d6835f21e40207bc1dd7861f7ac452c1c2993d2f385d32e31a4abbe850c"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep08__stochastic.jsonl": {
+      "bytes": 420169,
+      "sha256": "75b50a857b6f0792bf1ac6318d6d311f2418a2078b8f11dbedf6989a50a99a22"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep09__stochastic.jsonl": {
+      "bytes": 443028,
+      "sha256": "1095c103b5b652e92745d6ba41e135123e19b46c8c7c4f2a1f9ee0cc77981219"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep10__stochastic.jsonl": {
+      "bytes": 444348,
+      "sha256": "2297d9789c00d3f34e313ef6a82114ee4113b46860258ba36ee13c1c96522179"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep11__stochastic.jsonl": {
+      "bytes": 429643,
+      "sha256": "91051e5c1b32ff988fab98c23523ff541f302e4929165fd4c46b3a3b7e9496c3"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep12__stochastic.jsonl": {
+      "bytes": 426077,
+      "sha256": "39fe3b0cb4527c7febcfe0d0c90169922bb13a4fa9b4f2039f14cacb2b290972"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep13__stochastic.jsonl": {
+      "bytes": 423467,
+      "sha256": "2b214253b8ad469287bcb3786086eaf423515e1c6d2456d8d1b50ee2c70b4e62"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__right-turn-train-v2__ep14__stochastic.jsonl": {
+      "bytes": 452214,
+      "sha256": "ea617776b3b886a942a04849a03f358b14bc3f9b832dadc041b8ace42f5d3194"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep00__deterministic.jsonl": {
+      "bytes": 144586,
+      "sha256": "85c8e896aa6e9fe9f03bc0b87272947344e3aa51654c3c2f488653cba0956245"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep00__stochastic.jsonl": {
+      "bytes": 445889,
+      "sha256": "cef61f468fca15997c16da9f1fa52525ae620fe7603c2ba3cd64038d400f1234"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep01__deterministic.jsonl": {
+      "bytes": 144586,
+      "sha256": "85c8e896aa6e9fe9f03bc0b87272947344e3aa51654c3c2f488653cba0956245"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep01__stochastic.jsonl": {
+      "bytes": 425280,
+      "sha256": "3453ee3498a4dbedb32badc689a758dca498315f2fb52307913f86a816962052"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep02__deterministic.jsonl": {
+      "bytes": 144586,
+      "sha256": "85c8e896aa6e9fe9f03bc0b87272947344e3aa51654c3c2f488653cba0956245"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep02__stochastic.jsonl": {
+      "bytes": 434649,
+      "sha256": "d4e5a627a8e3bd5592f2fa62ad5f268d99f1c9fee2d11d2e40de27ffc51d305c"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep03__deterministic.jsonl": {
+      "bytes": 144586,
+      "sha256": "85c8e896aa6e9fe9f03bc0b87272947344e3aa51654c3c2f488653cba0956245"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep03__stochastic.jsonl": {
+      "bytes": 317031,
+      "sha256": "2f7871e79a371a71f245d545a686f12674487dcdc32e3c232bfa3268863222e5"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep04__deterministic.jsonl": {
+      "bytes": 144586,
+      "sha256": "85c8e896aa6e9fe9f03bc0b87272947344e3aa51654c3c2f488653cba0956245"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep04__stochastic.jsonl": {
+      "bytes": 438192,
+      "sha256": "2fdb8b5ec5f2240eb1f740a1a5e4a589614f86f7b4651beecc740fb3d5193486"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep05__deterministic.jsonl": {
+      "bytes": 144586,
+      "sha256": "85c8e896aa6e9fe9f03bc0b87272947344e3aa51654c3c2f488653cba0956245"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep05__stochastic.jsonl": {
+      "bytes": 417787,
+      "sha256": "7e48beae123be0d537e9180fcae8c485e9056a931376d3b58d72ddcc6179264f"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep06__deterministic.jsonl": {
+      "bytes": 144586,
+      "sha256": "85c8e896aa6e9fe9f03bc0b87272947344e3aa51654c3c2f488653cba0956245"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep06__stochastic.jsonl": {
+      "bytes": 443165,
+      "sha256": "6826248e15a7f8262266829df0384b97fcd1884e1b871691c26b0c1de887cf6d"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep07__deterministic.jsonl": {
+      "bytes": 144586,
+      "sha256": "85c8e896aa6e9fe9f03bc0b87272947344e3aa51654c3c2f488653cba0956245"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep07__stochastic.jsonl": {
+      "bytes": 313500,
+      "sha256": "32218bf5fc42841e7b4379c3e8b1cbcaae8887accf03b39258e2bcb10cc2ef7d"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep08__deterministic.jsonl": {
+      "bytes": 144586,
+      "sha256": "85c8e896aa6e9fe9f03bc0b87272947344e3aa51654c3c2f488653cba0956245"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep08__stochastic.jsonl": {
+      "bytes": 466094,
+      "sha256": "514b8f6e5617920700b7714f4a67b8f5dcca25d6b90ba7ebebc2c60e0fdca6a3"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep09__deterministic.jsonl": {
+      "bytes": 144586,
+      "sha256": "85c8e896aa6e9fe9f03bc0b87272947344e3aa51654c3c2f488653cba0956245"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep09__stochastic.jsonl": {
+      "bytes": 304043,
+      "sha256": "9f9f32bdbcc8302657e352391f063bb9b620e751156d63572b8062a3be706eb5"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep10__stochastic.jsonl": {
+      "bytes": 429356,
+      "sha256": "7efb6555f67f19a82b0a1c429ab5219a7a9edf61ff5c89ba511f127efa391bba"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep11__stochastic.jsonl": {
+      "bytes": 427978,
+      "sha256": "7e1a32d15625172ca59392baff1db6a984de040707476e50c01b5a7f6f0dcbba"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep12__stochastic.jsonl": {
+      "bytes": 417232,
+      "sha256": "fdaffbaad653718986b8af92d2965b8d4b177fdd5ac8cfb2f63bae0a657f51a0"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep13__stochastic.jsonl": {
+      "bytes": 437708,
+      "sha256": "055a0fd9dbfd66d6791a0a90b786b06440a3322a381ad6c5852b5882f5f3ebe9"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__slalom-v1__ep14__stochastic.jsonl": {
+      "bytes": 302877,
+      "sha256": "4bf66aa9d86167b32fc6f253808e555a64a5087c3da99e18f182728813e87e00"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep00__stochastic.jsonl": {
+      "bytes": 292607,
+      "sha256": "372ed0d6cb60efd4dfab0c926ce9ec1ca604e79ae299dd87451c057300b27e16"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep01__stochastic.jsonl": {
+      "bytes": 305378,
+      "sha256": "0735afb16c4b93c66e189bac3ff711a5fbff58dafc483c6b563ade27afbe97d2"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep02__stochastic.jsonl": {
+      "bytes": 290939,
+      "sha256": "699454c821f77d9a36711f487ae8c0d273f6034633b5487c91ede790ee1b5d29"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep03__stochastic.jsonl": {
+      "bytes": 293114,
+      "sha256": "0b9deadef516e295e0243fc22c3e20d36028d8699f6759c426895d2ad17da764"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep04__stochastic.jsonl": {
+      "bytes": 293053,
+      "sha256": "dc81f96113442acd378fc6160f03b15b734f798a7ba6f6466ab55955b4677568"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep05__stochastic.jsonl": {
+      "bytes": 290895,
+      "sha256": "7da11289c800bc9670bb28dd0841236c642667ac2f65b11bc595c9b08c82d4bd"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep06__stochastic.jsonl": {
+      "bytes": 283776,
+      "sha256": "b484ec023fd263504847c6865307f3f1145feb9d19126f9447ea796b1f86101e"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep07__stochastic.jsonl": {
+      "bytes": 289263,
+      "sha256": "8450ad616ca74cc9f7eb753396e1c52d6cd8533e4b2ddcca30551315441d0141"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep08__stochastic.jsonl": {
+      "bytes": 299527,
+      "sha256": "1db57febdee5c91fb30845ce2f6d66a3964a1c1dcaa1edbf7c22325173104026"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep09__stochastic.jsonl": {
+      "bytes": 286139,
+      "sha256": "51f39da4612a84adbb2e84a22bd0908836d366a6aa1c39dd1b155b6b54fa3a2d"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep10__stochastic.jsonl": {
+      "bytes": 283743,
+      "sha256": "01a3b4b52897d34149e1736bae1695087c99f4ed33db0d88f76b00078c41a341"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep11__stochastic.jsonl": {
+      "bytes": 294656,
+      "sha256": "c2384cb41968bdb948959a6ac4906463b0b6ceff65dd70064257137158d9b3f3"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep12__stochastic.jsonl": {
+      "bytes": 291639,
+      "sha256": "38260adfe7054f97f6afedcb24830477b86c9ae200569ace2f79f3b4c54705f0"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep13__stochastic.jsonl": {
+      "bytes": 302159,
+      "sha256": "1176eb13d1fe84adf7bddb477f80d74b58324befa4a594fc214a9690456b6724"
+    },
+    "archive/training-attempt-v5/checkpoint-evaluations/step-69632/steps/checkpoint-69632__straight-sprint-v1__ep14__stochastic.jsonl": {
+      "bytes": 292749,
+      "sha256": "a4b557e3c5d7ac765a70999a754b87365b035f21d320eff015a0e25307f659ff"
+    },
+    "archive/training-attempt-v5/checkpoint-selection.jsonl": {
+      "bytes": 487,
+      "sha256": "d9e76d7de2c36b49e301cb5219ea6e247117506bea27d248edd4c9fcda3699be"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/EVALUATION-REPORT.json": {
+      "bytes": 212227,
+      "sha256": "f299defc5e9b66926cb4cca7f454366a50433e00d86694abd65a7463ac8974d3"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/INDEPENDENT-AUDIT.json": {
+      "bytes": 1773,
+      "sha256": "8287eddad1ccee8659d932ccc88cf976c9a64c2888d09606b8fe731b88b6d415"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep00__stochastic.json": {
+      "bytes": 1940,
+      "sha256": "09ce510bec5272ccda52c25e3b5e84fa787f30e87a86e17c171d6fd09debd1ce"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep01__stochastic.json": {
+      "bytes": 1968,
+      "sha256": "85b3924edbe2bf25f527d01d203278608acbbcffb4374feab950a5075b2cac1f"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep02__stochastic.json": {
+      "bytes": 1967,
+      "sha256": "f56ce404dec07f0a8a7b689d4fb81b1d1310a137d0133d59d46c36808d47baf1"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep03__stochastic.json": {
+      "bytes": 1966,
+      "sha256": "30c32b16d388c438e9944d392d41dc3911685e345616280cddd6fb2fdaee4cfb"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep04__stochastic.json": {
+      "bytes": 1941,
+      "sha256": "2e39cb39fa8215eca7a41a75a0e5fc0a7e741fee13d7e89908a105fc44227f17"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep05__stochastic.json": {
+      "bytes": 1967,
+      "sha256": "e283ecdfc973444f9188c73bd5ecd316f71ae944750ffcbec66aa273ed9c13fc"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep06__stochastic.json": {
+      "bytes": 1968,
+      "sha256": "59a1928a52066043baba4cdd2e8fb2fa0666e38e33dd562e24f1b6b0406f8fe6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep07__stochastic.json": {
+      "bytes": 1940,
+      "sha256": "95ba903bd0df205e55e93cdcab38288003c89deffdf0ab3c27ed4d7ef90ec23e"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep08__stochastic.json": {
+      "bytes": 1941,
+      "sha256": "9ff45fb2ab93688f882108cbd8ba086eeeb8996a8d48acec7d2a9026f389cdf7"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep09__stochastic.json": {
+      "bytes": 1943,
+      "sha256": "b39d9fc1783f93ee7a1b7db9ab495c9bdaa560935de9af4c8b6d57580f1d1c85"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep10__stochastic.json": {
+      "bytes": 1940,
+      "sha256": "638151e4733bba7a2a9ebf649b9a4083b181c17dab8dca95139eca6ce421353f"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep11__stochastic.json": {
+      "bytes": 1970,
+      "sha256": "f7f955f8168e0e468aa9677ebe401197bab39ac345842bc25e2d02f04685c18e"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep12__stochastic.json": {
+      "bytes": 1969,
+      "sha256": "4fceba97b146556d7176500bdaf19b8fbe5fb14abca4ba3f97cdfbd50f6642cc"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep13__stochastic.json": {
+      "bytes": 1942,
+      "sha256": "01c9c90ffa87aa0d237f6a49f8c24d51ef3ebff797ebdbd4d4be604152bd69b8"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__left-turn-train-v2__ep14__stochastic.json": {
+      "bytes": 1968,
+      "sha256": "2d2be204370580bbbc0a0074ba8850f46dbc4898aaff4527e511b95b19b4cafc"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep00__stochastic.json": {
+      "bytes": 1896,
+      "sha256": "c8c1315d06247ca318c911e02622340681f912d1165acb98ed3e7c2b205bdcc3"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep01__stochastic.json": {
+      "bytes": 1894,
+      "sha256": "f0669a207459284290646e03a14b8bd6b08ff52422009c4441c80406d9c4c9e2"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep02__stochastic.json": {
+      "bytes": 1922,
+      "sha256": "aaa5787ccab2e5a10d4d231aa886b46bacae11bb4217e6b7562103a87a4cba95"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep03__stochastic.json": {
+      "bytes": 1893,
+      "sha256": "d6d992961a4463dbebe429d932f76c496f2982c6a255e7f5a8c767869e0261c7"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep04__stochastic.json": {
+      "bytes": 1924,
+      "sha256": "ef0a9194bd2d1ec636fd1e769f24bf1aedbf920bab82628d36792024df2edcd3"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep05__stochastic.json": {
+      "bytes": 1924,
+      "sha256": "8a6ca7e1969c120752117b68adb99d5dda1df59a79f3b3ef13f5da0dc8939460"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep06__stochastic.json": {
+      "bytes": 1894,
+      "sha256": "b122bc4e1e298d87f4dcacdfad704064e83da23d8d1d8cfe8c9440c3ec3272fa"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep07__stochastic.json": {
+      "bytes": 1924,
+      "sha256": "33873f529d133c1310eed96ce336482c497d97b2e55a5529bc7af3961a1f19e3"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep08__stochastic.json": {
+      "bytes": 1896,
+      "sha256": "ddfa0b1bc0d563cbd22bd64c5dc9a93438f1d36b29ba15ccec4095076ea51adf"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep09__stochastic.json": {
+      "bytes": 1892,
+      "sha256": "10ba16dfd0924cbd3d7541b1c160caa1ca37ec137d023ea1bc29f4286957e953"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep10__stochastic.json": {
+      "bytes": 1895,
+      "sha256": "7f2e42428fa0e7beebe4a0fc0d4ef20b874e9a13d3c1f08407bee56a73a5f7ad"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep11__stochastic.json": {
+      "bytes": 1897,
+      "sha256": "5fec1395051184be3faed43e3702b8adaa8f996d8b2972c64a03a0bbfc747945"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep12__stochastic.json": {
+      "bytes": 1922,
+      "sha256": "c6f25b7614523f17cb2e0b1dee837e72d26677fa8210a3d861c7354d7a038a34"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep13__stochastic.json": {
+      "bytes": 1920,
+      "sha256": "75cab512e92c3e8181ae8d01e95901640de2aeeeb67494fd3940ab1324f9966b"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__ramp-v1__ep14__stochastic.json": {
+      "bytes": 1926,
+      "sha256": "e2dd9b46c30421487fc13352ebd78caa0ee363bd0a998d92538bc66946dff17a"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep00__stochastic.json": {
+      "bytes": 1942,
+      "sha256": "0d330c68e610cb251c6e06172be76fe270df87d11d9b524c8c504a4d2eaa2258"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep01__stochastic.json": {
+      "bytes": 1969,
+      "sha256": "5cc560dada24e916d85a233eea3eb386affb779beee870c87458e7d9d32de6e9"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep02__stochastic.json": {
+      "bytes": 1969,
+      "sha256": "ee4fa4111c6873991f1a781da54d9b2546995dd3144732bfef1ebb2cd943feca"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep03__stochastic.json": {
+      "bytes": 1941,
+      "sha256": "2c616f2e5d852304bab244a1664157546ed1a9d5f5cab4cbe9e3da7efb28ae29"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep04__stochastic.json": {
+      "bytes": 1942,
+      "sha256": "13dda0ba6ac35c55649535eedc41c57aec85160f1834e0e87aa82fcbcc03753f"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep05__stochastic.json": {
+      "bytes": 1944,
+      "sha256": "bc164518b98b3df091a6919391bfd64296718400a3a9ce973561412f3d2e88a3"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep06__stochastic.json": {
+      "bytes": 1972,
+      "sha256": "8ab5a8f10eff2855c00bedb60f8e53cdfc1599332fe591293a0fb5e596a5f653"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep07__stochastic.json": {
+      "bytes": 1941,
+      "sha256": "5344851a7488b6cb4ec35e369bab689727e3c562834b93009fdb2fffa7531506"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep08__stochastic.json": {
+      "bytes": 1942,
+      "sha256": "281aff7cf51d35ffefe5c0f58e04b528edc21e2aa7f8a3963f7e6f3fdbbda33d"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep09__stochastic.json": {
+      "bytes": 1972,
+      "sha256": "e6fd413d7eb0bd3489146a150ffae8311df3ecd83d6b627f6ca541e8fb2bed4b"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep10__stochastic.json": {
+      "bytes": 1943,
+      "sha256": "169a918c604aa6e3cff6b89ee53fb8528cdb3143234a1f1384395496283667f8"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep11__stochastic.json": {
+      "bytes": 1970,
+      "sha256": "5ff06bec2f7bacc106dc4aab60e79e7da1cded782e9ed733026ace9b72f513ec"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep12__stochastic.json": {
+      "bytes": 1972,
+      "sha256": "ddd38facb0a4db97fc1280999b5fd657402d1489b8f64b50c480e25108bf986a"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep13__stochastic.json": {
+      "bytes": 1943,
+      "sha256": "74039bb23238be0b5955694f62bffd77f3944ef55c61b0caf91f26f8a067c892"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__right-turn-train-v2__ep14__stochastic.json": {
+      "bytes": 1973,
+      "sha256": "498a896ffa9e4678777c2505fb4da26053cad3ee4b0bef9b692b26e3d10ec559"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep00__deterministic.json": {
+      "bytes": 3689,
+      "sha256": "2044f10f39f5158d359878c21767e9021739679c7766b3529ad0aea5f9a72341"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep00__stochastic.json": {
+      "bytes": 1904,
+      "sha256": "507ee8f1a2fd2f83d3f1214a906b4d83270899b558df092ccb1fd5e2d7168fb1"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep01__deterministic.json": {
+      "bytes": 3689,
+      "sha256": "30ce09278a2909e45c2cae4a70ef9a35fa8ca83fbcf28066917eebfc2923d9cf"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep01__stochastic.json": {
+      "bytes": 3657,
+      "sha256": "fc0a6d65b8fd6a5465d3d86fed44334f3c4518eac67c6bd7ed11f995e2767432"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep02__deterministic.json": {
+      "bytes": 3688,
+      "sha256": "ebe03394ce7bbd0b3f0c97801880e744d959ae5ebbc2e380a136cb2f510b566b"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep02__stochastic.json": {
+      "bytes": 1931,
+      "sha256": "1dc94080f9b431d525e02e839c0143fe6fbd2b703398599b8d1a193c87a03df5"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep03__deterministic.json": {
+      "bytes": 3690,
+      "sha256": "d44fb9890dfef24738952435ca5bf88b1d0aa26fb20c855ab6439381e8011a6a"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep03__stochastic.json": {
+      "bytes": 1904,
+      "sha256": "cb2762781ce51383f6f66a8be4d6f7f3521cfec892bd6c4252a79c9c96a4c6b0"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep04__deterministic.json": {
+      "bytes": 3690,
+      "sha256": "fd8bf6cc877bada56df3c539d3837cad670b6b2189cee0dc2c5f52dd835d7ee6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep04__stochastic.json": {
+      "bytes": 1932,
+      "sha256": "0a1fcb225f63df01d28ab056d455bd6b3d9032d0f1eea72708d9c3064b70a249"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep05__deterministic.json": {
+      "bytes": 3688,
+      "sha256": "dfe61e1b39589b55c8d8aaf1349db199f9f9ee9fd23c1fed025f640cae28368b"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep05__stochastic.json": {
+      "bytes": 1902,
+      "sha256": "4e77c18912b52d1f59124d64e5259538d0b8b71ab3d366b78b8ba7e22c4fb61a"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep06__deterministic.json": {
+      "bytes": 3689,
+      "sha256": "21a78bb9ce1751ecc90fb9663c0a8bb5d6144d313edb1680fe5563696fbb6591"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep06__stochastic.json": {
+      "bytes": 1929,
+      "sha256": "acd79be0097eea84c63e126726f08b082333d873a88cffba546853aa7c40688b"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep07__deterministic.json": {
+      "bytes": 3689,
+      "sha256": "8eb21cdc4c6d633889e0131f9be1c0144b124af86ba130230174eea9822fe200"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep07__stochastic.json": {
+      "bytes": 3656,
+      "sha256": "4151993b1089465e60fcf014acc1652b954b9dc232868365e9d0d96cac28d5d2"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep08__deterministic.json": {
+      "bytes": 3689,
+      "sha256": "7e0958ec3a06984b77c929c553a58721bdef7dd5a24fc1e63c96531f5307b2d4"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep08__stochastic.json": {
+      "bytes": 1904,
+      "sha256": "7b4775b373c33938737c903292236f1509f0295af0ab8b9d658bd42a8820fa78"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep09__deterministic.json": {
+      "bytes": 3689,
+      "sha256": "55349c69e375c01ea6478e53510262ffe702e7536bc9ff616827f832d7d0b797"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep09__stochastic.json": {
+      "bytes": 1902,
+      "sha256": "45abcba7df791cf7507ea739484076cb99f3d87895c67e0a4c1bb9451d40d362"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep10__stochastic.json": {
+      "bytes": 3750,
+      "sha256": "66a0c61d31a63512cc3d74026154ad039a13f3e50782a25e120b5d186dfbce65"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep11__stochastic.json": {
+      "bytes": 1905,
+      "sha256": "7be8c01a14e0dd018e9337a78f3b85787f9b56fd9b8f34b8098e278c443387d0"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep12__stochastic.json": {
+      "bytes": 1904,
+      "sha256": "98d92bfae7f7643237ec7faede34cd44daf3dafee15fab061b1a42ae8b4aa39f"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep13__stochastic.json": {
+      "bytes": 1908,
+      "sha256": "6b943d7ea3e4ec4fdbaad5c8c116a4d011961a6919de2561879f02fcd271225d"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__slalom-v1__ep14__stochastic.json": {
+      "bytes": 1907,
+      "sha256": "a31a2bc9ff66c636ccfd00fe70d3f45ff5577b6fa57d10e46a245258e09cba00"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep00__stochastic.json": {
+      "bytes": 1923,
+      "sha256": "0f388b9e4f1509e76f3319b0d85e0ca56af29a96b44ae555eb7fc7ab4f5325d9"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep01__stochastic.json": {
+      "bytes": 1953,
+      "sha256": "c8dd591403ce35c0a3f8e886a0ca71ae26f75309e402100ed1fa93a34a83c4d9"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep02__stochastic.json": {
+      "bytes": 1927,
+      "sha256": "585a445577f5f8e739c1b9a203847a9fc371159efbf637fa5baad719dfc87bdf"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep03__stochastic.json": {
+      "bytes": 1928,
+      "sha256": "a70a882612e29e0ddc07703380ebadc4841284d11eb662dba47c2afcf9dfd6cf"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep04__stochastic.json": {
+      "bytes": 1958,
+      "sha256": "4ab1728c5bda51619eddc218ccb8e003e15931d8d3512ab25ebf4ad7bef8edba"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep05__stochastic.json": {
+      "bytes": 1956,
+      "sha256": "b3ca24ad0b6af30fe6b9f745fe37d07a1d98216422a991990d65c3ee39a9a809"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep06__stochastic.json": {
+      "bytes": 1951,
+      "sha256": "eca7b2363cd9e744a06bd6668bcbe0355aeb3f182945819339eb5d07641c5117"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep07__stochastic.json": {
+      "bytes": 1956,
+      "sha256": "f1660689dcc0db2f688d7e8edd6eb662ece8f6c73c6886cc85222f9fcde7881a"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep08__stochastic.json": {
+      "bytes": 1926,
+      "sha256": "80420985524261369545af783b883284612fd68aa16279f619b899ac6ea6ff9e"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep09__stochastic.json": {
+      "bytes": 1929,
+      "sha256": "6dbd526e8a6f0b1d230ce8621eaa32ee3d653c56c0cc86ac112a8e759a955de3"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep10__stochastic.json": {
+      "bytes": 1926,
+      "sha256": "a6830288d87231a434981aaaac0187f9193851063eae332915c3d9035292cc27"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep11__stochastic.json": {
+      "bytes": 1958,
+      "sha256": "27a78e876e2972acc06ffec3a33288a33344f39e1c94a224332f9a5bb39da13e"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep12__stochastic.json": {
+      "bytes": 1929,
+      "sha256": "107f55e5aa9d6ca75eb02c032bd04994f93d4c58b8aea94350fa782bd9caa067"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep13__stochastic.json": {
+      "bytes": 1926,
+      "sha256": "2461f211934618e52687b64bb80b972d330910e2440f4ed268a644e823e4b191"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/episodes/M4-C-seed0-std050-parent__straight-sprint-v1__ep14__stochastic.json": {
+      "bytes": 1928,
+      "sha256": "14a78255760c53756eea7ee1e1913f9f3e2651ac254e00ca661c4d28b8140e29"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep00__stochastic.jsonl": {
+      "bytes": 476102,
+      "sha256": "903d76ae74d2cedbff1bea44f71457322dbe7c42119f25376e7b897046ca6c5e"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep01__stochastic.jsonl": {
+      "bytes": 486112,
+      "sha256": "9c480cdb3d2d2719f09d7e6819e8b9ed9d7fc3be72216ea60bbe079817a42591"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep02__stochastic.jsonl": {
+      "bytes": 467415,
+      "sha256": "4db7748fdebd2dcf3afb2def7f6e87262ad4674f5851400c5cf4167d24ddd93a"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep03__stochastic.jsonl": {
+      "bytes": 482360,
+      "sha256": "ba52b5d8d2e420a6c32756bfd5cf5030e0fcb22c9edf502d60ec8f3c98589dcc"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep04__stochastic.jsonl": {
+      "bytes": 478980,
+      "sha256": "14ad371a04df3659a55d9aec17d768d35a42b3cd89821f45be869eea0565087e"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep05__stochastic.jsonl": {
+      "bytes": 470066,
+      "sha256": "3f1c39322ef9522f475bc43bb0180ac838148da717dae0a22b0e745856451928"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep06__stochastic.jsonl": {
+      "bytes": 469365,
+      "sha256": "136fc837f00aec0d4334a71f5916bea774d6a248e699702c0c2389568daddb39"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep07__stochastic.jsonl": {
+      "bytes": 492249,
+      "sha256": "e07709c6601a82d52e8ba0fa355d5c819695c2a63b0c8f077c34aa2519cf0c03"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep08__stochastic.jsonl": {
+      "bytes": 456224,
+      "sha256": "61df43467b8c8819c18089c61a71ae7c88da1656205f3f4cdeacb544d4f84c53"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep09__stochastic.jsonl": {
+      "bytes": 465487,
+      "sha256": "8a4f91c70335bea90d922e74c8bd69551fcef12f0babf4eec5414cf97503b71c"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep10__stochastic.jsonl": {
+      "bytes": 476172,
+      "sha256": "394b3b6b200ea0f6ca8335a2cf73179c45120d3c909d567b818304e490519724"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep11__stochastic.jsonl": {
+      "bytes": 453554,
+      "sha256": "246f2a0f038897601059922ba054c49de20ea36302bc57b7059d4d131ac20488"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep12__stochastic.jsonl": {
+      "bytes": 458606,
+      "sha256": "cdff04c93a8bff9d5bb52233fdcc9e19e0938b19ad25628cd6b523263ccbe120"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep13__stochastic.jsonl": {
+      "bytes": 464702,
+      "sha256": "bf6af425cf7a8b1bb52b3da4a0d73a1adae57e2df1907377b68a18176f4641a0"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__left-turn-train-v2__ep14__stochastic.jsonl": {
+      "bytes": 477046,
+      "sha256": "d364d0eaa495e745ec1e56994d8c09db77c5741de68365871ba9d717a2eef5f8"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep00__stochastic.jsonl": {
+      "bytes": 506203,
+      "sha256": "e6ed0b920572b8ccb2e68543fa79aa0e44c72cf0b65ace31bcbcf39da757a1fa"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep01__stochastic.jsonl": {
+      "bytes": 487293,
+      "sha256": "216cc81f9bd0e08493cc7da44429a473c6452d3ae4ba7a468bd5354f842c0be9"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep02__stochastic.jsonl": {
+      "bytes": 549264,
+      "sha256": "e8b520d714a45c5dda33c1af50103c40d228694281129a2ce5419ebea11b8407"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep03__stochastic.jsonl": {
+      "bytes": 476512,
+      "sha256": "892771564837419a6dd59f35d66fa8a2667bed58d6347119dfb754ff63c75cdc"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep04__stochastic.jsonl": {
+      "bytes": 510304,
+      "sha256": "020253a766ec5d299e394064784a51ceec5b078095358c8fca8287165a500678"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep05__stochastic.jsonl": {
+      "bytes": 486644,
+      "sha256": "90e58559ee01dc42a6dff724898af35043d23dadfe8b756c32a89845936c37de"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep06__stochastic.jsonl": {
+      "bytes": 481760,
+      "sha256": "b738cf2dc733cb2e8a80b16086b670f207eb83c2c3568966076acda1e88810ad"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep07__stochastic.jsonl": {
+      "bytes": 478893,
+      "sha256": "e5a964d64071bc14bd9c0d47bb6b056a70913d721defda423ecd9bc666e23106"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep08__stochastic.jsonl": {
+      "bytes": 503802,
+      "sha256": "2eaa56b8e4b27b7b6aefa2d982bfe5d1cd1e8d356eebd35fbf198ffdd61b7157"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep09__stochastic.jsonl": {
+      "bytes": 487520,
+      "sha256": "897be023f7cd6dcd2b59c84571d2b6c230d8d1eef4c83f852a07b604e189dc36"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep10__stochastic.jsonl": {
+      "bytes": 488186,
+      "sha256": "d8d5f9ec4279b82944b5abfca4e83ad667547ab5ef4bc90f8a7e56b1d6cc1d1d"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep11__stochastic.jsonl": {
+      "bytes": 493476,
+      "sha256": "7bdc5cb39235c2dada571dc1b6af88172e368160267a75caa6256ff8cfa26f26"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep12__stochastic.jsonl": {
+      "bytes": 500034,
+      "sha256": "d467ab5e57c7f3fbfacdc93b94ade8602b4f096119b5ec71d39713c6d8b1f0ce"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep13__stochastic.jsonl": {
+      "bytes": 491105,
+      "sha256": "742710c22f26ed278dda61914ba1a2e293d3db5cd698b7bb0bdaef6955ad52a1"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__ramp-v1__ep14__stochastic.jsonl": {
+      "bytes": 506222,
+      "sha256": "e6e965f598240315afbd28e2d4c5bf3a420653794f1c4fb316193aee4c9aafc7"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep00__stochastic.jsonl": {
+      "bytes": 470492,
+      "sha256": "6e6420bd0170a1f580619ede1e55ff60537d8370358fee954346e8ac1981f0ea"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep01__stochastic.jsonl": {
+      "bytes": 484869,
+      "sha256": "aa5285061e4d85a662ddbdd98a98e8968b2b914a7873bdacf6ee79b6a8ff1dd8"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep02__stochastic.jsonl": {
+      "bytes": 465754,
+      "sha256": "e6a4b892318c06f6cfdaa449a2a5840f51416f4e1105f2009574020402828fb4"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep03__stochastic.jsonl": {
+      "bytes": 426794,
+      "sha256": "f3041f1ac462b3ab9d4cc0c0d771c3e748f431ab852f193f03077b9e6e22321c"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep04__stochastic.jsonl": {
+      "bytes": 471414,
+      "sha256": "5f847f8b04a6575b79da9452710277e9fb0918c45d2f2cf1356c21882cfd2408"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep05__stochastic.jsonl": {
+      "bytes": 459080,
+      "sha256": "0b6330b4af8a142c73096e15dc0136a2386772a271b815c5a5e67565395f9a9c"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep06__stochastic.jsonl": {
+      "bytes": 464756,
+      "sha256": "84530f435fe1c46cec703a2fe8cc67543ac42ec73429d2ef96c9c7b7d0882320"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep07__stochastic.jsonl": {
+      "bytes": 464481,
+      "sha256": "708a8293099d329c88b8ff0f044dd4f058e784ab9c32c33263e12810f209c40c"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep08__stochastic.jsonl": {
+      "bytes": 429928,
+      "sha256": "caae7da2fe8c26ea87677daeee785dad69261c577eeb4f6619c118597ff2acda"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep09__stochastic.jsonl": {
+      "bytes": 452373,
+      "sha256": "2602e97754d7c742d222a3c46f75c4938d162b2bfb95209086a2e10cca4b6afd"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep10__stochastic.jsonl": {
+      "bytes": 454349,
+      "sha256": "72292e63389efa555202efa6d7364c852cb08bc386def2546f5a786d65cd14d1"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep11__stochastic.jsonl": {
+      "bytes": 433345,
+      "sha256": "3973f8a35750f634649b0cf529151c8a015a27f2d273584dcb811b9ad96601f3"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep12__stochastic.jsonl": {
+      "bytes": 441868,
+      "sha256": "50c7a94afc4012a74dde314097b4a0dcd272ad74a0dd167488be28d76248667c"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep13__stochastic.jsonl": {
+      "bytes": 439791,
+      "sha256": "0db8688e70842ac4bccf0c11a2635c99e1d775e0a87e0f7697dcf8c3c23deb94"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__right-turn-train-v2__ep14__stochastic.jsonl": {
+      "bytes": 468569,
+      "sha256": "553c60d94debc013a11e65128062aaf43ec7aa630aa48ff03fc12c69d69d7537"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep00__deterministic.jsonl": {
+      "bytes": 157717,
+      "sha256": "37f03915d784281fd1b82a75a3ce3aa176efb74eb3dd7c2f4e9778eeb3f8a9f6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep00__stochastic.jsonl": {
+      "bytes": 445886,
+      "sha256": "36511b475e9ceb05119edb18ec1d21d96470663db44e81e20df5aaa907b7c5db"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep01__deterministic.jsonl": {
+      "bytes": 157717,
+      "sha256": "37f03915d784281fd1b82a75a3ce3aa176efb74eb3dd7c2f4e9778eeb3f8a9f6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep01__stochastic.jsonl": {
+      "bytes": 316404,
+      "sha256": "76de49a374d15de4f58ef097e20728204360e1632abd37f1eea06a92cedcb14a"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep02__deterministic.jsonl": {
+      "bytes": 157717,
+      "sha256": "37f03915d784281fd1b82a75a3ce3aa176efb74eb3dd7c2f4e9778eeb3f8a9f6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep02__stochastic.jsonl": {
+      "bytes": 433512,
+      "sha256": "6e1e6f300d2532d1e975fb53ae58b02f6fbf242c327c921db36e9e9b82c63265"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep03__deterministic.jsonl": {
+      "bytes": 157717,
+      "sha256": "37f03915d784281fd1b82a75a3ce3aa176efb74eb3dd7c2f4e9778eeb3f8a9f6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep03__stochastic.jsonl": {
+      "bytes": 431806,
+      "sha256": "28c009e6ee282800a3b0483b168f3b5197f926f643df34a89c48c96db349648a"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep04__deterministic.jsonl": {
+      "bytes": 157717,
+      "sha256": "37f03915d784281fd1b82a75a3ce3aa176efb74eb3dd7c2f4e9778eeb3f8a9f6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep04__stochastic.jsonl": {
+      "bytes": 434182,
+      "sha256": "878c460a0e5b793e7f3f424bb7694c32596e0f356e980a50d72a8eea6c2c33a5"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep05__deterministic.jsonl": {
+      "bytes": 157717,
+      "sha256": "37f03915d784281fd1b82a75a3ce3aa176efb74eb3dd7c2f4e9778eeb3f8a9f6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep05__stochastic.jsonl": {
+      "bytes": 431966,
+      "sha256": "7b3047479ba897ddebad2aea425cf09acdb048d730e194a18986bb5b5698f357"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep06__deterministic.jsonl": {
+      "bytes": 157717,
+      "sha256": "37f03915d784281fd1b82a75a3ce3aa176efb74eb3dd7c2f4e9778eeb3f8a9f6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep06__stochastic.jsonl": {
+      "bytes": 452602,
+      "sha256": "fd71ef538f3e12f1c1d8faf737d33c39bcf31e411fc7c565c08ad8e326e400eb"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep07__deterministic.jsonl": {
+      "bytes": 157717,
+      "sha256": "37f03915d784281fd1b82a75a3ce3aa176efb74eb3dd7c2f4e9778eeb3f8a9f6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep07__stochastic.jsonl": {
+      "bytes": 313988,
+      "sha256": "7b059282470d30fb3ead9c173597128b8a62734c1a6dda179554aa69394afeaf"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep08__deterministic.jsonl": {
+      "bytes": 157717,
+      "sha256": "37f03915d784281fd1b82a75a3ce3aa176efb74eb3dd7c2f4e9778eeb3f8a9f6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep08__stochastic.jsonl": {
+      "bytes": 456031,
+      "sha256": "4627223f278a31bf1e1b8c472926e11d8ceaf9c1dfb70e4a921ddeacb60a417e"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep09__deterministic.jsonl": {
+      "bytes": 157717,
+      "sha256": "37f03915d784281fd1b82a75a3ce3aa176efb74eb3dd7c2f4e9778eeb3f8a9f6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep09__stochastic.jsonl": {
+      "bytes": 418945,
+      "sha256": "03c37d6a9ffbf417c0964ccd9ae54ea192c6b617266ba8b811dc443d2d02cd40"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep10__stochastic.jsonl": {
+      "bytes": 195736,
+      "sha256": "8f7841bf210019ac426ec801e9528f474a040ed230a9797936f58d5815e0409d"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep11__stochastic.jsonl": {
+      "bytes": 431532,
+      "sha256": "c0a25a1995d2d4d7baa3cd7ade911c357a0ef257d2f61a3e130a286c86f6dffa"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep12__stochastic.jsonl": {
+      "bytes": 415258,
+      "sha256": "da8622fbcd0abfc15be979f5b13d7990459fd67390236ff21f2c2bcb9f309f48"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep13__stochastic.jsonl": {
+      "bytes": 407196,
+      "sha256": "2c8fc96356a1fe72724befae7aa3b89d5dbc02e95f0da4d132fa77f7c6a581d5"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__slalom-v1__ep14__stochastic.jsonl": {
+      "bytes": 416862,
+      "sha256": "ec42e2d947748a96982188dffaa63e0b26eef5335e9401d513708e7ce849f331"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep00__stochastic.jsonl": {
+      "bytes": 308437,
+      "sha256": "1dec280ef63fe081bc49b6c586a32a08375871266e30f30efafaabd286ab8ab2"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep01__stochastic.jsonl": {
+      "bytes": 318415,
+      "sha256": "45aaf876242aa64bdbc523a75449f63b2a9c9d7b4d2b9963e1b84e4ac146ad34"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep02__stochastic.jsonl": {
+      "bytes": 295635,
+      "sha256": "df534c101ec6e2ec52c3e0820e62b91202891160918462c9ae8d214d1e2023b3"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep03__stochastic.jsonl": {
+      "bytes": 304402,
+      "sha256": "b94dd90f31175faedb4a162d93c1da4854a40145acc620c4a5996196a2640854"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep04__stochastic.jsonl": {
+      "bytes": 306898,
+      "sha256": "2c8ff3892ac95f88d0460186ecc97ad56f29fb44346fb0b4833d4132f3d7d4a6"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep05__stochastic.jsonl": {
+      "bytes": 294442,
+      "sha256": "2e77833bd546c54b2160b8fa03f5bdd979c3460f525ea4089cfe6fd1d9b8be95"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep06__stochastic.jsonl": {
+      "bytes": 307374,
+      "sha256": "dfdaf3226f018529e0c8ebc83028642e5a734456795dc21bf53ad47bb1a19555"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep07__stochastic.jsonl": {
+      "bytes": 302139,
+      "sha256": "6f8e8abac4bb735657d08df809bffea3ff143de8605b0a3142e6656e07721df4"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep08__stochastic.jsonl": {
+      "bytes": 301346,
+      "sha256": "55514a80e0678197efe8a9c515361e611e47a3cdd02980b5439a68852280da72"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep09__stochastic.jsonl": {
+      "bytes": 289449,
+      "sha256": "a7dad4c6dd88382742b174fb6a83507997f1af2da3a01a3a36cb9e09c3723eba"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep10__stochastic.jsonl": {
+      "bytes": 288672,
+      "sha256": "40ef4299d8d95c2e33b64f82690e1301e20a042315465d69980390339abd0cfa"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep11__stochastic.jsonl": {
+      "bytes": 311035,
+      "sha256": "056b543658c8138418a36e9008eba9515d33391721097666c0694df25512620f"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep12__stochastic.jsonl": {
+      "bytes": 299658,
+      "sha256": "b6c0008767c6d067585386c9c7e94d0d9b07c477c64c44a5b96931e19a0652eb"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep13__stochastic.jsonl": {
+      "bytes": 312318,
+      "sha256": "d59787b5c1d8ee5148307225511ed781773a833318e6d7eadd3941daf048495b"
+    },
+    "archive/training-attempt-v5/parent-selection-baseline/steps/M4-C-seed0-std050-parent__straight-sprint-v1__ep14__stochastic.jsonl": {
+      "bytes": 301359,
+      "sha256": "2084a6e828e08c38f9ed1e80c54c37f0cca2d7396699b53d3c60ac340b378e21"
+    },
+    "archive/training-attempt-v5/preflight/preflight.json": {
+      "bytes": 1218,
+      "sha256": "909fa4b8ed638dfa51a70d284cc94bd1a18260b2c6b6dd94f9a3dfb4aa2d0105"
+    },
+    "archive/training-attempt-v5/training-plan.json": {
+      "bytes": 3102,
+      "sha256": "974e539ae5319f800e6411bf7453612421c96fbd12e631d50629f568636c2945"
+    },
+    "archive/training-attempt-v5/training/checkpoint-69632.zip": {
+      "bytes": 158375,
+      "sha256": "8fdf18451a67da2d040f325b5c5c23cc6d8caca667f167bf4e89f625d43d7051"
+    },
+    "archive/training-attempt-v5/training/training-69632.jsonl": {
+      "bytes": 3900117,
+      "sha256": "52b705f71c7c0b73cda0fd5d6829b30fa4090f5d862960ad498fd1ef135c1889"
+    },
+    "archive/training-attempt-v5/training/training-result.json": {
+      "bytes": 2782,
+      "sha256": "f521252c42b4d93705efb8bea6f4d7cabd37c3aa53cfc1b890b4cd19529702c9"
+    },
+    "prior-stageb/PER-TRACK-SCORECARD.csv": {
+      "bytes": 1661,
+      "sha256": "8b7a96122b352858b31a4de2fc3e81cdb56b5de95d6ea82b575037e0b844568d"
+    },
+    "prior-stageb/SCREENING-DECISION-AND-DIAGNOSIS.md": {
+      "bytes": 6865,
+      "sha256": "2e531ea5e087b71fa8e7676e3e63b4086312ae471359fe476ddd7c113ffffe95"
+    },
+    "prior-stageb/SHA256-MANIFEST.json": {
+      "bytes": 351890,
+      "sha256": "1a4e9f811d0b6131012024cc179c80bfe9a52acb26703fadce98922310f99ffe"
+    },
+    "prior-stageb/stage-b/STAGE-B-REPORT.json": {
+      "bytes": 952119,
+      "sha256": "cc2ad959903b43e4d82a11b2b6d26a17ace06b82c195d205678e9e0348e2e1ff"
+    },
+    "report/FINE-TUNING-CYCLE2-REPORT.md": {
+      "bytes": 4876,
+      "sha256": "92e4962b2e8a57530768dd6fdf53cc81388138db0cadbc761b43ff19f977d175"
+    },
+    "report/INDEPENDENT-AUDIT-REPORT.md": {
+      "bytes": 3324,
+      "sha256": "01cb52a27d6a46670a8a757c5f02392246b587e85dfa770f48af016c4a3e808d"
+    },
+    "report/PARENT-VS-FINETUNED-SCORECARD.md": {
+      "bytes": 1610,
+      "sha256": "2c61f2fe2c1421b1d858f6c101823a19044a59b6825e50310d953622821656c4"
+    },
+    "report/SLALOM-ROOT-CAUSE-REPORT.md": {
+      "bytes": 4482,
+      "sha256": "566c7d3e23038d3eaafa26db305a8c3d88270af1739c1d8f49610d5628060fea"
+    },
+    "source/configs/research/m5-cycle2-c0-slalom-v1.json": {
+      "bytes": 1300,
+      "sha256": "5a1c3c6256b34662a3dc93851114c64f475397d943310caec7f5ebd5f8449b30"
+    },
+    "source/docs/m5-cycle2/C0-BASELINE-LOCK.md": {
+      "bytes": 2355,
+      "sha256": "b37549d05c6d80dd07e0e728f8431d8546823d1ff77dc15a5d5abbc73908e105"
+    },
+    "source/f1rl/learning/algorithms/ppo.py": {
+      "bytes": 21791,
+      "sha256": "70c12df862d42f8d583f6d7aa72323124fbb141bbb0fa9e053628b9561ba536b"
+    },
+    "source/f1rl/local_demo/admission.py": {
+      "bytes": 4690,
+      "sha256": "b68a5e1c6572280e1c696154a8c96d11fcee70dfd148b5376020af7281434ca5"
+    },
+    "source/f1rl/local_demo/m5_cycle2_telemetry.py": {
+      "bytes": 6009,
+      "sha256": "bb9228c89fe8e0bf01ef36b41bd0ae9dc58b7e59d5246a959dbbf35cde2eb835"
+    },
+    "source/f1rl/local_demo/runner.py": {
+      "bytes": 67679,
+      "sha256": "a2120dffa9e7cf3396c6b40f28be366b6bb756da01880fca5ec24b9ca76f8fd5"
+    },
+    "source/scripts/m5_cycle2_diagnostics.py": {
+      "bytes": 10709,
+      "sha256": "8abda71f9d9506359ca11ab931b1e565ca30af0b96344ea3d346ecbd37e7bd13"
+    },
+    "source/scripts/m5_cycle2_evaluate.py": {
+      "bytes": 16619,
+      "sha256": "62c1f864c15646b631f1bc0f6c1c1c1f19bc029f792d99f596fb00a64b756222"
+    },
+    "source/scripts/m5_cycle2_independent_audit.py": {
+      "bytes": 9146,
+      "sha256": "d640e36b80d9a7e1e9a7d8ed7a3831043d24077a1af2abee2cf05ae6889c9c34"
+    },
+    "source/scripts/m5_cycle2_train.py": {
+      "bytes": 12557,
+      "sha256": "3a1691bebecce301ef0197623ea48b961c6c80910b134429a68b6f17443542dc"
+    },
+    "source/scripts/m5_multicandidate_screening.py": {
+      "bytes": 63523,
+      "sha256": "b92565a903dac3e0c3b5cd3823cf68cd6d857367e5cc1c96533075ba3389b19d"
+    },
+    "source/web/package-lock.json": {
+      "bytes": 107464,
+      "sha256": "a051a931cad9a76c0d31e541e83e8353e68cfb6b576d13dfe8691d1aa647c918"
+    },
+    "source/web/package.json": {
+      "bytes": 810,
+      "sha256": "01970a8586a4bad35fc0bcdb2bf1320999cab025f7fe789ed3822a6afa487972"
+    }
+  },
+  "manifest_sha256": "77386042f7f498745b366f54b517ae76f74f380ef76d444c3253741dcb05800d",
+  "owner_request_sha256": "4603be84c780563ae70462cd053113e1c7dd9fd55f7d9cc70a411795d9148fa6",
+  "schema_version": "f1rl_m5_cycle2_sha256_manifest_v1",
+  "scope": {
+    "fresh_roster_audit": "NOT_RUN_NO_ELIGIBLE_WINNER",
+    "heldout_access": false,
+    "scientific_evidence": false,
+    "selected_finetuned_checkpoint": false
+  },
+  "source_provenance": {
+    "evaluation_plan_sha256": "52997b7347fe914991a9d20acd4a6086cfb18f643618da2db11f1b8ac2e9d89b",
+    "execution_bound_files": {
+      "configs/research/m5-cycle2-c0-slalom-v1.json": "5a1c3c6256b34662a3dc93851114c64f475397d943310caec7f5ebd5f8449b30",
+      "f1rl/learning/algorithms/ppo.py": "70c12df862d42f8d583f6d7aa72323124fbb141bbb0fa9e053628b9561ba536b",
+      "f1rl/local_demo/admission.py": "b68a5e1c6572280e1c696154a8c96d11fcee70dfd148b5376020af7281434ca5",
+      "f1rl/local_demo/m5_cycle2_telemetry.py": "bb9228c89fe8e0bf01ef36b41bd0ae9dc58b7e59d5246a959dbbf35cde2eb835",
+      "f1rl/local_demo/runner.py": "a2120dffa9e7cf3396c6b40f28be366b6bb756da01880fca5ec24b9ca76f8fd5",
+      "scripts/m5_cycle2_evaluate.py": "62c1f864c15646b631f1bc0f6c1c1c1f19bc029f792d99f596fb00a64b756222",
+      "scripts/m5_multicandidate_screening.py": "b92565a903dac3e0c3b5cd3823cf68cd6d857367e5cc1c96533075ba3389b19d"
+    },
+    "profile_sha256": "5a1c3c6256b34662a3dc93851114c64f475397d943310caec7f5ebd5f8449b30",
+    "track_asset_sha256": {
+      "left-turn-train-v2": "4ab3d10759b8cebb8e89414e378de04249cf1de59f83fc8fb3804a8c1acabeea",
+      "ramp-v1": "6c0da56966962363ed601c8fda2343006c207ee9ea6497deb72e6f6018721bd3",
+      "right-turn-train-v2": "5f285238821c869fd2e47e95576074b6a1ba1c7c618fa9c30c5b9f89e9103f30",
+      "slalom-v1": "e9dd588740189f7ed857de8e8b8f5eeb99f3161fdb9b8d3fa05d18978cdefa53",
+      "straight-sprint-v1": "9efe209780cfa8358f8622d38bb5d56db30425a57dcebebc16e6e447a10b5f00"
+    },
+    "training_plan_sha256": "42b54a3b854df3811d95da64944bc02936d18eb7eb4c27c652d7bd974b4d0957"
+  }
+}
