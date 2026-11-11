@@ -1,5 +1,7 @@
 # Physics v4 / TRAIN-5 handoff — source branch integration record
 
+> **Historical record (07/11):** For current terminal-penalty implementation, interrupted batch, evidence and working branch, see [TRAIN-5 terminal penalty handoff (11/11)](TRAIN5-TERMINAL-PENALTY-HANDOFF-20261111.md). Current working branch is `fix/physics-v4-handoff-audit`; the target below describes the earlier handoff only.
+
 **Target branch:** `handoff/physics-v4-khanh-bang-20261106`
 
 **Scope:** Implement source-only technical checks and GitHub CI directly on the

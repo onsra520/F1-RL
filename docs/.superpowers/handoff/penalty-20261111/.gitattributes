@@ -1,0 +1,3 @@
+*.json -text -diff
+*.jsonl -text -diff
+*.zip -text -diff

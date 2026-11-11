@@ -1,0 +1,1120 @@
+{
+  "schema": "train5_internal_development_v1",
+  "protocol_sha256": "eefe5ea9338b9e18fbdd2b400d7b3c4a61e4786e61df32254783cf4fff5a5836",
+  "manifest_sha256": "1dfcaab6a1afd1059a4d9ee5266f675c8f8061cfb702af3e2d9fb0b8768fa978",
+  "summary": {
+    "schema": "f1rl_train5_v4_dev_metrics_draft_v1",
+    "input_episode_count": 3600,
+    "complete_cell_count": 60,
+    "distinct_final_checkpoint_count": 6,
+    "final_checkpoint_step": 200704,
+    "nominal_finish_rate": 0.9011111111111111,
+    "finish_rate_all": 0.8986111111111111,
+    "finish_rates_per_track": {
+      "straight-sprint-v1": 0.9986111111111111,
+      "slalom-v1": 0.5041666666666667,
+      "right-turn-train-v2": 0.9986111111111111,
+      "ramp-v1": 0.9930555555555556,
+      "left-turn-train-v2": 0.9986111111111111
+    },
+    "hard_route_violation_rate": 0.011111111111111112,
+    "certified_physical_crash_rate": 0.0875,
+    "tilt_envelope_exit_count": 0,
+    "invalid_or_uncertified_physics_count": 0,
+    "mean_episode_return": 128.94817119938992,
+    "only_train_tracks": true,
+    "no_checkpoint_selection": true,
+    "scientific_training_permission": false,
+    "heldout_permission": false,
+    "failed_metrics": [
+      "per_track_finish_rate",
+      "certified_physical_crash_rate"
+    ],
+    "development_quality_result": "DEVELOPMENT_METRICS_FAIL"
+  },
+  "cells": [
+    {
+      "cohort": "scratch",
+      "replicate": 0,
+      "track_id": "straight-sprint-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 59,
+        "hard_route_violation": 1
+      },
+      "episodes": 60,
+      "finish_rate": 0.9833333333333333,
+      "finish_wilson_95": [
+        0.9114487027240993,
+        0.9970518402052136
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": null
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 0,
+      "track_id": "straight-sprint-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 0,
+      "track_id": "slalom-v1",
+      "condition": "nominal",
+      "counts": {
+        "certified_physical_crash": 34,
+        "finished": 25,
+        "hard_route_violation": 1
+      },
+      "episodes": 60,
+      "finish_rate": 0.4166666666666667,
+      "finish_wilson_95": [
+        0.30064278558341617,
+        0.5427191897735989
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": null
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 0,
+      "track_id": "slalom-v1",
+      "condition": "perturbation",
+      "counts": {
+        "certified_physical_crash": 24,
+        "finished": 34,
+        "hard_route_violation": 2
+      },
+      "episodes": 60,
+      "finish_rate": 0.5666666666666667,
+      "finish_wilson_95": [
+        0.44103438776125564,
+        0.6842760319531324
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": null
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 0,
+      "track_id": "right-turn-train-v2",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 0,
+      "track_id": "right-turn-train-v2",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 0,
+      "track_id": "ramp-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 59,
+        "certified_physical_crash": 1
+      },
+      "episodes": 60,
+      "finish_rate": 0.9833333333333333,
+      "finish_wilson_95": [
+        0.9114487027240993,
+        0.9970518402052136
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 0,
+      "track_id": "ramp-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 58,
+        "certified_physical_crash": 2
+      },
+      "episodes": 60,
+      "finish_rate": 0.9666666666666667,
+      "finish_wilson_95": [
+        0.886362257256914,
+        0.9908106807438021
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 0,
+      "track_id": "left-turn-train-v2",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 0,
+      "track_id": "left-turn-train-v2",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 1,
+      "track_id": "straight-sprint-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 1,
+      "track_id": "straight-sprint-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 1,
+      "track_id": "slalom-v1",
+      "condition": "nominal",
+      "counts": {
+        "hard_route_violation": 9,
+        "finished": 15,
+        "certified_physical_crash": 36
+      },
+      "episodes": 60,
+      "finish_rate": 0.25,
+      "finish_wilson_95": [
+        0.15776522530056675,
+        0.37232070077047824
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": null
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 1,
+      "track_id": "slalom-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 13,
+        "certified_physical_crash": 36,
+        "hard_route_violation": 11
+      },
+      "episodes": 60,
+      "finish_rate": 0.21666666666666667,
+      "finish_wilson_95": [
+        0.13123044048190308,
+        0.33620027573194783
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": null
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 1,
+      "track_id": "right-turn-train-v2",
+      "condition": "nominal",
+      "counts": {
+        "finished": 59,
+        "hard_route_violation": 1
+      },
+      "episodes": 60,
+      "finish_rate": 0.9833333333333333,
+      "finish_wilson_95": [
+        0.9114487027240993,
+        0.9970518402052136
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": null
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 1,
+      "track_id": "right-turn-train-v2",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 1,
+      "track_id": "ramp-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 1,
+      "track_id": "ramp-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 1,
+      "track_id": "left-turn-train-v2",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 1,
+      "track_id": "left-turn-train-v2",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 2,
+      "track_id": "straight-sprint-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 2,
+      "track_id": "straight-sprint-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 2,
+      "track_id": "slalom-v1",
+      "condition": "nominal",
+      "counts": {
+        "certified_physical_crash": 32,
+        "finished": 19,
+        "hard_route_violation": 9
+      },
+      "episodes": 60,
+      "finish_rate": 0.31666666666666665,
+      "finish_wilson_95": [
+        0.21305867552366523,
+        0.44233767026176773
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": null
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 2,
+      "track_id": "slalom-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 22,
+        "certified_physical_crash": 35,
+        "hard_route_violation": 3
+      },
+      "episodes": 60,
+      "finish_rate": 0.36666666666666664,
+      "finish_wilson_95": [
+        0.25620916687225426,
+        0.49316999369896963
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": null
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 2,
+      "track_id": "right-turn-train-v2",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 2,
+      "track_id": "right-turn-train-v2",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 2,
+      "track_id": "ramp-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 59,
+        "certified_physical_crash": 1
+      },
+      "episodes": 60,
+      "finish_rate": 0.9833333333333333,
+      "finish_wilson_95": [
+        0.9114487027240993,
+        0.9970518402052136
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 2,
+      "track_id": "ramp-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 2,
+      "track_id": "left-turn-train-v2",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "scratch",
+      "replicate": 2,
+      "track_id": "left-turn-train-v2",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 0,
+      "track_id": "straight-sprint-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 0,
+      "track_id": "straight-sprint-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 0,
+      "track_id": "slalom-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 47,
+        "certified_physical_crash": 10,
+        "valid_step_limit": 3
+      },
+      "episodes": 60,
+      "finish_rate": 0.7833333333333333,
+      "finish_wilson_95": [
+        0.6637997242680521,
+        0.868769559518097
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 0,
+      "track_id": "slalom-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 40,
+        "certified_physical_crash": 14,
+        "valid_step_limit": 6
+      },
+      "episodes": 60,
+      "finish_rate": 0.6666666666666666,
+      "finish_wilson_95": [
+        0.5405686645211968,
+        0.7727073847647731
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 0,
+      "track_id": "right-turn-train-v2",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 0,
+      "track_id": "right-turn-train-v2",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 0,
+      "track_id": "ramp-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 59,
+        "certified_physical_crash": 1
+      },
+      "episodes": 60,
+      "finish_rate": 0.9833333333333333,
+      "finish_wilson_95": [
+        0.9114487027240993,
+        0.9970518402052136
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 0,
+      "track_id": "ramp-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 0,
+      "track_id": "left-turn-train-v2",
+      "condition": "nominal",
+      "counts": {
+        "finished": 59,
+        "valid_step_limit": 1
+      },
+      "episodes": 60,
+      "finish_rate": 0.9833333333333333,
+      "finish_wilson_95": [
+        0.9114487027240993,
+        0.9970518402052136
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 0,
+      "track_id": "left-turn-train-v2",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 1,
+      "track_id": "straight-sprint-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 1,
+      "track_id": "straight-sprint-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 1,
+      "track_id": "slalom-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 48,
+        "certified_physical_crash": 12
+      },
+      "episodes": 60,
+      "finish_rate": 0.8,
+      "finish_wilson_95": [
+        0.6821819419437211,
+        0.8817149467710251
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 1,
+      "track_id": "slalom-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 44,
+        "certified_physical_crash": 16
+      },
+      "episodes": 60,
+      "finish_rate": 0.7333333333333333,
+      "finish_wilson_95": [
+        0.6099128690331636,
+        0.8286735999671945
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 1,
+      "track_id": "right-turn-train-v2",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 1,
+      "track_id": "right-turn-train-v2",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 1,
+      "track_id": "ramp-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 1,
+      "track_id": "ramp-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 1,
+      "track_id": "left-turn-train-v2",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 1,
+      "track_id": "left-turn-train-v2",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 2,
+      "track_id": "straight-sprint-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 2,
+      "track_id": "straight-sprint-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 2,
+      "track_id": "slalom-v1",
+      "condition": "nominal",
+      "counts": {
+        "certified_physical_crash": 25,
+        "finished": 34,
+        "hard_route_violation": 1
+      },
+      "episodes": 60,
+      "finish_rate": 0.5666666666666667,
+      "finish_wilson_95": [
+        0.44103438776125564,
+        0.6842760319531324
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": null
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 2,
+      "track_id": "slalom-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 22,
+        "certified_physical_crash": 36,
+        "hard_route_violation": 2
+      },
+      "episodes": 60,
+      "finish_rate": 0.36666666666666664,
+      "finish_wilson_95": [
+        0.25620916687225426,
+        0.49316999369896963
+      ],
+      "zero_crash_upper_95": null,
+      "zero_hard_route_upper_95": null
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 2,
+      "track_id": "right-turn-train-v2",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 2,
+      "track_id": "right-turn-train-v2",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 2,
+      "track_id": "ramp-v1",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 2,
+      "track_id": "ramp-v1",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 2,
+      "track_id": "left-turn-train-v2",
+      "condition": "nominal",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    },
+    {
+      "cohort": "frozen_initialization",
+      "replicate": 2,
+      "track_id": "left-turn-train-v2",
+      "condition": "perturbation",
+      "counts": {
+        "finished": 60
+      },
+      "episodes": 60,
+      "finish_rate": 1.0,
+      "finish_wilson_95": [
+        0.93982814785791,
+        0.9999999999999998
+      ],
+      "zero_crash_upper_95": 0.04870291331009746,
+      "zero_hard_route_upper_95": 0.04870291331009746
+    }
+  ],
+  "cohort_policy_summaries": {
+    "scratch": {
+      "policy_finish_rates": [
+        0.8916666666666667,
+        0.845,
+        0.8666666666666667
+      ],
+      "mean": 0.8677777777777779,
+      "range": [
+        0.845,
+        0.8916666666666667
+      ]
+    },
+    "frozen_initialization": {
+      "policy_finish_rates": [
+        0.9416666666666667,
+        0.9533333333333334,
+        0.8933333333333333
+      ],
+      "mean": 0.9294444444444444,
+      "range": [
+        0.8933333333333333,
+        0.9533333333333334
+      ]
+    }
+  },
+  "interval_note": "Conditional descriptive intervals per fixed policy/cell; not independent policies.",
+  "detection_probability_60": {
+    "0.01": 0.4528433576092388,
+    "0.05": 0.953930201013048,
+    "0.1": 0.9982029897000856
+  },
+  "scientific_admission": false,
+  "heldout_evaluated": false
+}

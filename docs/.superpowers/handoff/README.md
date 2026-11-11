@@ -1,5 +1,7 @@
 # Physics v4 handoff evidence
 
+**Cập nhật 11/11/2026:** trang này là handoff lịch sử. Với tình trạng training, evaluation và terminal-penalty mới nhất trên nhánh `fix/physics-v4-handoff-audit`, bắt đầu tại [TRAIN-5 terminal penalty handoff](../TRAIN5-TERMINAL-PENALTY-HANDOFF-20261111.md). Batch penalty trước đã bị gián đoạn và chưa có model hoàn tất.
+
 Read the [draft plan](../PHYSICS-V4-LEFT-TURN-PLAN.md) and [current spec](../PHYSICS-V4-LEFT-TURN-SPEC.md) before implementation. The handoff branch starts at root baseline 2417570f32f6879c2651bce37d88fd6ac83a2ea4; docs may be committed afterward. No implementation changes are included in this handoff preparation.
 
 Historical evidence is copied byte-for-byte into evidence/. Verify every evidence file using evidence/SHA256SUMS. The evidence directory's .gitattributes preserves original bytes across Git checkouts. These files document original runs and may contain machine-specific paths; those paths are provenance, not instructions to use the same directory. Run new diagnostics from a configurable output directory outside the checkout. No HELD-OUT geometry is included.

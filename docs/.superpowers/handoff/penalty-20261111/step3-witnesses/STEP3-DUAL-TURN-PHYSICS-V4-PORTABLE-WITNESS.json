@@ -1,0 +1,108 @@
+{
+  "recorded_at": "2026-11-06T18:38:18.242727+07:00",
+  "verdict": "PASS_TWO_REAL_INDEPENDENT_PHYSICS_V4_FINISHES",
+  "scope": "TRAIN-only engineering feasibility for exact nominal seed/control traces, NOT scientific acceptance",
+  "root": "D:\\F1-RL-PHYSICS-V4-KHANH-BANG-CLEAN-20261106",
+  "full06_or_ppo_training_performed": false,
+  "heldout_geometry_opened": false,
+  "frozen_model_used": false,
+  "physics_modified_for_trials": false,
+  "actual_engine_v4": "spatial_road_edge_partial_lifecycle_v4",
+  "actual_race_v4": "wp7_directed_lifecycle_crash_contract_v4",
+  "crash_terminal_contract": "wp3_physical_crash_terminal_v1",
+  "engineering_factory_origin": "registered owner-v3 physics policy and action settings, actual paired-v2 TRAIN geometry, v4 overlay, nominal reset without training registration",
+  "tape_attempts_per_direction": 1,
+  "cases": {
+    "right": {
+      "source_track": "right-turn-train-v2",
+      "run_id": "right-v2-portable-attempt02",
+      "steps": 497,
+      "checkpoint_sequence": [
+        "checkpoint-0",
+        "checkpoint-1",
+        "finish"
+      ],
+      "crossing_ticks": [
+        [
+          113,
+          "checkpoint-0"
+        ],
+        [
+          311,
+          "checkpoint-1"
+        ],
+        [
+          497,
+          "finish"
+        ]
+      ],
+      "finish_tick": 497,
+      "final_xyz": [
+        80.02902330582849,
+        0.4999981420973607,
+        74.99999999997678
+      ],
+      "final_speed_mps": 2.999999996354741,
+      "record_sha256": "6f7bb46a0ce6aad87edd547c1be1809022db8b24c228990c8cedd295707ac0bd",
+      "control_tape_file_sha256": "2d791721357aa3c61d60f2c099873fc9c697785e07ce84fb0f5225602be7b685",
+      "episode_jsonl_file_sha256": "41865081f1e43eb108ea5001c0f78a5c26d4fa24dacf7c598a2218581a005f2c",
+      "tick_rows_sha256": "afee5ceab327534dfa4eb79690e3133806ff265780d5e886d01486314fabf236",
+      "controller_controls_sha256": "2d791721357aa3c61d60f2c099873fc9c697785e07ce84fb0f5225602be7b685",
+      "replay_exact_match": true,
+      "no_terminal_failure": true,
+      "no_collision_events": true,
+      "all_tick_states_grounded": true,
+      "real_race_outcome": "successful_finish"
+    },
+    "left": {
+      "source_track": "left-turn-train-v2",
+      "run_id": "left-v2-portable-attempt02",
+      "steps": 497,
+      "checkpoint_sequence": [
+        "checkpoint-0",
+        "checkpoint-1",
+        "finish"
+      ],
+      "crossing_ticks": [
+        [
+          113,
+          "checkpoint-0"
+        ],
+        [
+          311,
+          "checkpoint-1"
+        ],
+        [
+          497,
+          "finish"
+        ]
+      ],
+      "finish_tick": 497,
+      "final_xyz": [
+        -80.02902330582849,
+        0.4999981420973607,
+        74.99999999997678
+      ],
+      "final_speed_mps": 2.999999996354741,
+      "record_sha256": "6dea077e3bd4a47a4f8d75309f75b9824496a8dbaaccbca597737e52d0a12004",
+      "control_tape_file_sha256": "74249d9b195ecc03a5116952f6ca3f25a338a2ef200c9cc570c7e83ea1aa457d",
+      "episode_jsonl_file_sha256": "5b5a20ca10fa2d68874107746299e03ef3b3e656739c27ae3bdb810f334a9984",
+      "tick_rows_sha256": "0eae825350e1aaba908207b978657c4bbb2573f0f9d2b1a2525b4118feb8f351",
+      "controller_controls_sha256": "74249d9b195ecc03a5116952f6ca3f25a338a2ef200c9cc570c7e83ea1aa457d",
+      "replay_exact_match": true,
+      "no_terminal_failure": true,
+      "no_collision_events": true,
+      "all_tick_states_grounded": true,
+      "real_race_outcome": "successful_finish"
+    }
+  },
+  "mirror_tolerance_verified_m": 1.7763568394002505e-15,
+  "max_steering_action_symmetry_error": 0.0,
+  "max_speed_mps_difference": 1.3322676295501878e-15,
+  "hard_limitations": [
+    "v2 paired new TRAIN-5 roster not yet admitted/registered as scientific training protocol",
+    "nominal control tape feasibility not PPO success rate or statistical generalization",
+    "this profile has not been tuned/validated against physical-world hardware",
+    "original WP7 optional missing-file regressions remain outside the scoped tests"
+  ]
+}

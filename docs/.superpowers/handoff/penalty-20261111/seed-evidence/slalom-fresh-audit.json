@@ -1,0 +1,250 @@
+[
+  {
+    "cohort": "train5_from_scratch",
+    "condition": "nominal",
+    "environment_seed": 3269579760,
+    "policy_seed": 3314099340,
+    "steps": 96,
+    "reason": "physical_crash",
+    "terminal_hit_ids": [
+      "road-patch:road-main"
+    ],
+    "terminal_collision_reward": 0.0,
+    "terminal_reward": 0.2541578464954327,
+    "observation_max_error": 0.0,
+    "terminal_position": [
+      6.2899120943526885,
+      0.42546737472047225,
+      56.68781033434802
+    ],
+    "last_actions": [
+      {
+        "reward": 0.381124765253835,
+        "collision_component": 0.0,
+        "position": [
+          5.691671704375135,
+          0.49349445775991047,
+          56.01808626315911
+        ],
+        "action": [
+          -1.0,
+          1.0,
+          0.0
+        ]
+      },
+      {
+        "reward": 0.39947453463000016,
+        "collision_component": 0.0,
+        "position": [
+          6.07542333714339,
+          0.45325962862869346,
+          56.42756079778911
+        ],
+        "action": [
+          -1.0,
+          1.0,
+          0.0749870240688324
+        ]
+      },
+      {
+        "reward": 0.2541578464954327,
+        "collision_component": 0.0,
+        "position": [
+          6.2899120943526885,
+          0.42546737472047225,
+          56.68781033434802
+        ],
+        "action": [
+          -1.0,
+          1.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  {
+    "cohort": "train5_from_scratch",
+    "condition": "perturbation",
+    "environment_seed": 4049937932,
+    "policy_seed": 1089461814,
+    "steps": 231,
+    "reason": "physical_crash",
+    "terminal_hit_ids": [
+      "road-patch:road-main"
+    ],
+    "terminal_collision_reward": 0.0,
+    "terminal_reward": 0.1703038278226245,
+    "observation_max_error": 0.0,
+    "terminal_position": [
+      -5.957197575616016,
+      0.43037064394562047,
+      112.79495432237951
+    ],
+    "last_actions": [
+      {
+        "reward": 0.24806983924545079,
+        "collision_component": 0.0,
+        "position": [
+          -5.646070154694566,
+          0.47728653805139637,
+          112.27899617869316
+        ],
+        "action": [
+          1.0,
+          0.8075595498085022,
+          0.0
+        ]
+      },
+      {
+        "reward": 0.2521110212378568,
+        "collision_component": 0.0,
+        "position": [
+          -5.834548226908102,
+          0.45118922972685727,
+          112.5874456727958
+        ],
+        "action": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "reward": 0.1703038278226245,
+        "collision_component": 0.0,
+        "position": [
+          -5.957197575616016,
+          0.43037064394562047,
+          112.79495432237951
+        ],
+        "action": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
+  },
+  {
+    "cohort": "train5_from_frozen_checkpoint",
+    "condition": "nominal",
+    "environment_seed": 3372400564,
+    "policy_seed": 3280278938,
+    "steps": 241,
+    "reason": "finish",
+    "terminal_hit_ids": [],
+    "terminal_collision_reward": 0.0,
+    "terminal_reward": 0.5403652436418148,
+    "observation_max_error": 0.0,
+    "terminal_position": [
+      -0.07246525342823756,
+      0.4984311937831492,
+      124.01349617116624
+    ],
+    "last_actions": [
+      {
+        "reward": 0.5962207120273513,
+        "collision_component": 0.0,
+        "position": [
+          -0.7776008867032363,
+          0.5004870220659284,
+          122.97985845846823
+        ],
+        "action": [
+          -0.5770001411437988,
+          0.3740941286087036,
+          0.0
+        ]
+      },
+      {
+        "reward": 0.5829326074991934,
+        "collision_component": 0.0,
+        "position": [
+          -0.43825906710691365,
+          0.49847437078540774,
+          123.51353542403726
+        ],
+        "action": [
+          0.5295674204826355,
+          1.0,
+          0.0
+        ]
+      },
+      {
+        "reward": 0.5403652436418148,
+        "collision_component": 0.0,
+        "position": [
+          -0.07246525342823756,
+          0.4984311937831492,
+          124.01349617116624
+        ],
+        "action": [
+          1.0,
+          0.440487265586853,
+          0.0
+        ]
+      }
+    ]
+  },
+  {
+    "cohort": "train5_from_frozen_checkpoint",
+    "condition": "perturbation",
+    "environment_seed": 314436262,
+    "policy_seed": 1812302900,
+    "steps": 247,
+    "reason": "finish",
+    "terminal_hit_ids": [],
+    "terminal_collision_reward": 0.0,
+    "terminal_reward": 0.5267605809666269,
+    "observation_max_error": 0.0,
+    "terminal_position": [
+      0.010625538494251153,
+      0.49741250120867736,
+      124.08480838313747
+    ],
+    "last_actions": [
+      {
+        "reward": 0.6121221444488805,
+        "collision_component": 0.0,
+        "position": [
+          -0.09912610064469944,
+          0.4993416625968691,
+          122.84848375455643
+        ],
+        "action": [
+          -1.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "reward": 0.6013426070405978,
+        "collision_component": 0.0,
+        "position": [
+          -0.04891618080629805,
+          0.4992174098161223,
+          123.46294549001706
+        ],
+        "action": [
+          -0.37324947118759155,
+          1.0,
+          0.0
+        ]
+      },
+      {
+        "reward": 0.5267605809666269,
+        "collision_component": 0.0,
+        "position": [
+          0.010625538494251153,
+          0.49741250120867736,
+          124.08480838313747
+        ],
+        "action": [
+          0.41669514775276184,
+          0.6712337732315063,
+          0.0
+        ]
+      }
+    ]
+  }
+]
