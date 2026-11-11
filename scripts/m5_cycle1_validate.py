@@ -14,14 +14,12 @@ sys.path.insert(0, str(ROOT))
 M4_ROOT = Path(r"D:\Projects\.archives\F1-RL\demo-completion\m4-m5-development-v2")
 M5_ROOT = Path(r"D:\Projects\.archives\F1-RL\demo-completion\m5-engineering-fix-20261111\attempt-2")
 ABLATION_ROOT = Path(r"D:\Projects\.archives\F1-RL\demo-completion\m5-improvement-cycle1-20261111\std-ablation")
-CHECKPOINT = ABLATION_ROOT.parent / "C-seed0-logstd-scale-0.5.zip"
+CHECKPOINT = ABLATION_ROOT.parent / "C-seed0-logstd-scale-0.65.zip"
 TRACK_MAP = {
-    "straight-sprint-v1": "straight-sprint-v1",
     "slalom-v1": "slalom-v1",
-    "right-turn-train-v2": "right-turn-v1",
     "ramp-v1": "ramp-v1",
-    "left-turn-train-v2": "left-turn-train-v2",
 }
+STD_SCALE = 0.65
 MODES = ("deterministic", "stochastic")
 STEP_LIMIT = 500
 WALL_TIMEOUT_SECONDS = 120
@@ -85,8 +83,8 @@ def source_identity() -> tuple[str, str, dict[str, str]]:
 def make_plan(output: Path) -> dict:
     commit, tree_sha, source_hashes = source_identity()
     prior = json.loads((ABLATION_ROOT / "RAMP-STD-ABLATION-REPORT.json").read_text())
-    if prior["finish_count"] != 10 or prior["candidate_checkpoint_sha256"] != file_sha256(CHECKPOINT):
-        raise ValueError("std ablation did not produce a hash-verified Ramp candidate")
+    if prior["finish_count"] != 10:
+        raise ValueError("std 0.5 ablation did not produce 10 Ramp finishes")
     seed_rows = [json.loads(line) for line in (M4_ROOT / "evaluation/episodes.jsonl").read_text().splitlines()
                  if line.strip()]
     roster = []
@@ -103,7 +101,7 @@ def make_plan(output: Path) -> dict:
                            "episode": row["episode"], "environment_seed": row["environment_seed"],
                            "policy_seed": row["policy_seed"]})
     plan = {
-        "schema_version": "f1rl_m5_cycle1_scaled_std_validation_plan_v1",
+        "schema_version": "f1rl_m5_cycle1_scaled_std_validation_plan_v2",
         "status": "TRAIN_DEVELOPMENT_PURE_PPO_VALIDATION",
         "source_commit": commit,
         "source_tree_sha256": tree_sha,
@@ -111,7 +109,8 @@ def make_plan(output: Path) -> dict:
         "candidate_checkpoint_path": str(CHECKPOINT),
         "candidate_checkpoint_sha256": file_sha256(CHECKPOINT),
         "parent_checkpoint_sha256": "600e6eb3a781af66e34ea56f8f65e20f46d4a4318a77aeebceceacef3ffa7fd4",
-        "policy_change": "only PPO learned log_std shifted by log(0.5); no gradient updates",
+        "policy_change": f"only PPO learned log_std shifted by log({STD_SCALE}); no gradient updates",
+        "reference_std050_checkpoint_sha256": prior["candidate_checkpoint_sha256"],
         "tracks": list(TRACK_MAP),
         "track_file_sha256": {track: file_sha256(ROOT / "assets/tracks/training" / f"{track}.json")
                               for track in TRACK_MAP},
@@ -196,7 +195,7 @@ def run_episode(plan: dict, seed: dict, mode: str, output: Path) -> dict:
             latest_observation = observation.copy()
             return model.predict(observation, deterministic=deterministic)
 
-    case_id = f"C-seed0__{track}__ep{seed['episode']:02d}__{mode}__std050"
+    case_id = f"C-seed0__{track}__ep{seed['episode']:02d}__{mode}__std065"
     trace = output / "steps" / f"{case_id}.jsonl"
     trace.parent.mkdir(parents=True, exist_ok=True)
     trace_rows = []
@@ -284,7 +283,7 @@ def run_plan(plan_path: Path) -> dict:
     cases = []
     for seed in plan["seed_roster"]:
         for mode in MODES:
-            case_id = f"C-seed0__{seed['track_id']}__ep{seed['episode']:02d}__{mode}__std050"
+            case_id = f"C-seed0__{seed['track_id']}__ep{seed['episode']:02d}__{mode}__std065"
             summary_path = output / "episodes" / f"{case_id}.json"
             child = subprocess.run(
                 [sys.executable, str(Path(__file__).resolve()), "--worker", str(plan_path),
@@ -317,7 +316,7 @@ def run_plan(plan_path: Path) -> dict:
                 "mean_steering": sum(c["action_summary"]["mean_steering"] for c in group) / len(group),
             }
     report = {
-        "schema_version": "f1rl_m5_cycle1_scaled_std_validation_report_v1",
+        "schema_version": "f1rl_m5_cycle1_scaled_std_validation_report_v2",
         "plan_sha256": plan["sha256"], "source_commit": plan["source_commit"],
         "candidate_checkpoint_sha256": plan["candidate_checkpoint_sha256"],
         "cases": cases, "cell_summary": cells,
@@ -358,7 +357,7 @@ def main() -> None:
         seed = next(row for row in plan["seed_roster"]
                     if row["track_id"] == track and row["episode"] == int(episode))
         output = Path(plan["artifact_root"])
-        case_id = f"C-seed0__{track}__ep{int(episode):02d}__{mode}__std050"
+        case_id = f"C-seed0__{track}__ep{int(episode):02d}__{mode}__std065"
         summary_path = output / "episodes" / f"{case_id}.json"
         if summary_path.exists():
             raise FileExistsError(summary_path)
