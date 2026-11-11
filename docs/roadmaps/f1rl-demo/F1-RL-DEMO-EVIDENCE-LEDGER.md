@@ -112,6 +112,12 @@
 - Active-workload budget charge: this bounded real benchmark took **102.765s**, bringing the provisional cumulative total from 1,263.031s to **1,365.796s / 86,400s**; **85,034.204s remain**. No PPO training/smoke/evaluation workload occurred.
 - **Evidence root:** `D:\Projects\.archives\F1-RL\demo-completion\m1-hardening-20261111`. `SHA256SUMS.json` inventories 16 source/config files and 12 output artifacts; SHA-256 `0330c4cc74b87ef7e43a317fa6f1c003da3e5a3abc47e5b66404742f89027628`. Evidence summary SHA-256 `18e12e033c4d4d992e4f314901dc7fc6ddfa22521ec641b3f481ab8271023bcd`.
 
+### 0.3 M1 evidence custody recheck (2026-11-11)
+
+- Rechecked the execution base against `git rev-parse`: `8e7b99c4d462bdbfdf6d010e068404e03e717a08` is present in the current feature branch history; current branch HEAD is later and includes downstream documentation commits.
+- Recomputed SHA-256 for every path in `m1-hardening-20261111/SHA256SUMS.json`: all 16 source/config entries and all 12 artifact entries match. Inventory SHA-256 remains `0330c4cc74b87ef7e43a317fa6f1c003da3e5a3abc47e5b66404742f89027628`.
+- Archived logs confirm the recorded M1 PASS results. This was an evidence-integrity check; M1 tests/build were not rerun during this closeout. No M2 gate was started as part of this closeout.
+
 ## 3. Milestone evidence register (append/update only with provenance)
 
 | Gate | State | Minimum evidence to link | Actual source SHA | Attempt(s) | Verified by |

@@ -189,6 +189,24 @@ NEXT_SAFE_COMMAND: from the clean feature branch, set `PYTHONPATH` to `D:\Projec
 OWNER_APPROVAL_NEEDED: none for M2 reuse or bounded M3 rerun; stop before M6, HELD-OUT, or main merge
 ```
 
+## 11. M1 final hardening closeout (2026-11-11)
+
+```text
+STATUS: M1 PASS / READY_FOR_M2 (engineering gate only)
+TASK_SCOPE: Final M1 hardening; no M2/PPO work authorized or started by this closeout
+EXECUTION_BASE: 8e7b99c4d462bdbfdf6d010e068404e03e717a08
+CURRENT_BRANCH_HEAD_AT_CLOSEOUT: 50c76513f1225463c24bc97aa9b1d7fae4e2b65e
+BRANCH: feat/f1rl-demo-completion
+WORKTREE: D:\Projects\.worktrees\F1-RL\f1rl-demo-completion
+M1_EVIDENCE_ROOT: D:\Projects\.archives\F1-RL\demo-completion\m1-hardening-20261111
+M1_SHA256_INVENTORY: 0330c4cc74b87ef7e43a317fa6f1c003da3e5a3abc47e5b66404742f89027628
+LAST_GATE: M1 PASS. Geometry/reference finishes, bounded API/WebSocket E2E, Python and Physics V4/PPO contract regressions, web tests/build, and controlled low-load V5 benchmark are evidenced in the ledger. Fresh custody check matched all 16 source/config and 12 output hashes. No M1 test was rerun during this documentation-only closeout.
+SCOPE_NOTE: A sequential M3 benchmark process was already running when this closeout began. It was stopped to honor the request to end at M1; partial attempt artifacts were preserved at D:\Projects\.archives\F1-RL\demo-completion\m3-real-benchmark-20261111\sequential-20261110T231718Z-24ff8728. Treat that attempt as incomplete; it is not M1 evidence or an accepted benchmark.
+NEXT_SAFE_ACTION: None within this M1 task. Stop here.
+HELD_OUT: SEALED
+MAIN_MERGE: NOT PERFORMED
+```
+
 ## 9. Final handoff at initial document creation (historical)
 
 - **Next action:** M0 reconnaissance; do not start C0 full-length training yet.
