@@ -4,6 +4,7 @@
 - Repo local: `D:\REL301m\F1-RL` (remote `onsra520/F1-RL`).
 - Nhánh gốc: `fix/physics-v4-handoff-audit` @ `21a37dd` (CI Windows + Linux đã đạt, run 42936763142).
 - Nhánh làm việc mới: `kiet/physics-v4-penalty-rerun` (tách từ `21a37dd`).
+- **Cập nhật 11/11 (sau khi A1 dừng):** `origin/fix/physics-v4-handoff-audit` đã có commit `224d6ff` (Khánh Băng, đổi DOMAIN sang `-v2`). Nhánh `kiet/...` được rebase lên `224d6ff`. Nền thực tế là `224d6ff`. Các bước B1-B5 đã được `224d6ff` thay thế, không làm lại. Chỉ làm B6, B7, G2-2 đến G2-5 và các bước sau, theo chỉ đạo của Kiệt.
 - Tài liệu canonical phải đọc trước: `docs/.superpowers/TRAIN5-TERMINAL-PENALTY-HANDOFF-20261111.md`.
 - Bản plan này được commit tại `docs/.superpowers/PLAN-TRAIN5-PENALTY-RERUN-KIET-20261111.md` trên nhánh `kiet/physics-v4-penalty-rerun` để owner đọc và duyệt Gate G2. Commit xong trước khi chạy `prepare`.
 

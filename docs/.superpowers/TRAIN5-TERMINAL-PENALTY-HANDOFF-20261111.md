@@ -59,3 +59,14 @@ python -B -m scripts.wp7_penalty_trial_cli execute --packet <NEW_PACKET.json> --
 ```
 
 `sign` hiển thị scope, yêu cầu người giữ key gõ `DONG Y TRAIN5 PENALTY` và nhập passphrase tại terminal; không gửi passphrase qua chat. `execute` kiểm tra chữ ký và tạo output độc quyền, sau đó lần lượt 12 lượt rồi đánh giá 7.200 episode. Dùng log process và `trial-journal.jsonl` để theo dõi; `training-result.json` chỉ có sau 12 lượt, `paired-evaluation-journal.jsonl` và `paired-evaluation-result.json` thuộc bước sau. Kiểm tra model hash, số bước và ba checkpoint gốc; không tuyên bố thành công chỉ vì process bắt đầu. Khi có kết quả, báo cáo cả điểm không đạt và những giới hạn ở trên.
+
+## Cập nhật 11/11 - Kiệt tiếp nhận
+
+- Nhánh làm việc: `kiet/physics-v4-penalty-rerun`. Nền: `origin/fix/physics-v4-handoff-audit` @ `224d6ff` (Khánh Băng, "Use fresh seed domain after interrupted trial"). Nền ban đầu `21a37dd` đã được rebase lên `224d6ff`.
+- Quyết định seed: dùng `DOMAIN = F1RL-TERMINAL-PENALTY-TRIAL-20261111-v2` theo `224d6ff`, có test đối chiếu với seed v1. Domain v1 coi như đã tiêu thụ, kể cả phần chưa chạy. Lý do: giữ ghép cặp baseline/penalty sạch. Lượt `baseline/train5_from_scratch/0` của v1 đã `started` và không hoàn tất. Plan bước B1-B5 đã được `224d6ff` thay thế; không sửa thêm `scripts/wp7_penalty_trial_protocol.py`.
+- Test `test_wp7_penalty_trial_fake_batch.py` cần bản sao byte của `penalty-20261111/step3-witnesses/` đặt ngoài checkout tại `D:\F1-RL-PHYSICS-V4-EVIDENCE-20261106`. Sau khi copy, test pass. Đây là điều kiện chạy môi trường, không phải thay đổi test.
+- CI: workflow thêm nhánh `kiet/physics-v4-penalty-rerun` vào `on.push` và danh sách cho phép. Pin hash trong `configs/research/wp7-train5-v4-run-manifest-review-draft.json` được cập nhật đúng hai mục: owner-key và workflow.
+- Ủy quyền (phương án B): Owner Onsra (Tiến) chọn phương án B, Kiệt chuyển lại từ Zalo ngày 11/11/2026. Agent không tự xác minh được phản hồi này. Phạm vi: chỉ thay `owner_public_key_hex` trong `configs/research/wp7-train5-internal-owner-key-v1.json`, chỉ có hiệu lực trên nhánh `kiet/...`. File key này cũng là key của luồng batch/development v4 cũ, nên trên nhánh này key của Kiệt thay owner ở các luồng đó. Plan này chỉ chạy penalty trial.
+- Key đã đăng ký: fingerprint OpenSSH `SHA256:1l21uIA631AsYG64A72A7psS1YhJRh5XQhOksYO9Vpo`, `owner_public_key_hex` `222be74baeba66d5c7f6c076acca16a2b04a31da71bf271b3bc18a6d5f34c8bc`. Key cũ của owner có fingerprint `SHA256:6S0rHCQyWkbb/aV+GyxpAm4nSjDPbtdmD7Eh9CYZrVY` được thay trên nhánh này.
+- Người duyệt phương án B: Tiến (Onsra), chuyển lại qua Kiệt. Dấu vết ngoài repo (ảnh chụp Zalo hoặc comment của Tiến) chưa có trong tài liệu này; cần bổ sung.
+- Giới hạn còn nguyên: non-use toàn cục của seed v2 chưa được chứng minh; chưa có review độc lập; chưa HELD-OUT; không tuyên bố ý nghĩa thống kê với 3 replicate. Đây là đánh giá nội bộ trên TRAIN.
