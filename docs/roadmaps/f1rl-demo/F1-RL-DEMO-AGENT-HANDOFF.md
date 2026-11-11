@@ -260,3 +260,28 @@ BLOCKERS: source-lock anchor drift in test_right_turn_train_v2_design; owner rev
 NEXT_SAFE_COMMAND: review M5-DIAGNOSIS-REPORT.md and the Cycle 1 acceptance proposal; do not start training until design/roster scope is approved
 OWNER_APPROVAL_NEEDED: approve V3 design and M5 candidate-roster treatment before Cycle 1 workload; no main merge requested
 ```
+
+## 14. M5 final hardening handoff (2026-11-11)
+
+```text
+STATUS: M5_ENGINEERING_FIX_PASS / M5_CANDIDATE_NOT_ACCEPTED
+BRANCH: feat/f1rl-demo-completion
+CODE_COMMIT: d34a58341c55540d37d8743621be5cc2b4154bec
+PORTABLE_SOURCE_REVISION: V2, anchor d34a58341c55540d37d8743621be5cc2b4154bec; 44/44 source locks PASS
+PORTABLE_V1: preserved; frozen historical registration unchanged
+STEP3_WITNESS: restored archive source-witnesses-6e30ebd7; source commit 6e30ebd78b010d3f20d120b936c0283eab6ca78a; 4/4 hashes and provenance PASS
+RIGHT_TURN_V2_PURE_PPO: 10/10 deterministic, 10/10 stochastic; diagnostics only; zero collision/timeout
+RAMP_V1_PURE_PPO: deterministic 10/10 identical trajectories (not robustness); stochastic 1/10; 9/10 500-step simulation limits; zero collision/wall timeout
+RAMP_STOCHASTIC_CAUSE: throttle/brake overlap >0.05 on 13.4% of steps; mean speed 2.445m/s; action SD throttle/brake/steering 0.406/0.216/0.677; evidence consistent with slow progress, not sole-cause proof
+AUTO_DRIVE_RIGHT_LANE: offset capped 3.5m within 4m route corridor; focused 51 tests PASS; not PPO evidence
+TESTS: source/M5 6 PASS; Auto Drive 51 PASS; Physics V4/PPO 156 PASS; source locks 44/44; STEP3 witnesses 4/4
+PLAN_FILE_SHA256: db1cc1694b766fb1e92bf16892c9c5978f79cb4aa3dcfe3d2f05b3592070024e
+REPORT_FILE_SHA256: c57d78397e424f6a62d2b696c5124569c508bab4333338a782d613221f6586b9
+SHA256_MANIFEST: 42685f135ed1f6d74dddd4fc5bd4a0327ba3984937999d450c411a2c229f3bc6
+EVIDENCE_ROOT: D:\Projects\.archives\F1-RL\demo-completion\m5-engineering-fix-20261111\final-hardening
+IMPROVEMENT_CYCLE_1: proposed only; no training. First action: non-training throttle/brake and Ramp-progress ablation; then submit a versioned single-change plan for review/authorization.
+HELD_OUT: SEALED
+M2_M3_RERUN / PPO_TRAINING / M6_PLUS / U_TURN: NOT RUN
+MAIN_MERGE: NOT PERFORMED
+NEXT: finish final diff/test/hash review; commit and push feature branch only
+```

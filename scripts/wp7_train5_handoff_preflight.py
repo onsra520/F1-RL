@@ -189,10 +189,12 @@ def audit(root: Path, evidence_root: Path | None = None) -> dict:
              "registered historical source baseline does not descend from its pinned anchor")
     head = _git(root, "rev-parse", "HEAD")
     _require(head.returncode == 0, "unable to identify Git HEAD")
-    from f1rl.research.wp7_train5_v2_protocol import Train5PreflightError, validate_preview
+    from f1rl.research.wp7_train5_v2_protocol import (
+        REGISTRATION, Train5PreflightError, validate_preview,
+    )
     try:
         active = validate_preview(root,
-            registration_file=root/"configs/research/wp7-train5-paired-v2-portable-source-revision-v1.json",
+            registration_file=root/REGISTRATION,
             evidence_root=root, check_evidence=False)
     except Train5PreflightError as error:
         raise HandoffPreflightError(str(error)) from error
