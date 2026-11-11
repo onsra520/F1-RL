@@ -51,12 +51,13 @@ class M5Cycle2Telemetry:
         track_id = info.get("track_id")
         if track_id not in self.track_exposure:
             raise ValueError(f"M5 cycle sampled an unregistered track: {track_id}")
-        action = np.asarray(actions)[0].astype(float).tolist()
-        mapped = map_policy_action(BrakingPolicyAction(*action))
+        raw_action = np.asarray(actions)[0].astype(float).tolist()
+        action_sent = np.asarray(locals_.get("clipped_actions", actions))[0].astype(float).tolist()
+        mapped = map_policy_action(BrakingPolicyAction(*action_sent))
         applied_action = {"steering": float(mapped.steering), "throttle": float(mapped.throttle),
                           "brake": float(mapped.brake)}
-        if not np.allclose(action, list(applied_action.values()), atol=1e-7, rtol=0):
-            raise ValueError("Cycle 2 PPO action does not match the registered action mapper")
+        if not np.allclose(action_sent, list(applied_action.values()), atol=1e-7, rtol=0):
+            raise ValueError("Cycle 2 environment action does not match the registered action mapper")
         observation = np.asarray(observations)[0].astype(float).tolist()
         reward = float(np.asarray(rewards)[0])
         done = bool(np.asarray(dones)[0])
@@ -65,7 +66,9 @@ class M5Cycle2Telemetry:
         self._write({"event_type": "transition", "run_id": self.run_id,
                      "chunk_timestep": self.steps, "global_timestep": int(model.num_timesteps),
                      "track_id": track_id, "observation": observation,
-                     "raw_ppo_action": action, "applied_action": applied_action,
+                     "raw_ppo_action": raw_action,
+                     "action_sent_to_environment": action_sent,
+                     "applied_action": applied_action,
                      "reward": reward, "done": done,
                      "reward_components": info.get("reward_components", {}),
                      "next_checkpoint_index": info.get("next_checkpoint_index"),

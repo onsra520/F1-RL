@@ -16,12 +16,17 @@ class FakeModel:
         return {"finite": True, "nonzero_gradient_elements": 3}
 
 
-def _locals(track="slalom-v1"):
+def _locals(track="slalom-v1", raw_action=None, action_sent=None):
+    if raw_action is None:
+        raw_action = [0.2, 0.7, 0.0]
+    if action_sent is None:
+        action_sent = raw_action
     return {
         "infos": [{"track_id": track, "reward_components": {"route_progress": 1.0},
                    "race": {"next_checkpoint_index": 2},
                    "telemetry": {"obstacle_hit_ids": []}}],
-        "actions": np.array([[0.2, 0.7, 0.0]], dtype=np.float32),
+        "actions": np.array([raw_action], dtype=np.float32),
+        "clipped_actions": np.array([action_sent], dtype=np.float32),
         "obs": np.zeros((1, 16), dtype=np.float32),
         "rewards": np.array([1.0], dtype=np.float32),
         "dones": np.array([False]),
@@ -57,3 +62,19 @@ def test_cycle2_telemetry_rejects_unregistered_track(tmp_path):
     with pytest.raises(ValueError, match="unregistered track"):
         observer.on_step(_locals("right-turn-v1"), FakeModel())
     observer._stream.close()
+
+
+def test_cycle2_telemetry_preserves_raw_and_environment_clipped_actions(tmp_path):
+    path = tmp_path / "training.jsonl"
+    observer = M5Cycle2Telemetry(path, run_id="run-3", expected_steps=1)
+    model = FakeModel()
+    observer.on_training_start(model, total_timesteps=1, n_envs=1)
+    observer.on_step(_locals(raw_action=[1.2, 1.4, -0.2], action_sent=[1.0, 1.0, 0.0]), model)
+    observer.on_optimizer_step()
+    observer.on_update(model)
+    observer.close()
+    transition = next(json.loads(line) for line in path.read_text().splitlines()
+                      if '"transition"' in line)
+    assert transition["raw_ppo_action"] == [1.2000000476837158, 1.399999976158142, -0.20000000298023224]
+    assert transition["action_sent_to_environment"] == [1.0, 1.0, 0.0]
+    assert transition["applied_action"] == {"steering": 1.0, "throttle": 1.0, "brake": 0.0}
