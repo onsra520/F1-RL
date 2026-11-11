@@ -43,7 +43,7 @@ Các giới hạn không mất đi: 15 log GitHub lịch sử và replay C2 lị
 
 ## Chuẩn bị trên máy người tiếp nhận
 
-Từ repo root, tạo môi trường Python tương thích, cài `pip install -e ".[dev]" bcrypt` (bcrypt cần để đọc khóa OpenSSH có passphrase). Bảo đảm `git status --short` sạch. Kiểm tra file trong `handoff/penalty-20261111/SHA256SUMS` theo byte, đặc biệt bốn witness và ba checkpoint gốc theo `configs/research/wp7-train5-paired-v2-registration.json` / `wp7_train5_v4_checkpoint.py`.
+Từ repo root, tạo môi trường Python 3.11 trở lên và cài trực tiếp các phụ thuộc bằng `python -m pip install "gymnasium>=1.3,<2" "numpy>=2,<3" "cryptography>=50.0.2,<51" "pytest>=8,<10" "stable-baselines3>=2.9,<2.10" "PyYAML>=6,<7" bcrypt` (bcrypt cần để đọc khóa OpenSSH có passphrase). Chạy các lệnh Python từ repo root; hiện không dùng `pip install -e .` vì `pyproject.toml` tham chiếu README.md ở root nhưng file đó không có trong checkout. Bảo đảm `git status --short` sạch. Kiểm tra file trong `handoff/penalty-20261111/SHA256SUMS` theo byte, đặc biệt bốn witness và ba checkpoint gốc theo `configs/research/wp7-train5-paired-v2-registration.json` / `wp7_train5_v4_checkpoint.py`.
 
 Implementation hiện tìm hai tệp seed evidence **ngoài checkout tại thư mục cha**. Sao chép byte nguyên vẹn, không sửa nội dung:
 
