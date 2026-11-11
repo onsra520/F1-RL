@@ -48,23 +48,38 @@ B5. Test (thêm vào `tests/research/test_wp7_penalty_trial_protocol.py`, file n
     - cụ thể seed của lượt bị gián đoạn (`train5_from_scratch`, replicate 0, 3 role + 8 rank ppo, domain v1) không xuất hiện trong proposal;
     - các assert cũ (12 lượt, 2.408.448 bước, 3.600 hàng, 7.200 episode) vẫn đúng.
 B6. CI: workflow chỉ chạy trên 2 nhánh cũ và có bước chặn tên nhánh. Thêm `kiet/physics-v4-penalty-rerun` vào `on.push.branches` và vào `case` của bước "Enforce candidate branch". Không đổi gì khác trong workflow.
-    Rủi ro cần kiểm tra: `scripts/wp7_train5_handoff_preflight.py` ghim 44 blob và các manifest review ghim hash source. Nếu workflow hoặc file protocol nằm trong danh sách ghim thì preflight sẽ fail - khi đó DỪNG và báo, không tự sửa pin.
+    Đã xác minh: file workflow bị ghim hash trong `configs/research/wp7-train5-v4-run-manifest-review-draft.json`, nên sửa workflow bắt buộc phải cập nhật mục hash tương ứng theo G2-3. Pin khác fail thì DỪNG và báo.
 B7. Tài liệu: thêm mục "Cập nhật 11/11 - Kiệt tiếp nhận" vào `TRAIN5-TERMINAL-PENALTY-HANDOFF-20261111.md`, nêu rõ:
     - nhánh `kiet/physics-v4-penalty-rerun`, tách từ `21a37dd`;
     - quyết định seed: bỏ toàn bộ domain v1 (coi như đã tiêu thụ, kể cả phần chưa chạy), dùng v2, lý do là giữ ghép cặp baseline/penalty sạch; lượt `baseline/train5_from_scratch/0` của v1 đã `started` và không hoàn tất;
     - giới hạn giữ nguyên: non-use toàn cục của seed mới chưa được chứng minh, chưa có review độc lập, chưa HELD-OUT;
-    - cách ủy quyền thực tế đã dùng (điền sau Gate G2).
+    - cách ủy quyền: phương án B, chi tiết theo G2-5.
 B8. Chạy lại toàn bộ test như A6. Commit (1 commit code+test+workflow, 1 commit docs), push nhánh `kiet/...`, chờ CI xanh trên đúng HEAD. Ghi lại SHA.
 
-## 3. Gate G2 - Ủy quyền chạy (DỪNG ở đây, chờ Kiệt xác nhận)
+## 3. Gate G2 - Ủy quyền chạy: ĐÃ CHỌN PHƯƠNG ÁN B (11/11/2026)
 
-Lệnh `sign` chỉ nhận private key khớp `configs/research/wp7-train5-internal-owner-key-v1.json` (key của owner Onsra). Guard này do owner đặt; tài liệu bàn giao ghi "Không bỏ qua guard". Agent không được gỡ hoặc vô hiệu hóa nó. Hai đường hợp lệ, đều chỉ cần owner trả lời một lần:
+Owner Onsra (Tiến) đã trả lời chọn B: cho phép ghi public key của Kiệt vào file owner-key trên nhánh `kiet/physics-v4-penalty-rerun` để Kiệt tự ký. Phản hồi này do Kiệt chuyển lại từ Zalo ngày 11/11/2026; agent không tự xác minh được, nên tài liệu bàn giao phải ghi đúng như vậy (ai duyệt, kênh nào, ngày nào, do ai chuyển lại). Phương án A (Onsra ký từ xa) không dùng nữa.
 
-- G2-A (ưu tiên, không đổi code): Kiệt chạy `prepare` tạo `plan.json`, gửi cho Onsra. Onsra checkout đúng commit, đặt 2 file seed evidence ở thư mục cha, chạy `sign`, gửi lại `packet.json`. Điều kiện: chuỗi `output_root` trong plan phải resolve giống nhau trên hai máy (cùng ổ đĩa, đường dẫn tuyệt đối Windows) và chưa tồn tại trên máy Onsra. Packet hết hạn sau 168 giờ.
-- G2-B (nếu Onsra không ký kịp): Onsra xác nhận bằng văn bản (chat nhóm hoặc comment trên commit) cho phép ghi public key Ed25519 của Kiệt vào file owner-key TRÊN NHÁNH `kiet/...`. Khi đó: Kiệt tự tạo cặp khóa có passphrase, agent chỉ thay `owner_public_key_hex`, chạy lại test + CI, ghi rõ trong tài liệu bàn giao ai duyệt và khi nào. Agent không bao giờ đọc, nhận hay lưu private key và passphrase.
-  Rủi ro G2-B: các manifest review v4 ghim hash file owner-key; đổi file có thể làm fail test/preflight. Fail thì dừng, báo.
+Phạm vi của phê duyệt - không nới rộng:
+- Chỉ thay GIÁ TRỊ `owner_public_key_hex` trong `configs/research/wp7-train5-internal-owner-key-v1.json`. Không sửa, không gỡ code guard/chữ ký/capability; quy tắc cứng 3 giữ nguyên.
+- Chỉ có hiệu lực trên nhánh `kiet/...`. Không merge thay đổi key này về `fix/physics-v4-handoff-audit` hay nhánh khác nếu owner chưa duyệt riêng.
+- Lưu ý phải ghi trong tài liệu bàn giao: file key này cũng là key của luồng batch/development v4 cũ, nên trên nhánh này key của Kiệt thay owner ở cả các luồng đó. Plan này chỉ chạy penalty trial, không chạy lại luồng v4 cũ.
 
-Không có xác nhận của owner thì không sang Phase C. Phase A, B vẫn làm trọn để không mất thời gian.
+Các bước:
+G2-1. (Kiệt tự làm, agent KHÔNG làm) Tạo cặp khóa Ed25519 có passphrase, NGOÀI checkout:
+      `ssh-keygen -t ed25519 -f D:\REL301m\keys\f1rl-kiet-ed25519 -C "kiet f1rl penalty trial"`
+      Agent không bao giờ mở file private key, không nhận passphrase qua chat, không ghi chúng vào log hay repo.
+G2-2. Agent chỉ đọc file `.pub`, lấy 32 byte raw của public key (base64-decode trường thứ hai, lấy 32 byte cuối), ghi dạng hex vào `owner_public_key_hex`. Giữ nguyên schema và 2 khóa JSON của file.
+G2-3. Re-pin có kiểm soát. File owner-key và file workflow đều bị ghim hash trong `configs/research/wp7-train5-v4-run-manifest-review-draft.json` (`review_source_bindings`, hash SHA-256 sau khi chuẩn hóa CRLF thành LF). Tiền lệ: commit `0deb29c` đã cập nhật đúng kiểu này khi sửa workflow. Được phép cập nhật DUY NHẤT các mục hash của file mà plan chủ động sửa:
+      - `configs/research/wp7-train5-internal-owner-key-v1.json` (do G2-2);
+      - `.github/workflows/handoff-train5-engineering-preflight.yml` (do B6);
+      - và các hash dây chuyền phát sinh trực tiếp từ hai thay đổi trên, nếu test chỉ ra.
+      Bất kỳ pin nào khác fail (git-blob-lock 44 blob, simulation-protocol, registration, checkpoint): DỪNG và báo Kiệt.
+G2-4. Chạy lại toàn bộ test như A6, commit riêng ("Enroll delegated operator key for penalty trial on kiet branch", nêu rõ owner duyệt phương án B), push, chờ CI xanh.
+G2-5. Ghi mục ủy quyền vào tài liệu bàn giao (B7): fingerprint OpenSSH của key mới (`ssh-keygen -lf <file.pub>`), key cũ của owner có fingerprint `SHA256:6S0rHCQyWkbb/aV+GyxpAm4nSjDPbtdmD7Eh9CYZrVY` đã được thay trên nhánh này, lý do, người duyệt.
+G2-6. Lệnh `sign` do Kiệt tự chạy trong terminal của mình (gõ `DONG Y TRAIN5 PENALTY`, nhập passphrase). Agent chỉ chạy `prepare` và `execute`.
+
+Thứ tự gộp để chỉ phải chờ CI một lần: làm B1-B7 và G2-2, G2-3, G2-5 rồi mới push; `prepare` chỉ chạy sau khi HEAD cuối cùng đã xanh CI.
 
 ## 4. Phase C - Chạy
 
@@ -74,7 +89,7 @@ C2. Đường dẫn (ví dụ, tất cả phải chưa tồn tại):
     - plan/packet/log: `D:\REL301m\F1RL-runs\penalty-v2-20261111-plan.json`, `...-packet.json`, `...-execution.log`
     - evidence: `D:\REL301m\F1-RL\docs\.superpowers\handoff\penalty-20261111\step3-witnesses`
     Kiểm tra dung lượng trống ổ D.
-C3. `prepare` -> (G2) `sign` -> `execute`, đúng 3 lệnh mẫu trong tài liệu bàn giao. `execute` chạy trong một terminal riêng, redirect stdout+stderr ra log, ghi exit code ra file `.status`.
+C3. `prepare` (agent) -> `sign` (Kiệt tự chạy, G2-6) -> `execute` (agent), đúng 3 lệnh mẫu trong tài liệu bàn giao. `execute` chạy trong một terminal riêng, redirect stdout+stderr ra log, ghi exit code ra file `.status`.
 C4. Go/no-go thời gian: chưa ai đo thời gian một lượt. Sau khi lượt 1 ghi `completed` trong `trial-journal.jsonl`, lấy thời gian lượt 1 x 12 + ước lượng eval. Nếu vượt hạn 168 giờ của packet hoặc vượt hạn Kiệt đặt: báo ngay, không tự đổi ngân sách.
 C5. Theo dõi bằng cách ĐỌC `trial-journal.jsonl` và log. Không đụng vào checkout (quy tắc 5).
 C6. Nếu gián đoạn: không xóa claim, không chạy lại nguyên lệnh. Ghi nhận hiện trạng, báo Kiệt. Chạy lại đồng nghĩa domain seed mới (v3) + packet mới.
@@ -91,7 +106,8 @@ D5. Báo Kiệt: kết quả, bằng chứng (đường dẫn file + SHA), giớ
 
 - Thời gian chạy chưa biết; có C4 làm điểm quyết định sớm.
 - Runner không resume, không checkpoint trung gian: một lần mất điện là mất lượt đang chạy và phải đổi seed. Plan không thêm tính năng resume vì đó là thay đổi runner ngoài phạm vi.
-- Pin hash (preflight 44 blob, manifest review) có thể chặn B6 hoặc G2-B; đã có điểm dừng.
+- Pin hash: B6 và G2-2 chắc chắn đụng manifest review (đã xác minh), xử lý theo G2-3; pin ngoài danh sách cho phép vẫn là điểm dừng.
+- Phê duyệt phương án B của owner là thông tin do Kiệt chuyển lại; nên xin Tiến để lại một comment trên commit hoặc giữ ảnh chụp Zalo ngoài repo làm dấu vết.
 - Nhánh `fix/physics-v4-handoff-audit` có thể nhận commit mới trong lúc làm; A1 kiểm tra trước, sau đó không tự rebase - báo Kiệt.
 - 2 commit chỉ có trên nhánh handoff lịch sử (`179a255`, `6e30ebd`) là commit lưu trữ evidence WP3 (docs), không chứa code penalty; không cần đưa sang.
 - Penalty 5 có thể không cải thiện slalom; kết quả âm vẫn phải báo nguyên trạng.
