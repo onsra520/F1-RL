@@ -70,3 +70,12 @@ python -B -m scripts.wp7_penalty_trial_cli execute --packet <NEW_PACKET.json> --
 - Key đã đăng ký: fingerprint OpenSSH `SHA256:1l21uIA631AsYG64A72A7psS1YhJRh5XQhOksYO9Vpo`, `owner_public_key_hex` `222be74baeba66d5c7f6c076acca16a2b04a31da71bf271b3bc18a6d5f34c8bc`. Key cũ của owner có fingerprint `SHA256:6S0rHCQyWkbb/aV+GyxpAm4nSjDPbtdmD7Eh9CYZrVY` được thay trên nhánh này.
 - Người duyệt phương án B: Tiến (Onsra), chuyển lại qua Kiệt. Dấu vết ngoài repo (ảnh chụp Zalo hoặc comment của Tiến) chưa có trong tài liệu này; cần bổ sung.
 - Giới hạn còn nguyên: non-use toàn cục của seed v2 chưa được chứng minh; chưa có review độc lập; chưa HELD-OUT; không tuyên bố ý nghĩa thống kê với 3 replicate. Đây là đánh giá nội bộ trên TRAIN.
+
+## Cập nhật 11/11 chiều - chạy song song
+
+- Quyết định của Kiệt (không chờ duyệt): bỏ bước ký Ed25519 trên nhánh này. Nguồn xác nhận: Tiến (chủ repo) trả lời qua chat 11/11 (11:05-11:16), ghi "tiến xác nhận ko cần ký nữa"; Kiệt chuyển lại. Agent không kiểm chứng được nguồn này ngoài nội dung chat do Kiệt cung cấp. Chữ ký cũ không còn là điều kiện chạy; `verify_trial_scope` chỉ kiểm tra ràng buộc proposal/source và output nằm ngoài checkout. Module `wp7_penalty_trial_authorization.py` cũ vẫn còn, không được gọi trong đường chạy trial.
+- Seed domain v3 cho cả 12 lượt và toàn bộ seed đánh giá. Seed của v1 và v2 (train và eval) được đưa vào tập dành riêng, có test chứng minh v3 rời hoàn toàn với v1 và v2. Lý do: v2 đã tiêu thụ một phần (lượt 1 xong, lượt 2 dừng).
+- Trạng thái batch v2 (`D:\REL301m\F1RL-runs\penalty-v2-20261111`): lượt 1 (baseline/train5_from_scratch/0) hoàn tất lúc 13:16, 200.704 bước; lượt 2 đã bắt đầu. Output v2 giữ nguyên, KHÔNG dùng cho so sánh. Ghi lại giờ dừng và dòng journal cuối khi dừng ở bước E3.
+- Cách chạy mới: mỗi lượt một process, `torch.set_num_threads(1)` trong mỗi process; đánh giá chia 30 shard theo (cohort, replicate, track), ghép lại đúng thứ tự seed. Cấu hình khoa học không đổi: 12 lượt, 200.704 bước/lượt, 8 env `DummyVecEnv`, PPO không đổi, 5 track TRAIN, penalty 0 và 5, 60 episode x 2 condition, không HELD-OUT.
+- Giới hạn giữ nguyên: non-use toàn cục của seed mới chưa được chứng minh; chưa có review độc lập; chưa HELD-OUT; không còn chữ ký ủy quyền trong đường chạy.
+- Runner không resume. Mất điện hoặc sleep làm mất các lượt đang chạy; khi đó phải đổi domain (v4) và packet mới.
