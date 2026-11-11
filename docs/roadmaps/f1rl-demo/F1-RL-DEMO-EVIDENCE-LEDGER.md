@@ -1,6 +1,6 @@
 # F1-RL — Demo Evidence Ledger
 
-> **Document version:** 1.9 (2026-11-11). **Role:** inspectable factual evidence register, NOT a full demo success report.
+> **Document version:** 2.0 (2026-11-11). **Role:** inspectable factual evidence register, NOT a full demo success report.
 > **Master contract:** [Roadmap](F1-RL-DEMO-COMPLETION-ROADMAP.md). **Operational resume:** [Handoff](F1-RL-DEMO-AGENT-HANDOFF.md).  
 > **Initial global verdict:** `NOT_ACCEPTED / NOT_EVALUATED`. No real PPO training, live demo acceptance or scientific HELD-OUT proof is claimed here.
 
@@ -349,3 +349,40 @@ When a milestone changes state, atomically as reasonably practical:
 - **Evidence manifest:** `SHA256-MANIFEST.json`, exact SHA-256 `42685f135ed1f6d74dddd4fc5bd4a0327ba3984937999d450c411a2c229f3bc6`; 108 artifacts plus 44 source provenance records. Plan/report, all episode/trace files, checkpoint, tracks, V1/V2 records and external witnesses are inventoried.
 - **Improvement Cycle 1 recommendation:** not started. Version a new candidate roster keeping Right Turn V1 as legacy regression and V2 as active development right turn; run non-training action/reward ablation for throttle-brake overlap and Ramp progress before selecting one minimal training change. If separately authorized, compare on the original fixed stochastic roster; keep deterministic supplemental and preserve the per-track 8/10 demo bar. Review reward suppression, ramp overfit and registration drift risks before any run.
 - **Restrictions:** no M2/M3 rerun, PPO training, M6+, U-turn, held-out access, frozen checkpoint/track edits, Physics V4 change or main merge.
+
+## 0.7 M5 Improvement Cycle 1 Ramp stochastic ablation (2026-11-11)
+
+- **Scope/status:** Cycle 1 non-training policy-variance ablation completed on TRAIN/development only. No PPO gradient updates, no fine-tuning, no checkpoint replacement, no M2/M3 rerun, M6+, U-turn, HELD-OUT access or `main` change. Current verdict remains `M5 CANDIDATE NOT_ACCEPTED`; no model freeze or `DEMO_READY` claim.
+- **Root-cause evidence:** the original M5 plan uses stochastic Pure PPO (`deterministic=false`). Ramp V1 baseline is 1/10 stochastic and 10/10 diagnostic deterministic; 9 stochastic episodes stop at the 500-step simulation limit without collision. Telemetry showed throttle/brake overlap and large stochastic steering variation while raw PPO actions mapped exactly to applied controls. The controlled log-standard-deviation ablation kept policy mean/network, reward, curriculum, track, Physics V4, action/observation contracts, seeds and step limit fixed. Ramp's 10/10 outcome under both tested scales demonstrates sampled-action variance is a causal contributor; it does not prove it is the only factor.
+- **Baseline reference:** original M5 report file SHA-256 `34f4e923dc5ab000b6a3cd5b929e6c60afaa6d0355450d55754ef48eba407c0b`; original seed roster SHA-256 `294e1818a1cd83d1bc63c4d7c9bd92dd476652ab14d82d3327af3e27bda72ddc`; C0 parent checkpoint SHA-256 `600e6eb3a781af66e34ea56f8f65e20f46d4a4318a77aeebceceacef3ffa7fd4`. The original M4 report recorded Slalom 10/10 stochastic; candidate comparisons use the same predeclared ten environment/policy seeds per cell.
+
+| Development track / mode | std×0.5 finishes | std×0.5 mean progress | std×0.5 mean steps | std×0.65 finishes |
+|---|---:|---:|---:|---:|
+| Straight stochastic | 10/10 | 1.000 | 188.5 | Not run |
+| Slalom stochastic | 9/10 (baseline 10/10) | 0.944 | 251.1 | 6/10 |
+| Right Turn V2 stochastic | 10/10 | 1.000 | 286.8 | Not run |
+| Ramp V1 stochastic | 10/10 (baseline 1/10) | 1.000 | 306.0 | 10/10 |
+| Left Turn V2 stochastic | 10/10 | 1.000 | 298.9 | Not run |
+| Ramp V1 deterministic diagnostic | 10/10 | 1.000 | 197.0 | 10/10 |
+| Slalom deterministic diagnostic | 0/10 | 0.441 | 98.0 | 0/10 |
+
+- **std×0.5 detail:** stochastic Ramp mean applied controls throttle `0.7441`, brake `0.0092`, steering `−0.0046`; mean speed `4.947m/s`; zero collision and zero step/wall timeout. Right Turn V2, Straight and Left Turn V2 remain 10/10. Slalom had one collision and 9/10 finishes. Deterministic Slalom 0/10 is reported separately; M5 registered stochastic inference, and this result does not substitute for or redefine that contract.
+- **std×0.65 detail:** the second controlled ablation was limited to Ramp and Slalom. Ramp remained 10/10, mean 367.3 steps and 4.128m/s. Slalom fell to 6/10 with four collision episodes. The probe was stopped at that point; no additional scale search or training was opened.
+- **Acceptance and decision:** the final demo's ≥8/10 per-track bar does not authorize retroactive alteration of the stochastic M5 registration or establish candidate acceptance by itself. Since std×0.5 changed historical Slalom performance from 10/10 to 9/10 and no candidate freeze was authorized, status remains `NOT_ACCEPTED` pending review. No PPO fine-tuning was run: Ramp failure was corrected by the valid non-training change, while the observed cross-track trade-off does not yet support a safe training change.
+- **Validation:** `$env:PYTHONPATH='.'; uv run --no-sync --extra dev pytest tests/research/test_m5_cycle1_ablation.py tests/research/test_m5_cycle1_validate.py tests/research/test_m5_c0_diagnostic.py -q` — **PASS**, 12 passed; after the second-plan adjustment, `$env:PYTHONPATH='.'; uv run --no-sync --extra dev pytest tests/research/test_m5_cycle1_validate.py -q` — **PASS**, 2 passed. `python -m py_compile scripts/m5_cycle1_validate.py scripts/m5_cycle1_ablation.py` and `git diff --check` — **PASS**. The 100-case and 40-case evaluators report zero worker failures/timeouts.
+- **Execution source:** branch `feat/f1rl-demo-completion`; final evidence-generating source commit `e3b7f749186d676cbd1a63796e68d0930866cbfe`; source tree `8030081db7fedd253d306cc6a31c8a365aa3d56f`. Research scripts and supporting source hashes are recorded in the manifest.
+- **Plan/report/checkpoint hashes:**
+
+| Artifact | Exact file SHA-256 |
+|---|---|
+| std×0.5 Ramp ablation plan | `6d5c283ffdc94fc3ef1765fc9c3cfbf36ca07b5b7b79e5e3507abcaf5e0dfcb6` |
+| std×0.5 Ramp ablation report | `b9a48c35d2a5c9f54c30bdd6837305f3200423e79e252dd299aff2afb20116af` |
+| std×0.5 five-track validation plan | `dc83407f4eb3b943e9b94033064b1ecd98831cdb161baf2412534a85a82623f0` |
+| std×0.5 five-track validation report | `8854e1de6b6ae5c939206389392c85185c703f82fee488d9b7ec1347ceb11616` |
+| std×0.5 candidate checkpoint | `b6de69382523b9dc5309a6cffb230afd31f9b0206d3381dff723abc69ebffa86` |
+| std×0.65 Ramp/Slalom plan | `1c463b7649fea127efe42211cd7e3e0e2698a4fb75094fb80af449b17fa4d411` |
+| std×0.65 Ramp/Slalom report | `1184bd25ecef03bf161ff163e1801e12059d7435e5ceb51f45f69bc291e88212` |
+| std×0.65 candidate checkpoint | `17d8a52f308e78c015238b9caa6f6ce4ee0e7b8289981b52b81d399e84ba6665` |
+| Complete cycle evidence manifest (308 files) | `7ce4e93f948f7115857fb8aadf732be383e1dc6018469783224548c060c09e75` |
+
+- **Artifact root:** `D:\Projects\.archives\F1-RL\demo-completion\m5-improvement-cycle1-20261111`. `SHA256-MANIFEST.json` indexes plans, reports, 140 episode summaries, 140 raw step traces, two candidate checkpoints and source provenance. Both evaluation plans record `heldout_access=false`, `scientific_evidence=false`, `training_started=false`.

@@ -1,16 +1,16 @@
 # F1-RL — Agent Handoff / Resume Contract
 
-> **Document version:** 2.7 (2026-11-11). **Current state:** `M0_PASS; M1_PASS; M2_PASS; M3_PASS_2_WORKERS; M4_ENGINEERING_PASS; M5_DIAGNOSIS_COMPLETE_CANDIDATE_FAIL; OVERALL_NOT_ACCEPTED`.
+> **Document version:** 2.8 (2026-11-11). **Current state:** `M0_PASS; M1_PASS; M2_PASS; M3_PASS_2_WORKERS; M4_ENGINEERING_PASS; M5_CYCLE1_DIAG_COMPLETE_CANDIDATE_NOT_ACCEPTED; OVERALL_NOT_ACCEPTED`.
 > This is an actionable **handoff**, not a certification of PPO driving.  
 > **Authoritative goals:** [Master Roadmap](F1-RL-DEMO-COMPLETION-ROADMAP.md) · **Proof/limits:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md).
 
-## 0. Live takeover snapshot — M5 diagnosis (2026-11-11)
+## 0. Live takeover snapshot — M5 Cycle 1 ablation (2026-11-11)
 
 - PR #60 and PR #61 **MERGED**. Local `main` and `origin/main` both at `ab8951a9c68f009d7b2a14127b13c07426a2460a`.
-- Working branch/worktree: `feat/f1rl-demo-completion` / `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion`; M5 diagnosis executed at source HEAD `636c4ec15b4f965e615a8055cd3f721c2b4ae942`, source-tree SHA `f77d5033663a3681e8b33ad96d70a993eda0d6f1f014018e84f17cb726b176af`. Source code remained unchanged; this stop updates only roadmap documentation.
-- M0 **PASS**, M1 engineering **PASS / READY_FOR_M2**, M2 **PASS**, M3 **PASS for the matched 1-worker/2-worker benchmark only**, and M4 **ENGINEERING_PASS** for its bounded two-model development plan. M5's original candidate gate **FAILS**; paired diagnosis is complete and Cycle 1 has not started. V5 remains custom Auto Drive only; HELD-OUT remains sealed; no main merge.
+- Working branch/worktree: `feat/f1rl-demo-completion` / `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion`; Cycle 1 evidence source HEAD `e3b7f749186d676cbd1a63796e68d0930866cbfe`, source-tree SHA `8030081db7fedd253d306cc6a31c8a365aa3d56f`. Cycle 1 scripts are committed; result, limitations and artifact hashes are recorded in sections 0 and 15 and the linked Evidence Ledger.
+- M0 **PASS**, M1 engineering **PASS / READY_FOR_M2**, M2 **PASS**, M3 **PASS for the matched 1-worker/2-worker benchmark only**, and M4 **ENGINEERING_PASS** for its bounded two-model development plan. Ramp V1 stochastic rose from 1/10 to 10/10 under std×0.5. The same candidate scored Slalom 9/10 versus the historical 10/10; std×0.65 scored Slalom 6/10. M5 remains `CANDIDATE_NOT_ACCEPTED`; no PPO fine-tuning or checkpoint freeze. V5 remains custom Auto Drive only; HELD-OUT remains sealed; no main merge.
 - Historical real smoke source `6452517e3e887ee83f9d98b3323e3e5089d4c187`; artifact hashes and telemetry independently match. Historical M3 source `8582d9d08826074dbd2b6d32609d9d58639f771d`; its profile SHA `1b9f…` does not match the benchmark profile at that commit, so old timing results do not admit worker count.
-- Historical runtime snapshot before M2–M5: **1,365.796 / 86,400 seconds**, provisional remaining **85,034.204 seconds**. This is not the current cumulative total; see Evidence Ledger §0.4 for the later campaign accounting. Two improvement cycles remain unused.
+- Historical runtime snapshot before M2–M5: **1,365.796 / 86,400 seconds**, provisional remaining **85,034.204 seconds**. This is not the current cumulative total; see Evidence Ledger §0.4 for the later campaign accounting. Cycle 1 used a non-training ablation; no training round was run.
 - On `main` `ab8951a`, independent scoped regression: **121 passed, 2 skipped**. Five historical checkpoints loaded, hashes matched and predicted finite actions. Post-merge new real smoke from `6452517` PASS 256 steps / 10 optimizer updates / checkpoint `09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f5bf`; 90.718 seconds and preserved under `D:\Projects\.archives\F1-RL\wp3-postmerge-real-smoke-20261110`.
 - **Perf observation:** new smoke rollout 85.255 seconds vs historical 18.040 seconds; cause unknown, avoid speedup/ETA claim and investigate in M0/M3 as needed.
 - Any historical claims below about unmerged docs/parallel branches are **superseded by this dated snapshot**. No scientific HELD-OUT access.
@@ -19,9 +19,9 @@
 
 | Key | Status / fact |
 |---|---|
-| Overall | `NOT_ACCEPTED` — M5 candidate gate failed; diagnosis is complete; M6+ and final demo acceptance remain pending |
-| Next milestone | **Review the M5 Right Turn V3 / Cycle 1 proposal**; no training until scope review |
-| M0-M10 | M0 PASS; M1 PASS; M2 PASS; M3 PASS (2-worker scope); M4 ENGINEERING_PASS; M5 candidate FAIL / diagnosis complete; M6-M10 PENDING |
+| Overall | `NOT_ACCEPTED` — Ramp ablation improved, but Slalom regressed against its fixed-roster baseline; M6+ and final acceptance remain pending |
+| Next milestone | **Review Cycle 1 evidence and the Slalom trade-off**; no additional training cycle was opened |
+| M0-M10 | M0 PASS; M1 PASS; M2 PASS; M3 PASS (2-worker scope); M4 ENGINEERING_PASS; M5 Cycle 1 diagnosis complete / candidate NOT_ACCEPTED; M6-M10 PENDING |
 | Operating permission | Autonomous within owner-approved scope and 24h active workload cap; never merge main |
 | Scientific HELD-OUT | **SEALED**; WP7/Gate 2 **BLOCKED** |
 | Final model freeze | Not created |
@@ -29,8 +29,8 @@
 | 70-run Pure PPO evaluation | Not performed |
 | Live real-time 1×/30FPS/p95≤150ms | Not measured |
 | Training budget epoch | See Evidence Ledger §0.4 for M2–M5 campaign accounting; the 1,371.220 s figure in older handoff snapshots predates those runs |
-| Agent improvement cycles | M5 diagnosis used 0 improvement cycles; Cycle 1 has not started |
-| Remaining gates | Owner review of the Right Turn V3/Cycle 1 proposal, then an approved Cycle 1 and later M6+ gates; V5 remains custom Auto Drive only; seven external WP7 engineering nodes still lack witnesses |
+| Agent improvement cycles | Cycle 1 non-training ablation complete; no PPO fine-tuning or additional training cycle |
+| Remaining gates | Review stochastic Slalom regression and candidate acceptance; later M6+ gates remain pending; V5 remains custom Auto Drive only; seven external WP7 engineering nodes still lack witnesses |
 
 **Do not take the historical 63+3 tests as proof of real PPO driving.** They were scoped code/mock integration tests. Real training must satisfy M2–M4 gates with new evidence.
 
@@ -284,4 +284,29 @@ HELD_OUT: SEALED
 M2_M3_RERUN / PPO_TRAINING / M6_PLUS / U_TURN: NOT RUN
 MAIN_MERGE: NOT PERFORMED
 NEXT: finish final diff/test/hash review; commit and push feature branch only
+```
+
+## 15. M5 Improvement Cycle 1 handoff (2026-11-11)
+
+```text
+STATUS: M5_CYCLE1_DIAG_COMPLETE / CANDIDATE_NOT_ACCEPTED / OVERALL_NOT_ACCEPTED
+BRANCH: feat/f1rl-demo-completion
+EVIDENCE_SOURCE_HEAD: e3b7f749186d676cbd1a63796e68d0930866cbfe
+SOURCE_TREE_SHA256: 8030081db7fedd253d306cc6a31c8a365aa3d56f
+RAMP_V1_STOCHASTIC: baseline 1/10; std*0.5 10/10; std*0.65 10/10
+SLALOM_STOCHASTIC: baseline 10/10; std*0.5 9/10; std*0.65 6/10
+OTHER_STD050_STOCHASTIC: Straight 10/10; Right Turn V2 10/10; Left Turn V2 10/10
+DETERMINISTIC_DIAGNOSTICS: Ramp 10/10; Slalom 0/10; do not substitute for registered stochastic contract
+CAUSE: sampled PPO action variance is a proven contributor to Ramp failures; no action mapper, Physics, reward, or step-limit defect demonstrated
+CHANGE: only learned log_std scaled; no gradient update; original C0 checkpoint preserved
+FINETUNING: NOT RUN; no safe training change supported after Slalom regression
+VALIDATION: std*0.5 100/100; std*0.65 40/40; zero worker failures/timeouts; focused tests 12 PASS, final validator tests 2 PASS
+CHECKPOINT_STD050_SHA256: b6de69382523b9dc5309a6cffb230afd31f9b0206d3381dff723abc69ebffa86
+CHECKPOINT_STD065_SHA256: 17d8a52f308e78c015238b9caa6f6ce4ee0e7b8289981b52b81d399e84ba6665
+REPORT_STD050_SHA256: 8854e1de6b6ae5c939206389392c85185c703f82fee488d9b7ec1347ceb11616
+REPORT_STD065_SHA256: 1184bd25ecef03bf161ff163e1801e12059d7435e5ceb51f45f69bc291e88212
+MANIFEST_SHA256: 7ce4e93f948f7115857fb8aadf732be383e1dc6018469783224548c060c09e75 (308 artifacts)
+EVIDENCE_ROOT: D:\Projects\.archives\F1-RL\demo-completion\m5-improvement-cycle1-20261111
+HELD_OUT: SEALED; M2/M3 rerun, M6+, U-turn, main merge: NOT RUN
+NEXT: independent review of candidate scorecard/Slalom regression; do not claim DEMO_READY
 ```

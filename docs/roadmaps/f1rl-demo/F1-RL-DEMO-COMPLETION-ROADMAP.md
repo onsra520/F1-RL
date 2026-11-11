@@ -1,7 +1,7 @@
 # F1-RL — Demo Completion Master Roadmap
 
-> **Document version:** 1.8 (2026-11-11)
-> **Overall state (2026-11-11):** `M0_PASS / M1_PASS / M2_PASS / M3_PASS / M4_ENGINEERING_PASS / M5_DIAGNOSIS_COMPLETE_CANDIDATE_FAIL / NOT_ACCEPTED` — the predeclared M5 evaluation failed candidate selection, and paired diagnosis now identifies A0 action saturation, C0's V1 geometry/contract defect, and stochastic Ramp step limits. Improvement Cycle 1 is not started; model freeze and final acceptance remain unauthorized.
+> **Document version:** 1.9 (2026-11-11)
+> **Overall state (2026-11-11):** `M0_PASS / M1_PASS / M2_PASS / M3_PASS / M4_ENGINEERING_PASS / M5_CYCLE1_DIAG_COMPLETE_CANDIDATE_NOT_ACCEPTED / NOT_ACCEPTED` — Cycle 1's non-training stochastic-variance ablation raised Ramp V1 from 1/10 to 10/10, but std×0.5 scored 9/10 on Slalom versus its historical 10/10, and std×0.65 scored 6/10. No PPO fine-tuning, model freeze or final acceptance occurred.
 > **Owner:** F1-RL project owner. **Execution:** autonomous coding agent, gate-driven.  
 > **Related:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md) · [Agent Handoff](F1-RL-DEMO-AGENT-HANDOFF.md).
 
@@ -239,3 +239,15 @@ Then independently verify repository HEAD/worktrees, existing source admission p
 - **Improvement Cycle 1 proposal (not started):** create a new versioned development roster preserving V1 as a legacy regression and evaluating V2 as the development turn; first run a non-training action/reward ablation for throttle-brake overlap and ramp progress. If a new training run is separately authorized, change one supported cause, preserve the original stochastic seed roster for comparison, and apply the existing per-track 8/10 demo bar where applicable. Deterministic runs remain supplementary. Risks include suppressing necessary braking, reward/curriculum overfit and invalid roster changes.
 - **Evidence package:** `D:\Projects\.archives\F1-RL\demo-completion\m5-engineering-fix-20261111\final-hardening`; see Evidence Ledger §0.6 for exact hashes and commands.
 - **Restrictions honored:** no training, M2/M3 rerun, M6+, U-turn, HELD-OUT access, frozen asset/checkpoint edits, Physics V4 changes or main merge.
+
+## 9. M5 Improvement Cycle 1 — Ramp stochastic ablation (2026-11-11)
+
+- **Status:** development diagnosis complete; `M5 CANDIDATE NOT_ACCEPTED`; do not label `DEMO_READY`. Cycle 1 changed only the loaded PPO policy's learned `log_std` for ablation. No gradient update or PPO fine-tuning was run, and C0's original checkpoint remains unchanged.
+- **Root cause evidence:** baseline Ramp V1 stochastic Pure PPO finished 1/10 on the fixed M5 roster; 9/10 reached the unchanged 500-step simulation limit with no collision. The raw/applied action mapping was exact. Throttle/brake overlap and large sampled steering variation were present. Changing only the policy sampling standard deviation changed the result on the same seeds, isolating stochastic policy variance as a causal contributor; it does not prove that variance is the only contributing factor.
+- **Candidate std×0.5:** Ramp 10/10 stochastic (1/10 baseline), 10/10 diagnostic deterministic; Right Turn V2 10/10, Straight 10/10, Left Turn V2 10/10 stochastic. Slalom stochastic was 9/10 versus the original 10/10 on the same roster. Slalom deterministic was 0/10 in the diagnostic run; the original registered M5 contract is stochastic-only, so deterministic results are reported separately and do not replace that score.
+- **Second ablation std×0.65:** same Ramp/Slalom seed roster, no training; Ramp 10/10 stochastic and Slalom 6/10 stochastic. This did not restore Slalom and was not expanded to other tracks.
+- **Acceptance interpretation:** the existing final-demo bar is ≥8/10 per track, but the Cycle 1 candidate is not declared accepted on that basis: Slalom regressed from its fixed-roster historical 10/10, the proposal threshold does not redefine the registered M5 contract, and the candidate is not frozen. Preserve both results and require owner review for any next model selection step.
+- **Fine-tuning decision:** not run. The non-training ablation resolves the Ramp failure under the fixed contract, and further training is not justified by this evidence alone given the Slalom trade-off. No additional training cycle was opened.
+- **Validation:** std×0.5 evaluated 100/100 cases (five development tracks × ten seeds × deterministic/stochastic); std×0.65 evaluated 40/40 cases (Ramp and Slalom × ten seeds × deterministic/stochastic). Both used Pure PPO, Physics V4, original action/reward/curriculum/step limit, no Auto/Hybrid/action override, no wall timeout and no worker failure.
+- **Evidence:** `D:\Projects\.archives\F1-RL\demo-completion\m5-improvement-cycle1-20261111`; report/plan/checkpoint/raw trace hashes are inventoried in `SHA256-MANIFEST.json` (file SHA-256 `7ce4e93f948f7115857fb8aadf732be383e1dc6018469783224548c060c09e75`; 308 artifacts). See Evidence Ledger §0.7.
+- **Restrictions honored:** no HELD-OUT access, M2/M3 rerun, M6+, U-turn, Physics V4 or contract changes, historical asset/checkpoint edits, or `main` change/merge.
