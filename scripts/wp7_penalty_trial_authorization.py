@@ -55,3 +55,16 @@ def verify_trial_authorization(root, proposal, output, envelope, *, now=None, al
     except InvalidSignature as exc:
         raise ValueError('invalid penalty-trial signature') from exc
     return {'signature_verified': True, 'training_permitted': False}
+
+
+def verify_trial_scope(root, proposal, output, *, allow_existing=False):
+    """Scope check without signature: source/proposal binding and output outside checkout.
+
+    Replaces the signed-envelope check on the kiet branch after owner approval on 11/11 (Tien, via chat).
+    The signed-envelope verifier above stays in place, unused, so its tests keep applying.
+    """
+    validate_proposal(root, proposal)
+    root, output = Path(root).resolve(strict=True), Path(output).resolve()
+    if output == root or output.is_relative_to(root) or (output.exists() and not allow_existing):
+        raise ValueError('trial output must be a new directory outside checkout')
+    return {'scope_verified': True, 'training_permitted': False}

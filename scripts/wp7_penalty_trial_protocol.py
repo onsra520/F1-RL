@@ -7,7 +7,8 @@ import subprocess
 from f1rl.research.wp7_train5_v4_admission import development_policy_seeds, development_seeds, load_v4_protocol
 from f1rl.research.wp7_train5_v4_checkpoint import FROZEN_BY_REPLICATE, FROZEN_CHECKPOINTS
 
-DOMAIN = 'F1RL-TERMINAL-PENALTY-TRIAL-20261111-v2'
+DOMAIN = 'F1RL-TERMINAL-PENALTY-TRIAL-20261111-v3'
+RETIRED_DOMAINS = ('F1RL-TERMINAL-PENALTY-TRIAL-20261111-v1', 'F1RL-TERMINAL-PENALTY-TRIAL-20261111-v2')
 EXTRA_SOURCES = ('scripts/wp7_terminal_crash_penalty.py', 'scripts/wp7_penalty_trial_protocol.py',
                  'scripts/wp7_penalty_trial_authorization.py', 'tests/research/test_wp7_penalty_trial_authorization.py',
                  'scripts/wp7_penalty_trial_runner.py', 'tests/research/test_wp7_penalty_trial_runner.py',
@@ -24,8 +25,31 @@ def _digest(path):
     return sha256(data if path.suffix.lower() == '.zip' else data.replace(b'\r\n', b'\n')).hexdigest()
 
 
+def _seed_in(domain, *parts):
+    return int.from_bytes(sha256(('/'.join((domain, *map(str, parts)))).encode('ascii')).digest()[:4], 'big')
+
+
 def _seed(*parts):
-    return int.from_bytes(sha256(('/'.join((DOMAIN, *map(str, parts)))).encode('ascii')).digest()[:4], 'big')
+    return _seed_in(DOMAIN, *parts)
+
+
+def retired_domain_seeds(track_ids):
+    """Every train and evaluation seed the retired domains would have produced (for exclusion only)."""
+    values = set()
+    for domain in RETIRED_DOMAINS:
+        for cohort in ('train5_from_scratch', 'train5_from_frozen_checkpoint'):
+            for rep in range(3):
+                seeds = {role: _seed_in(domain, 'train', cohort, rep, role) for role in ('ppo', 'sampling', 'perturbation')}
+                values.update(seeds.values())
+                values.update(range(seeds['ppo'], seeds['ppo'] + 8))
+        for cohort in ('train5_from_scratch', 'train5_from_frozen_checkpoint'):
+            for track in track_ids:
+                for condition in ('nominal', 'perturbation'):
+                    for episode in range(60):
+                        for rep in range(3):
+                            identity = (cohort, rep, track, condition, episode)
+                            values.update((_seed_in(domain, 'env', *identity), _seed_in(domain, 'policy', *identity)))
+    return values
 
 
 def build_proposal(root):
@@ -34,6 +58,7 @@ def build_proposal(root):
     registration = json.loads((root / 'configs/research/wp7-train5-paired-v2-registration.json').read_text())
     registry = json.loads((root / 'configs/research/wp7-train5-global-seed-registry-owner-exception-20261107.json').read_text())
     reserved = set(registry['candidate_seeds'])
+    reserved.update(retired_domain_seeds(protocol['track_ids']))
     reserved.update(development_seeds(root, protocol, old_sha).values())
     reserved.update(development_policy_seeds(root, protocol, old_sha).values())
     journal = root.parent / 'TRAIN5-v4-internal-20261109' / 'evaluation-journal.jsonl'
@@ -96,6 +121,7 @@ def build_proposal(root):
             'old_protocol_sha256': old_sha, 'source_bindings': bindings,
             'diagnostic_seed_evidence_sha256': _digest(audit),
             'prior_evaluation_seed_evidence_sha256': _digest(journal),
+            'seed_domain': DOMAIN, 'retired_seed_domains': list(RETIRED_DOMAINS),
             'interventions': {'baseline': 0, 'terminal_crash_penalty': 5},
             'pairs': pairs, 'training_runs': 12,
             'budget_per_run': protocol['budget'], 'total_actual_training_steps': 12 * 200704,

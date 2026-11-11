@@ -50,3 +50,21 @@ def test_new_seed_domain_does_not_reuse_interrupted_trial():
         previous.update((old_seed('env', *row[:-2]), old_seed('policy', *row[:-2])))
         current.update(row[-2:])
     assert previous.isdisjoint(current)
+
+
+def test_v3_seeds_are_disjoint_from_retired_v1_and_v2_domains():
+    from scripts.wp7_penalty_trial_protocol import RETIRED_DOMAINS, DOMAIN, _seed_in, retired_domain_seeds
+
+    assert DOMAIN == 'F1RL-TERMINAL-PENALTY-TRIAL-20261111-v3'
+    assert RETIRED_DOMAINS == ('F1RL-TERMINAL-PENALTY-TRIAL-20261111-v1', 'F1RL-TERMINAL-PENALTY-TRIAL-20261111-v2')
+    proposal = build_proposal(ROOT)
+    assert proposal['seed_domain'] == DOMAIN
+    assert proposal['retired_seed_domains'] == list(RETIRED_DOMAINS)
+    current = set()
+    for pair in proposal['pairs']:
+        current.update(pair['seeds'].values())
+        current.update(range(pair['seeds']['ppo'], pair['seeds']['ppo'] + 8))
+    for row in proposal['evaluation_seed_rows']:
+        current.update(row[-2:])
+    assert current.isdisjoint(retired_domain_seeds(proposal['tracks']))
+    assert len(proposal['evaluation_seed_rows']) == 3600 and proposal['training_runs'] == 12
