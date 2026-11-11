@@ -21,7 +21,7 @@ SOURCE_FILES = (
     "scripts/wp7_dual_turn_v4_feasibility.py",
     "f1rl/learning/action.py",
     "f1rl/learning/algorithms/ppo.py",
-    "f1rl/learning/episode.py",
+    "f1rl/learning/episode/__init__.py",
     "f1rl/learning/evaluation/evaluator.py",
     "f1rl/learning/gym_environment.py",
     "f1rl/learning/training/env_factory.py",
