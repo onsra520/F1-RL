@@ -214,3 +214,20 @@ MAIN_MERGE: NOT PERFORMED
 - **Git requirement:** documentation PR awaiting owner review, not merged; separate parallel branch apparently unpushed. Do not make Git changes to main.
 - **No active training launched by this documentation authoring.** Local Windows control was disconnected during creation; local disk and current worktree state could not be freshly inspected this turn.
 - **No claim of demo readiness.** Current outcome remains `NOT_ACCEPTED / NOT_EVALUATED`.
+
+## 12. M2–M5 development continuation closeout (2026-11-11)
+
+```text
+STATUS: M2_PASS / M3_PASS_2_WORKERS / M4_ENGINEERING_PASS / M5_EVALUATION_COMPLETE_CANDIDATE_FAIL / NOT_ACCEPTED
+NEXT_MILESTONE: None; stop at M5 as authorized. No M6 or final acceptance work started.
+BRANCH / WORKTREE: feat/f1rl-demo-completion / D:\Projects\.worktrees\F1-RL\f1rl-demo-completion
+HEAD: ba01400f09ef1487ac75f8e760d754f1583a6584
+M4_M5_SOURCE_TREE_SHA256: 1cb0b80a39fed35363bdc397156aabf9191b13984d463a839663c0dce3b7d3f4
+EVIDENCE_ROOT: D:\Projects\.archives\F1-RL\demo-completion\m4-m5-development-v2
+M2: current-source smoke 256 timesteps / 10 optimizer updates, 23.375s; profile 3d078a4bc45718407fb8a58cdb2f2dd856df101510deb6c9327ebff61c43ee36; independently verified.
+M3: current-source sequential 2x4096 = 668.718s; two-worker 2x4096 = 340.625s; profile f3f3cad13eb6b8f717a93584b4cd5551717405a15584a26c9eb62fb34821ec5f. Four-worker benchmark not run.
+M4: bounded v2 plan trained C-seed0 and A-seed0, 65,536 steps/model. Final model hashes C=600e6eb3a781af66e34ea56f8f65e20f46d4a4318a77aeebceceacef3ffa7fd4; A=ea2e9c69c0ec5c3bdd1a883f0ebf610127d5b10375dc791eb79063ce8f5a22f5. This is not the full 12-job v3 campaign.
+M5: report SHA 34f4e923dc5ab000b6a3cd5b929e6c60afaa6d0355450d55754ef48eba407c0b; 100/100 valid episodes; no harness timeout/error; 2258s. C-seed0 mean finish 0.62 but right 0/10, ramp 1/10; A-seed0 0.00 mean finish. Candidate gate FAIL; no model freeze.
+HELD_OUT: SEALED; no final acceptance tracks created; no M6+; no main merge.
+NEXT_SAFE_ACTION: None within this M2–M5 continuation. Preserve all artifacts; further training requires a newly authorized continuation and a new versioned plan.
+```

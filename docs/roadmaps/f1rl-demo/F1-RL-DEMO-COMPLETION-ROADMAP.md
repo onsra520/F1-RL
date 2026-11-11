@@ -1,7 +1,7 @@
 # F1-RL — Demo Completion Master Roadmap
 
-> **Document version:** 1.6 (2026-11-11)
-> **Overall state:** `M0_PASS / M1_PASS / M2_IN_PROGRESS / M3_BLOCKED_ON_M2 / NOT_ACCEPTED` — historical smoke evidence is valid for its source but the supervisor requires a passing smoke on the exact current source before M3.
+> **Document version:** 1.7 (2026-11-11)
+> **Overall state (2026-11-11):** `M0_PASS / M1_PASS / M2_PASS / M3_PASS / M4_ENGINEERING_PASS / M5_FAIL / NOT_ACCEPTED` — current-source smoke, controlled 2-worker benchmark and bounded two-model training passed their engineering gates. The predeclared development evaluation completed without harness failures, but candidate behavior did not meet the development-selection gate. No model freeze or final acceptance is authorized.
 > **Owner:** F1-RL project owner. **Execution:** autonomous coding agent, gate-driven.  
 > **Related:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md) · [Agent Handoff](F1-RL-DEMO-AGENT-HANDOFF.md).
 
@@ -112,37 +112,37 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 
 ### M2 — One-model **real PPO smoke** gate
 
-- [ ] Run LOCAL_DEMO smoke for `C-seed0` on the current clean committed source, **256 timesteps / one rollout / CPU / n_envs=1**. The existing smoke is source-bound to `6452517e` and cannot satisfy current-source admission.
-- [ ] Confirm `PPO.learn()` execution: 10 optimizer updates, finite nonzero gradients, changed weights, reloadable final checkpoint, current smoke-profile SHA, exact checkpoint/telemetry SHA matches, cleanup verified and HELD-OUT access false.
+- [x] Run LOCAL_DEMO smoke for `C-seed0` on the current clean committed source, **256 timesteps / one rollout / CPU / n_envs=1**. Current-source attempt `smoke-20261110T234203Z-2e3f4744` passed at source `50c76513`.
+- [x] Confirm `PPO.learn()` execution: 10 optimizer updates, finite nonzero gradients, changed weights, reloadable final checkpoint, current smoke-profile SHA, exact checkpoint/telemetry SHA matches, cleanup verified and HELD-OUT access false.
 - [x] Do NOT call frozen full `parallel-run` for a 256- or 4,096-step smoke: it enforces full **65,536-step C0 engineering gate**.
-- **IN_PROGRESS:** historical run `smoke-20261110T133738Z-a02802b3` is internally valid but bound to source `6452517e`; it is retained as historical integration evidence and does not fulfill current-source M2 admission. Current-source smoke required.
+- **PASS:** current-source smoke `smoke-20261110T234203Z-2e3f4744` completed 256 transitions and 10 optimizer updates, wall 23.375s, profile SHA `3d078a4bc45718407fb8a58cdb2f2dd856df101510deb6c9327ebff61c43ee36`. Full attempt hashes and independent validation are recorded in the evidence ledger. Earlier failed/historical attempts remain preserved.
 
 ### M3 — Controlled **real PPO concurrency** benchmark
 
-- [ ] If necessary implement a separate, **versioned engineering benchmark profile**, e.g. **4,096 timesteps/job**, aligned to PPO rollout=256, CPU, `n_envs=1`; don't override frozen v3 limits or label benchmark as campaign completion.
-- [ ] Re-run the **same two jobs/seeds/configs** sequentially (1 worker) versus concurrently (2 workers) under current clean committed source, both with isolated artifacts. Record total wall-clock, transitions/s, rollout/update cost, aggregate/per-tree RSS, CPU, disk/telemetry, orphan checks and checkpoint integrity. A conservative initial per-job time guard of ~15 minutes may be used if explicitly encoded in the benchmark contract; stop earlier on unsafe resource use.
+- [x] Use the separate versioned engineering benchmark profile of **4,096 timesteps/job**, rollout=256, CPU, `n_envs=1`; this is not frozen v3 campaign completion.
+- [x] Run the same two jobs/seeds/configs sequentially (1 worker) versus concurrently (2 workers) under current committed source with isolated artifacts. Both were source-bound; sequential 2×4096 completed in 668.718s and parallel 2×4096 in 340.625s, with process/resource cleanup and integrity checks passing.
 - [ ] Test 4 workers **only after** 2-worker safety/throughput evidence and fresh admission; use comparable workloads, declare any thread-budget changes, assess oversubscription and memory reserve.
 - [ ] Choose fastest **safe measured** configuration, not highest count; reject performance claims based on synthetic/mock subprocess timing or vectorized-env benchmark (different experiment).
 - [ ] Reserve sufficient remaining 24h budget for M4–M9; if estimated training cannot fit, prefer a versioned smaller development plan or stop for owner review—do not silently start full campaign.
-- **BLOCKED_ON_M2:** historical benchmark results were 696.250s sequential and 367.500s parallel, but their profile SHA `1b9f787b…` cannot be reproduced from their claimed source/config. The current-source M3 preflight launched no PPO child. The first current-source smoke attempt also failed before training because transient launcher/Git descendants exceeded the existing 2-process cap. Both attempts and process-tree diagnostics are preserved outside Git; run a fresh M2 attempt after applying the process-safe executable/PATH setup, then rerun sequential and 2-worker benchmark without source changes.
+- **PASS (2-worker scope only):** current-source sequential and parallel results use profile SHA `f3f3cad13eb6b8f717a93584b4cd5551717405a15584a26c9eb62fb34821ec5f` and source `50c76513`. Four-worker benchmarking was not performed and remains unadmitted. Historical mismatched-profile attempts remain excluded.
 
 ### M4 — Real PPO training campaign gate
 
-- [ ] Choose a versioned training plan justified by M1–M3 and remaining budget. Frozen v3 baseline = **A/B/C/D × seeds 0/1/2, C-seed0 first, 65,536 timesteps/model, checkpoint every 4,096, n_envs=1, CPU**. Preserve that protocol if running v3; alternate development curriculum must use a **new named contract** and cannot counterfeit v3 evidence.
-- [ ] If using v3 parallel supervisor: execute **full-length C0** in isolation; independently validate C0 lifecycle, per-TRAIN-track timesteps, automatic resets, optimizer, hashes and checkpoint. Queue opens only after C0 PASS.
-- [ ] Admit bounded concurrency and dynamic queue per verified config; independent attempt dirs, unique per-job PID/identity, comprehensive resource watchdog, no implicit retries.
-- [ ] Capture actual learning progress and dev-only checkpoints; preserve failures; stop on integrity, source, physics, disk/memory or budget gate breach.
-- [ ] If M1 revealed insufficient coverage (notably left-turn and complex terrain), prioritize a **separate development training profile** under budget before claiming arbitrary Track Builder competence. Never train on post-freeze acceptance tracks.
-- **PASS:** actual PPO models trained under identified contract with validated checkpoints/optimizer evidence and no safety violation. Full 12-job v3 is required **only if explicitly chosen as the registered campaign**, not silently replaced by short benchmark runs.
+- [x] Choose a versioned M1–M3-informed training plan: `m4-m5-development-v2`, CPU, 65,536 steps each, final and periodic checkpoints, C-seed0 then A-seed0. This is explicitly a bounded development plan, not the full 12-job v3 campaign.
+- [x] Complete and independently validate the full C0 engineering gate before A0; both attempts met source, timestep, optimizer, checkpoint, telemetry and resource checks.
+- [x] Use one worker, isolated attempts, resource watchdogs, no retries; preserve the failed pre-training v1 harness attempt.
+- [x] Capture actual learning telemetry/checkpoints over the four registered TRAIN tracks; no acceptance tracks or HELD-OUT data used.
+- [x] Include `left-turn-train-v2` in the source-bound M5 development evaluation roster. It was evaluation-only; it was not part of PPO training transitions.
+- **ENGINEERING PASS (bounded scope):** two real PPO models completed the declared development plan. This is not completion of frozen v3's 12-job campaign and does not imply policy competence.
 
 ### M5 — Development evaluation and improvement gate (maximum 2 cycles)
 
-- [ ] Evaluate Pure PPO on predeclared **TRAIN/development** tracks including unseen development-only left/right, obstacle, slope and intersection variants; report per-track finish rate, route progress, crash/off-road, speed before/after turn, braking and steering oscillation. Separate TRAIN vs dev-only labels.
+- [x] Evaluate Pure PPO stochastically on predeclared four TRAIN tracks plus `left-turn-train-v2` (`TRAIN_DEVELOPMENT_ONLY`), 10 fixed-seed episodes per model/track; report per-track finish rate, route progress, collisions, timeout, steering and timing metrics. No intersection variant was included in this evaluation.
 - [ ] Diagnose behavior from observations, actions, rewards, collisions and policy gradients, not frontend visualization alone.
 - [ ] Agent may edit PPO hyperparameters, reward, curriculum, observation/action mapping, vehicle control or physics; **before each edit** write impact graph, contract/version delta, checkpoint compatibility classification, targeted regression and migration/retrain decision.
 - [ ] Run at most **two complete improvement cycles** (change → smoke/regressions → real train/fine-tune → dev eval). Each consumes remaining active-runtime budget. Never call model compatible solely because the .zip loads.
-- [ ] Choose best **development-evidenced** candidate using declared criteria, including skill on left turns and multi-feature development routes. Respect any frozen-v3 `final_checkpoint_only` selection rule; selecting intermediate checkpoints requires a new versioned development selection contract.
-- **PASS:** a model candidate has solid dev evidence for required behaviors and enough remaining budget for final acceptance/runtime. No custom acceptance tracks exist yet.
+- [ ] Choose a candidate meeting declared development criteria including left turns and multi-feature development routes. Neither candidate met the evidence bar: C-seed0 mean finish rate 0.62 over five cells, with 0/10 right-turn and 1/10 ramp; A-seed0 mean finish rate 0.00 across all five cells.
+- **FAIL (candidate gate):** 100/100 scheduled episodes completed with valid harness records, but no candidate meets the development behavior criteria. No improvement cycle, model freeze or custom acceptance track creation occurred. Remain `NOT_ACCEPTED`.
 
 ### M6 — Model + runtime contract freeze
 
