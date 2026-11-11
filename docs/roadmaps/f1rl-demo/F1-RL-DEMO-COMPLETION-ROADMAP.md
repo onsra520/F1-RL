@@ -1,7 +1,7 @@
 # F1-RL — Demo Completion Master Roadmap
 
-> **Document version:** 1.7 (2026-11-11)
-> **Overall state (2026-11-11):** `M0_PASS / M1_PASS / M2_PASS / M3_PASS / M4_ENGINEERING_PASS / M5_FAIL / NOT_ACCEPTED` — current-source smoke, controlled 2-worker benchmark and bounded two-model training passed their engineering gates. The predeclared development evaluation completed without harness failures, but candidate behavior did not meet the development-selection gate. No model freeze or final acceptance is authorized.
+> **Document version:** 1.8 (2026-11-11)
+> **Overall state (2026-11-11):** `M0_PASS / M1_PASS / M2_PASS / M3_PASS / M4_ENGINEERING_PASS / M5_DIAGNOSIS_COMPLETE_CANDIDATE_FAIL / NOT_ACCEPTED` — the predeclared M5 evaluation failed candidate selection, and paired diagnosis now identifies A0 action saturation, C0's V1 geometry/contract defect, and stochastic Ramp step limits. Improvement Cycle 1 is not started; model freeze and final acceptance remain unauthorized.
 > **Owner:** F1-RL project owner. **Execution:** autonomous coding agent, gate-driven.  
 > **Related:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md) · [Agent Handoff](F1-RL-DEMO-AGENT-HANDOFF.md).
 
@@ -138,11 +138,12 @@ Some frontend engineering in M9 may be developed alongside M1–M5 but **M9 PASS
 ### M5 — Development evaluation and improvement gate (maximum 2 cycles)
 
 - [x] Evaluate Pure PPO stochastically on predeclared four TRAIN tracks plus `left-turn-train-v2` (`TRAIN_DEVELOPMENT_ONLY`), 10 fixed-seed episodes per model/track; report per-track finish rate, route progress, collisions, timeout, steering and timing metrics. No intersection variant was included in this evaluation.
-- [ ] Diagnose behavior from observations, actions, rewards, collisions and policy gradients, not frontend visualization alone.
+- [x] Diagnose behavior from observations, raw/applied actions, rewards, collisions, Physics and terminal telemetry using paired deterministic/stochastic probes; evidence and limits are in the M5 diagnosis report.
+- [x] Audit Right Turn V1/V2 geometry, road edges, navigation, spawn, gates, steering convention and Physics V4 runtime behavior; preserve both assets. A separate Right Turn V3 design proposal is recorded; no asset or contract was changed.
 - [ ] Agent may edit PPO hyperparameters, reward, curriculum, observation/action mapping, vehicle control or physics; **before each edit** write impact graph, contract/version delta, checkpoint compatibility classification, targeted regression and migration/retrain decision.
 - [ ] Run at most **two complete improvement cycles** (change → smoke/regressions → real train/fine-tune → dev eval). Each consumes remaining active-runtime budget. Never call model compatible solely because the .zip loads.
 - [ ] Choose a candidate meeting declared development criteria including left turns and multi-feature development routes. Neither candidate met the evidence bar: C-seed0 mean finish rate 0.62 over five cells, with 0/10 right-turn and 1/10 ramp; A-seed0 mean finish rate 0.00 across all five cells.
-- **FAIL (candidate gate):** 100/100 scheduled episodes completed with valid harness records, but no candidate meets the development behavior criteria. No improvement cycle, model freeze or custom acceptance track creation occurred. Remain `NOT_ACCEPTED`.
+- **FAIL (candidate gate; diagnosis complete):** 100/100 scheduled M5 episodes completed with valid harness records, but neither candidate meets development criteria. Paired diagnosis explains the main A0 and C0 failures; it does not change the predeclared scores. No improvement cycle, model freeze or custom acceptance track creation has occurred. Remain `NOT_ACCEPTED`; review the Cycle 1 proposal before any training.
 
 ### M6 — Model + runtime contract freeze
 

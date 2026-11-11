@@ -1,16 +1,16 @@
 # F1-RL — Agent Handoff / Resume Contract
 
-> **Document version:** 2.6 (2026-11-11). **Current state:** `M0_PASS; M1_PASS; M2_IN_PROGRESS; M3_BLOCKED_ON_M2; OVERALL_NOT_ACCEPTED`.
+> **Document version:** 2.7 (2026-11-11). **Current state:** `M0_PASS; M1_PASS; M2_PASS; M3_PASS_2_WORKERS; M4_ENGINEERING_PASS; M5_DIAGNOSIS_COMPLETE_CANDIDATE_FAIL; OVERALL_NOT_ACCEPTED`.
 > This is an actionable **handoff**, not a certification of PPO driving.  
 > **Authoritative goals:** [Master Roadmap](F1-RL-DEMO-COMPLETION-ROADMAP.md) · **Proof/limits:** [Evidence Ledger](F1-RL-DEMO-EVIDENCE-LEDGER.md).
 
-## 0. Live takeover snapshot (2026-11-11)
+## 0. Live takeover snapshot — M5 diagnosis (2026-11-11)
 
 - PR #60 and PR #61 **MERGED**. Local `main` and `origin/main` both at `ab8951a9c68f009d7b2a14127b13c07426a2460a`.
-- Working branch/worktree: `feat/f1rl-demo-completion` / `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion`; current execution source at audit start `f4b57a12428b8749db8c11d87fb00e95866df7f8`.
-- M0 **PASS** on recorded evidence; M1 engineering **PASS / READY_FOR_M2** after versioned development geometry, reference Auto Drive, bounded API/WebSocket finish, Physics V4/PPO regressions, web tests/build and a low-load V5 benchmark. M2 **PASS / REUSED_COMPATIBLE** from the source-bound 256-step C-seed0 smoke. M3 is **IN_PROGRESS** because old benchmark attempts bind an unreconciled profile SHA. V5 remains custom Auto Drive only; no V5 PPO, crash/roll terminal acceptance, held-out access or main merge.
+- Working branch/worktree: `feat/f1rl-demo-completion` / `D:\Projects\.worktrees\F1-RL\f1rl-demo-completion`; M5 diagnosis executed at source HEAD `636c4ec15b4f965e615a8055cd3f721c2b4ae942`, source-tree SHA `f77d5033663a3681e8b33ad96d70a993eda0d6f1f014018e84f17cb726b176af`. Source code remained unchanged; this stop updates only roadmap documentation.
+- M0 **PASS**, M1 engineering **PASS / READY_FOR_M2**, M2 **PASS**, M3 **PASS for the matched 1-worker/2-worker benchmark only**, and M4 **ENGINEERING_PASS** for its bounded two-model development plan. M5's original candidate gate **FAILS**; paired diagnosis is complete and Cycle 1 has not started. V5 remains custom Auto Drive only; HELD-OUT remains sealed; no main merge.
 - Historical real smoke source `6452517e3e887ee83f9d98b3323e3e5089d4c187`; artifact hashes and telemetry independently match. Historical M3 source `8582d9d08826074dbd2b6d32609d9d58639f771d`; its profile SHA `1b9f…` does not match the benchmark profile at that commit, so old timing results do not admit worker count.
-- Active runtime lower bound including prior campaigns and M1 benchmark: **1,365.796 / 86,400 seconds**, provisional remaining **85,034.204 seconds**. M2 evidence reuse adds no time. Two improvement cycles remain unused.
+- Historical runtime snapshot before M2–M5: **1,365.796 / 86,400 seconds**, provisional remaining **85,034.204 seconds**. This is not the current cumulative total; see Evidence Ledger §0.4 for the later campaign accounting. Two improvement cycles remain unused.
 - On `main` `ab8951a`, independent scoped regression: **121 passed, 2 skipped**. Five historical checkpoints loaded, hashes matched and predicted finite actions. Post-merge new real smoke from `6452517` PASS 256 steps / 10 optimizer updates / checkpoint `09de1596d324f27bb39716c5032c88c4071f23f0b18c4343390da8beebb5f5bf`; 90.718 seconds and preserved under `D:\Projects\.archives\F1-RL\wp3-postmerge-real-smoke-20261110`.
 - **Perf observation:** new smoke rollout 85.255 seconds vs historical 18.040 seconds; cause unknown, avoid speedup/ETA claim and investigate in M0/M3 as needed.
 - Any historical claims below about unmerged docs/parallel branches are **superseded by this dated snapshot**. No scientific HELD-OUT access.
@@ -19,18 +19,18 @@
 
 | Key | Status / fact |
 |---|---|
-| Overall | `NOT_ACCEPTED` — M1 and M2 are ready; M3, full PPO training and final demo acceptance remain incomplete |
-| Next milestone | **M2 current-source real PPO smoke**; historical source cannot satisfy current-source admission |
-| M0-M10 | M0 PASS; M1 PASS; M2 IN_PROGRESS; M3 BLOCKED_ON_M2; M4-M10 PENDING |
+| Overall | `NOT_ACCEPTED` — M5 candidate gate failed; diagnosis is complete; M6+ and final demo acceptance remain pending |
+| Next milestone | **Review the M5 Right Turn V3 / Cycle 1 proposal**; no training until scope review |
+| M0-M10 | M0 PASS; M1 PASS; M2 PASS; M3 PASS (2-worker scope); M4 ENGINEERING_PASS; M5 candidate FAIL / diagnosis complete; M6-M10 PENDING |
 | Operating permission | Autonomous within owner-approved scope and 24h active workload cap; never merge main |
 | Scientific HELD-OUT | **SEALED**; WP7/Gate 2 **BLOCKED** |
 | Final model freeze | Not created |
 | Three custom acceptance tracks | Not created — must only be generated **after** model freeze |
 | 70-run Pure PPO evaluation | Not performed |
 | Live real-time 1×/30FPS/p95≤150ms | Not measured |
-| Training budget epoch | 2026-11-10 WP3 engineering run + M1 V5 benchmark + blocked M3/M2 attempts: **1,371.220 s** used; **85,028.780 s** remaining (provisional) |
-| Agent improvement cycles | 0 newly used **by this documentation task**; confirm pre-existing active campaign history before charging |
-| Remaining gates | Fresh M3 benchmark, M4 training, M5 development evaluation and later milestones; V5 remains custom Auto Drive only; seven external WP7 engineering nodes still lack witnesses |
+| Training budget epoch | See Evidence Ledger §0.4 for M2–M5 campaign accounting; the 1,371.220 s figure in older handoff snapshots predates those runs |
+| Agent improvement cycles | M5 diagnosis used 0 improvement cycles; Cycle 1 has not started |
+| Remaining gates | Owner review of the Right Turn V3/Cycle 1 proposal, then an approved Cycle 1 and later M6+ gates; V5 remains custom Auto Drive only; seven external WP7 engineering nodes still lack witnesses |
 
 **Do not take the historical 63+3 tests as proof of real PPO driving.** They were scoped code/mock integration tests. Real training must satisfy M2–M4 gates with new evidence.
 
@@ -230,4 +230,33 @@ M4: bounded v2 plan trained C-seed0 and A-seed0, 65,536 steps/model. Final model
 M5: report SHA 34f4e923dc5ab000b6a3cd5b929e6c60afaa6d0355450d55754ef48eba407c0b; 100/100 valid episodes; no harness timeout/error; 2258s. C-seed0 mean finish 0.62 but right 0/10, ramp 1/10; A-seed0 0.00 mean finish. Candidate gate FAIL; no model freeze.
 HELD_OUT: SEALED; no final acceptance tracks created; no M6+; no main merge.
 NEXT_SAFE_ACTION: None within this M2–M5 continuation. Preserve all artifacts; further training requires a newly authorized continuation and a new versioned plan.
+```
+
+## 13. M5 diagnosis stop report (2026-11-11)
+
+```text
+STATUS: M5_DIAGNOSIS_COMPLETE / CANDIDATE_FAIL / REVIEW_REQUIRED / NOT_ACCEPTED
+NEXT_MILESTONE: Owner review of Right Turn V3 and Cycle 1 plan; do not train before review
+EXECUTION_SOURCE_BRANCH/HEAD: feat/f1rl-demo-completion / 636c4ec15b4f965e615a8055cd3f721c2b4ae942
+SOURCE_TREE_SHA256: f77d5033663a3681e8b33ad96d70a993eda0d6f1f014018e84f17cb726b176af
+SOURCE_CODE_UNCHANGED: true; only the three roadmap documents are updated for this handoff
+ARTIFACT_ROOT: D:\Projects\.archives\F1-RL\demo-completion\m5-diagnosis-20261111
+MODEL_FREEZE_SHA: PENDING
+TRAINED_MODEL_SHA: C0 600e6eb3a781af66e34ea56f8f65e20f46d4a4318a77aeebceceacef3ffa7fd4; A0 ea2e9c69c0ec5c3bdd1a883f0ebf610127d5b10375dc791eb79063ce8f5a22f5 (neither frozen)
+CONFIG/PHYSICS/OBS/ACTION_SHA: Physics V4 c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37; action/observation sources are inventoried in SHA256-MANIFEST.json
+M5_PAIRED_DIAGNOSTICS: 48/48 complete; 24 seed pairs; deterministic and stochastic; no 120s worker wall timeout; 1,083.406s grid wall
+A0: deterministic full throttle+brake every step and ~0.0345m/s; stochastic adds motion but every case still fails; 174/226 curriculum-boundary terminations are a contributor hypothesis, not proven sole cause
+C0_RIGHT_TURN: V1 crashes 3/3 in both modes at the road patch junction; same-seed V2 PPO comparison finishes 3/3 in both modes
+C0_RAMP: deterministic 3/3 finishes in 197 steps; stochastic 0/3, step-limit 500 at 76.2–84.2% progress, no collision
+RIGHT_TURN_V1_V2: V1 asset SHA a302f5d1d7f08d2b51ae963a5e695d8600d52a0ebf2d1f212ca0a4fbf90e303e; V2 SHA 5f285238821c869fd2e47e95576074b6a1ba1c7c618fa9c30c5b9f89e9103f30; details in Evidence Ledger §0.5
+TESTS: geometry suite 46 PASS / 1 deselected; separately run source-lock test FAIL because env_factory.py differs from anchored Git blob; no Physics V4/PPO source contract change
+V2_TRACE_HELPER: all 6 PPO environments completed; original helper failed only during EpisodeMetrics summary serialization; all six hash-verified traces were reconstructed without reruns
+M4_M5_BASELINE: original M5 100/100 valid episodes; C0 0/10 right V1 and 1/10 ramp; A0 0/10 all five cells; no model freeze
+IMPROVEMENT_CYCLES_USED: 0
+HELD_OUT: SEALED; M2/M3 were not rerun; no training, M6+, final acceptance tracks, or main merge
+EVIDENCE_REPORT_SHA256: D79A4569CB0DAC99B544AADEDA53F00763C65E2217B2CB78EB539306ACB81F7D
+EVIDENCE_MANIFEST_SHA256: 73168b13cedfae17039787ecb45beb88d623b93c3ee2610d5a26acfb29349b72 (140 artifacts + 20 source/config records)
+BLOCKERS: source-lock anchor drift in test_right_turn_train_v2_design; owner review needed on whether V3 supplements V1 or changes the development candidate roster
+NEXT_SAFE_COMMAND: review M5-DIAGNOSIS-REPORT.md and the Cycle 1 acceptance proposal; do not start training until design/roster scope is approved
+OWNER_APPROVAL_NEEDED: approve V3 design and M5 candidate-roster treatment before Cycle 1 workload; no main merge requested
 ```
