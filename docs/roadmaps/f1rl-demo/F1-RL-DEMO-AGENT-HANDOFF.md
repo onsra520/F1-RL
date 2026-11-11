@@ -310,3 +310,27 @@ EVIDENCE_ROOT: D:\Projects\.archives\F1-RL\demo-completion\m5-improvement-cycle1
 HELD_OUT: SEALED; M2/M3 rerun, M6+, U-turn, main merge: NOT RUN
 NEXT: independent review of candidate scorecard/Slalom regression; do not claim DEMO_READY
 ```
+
+
+## 16. M5 multi-candidate screening handoff (2026-11-11)
+
+```text
+STATUS: BASELINE_SELECTED_READY_FOR_FINE_TUNE_REVIEW / M5_NOT_ACCEPTED / OVERALL_NOT_ACCEPTED
+BRANCH: feat/m5-multicandidate-screening-20261111
+EXECUTION_SOURCE_HEAD: cf6841acba7b16757962902d5c771d0ad4c0971f
+PLAN_SHA256: c26f2af4626d834fc04edca0e607909024cb0701874d6c00197d74773505f8c7
+CANDIDATES: 14 compatible / 14 screened; 5 finalists
+STAGE_A: 280/280 complete; 0 worker failures/timeouts
+STAGE_B: 400/400 complete; 0 worker failures/timeouts
+PROPOSED_BASELINE: M4-C-seed0-std050
+PROPOSED_CHECKPOINT_SHA256: b6de69382523b9dc5309a6cffb230afd31f9b0206d3381dff723abc69ebffa86
+STOCHASTIC_15_SEED_FINISHES: Straight 15/15; Slalom 12/15 (fixed 8/10, fresh 4/5); Right Turn V2 15/15; Ramp 15/15; Left Turn V2 15/15
+NEAREST_COMPARATOR: FULL06-A-seed2, Slalom 11/15 (fixed 7/10, fresh 4/5), other four 15/15
+DETERMINISTIC: diagnostic only, one per track; std050 Slalom physical crash
+BENCHMARK: 8 workers selected; 0.399 episodes/s; normalized traces reproduced across 1/2/4/8
+TRAINING: NOT RUN; proposed one-cycle cap 32,768 additional timesteps needs separate authorization/new frozen plan
+EVIDENCE_ROOT: D:\Projects\.archives\F1-RL\demo-completion\m5-multicandidate-screening-20261111-reprocheck
+MANIFEST_FILE_SHA256: 1a4e9f811d0b6131012024cc179c80bfe9a52acb26703fadce98922310f99ffe (1533 evidence files)
+HELD_OUT: SEALED; M2/M3 rerun, M6+, U-turn, main merge: NOT RUN
+NEXT: review proposed baseline/fine-tune plan; do not declare M5 acceptance or DEMO_READY
+```

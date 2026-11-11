@@ -386,3 +386,24 @@ When a milestone changes state, atomically as reasonably practical:
 | Complete cycle evidence manifest (308 files) | `7ce4e93f948f7115857fb8aadf732be383e1dc6018469783224548c060c09e75` |
 
 - **Artifact root:** `D:\Projects\.archives\F1-RL\demo-completion\m5-improvement-cycle1-20261111`. `SHA256-MANIFEST.json` indexes plans, reports, 140 episode summaries, 140 raw step traces, two candidate checkpoints and source provenance. Both evaluation plans record `heldout_access=false`, `scientific_evidence=false`, `training_started=false`.
+
+
+## 0.8 M5 multi-candidate screening evidence (2026-11-11)
+
+Evidence root: `D:\Projects\.archives\F1-RL\demo-completion\m5-multicandidate-screening-20261111-reprocheck`. Dedicated branch `feat/m5-multicandidate-screening-20261111`; screening source HEAD at execution `cf6841acba7b16757962902d5c771d0ad4c0971f`.
+
+| Evidence | Result / SHA-256 |
+|---|---|
+| Frozen campaign plan | `c26f2af4626d834fc04edca0e607909024cb0701874d6c00197d74773505f8c7` (canonical plan SHA) |
+| Inventory/compatibility | 14 distinct checkpoints; 70/70 candidate-track compatibility probes; 70 PPO policy probes finite; Physics V4 and action/observation contracts uniform |
+| Worker benchmark | 20 matched cases × 4 worker counts; 80/80 complete; 0 crashes/timeouts; 8 workers selected (0.399 episodes/s), min available RAM 22,996,254,720 bytes; normalized trace equality PASS. Raw artifact SHA-256 `b241d6b357f056fa95421125326fea0e8cf114dce60c2be467bd4c5c8bded518` |
+| Stage A | 280/280 complete; 0 crashes/timeouts; 92,982 transitions; 0.299 episodes/s; report file SHA-256 `c5399685707834ece9946ebe4f88a3dd0d577949470a491c4b76604d854ecd2c` |
+| Stage B | 400/400 complete; 0 crashes/timeouts; 116,368 transitions; 0.351 episodes/s; report file SHA-256 `cc2ad959903b43e4d82a11b2b6d26a17ace06b82c195d205678e9e0348e2e1ff` |
+| Proposed fine-tune parent | M4 C-seed0 std×0.5, checkpoint SHA-256 `b6de69382523b9dc5309a6cffb230afd31f9b0206d3381dff723abc69ebffa86` |
+| Final artifact manifest | See `SHA256-MANIFEST.json` in evidence root; includes all reports, individual summaries, raw traces, plan, chart, scorecard, checkpoint input hashes and source hashes |
+
+Stage B proposed baseline scores 15/15 on Straight, Right Turn V2, Ramp and Left Turn V2; Slalom 12/15 (fixed 8/10, fresh 4/5). Nearest A-seed2 scores Slalom 11/15 (fixed 7/10, fresh 4/5), other tracks 15/15. New original C0 Ramp is 0/15 with 15 step limits versus std050 15/15. Deterministic diagnostics are one episode/track and separate. Historical FULL-06 outcomes are context only; old Right Turn V1 was not run and its scores are not mixed with V2.
+
+The first benchmark attempt is preserved at the non-reprocheck evidence root. Raw trace hashes differed because worker-suffixed case IDs differed; a paired step comparison showed identical content after removing only case ID. The runner was fixed to keep raw file SHA and normalized trajectory SHA separately, regression-tested, then the corrected benchmark was rerun and reported reproducible. Details: `WORKER-BENCHMARK-REPRODUCIBILITY-NOTE.md`. `mean_worker_startup_seconds` is the startup metric; the field named `time_to_first_result_seconds` is the minimum per-task duration, not global time-to-first-result, as documented in `BENCHMARK-METRIC-INTERPRETATION.md`.
+
+This is `BASELINE_SELECTED_READY_FOR_FINE_TUNE_REVIEW`, not `M5_ACCEPTED`. No training, HELD-OUT access or M6+ work occurred.
