@@ -155,6 +155,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--freeze", nargs=3, metavar=("EVIDENCE_ROOT", "EVAL_PLAN", "CAMPAIGN_PLAN"))
     parser.add_argument("--train", nargs=2, metavar=("TRAINING_PLAN", "EVIDENCE_ROOT"))
+    parser.add_argument("--preflight", nargs=2, metavar=("TRAINING_PLAN", "EVIDENCE_ROOT"))
     args = parser.parse_args()
     if args.freeze:
         evidence_root, eval_path, campaign_path = map(Path, args.freeze)
@@ -166,6 +167,11 @@ def main():
             json.dumps(training, sort_keys=True, indent=2, allow_nan=False) + "\n", encoding="utf-8")
         print(json.dumps({"training_plan_sha256": training["sha256"],
                           "evaluation_plan_sha256": evaluation["sha256"]}))
+    elif args.preflight:
+        plan_path, root = map(Path, args.preflight)
+        result = run_m5_cycle2(ROOT, plan_path=plan_path, output_directory=root / "preflight",
+                               checkpoint_observer=lambda *_: True, dry_run=True)
+        print(json.dumps(result, sort_keys=True))
     elif args.train:
         plan_path, root = map(Path, args.train)
         plan = json.loads(plan_path.read_text(encoding="utf-8"))

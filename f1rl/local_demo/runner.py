@@ -848,7 +848,8 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
 
 
 def run_m5_cycle2(root: str | Path, *, plan_path: str | Path,
-                  output_directory: str | Path, checkpoint_observer) -> dict:
+                  output_directory: str | Path, checkpoint_observer,
+                  dry_run: bool = False) -> dict:
     """Run the single source-bound, bounded C0 Cycle 2 development attempt."""
     import platform
 
@@ -859,6 +860,8 @@ def run_m5_cycle2(root: str | Path, *, plan_path: str | Path,
 
     if not callable(checkpoint_observer):
         raise ValueError("Cycle 2 requires a checkpoint evaluation observer")
+    if type(dry_run) is not bool:
+        raise ValueError("Cycle 2 dry_run must be bool")
     root = Path(root).resolve(strict=True)
     output = Path(output_directory)
     plan_path = Path(plan_path)
@@ -975,6 +978,23 @@ def run_m5_cycle2(root: str | Path, *, plan_path: str | Path,
                 raise ValueError("Cycle 2 source identity changed after admission")
         except ValueError:
             raise
+        if dry_run:
+            result = {"schema_version": "f1rl_m5_cycle2_preflight_v1",
+                      "status": "dry_run_pass", "source_commit": commit,
+                      "source_tree_sha256": tree_sha256,
+                      "profile_sha256": sha256(profile_bytes).hexdigest(),
+                      "parent_checkpoint_sha256": expected["parent_checkpoint_sha256"],
+                      "policy_weights_sha256": initial_weights_sha256,
+                      "optimizer_state_sha256": initial_optimizer_sha256,
+                      "log_std": log_std, "log_std_optimizer_step": log_std_step,
+                      "track_ids": expected["tracks"], "physics_sha256": expected["physics_profile_sha256"],
+                      "action_contract": expected["action_contract"],
+                      "observation_dimension": expected["observation_dimension"],
+                      "sampling_policy": expected["sampling_policy"],
+                      "device": "cpu", "training_started": False,
+                      "heldout_access": False, "scientific_evidence": False}
+            _write_json(output / "preflight.json", result)
+            return result
         callback_outcomes = []
         chunks = expected["max_additional_timesteps"] // expected["checkpoint_interval"]
         for _ in range(chunks):
