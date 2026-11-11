@@ -79,3 +79,90 @@ python -B -m scripts.wp7_penalty_trial_cli execute --packet <NEW_PACKET.json> --
 - Cách chạy mới: mỗi lượt một process, `torch.set_num_threads(1)` trong mỗi process; đánh giá chia 30 shard theo (cohort, replicate, track), ghép lại đúng thứ tự seed. Cấu hình khoa học không đổi: 12 lượt, 200.704 bước/lượt, 8 env `DummyVecEnv`, PPO không đổi, 5 track TRAIN, penalty 0 và 5, 60 episode x 2 condition, không HELD-OUT.
 - Giới hạn giữ nguyên: non-use toàn cục của seed mới chưa được chứng minh; chưa có review độc lập; chưa HELD-OUT; không còn chữ ký ủy quyền trong đường chạy.
 - Runner không resume. Mất điện hoặc sleep làm mất các lượt đang chạy; khi đó phải đổi domain (v4) và packet mới.
+
+## Kết quả batch v3 (penalty-v3-20261111) - mô tả, chưa kiểm định
+
+- Batch đã chạy xong: execute `EXIT=0`, 12 lượt, 7.200 bản ghi đánh giá. Source commit `5c7f832`. Plan: `D:\REL301m\F1RL-runs\penalty-v3-20261111-plan.json`. Output: `D:\REL301m\F1RL-runs\penalty-v3-20261111\` (không sửa sau khi chạy xong).
+- Phân tích chỉ đọc ngày 12/11. Số liệu và script nằm ngoài repo tại `D:\REL301m\F1RL-runs\penalty-v3-analysis-20261112\` (`analysis-report.md`, `analysis-summary.json`, `cells.csv`, `models.csv`, `model_pair_diffs.csv`, `analyze_v3.py`).
+- Đây là thống kê mô tả trên tập TRAIN. Không có kiểm định thống kê (D3). Không phải bằng chứng HELD-OUT.
+
+### Kết luận theo ngưỡng plan
+
+Penalty 5 không đạt cả ba ngưỡng. Baseline cũng không đạt cùng các ngưỡng đó.
+
+Ngưỡng dùng theo handoff, với mẫu số khớp batch v4: finish từng track gộp hai condition (720 episode mỗi track mỗi intervention) phải từ 80% trở lên; certified crash toàn bộ (3.600) không quá 1%; nominal finish gộp các track (1.800) phải từ 90% trở lên.
+
+| Chỉ số | Baseline | Penalty 5 | Ngưỡng | Kết quả penalty |
+|---|---|---|---|---|
+| Slalom finish (720) | 344/720 = 47,8% | 396/720 = 55,0% | >= 80% | không đạt |
+| Certified crash toàn bộ (3.600) | 346/3.600 = 9,6% | 301/3.600 = 8,4% | <= 1% | không đạt |
+| Nominal finish (1.800) | 1.601/1.800 = 88,9% | 1.598/1.800 = 88,8% | >= 90% | không đạt |
+
+Finish gộp hai condition của bốn track còn lại, penalty: straight 95,1%, right-turn 98,5%, ramp 96,1%, left-turn 97,5%. Baseline tương ứng: 100%, 100%, 99,0%, 99,7%.
+
+### Chênh lệch ghép cặp (penalty trừ baseline, cùng seed môi trường và policy)
+
+| Phạm vi | Δ finish (điểm %) | Δ crash (điểm %) |
+|---|---|---|
+| Tổng thể (3.600) | -0,9 | -1,3 |
+| Nominal (1.800) | -0,2 | -1,9 |
+| Perturbation (1.800) | -1,6 | -0,6 |
+| Slalom gộp (720) | +7,2 | -5,6 |
+
+Trên 6 cặp (cohort x replicate), chênh lệch finish slalom có trung bình +7,2 điểm, SD 31,7, nhỏ nhất -31,7, lớn nhất +57,5. Ba cặp penalty tốt hơn baseline, ba cặp tệ hơn. Không có hướng nhất quán giữa các lượt train. Không mô tả penalty là cải thiện slalom.
+
+### Hai điểm mơ hồ của plan (chờ nhóm chốt, chưa chọn cách đọc)
+
+1. Ngưỡng crash không quá 1%: áp dụng cho tổng thể (handoff) hay từng track (D2 ghi "mỗi track")?
+   - Tổng thể: baseline 9,6%, penalty 8,4%. Không đạt.
+   - Từng track, gộp condition: slalom baseline 47,1%, penalty 41,5%. Ramp baseline 0,97%, penalty 0,28%. Straight, right-turn, left-turn: 0% cả hai. Slalom không đạt.
+   - Từng track x condition: baseline ramp perturbation 1,1% (không đạt); penalty ramp perturbation 0,6%. Slalom không đạt cả hai condition.
+2. Ngưỡng finish từ 80% trở lên: gộp hai condition (handoff, mẫu số 720) hay tính từng track x condition (D2)?
+   - Gộp condition: slalom baseline 47,8%, penalty 55,0%. Không đạt.
+   - Từng track x condition: slalom nominal baseline 45,8%, penalty 56,4%; slalom perturbation baseline 49,7%, penalty 53,6%. Không đạt. Bốn track còn lại đạt ở cả hai condition, trừ đã ghi ở trên.
+
+Ở mọi cách đọc, slalom không đạt cả ngưỡng finish lẫn ngưỡng crash. Penalty không đạt ngưỡng nominal finish ở mọi cách đọc.
+
+### Quan sát ngoài plan (mô tả, chưa kết luận)
+
+Plan không đo các mục dưới đây. Ghi lại để nhóm đánh giá. Không dùng chúng để kết luận gate.
+
+- `hard_route_violation` (không tính là finish, cũng không là crash): baseline 39, penalty 115, trên 3.600 episode mỗi intervention.
+- Theo track, penalty: straight-sprint 35 (baseline 0), ramp 26 (baseline 0), left-turn 18 (baseline 2), right-turn 11 (baseline 0), slalom 25 (baseline 37).
+- Theo model, 110 trên 115 lượt route violation của penalty nằm ở ba lượt: `train5_from_frozen_checkpoint` rep 0 (59), `train5_from_scratch` rep 1 (34), `train5_from_scratch` rep 0 (17). Ba lượt còn lại có 0, 2 và 3. Phân bố không đều.
+- Penalty làm giảm finish trên bốn track không phải slalom: tổng 83 lượt (straight 35, right-turn 11, ramp 21, left-turn 16). Trên slalom penalty tăng 52 lượt finish. Tổng thể finish của penalty là 3.184, baseline là 3.215.
+
+### Định nghĩa kết cục (đã đọc mã)
+
+- `finished`: `metrics.success and not metrics.truncated` (`scripts/wp7_train5_v4_development.py:35-36`). `success` nhận từ `final_finished` (`f1rl/learning/evaluation/evaluator.py:349, 403`), là cờ `finished` của bước cuối. Nguồn của cờ này trong môi trường chưa được đọc.
+- `hard_route_violation`: không bị cắt cụt, `reason == "hard_route_violation"` và `valid_sample` là True (`scripts/wp7_train5_v4_development.py:39-40`).
+- `certified_physical_crash`: không bị cắt cụt, `reason` là `physical_crash` hoặc `physical_crash_development`, và qua `validate_registered_crash_terminal_info` hoặc `validate_crash_terminal_info` (`scripts/wp7_train5_v4_development.py:45-49`).
+- `evaluate_one` yêu cầu đúng một sự kiện terminal và `valid_sample` là True, nếu không thì ném lỗi (`scripts/wp7_train5_v4_development.py:80, 83`). Batch này không có sự kiện `failed` và không có kết cục ngoài ba nhãn trên.
+
+### Điều kiện nguồn khi chạy
+
+- `_require_clean_source` (kiểm tra `git status --porcelain` rỗng) chỉ được gọi một lần, lúc bắt đầu execute: `prepare_output` (`scripts/wp7_penalty_trial_runner.py:43`), gọi từ `scripts/wp7_penalty_trial_cli.py:94`. Không gọi lại cho từng lượt.
+- Mỗi lượt `run-one` gọi `activate` (`scripts/wp7_penalty_trial_capability.py:43`), gọi `verify_trial_scope`, rồi `validate_proposal`. `validate_proposal` dựng lại toàn bộ proposal từ source và so sánh (`scripts/wp7_penalty_trial_protocol.py:140-142`). Vì vậy băm của các file ràng buộc được kiểm tra lại ở đầu mỗi lượt. Cả 12 lượt hoàn thành, nên không lượt nào thấy lệch.
+- Bằng chứng gián tiếp về cây sạch lúc chạy: `claim-batch` được ghi lúc 14:25:28, sau kiểm tra sạch ban đầu. Không có file nào trong `scripts/`, `f1rl/`, `tests/`, `configs/`, `docs/` có thời điểm sửa sau đó. HEAD không đổi từ 14:24:37 (reflog). Không có log riêng ghi kết quả kiểm tra sạch cho từng lượt.
+- Chưa xác minh trực tiếp: cây làm việc sạch hoàn toàn (kể cả file không ràng buộc) ở từng lượt. Mã không kiểm tra điều này cho từng lượt, dù quy tắc 5 của plan mô tả việc đó.
+
+### Đã thực hiện trong đợt này
+
+- Miền seed mới v3 cho cả 12 lượt và toàn bộ seed đánh giá. v1 và v2 nằm trong `retired_seed_domains`.
+- Chạy song song: mỗi lượt một process (12 process). Đánh giá chia 30 shard theo (cohort, replicate, track), ghép lại đúng thứ tự seed.
+- Bỏ bước ký Ed25519 trên nhánh này, theo phần "chạy song song" ở trên. `verify_trial_scope` thay thế chữ ký.
+
+### Giới hạn
+
+- Không có kiểm định thống kê (D3). Chỉ là thống kê mô tả trên TRAIN.
+- 6 cặp train (2 cohort x 3 replicate), tức 12 model. Mỗi ô (track x condition x model) có 60 episode.
+- HELD-OUT chưa được đánh giá (`heldout_evaluated = false`).
+- Chưa xác minh trực tiếp điều kiện nguồn ở từng lượt, như nêu trong mục trên.
+- Chưa đọc nguồn cờ `finished` trong môi trường (`evaluator.py`, mục định nghĩa kết cục).
+- Non-use toàn cục của seed v3 chưa được chứng minh. Chưa có review độc lập.
+
+### Câu hỏi mở cho nhóm
+
+1. Ngưỡng crash không quá 1% áp dụng cho tổng thể hay từng track?
+2. Ngưỡng finish từ 80% gộp hai condition hay tính từng track x condition?
+3. `hard_route_violation` có đưa vào báo cáo kết quả như một chỉ số không?
