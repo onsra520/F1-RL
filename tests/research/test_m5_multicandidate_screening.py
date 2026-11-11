@@ -3,6 +3,7 @@ from scripts.m5_multicandidate_screening import (
     _episode_id,
     _rank_candidates,
     _seed_roster,
+    normalized_trace_sha256,
 )
 
 
@@ -36,6 +37,14 @@ def test_episode_ids_are_unique_by_stage_and_mode():
     }
     assert len(values) == 8
     assert all("right-turn-v1" not in value for value in values)
+
+
+def test_normalized_trace_hash_ignores_worker_specific_case_id():
+    first = [{"case_id": "case_w1", "step": 0, "action": [0.1, 0.8, 0.0]}]
+    second = [{"case_id": "case_w8", "step": 0, "action": [0.1, 0.8, 0.0]}]
+    assert normalized_trace_sha256(first) == normalized_trace_sha256(second)
+    second[0]["action"] = [0.2, 0.8, 0.0]
+    assert normalized_trace_sha256(first) != normalized_trace_sha256(second)
 
 
 def test_candidate_rank_prioritizes_worst_track_reliability():

@@ -63,6 +63,11 @@ def canonical_sha256(value: object) -> str:
                              separators=(",", ":")).encode("utf-8")).hexdigest()
 
 
+def normalized_trace_sha256(rows: list[dict]) -> str:
+    return canonical_sha256([{key: value for key, value in row.items() if key != "case_id"}
+                             for row in rows])
+
+
 def source_identity() -> tuple[str, str, dict[str, str]]:
     commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
                             capture_output=True, text=True).stdout.strip()
@@ -516,7 +521,8 @@ def _worker_episode(plan: dict, candidate: dict, track_id: str, seed: dict,
         "model_load_seconds": model_load_seconds,
         "episode_seconds": time.monotonic() - episode_started,
         "step_count": len(trace_rows), "trace_path": str(trace_path.resolve()),
-        "trace_sha256": file_sha256(trace_path),
+        "trace_sha256": normalized_trace_sha256(trace_rows),
+        "raw_trace_sha256": file_sha256(trace_path),
         "source_commit": plan["source_commit"], "heldout_access": False,
         "scientific_evidence": False, "ppo_training_started": False,
     }
