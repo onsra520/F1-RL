@@ -264,7 +264,7 @@ def evaluate_checkpoint(plan_path: Path, checkpoint: Path, output: Path,
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("--freeze-plan", nargs=2, metavar=("CAMPAIGN_PLAN", "OUTPUT"))
     group.add_argument("--evaluate", nargs=3, metavar=("PLAN", "CHECKPOINT", "OUTPUT"))
     group.add_argument("--deterministic-slalom", nargs=3, metavar=("PLAN", "CHECKPOINT", "OUTPUT"))
@@ -288,7 +288,7 @@ def main():
         path = Path(output) / "episodes" / f"{Path(checkpoint).stem}__{track}__ep{int(episode):02d}__{mode}.json"
         path.write_text(json.dumps(result, sort_keys=True, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     else:
-        raise SystemExit("missing operation")
+        parser.error("choose a plan, evaluation, or worker operation")
 
 
 if __name__ == "__main__":
