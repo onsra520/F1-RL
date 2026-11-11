@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT))
 M4_ROOT = Path(r"D:\Projects\.archives\F1-RL\demo-completion\m4-m5-development-v2")
 M5_ROOT = Path(r"D:\Projects\.archives\F1-RL\demo-completion\m5-engineering-fix-20261111\attempt-2")
 ABLATION_ROOT = Path(r"D:\Projects\.archives\F1-RL\demo-completion\m5-improvement-cycle1-20261111\std-ablation")
-CHECKPOINT = ABLATION_ROOT / "C-seed0-logstd-scale-0.5.zip"
+CHECKPOINT = ABLATION_ROOT.parent / "C-seed0-logstd-scale-0.5.zip"
 TRACK_MAP = {
     "straight-sprint-v1": "straight-sprint-v1",
     "slalom-v1": "slalom-v1",
