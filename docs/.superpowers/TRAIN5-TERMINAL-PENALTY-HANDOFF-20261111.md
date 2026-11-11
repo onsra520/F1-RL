@@ -33,7 +33,7 @@ Proposal dự kiến so sánh cặp baseline/penalty trên **12 lượt**: hai c
 
 **Chưa hoàn thành so sánh penalty–baseline và chưa có model penalty thật.** Trước khi ký/chạy lại, người tiếp nhận phải:
 
-1. Quyết định và ghi lại cách xử lý seed của lượt đã bắt đầu nhưng không hoàn tất. Hiện `scripts/wp7_penalty_trial_protocol.py` dùng domain seed cố định, vì vậy chạy `prepare` lại trên source hiện tại sẽ đề xuất lại cùng seed. Không giả định seed đó sạch; nếu đổi seed/domain phải cập nhật protocol, kiểm tra trùng với lịch sử có thể truy cập, review và chạy test/CI lại. Không tự áp dụng ngoại lệ 18 seed lịch sử cho seed mới.
+1. Lượt cũ đã bắt đầu được xem là đã tiêu thụ seed. Domain mới `F1RL-TERMINAL-PENALTY-TRIAL-20261111-v2` tạo seed khác; đối chiếu toàn bộ 7.260 giá trị gồm PPO rank, sampling, perturbation và evaluation với plan v1 cho kết quả không trùng. Proposal vẫn kiểm tra lịch sử seed có thể truy cập; không chứng minh được global non-use và không tự áp dụng ngoại lệ 18 seed lịch sử cho seed mới. Chạy test/CI cho commit mới trước khi ký.
 2. Giữ bản cũ bất biến, chọn **output mới ngoài checkout**, bảo đảm dung lượng và máy duy trì nguồn/không sleep suốt training và đánh giá. Runner hiện không resume; chỉ lưu final model sau mỗi lượt, không có intermediate checkpoint. Một lần gián đoạn có thể mất lượt đang chạy. Kiểm tra thời hạn packet 168 giờ đủ cho kế hoạch thực tế; hết hạn thì guard dừng.
 3. Kiểm tra lại implementation, các nhánh fail-closed và thời gian/thiết lập runtime trên máy thực thi. Không bỏ qua guard; xác nhận CI Windows/Linux theo HEAD và chạy lại local tests có witness. GitHub CI không có evidence ngoài máy, vì vậy một số kiểm thử trial phụ thuộc witness/journal được skip ở CI; CI xanh không chứng minh các witness đó đã được kiểm tra.
 4. Đăng ký/xác thực public key của người ký theo quy trình project. Registry hiện tại thuộc owner `onsra520`; người vận hành khác **không tự động có quyền ký** và không được xin/chia sẻ private key hoặc passphrase của owner. Nếu thay key hoặc source phải cập nhật và kiểm thử bindings, commit/CI, tạo plan mới rồi owner hoặc key được ủy quyền tự ký. Thời hạn và các disclosure được hiển thị trong terminal.
@@ -50,7 +50,7 @@ Implementation hiện tìm hai tệp seed evidence **ngoài checkout tại thư 
 - `handoff/penalty-20261111/seed-evidence/slalom-fresh-audit.json` -> `<repo-parent>/slalom-fresh-audit.json`.
 - `handoff/penalty-20261111/seed-evidence/evaluation-journal.jsonl` -> `<repo-parent>/TRAIN5-v4-internal-20261109/evaluation-journal.jsonl`.
 
-Bốn witness nằm trong `handoff/penalty-20261111/step3-witnesses/`; truyền đường dẫn thư mục đó bằng `--evidence`. `prepare` kiểm tra witness và ba checkpoint. Giữ output, plan và packet ngoài checkout, mỗi path mới và riêng biệt. Các lệnh dưới đây là **mẫu sau khi đã giải quyết seed bị gián đoạn và có commit/CI mới**; chúng không tự cấp quyền:
+Bốn witness nằm trong `handoff/penalty-20261111/step3-witnesses/`; truyền đường dẫn thư mục đó bằng `--evidence`. `prepare` kiểm tra witness và ba checkpoint. Giữ output, plan và packet ngoài checkout, mỗi path mới và riêng biệt. Các lệnh dưới đây là **mẫu sau khi có commit/CI mới cho domain v2**; chúng không tự cấp quyền:
 
 ```text
 python -B -m scripts.wp7_penalty_trial_cli prepare --output <NEW_OUTPUT> --plan <NEW_PLAN.json> --evidence <STEP3_WITNESSES_DIR>

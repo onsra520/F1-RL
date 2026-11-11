@@ -28,3 +28,25 @@ def test_modified_scope_fails_closed(field, value):
     proposal[field] = value
     with pytest.raises(ValueError, match='proposal or source bindings changed'):
         validate_proposal(ROOT, proposal)
+
+
+def test_new_seed_domain_does_not_reuse_interrupted_trial():
+    from hashlib import sha256
+
+    proposal = build_proposal(ROOT)
+    def old_seed(*parts):
+        value = '/'.join(('F1RL-TERMINAL-PENALTY-TRIAL-20261111-v1', *map(str, parts)))
+        return int.from_bytes(sha256(value.encode('ascii')).digest()[:4], 'big')
+
+    previous, current = set(), set()
+    for pair in proposal['pairs']:
+        old = {role: old_seed('train', pair['cohort'], pair['replicate'], role)
+               for role in ('ppo', 'sampling', 'perturbation')}
+        previous.update(old.values())
+        previous.update(range(old['ppo'], old['ppo'] + 8))
+        current.update(pair['seeds'].values())
+        current.update(range(pair['seeds']['ppo'], pair['seeds']['ppo'] + 8))
+    for row in proposal['evaluation_seed_rows']:
+        previous.update((old_seed('env', *row[:-2]), old_seed('policy', *row[:-2])))
+        current.update(row[-2:])
+    assert previous.isdisjoint(current)

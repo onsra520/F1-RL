@@ -7,7 +7,7 @@ import subprocess
 from f1rl.research.wp7_train5_v4_admission import development_policy_seeds, development_seeds, load_v4_protocol
 from f1rl.research.wp7_train5_v4_checkpoint import FROZEN_BY_REPLICATE, FROZEN_CHECKPOINTS
 
-DOMAIN = 'F1RL-TERMINAL-PENALTY-TRIAL-20261111-v1'
+DOMAIN = 'F1RL-TERMINAL-PENALTY-TRIAL-20261111-v2'
 EXTRA_SOURCES = ('scripts/wp7_terminal_crash_penalty.py', 'scripts/wp7_penalty_trial_protocol.py',
                  'scripts/wp7_penalty_trial_authorization.py', 'tests/research/test_wp7_penalty_trial_authorization.py',
                  'scripts/wp7_penalty_trial_runner.py', 'tests/research/test_wp7_penalty_trial_runner.py',
