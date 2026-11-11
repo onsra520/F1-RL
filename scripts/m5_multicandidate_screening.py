@@ -17,7 +17,7 @@ from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-ARTIFACT_ROOT = Path(r"D:\Projects\.archives\F1-RL\demo-completion\m5-multicandidate-screening-20261111")
+ARTIFACT_ROOT = Path(r"D:\Projects\.archives\F1-RL\demo-completion\m5-multicandidate-screening-20261111-reprocheck")
 FULL06_ARCHIVE = Path(r"D:\Projects\.archives\F1-RL\pre-cleanup-consolidation-818eedc\evidence-wp3-87face7-raw.zip")
 FULL06_ARCHIVE_SHA256 = "144a41a5e2b2f393103321487265a6ba0f98ec1075196e4f796aecf72b3ef2ba"
 M4_ROOT = Path(r"D:\Projects\.archives\F1-RL\demo-completion\m4-m5-development-v2")
