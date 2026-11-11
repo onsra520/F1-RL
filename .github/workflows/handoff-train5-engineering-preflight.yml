@@ -5,6 +5,7 @@ on:
     branches:
       - handoff/physics-v4-khanh-bang-20261106
       - fix/physics-v4-handoff-audit
+      - kiet/physics-v4-penalty-rerun
   workflow_dispatch:
 
 permissions:
@@ -38,7 +39,7 @@ jobs:
         shell: bash
         run: |
           case "${GITHUB_REF_NAME}" in
-            handoff/physics-v4-khanh-bang-20261106|fix/physics-v4-handoff-audit) ;;
+            handoff/physics-v4-khanh-bang-20261106|fix/physics-v4-handoff-audit|kiet/physics-v4-penalty-rerun) ;;
             *) exit 1 ;;
           esac
           git merge-base --is-ancestor 2417570f32f6879c2651bce37d88fd6ac83a2ea4 HEAD
