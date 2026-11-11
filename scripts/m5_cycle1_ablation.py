@@ -76,7 +76,7 @@ def _source_identity() -> tuple[str, str, dict[str, str]]:
     commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
                             check=True, capture_output=True, text=True).stdout.strip()
     tree = subprocess.run(["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT,
-                          check=True, capture_output=True).stdout.strip()
+                          check=True, capture_output=True, text=True).stdout.strip()
     dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all"], cwd=ROOT,
                            check=True, capture_output=True, text=True).stdout
     if dirty or len(commit) != 40 or len(tree) != 40:
