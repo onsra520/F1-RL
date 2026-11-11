@@ -43,7 +43,8 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
     metadata = {"render_modes": []}
     render_mode = None
 
-    def __init__(self, scenarios: TrainingScenarioSet, sampling_seed: int, rank: int) -> None:
+    def __init__(self, scenarios: TrainingScenarioSet, sampling_seed: int, rank: int,
+                 sampling_policy: str = "uniform") -> None:
         if not isinstance(scenarios, TrainingScenarioSet):
             raise ValueError("scenarios must be TrainingScenarioSet")
         if (
@@ -54,6 +55,8 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             raise ValueError(f"sampling_seed must be an integer in [0, {MAX_SEED}]")
         if isinstance(rank, bool) or not isinstance(rank, int) or rank < 0:
             raise ValueError("rank must be a non-negative integer")
+        if sampling_policy not in {"uniform", "balanced"}:
+            raise ValueError('sampling_policy must be "uniform" or "balanced"')
         super().__init__()
         rank_seed = int.from_bytes(
             hashlib.sha256(
@@ -62,6 +65,8 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             "big",
         )
         self._scenarios = scenarios
+        self._sampling_policy = sampling_policy
+        self._balanced_schedule: list[TrainingScenario] = []
         self._selection_rng = random.Random(rank_seed)
         self._rank = rank
         self._reset_sequence = 0
@@ -105,7 +110,13 @@ class _SampledF1RLEnv(gym.Env[np.ndarray, np.ndarray]):
         if previous_env is not None:
             previous_env.close()
 
-        scenario = self._selection_rng.choice(self._scenarios.scenarios)
+        if self._sampling_policy == "balanced":
+            if not self._balanced_schedule:
+                self._balanced_schedule = list(self._selection_rng.sample(
+                    self._scenarios.scenarios, len(self._scenarios.scenarios)))
+            scenario = self._balanced_schedule.pop(0)
+        else:
+            scenario = self._selection_rng.choice(self._scenarios.scenarios)
         env = (
             scenario.factory.create(reset_rank=self._rank, reset_sequence=self._reset_sequence)
             if scenario.factory.reset_config is not None else scenario.factory.create()
@@ -153,15 +164,18 @@ class _RankedScenarioEnvFactory:
     scenarios: TrainingScenarioSet
     sampling_seed: int
     rank: int
+    sampling_policy: str = "uniform"
 
     def __call__(self) -> _SampledF1RLEnv:
-        return _SampledF1RLEnv(self.scenarios, self.sampling_seed, self.rank)
+        return _SampledF1RLEnv(self.scenarios, self.sampling_seed, self.rank,
+                               self.sampling_policy)
 
 
 def make_multi_track_vector_env(
     scenarios: TrainingScenarioSet,
     config: VectorEnvConfig,
     sampling_seed: int,
+    sampling_policy: str = "uniform",
 ) -> VecEnv:
     if not isinstance(scenarios, TrainingScenarioSet):
         raise ValueError("scenarios must be TrainingScenarioSet")
@@ -173,9 +187,11 @@ def make_multi_track_vector_env(
         or not 0 <= sampling_seed <= MAX_SEED
     ):
         raise ValueError(f"sampling_seed must be an integer in [0, {MAX_SEED}]")
+    if sampling_policy not in {"uniform", "balanced"}:
+        raise ValueError('sampling_policy must be "uniform" or "balanced"')
 
     factories = [
-        _RankedScenarioEnvFactory(scenarios, sampling_seed, rank)
+        _RankedScenarioEnvFactory(scenarios, sampling_seed, rank, sampling_policy)
         for rank in range(config.n_envs)
     ]
     if config.backend == "dummy":

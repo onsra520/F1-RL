@@ -244,6 +244,20 @@ def test_sampled_wrapper_ranks_advance_independent_streams() -> None:
         rank_one.close()
 
 
+def test_sampled_wrapper_balances_track_selection_per_episode_cycle() -> None:
+    def sample(seed: int) -> list[str]:
+        wrapper = vector_env._SampledF1RLEnv(_scenario_set(), seed, 0, "balanced")
+        try:
+            return [wrapper.reset()[1]["track_id"] for _ in range(9)]
+        finally:
+            wrapper.close()
+
+    first = sample(321)
+    assert first == sample(321)
+    assert all(set(first[offset:offset + 3]) == {"alpha", "beta", "gamma"}
+               for offset in (0, 3, 6))
+
+
 def test_make_multi_track_vector_env_builds_distinct_dummy_slots() -> None:
     scenarios = _scenario_set()
     vector_env_instance = vector_env.make_multi_track_vector_env(
@@ -261,6 +275,14 @@ def test_make_multi_track_vector_env_builds_distinct_dummy_slots() -> None:
         assert [env._current_scenario.track_id for env in vector_env_instance.envs] == ["gamma", "gamma"]
     finally:
         vector_env_instance.close()
+
+
+def test_make_multi_track_vector_env_rejects_unknown_sampling_policy() -> None:
+    with pytest.raises(ValueError, match="sampling_policy"):
+        vector_env.make_multi_track_vector_env(
+            _scenario_set(), VectorEnvConfig(n_envs=1), sampling_seed=123,
+            sampling_policy="cycle",
+        )
 
 
 def test_dummy_auto_reset_preserves_terminal_track_id_before_sampling_next_episode() -> None:

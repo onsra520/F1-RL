@@ -845,3 +845,262 @@ def run_local_demo(root: str | Path, *, candidate_id: str, tuning_seed_index: in
                     primary_error.add_note(f"Could not persist failed smoke validation: {error}")
                 else:
                     raise
+
+
+def run_m5_cycle2(root: str | Path, *, plan_path: str | Path,
+                  output_directory: str | Path, checkpoint_observer) -> dict:
+    """Run the single source-bound, bounded C0 Cycle 2 development attempt."""
+    import platform
+
+    from ..learning.training.env_factory import TrainingScenario, TrainingScenarioSet
+    from ..learning.training.config import VectorEnvConfig
+    from ..learning.training.vector_env import make_multi_track_vector_env
+    from .m5_cycle2_telemetry import M5Cycle2Telemetry
+
+    if not callable(checkpoint_observer):
+        raise ValueError("Cycle 2 requires a checkpoint evaluation observer")
+    root = Path(root).resolve(strict=True)
+    output = Path(output_directory)
+    plan_path = Path(plan_path)
+    if not output.is_absolute() or output.exists() or output.is_relative_to(root):
+        raise ValueError("Cycle 2 output must be a new absolute external evidence directory")
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    profile_path = root / "configs/research/m5-cycle2-c0-slalom-v1.json"
+    profile_bytes = profile_path.read_bytes()
+    profile = json.loads(profile_bytes)
+    expected = {
+        "schema_version": "f1rl_m5_cycle2_c0_slalom_v1",
+        "owner_request_sha256": "4603be84c780563ae70462cd053113e1c7dd9fd55f7d9cc70a411795d9148fa6",
+        "parent_checkpoint_sha256": "b6de69382523b9dc5309a6cffb230afd31f9b0206d3381dff723abc69ebffa86",
+        "expected_optimizer_state_sha256": "668fcdae8285d780c7033688d61fe9cb482fe7547e87ef14fa1370b994bd0c05",
+        "expected_log_std": [-0.9352163076400757, -0.7101601362228394, -0.8592329621315002],
+        "expected_log_std_optimizer_step": 10240,
+        "source_branch": "feat/m5-multicandidate-screening-20261111",
+        "tracks": ["straight-sprint-v1", "slalom-v1", "right-turn-train-v2", "ramp-v1",
+                   "left-turn-train-v2"],
+        "sampling_policy": "balanced",
+        "sampling_seed": 3141592653,
+        "physics_profile_sha256": "c178b6a3109a7ae2d2c8b8b35f2e1e0868e0c97280ec5c83e643a7050d7c2e37",
+        "action_contract": "steering-throttle-brake-v2", "observation_dimension": 16,
+        "episode_step_limit": 500, "max_additional_timesteps": 32768,
+        "checkpoint_interval": 4096, "rollout_length": 256, "n_envs": 1,
+        "device": "cpu", "torch_threads": 4, "torch_interop_threads": 1,
+        "max_wall_seconds": 28800, "max_process_rss_bytes": 4294967296,
+        "minimum_available_memory_bytes": 8589934592, "heldout_access": False,
+        "scientific_evidence": False,
+    }
+    if (profile != expected or plan.get("schema_version") != "f1rl_m5_cycle2_training_plan_v1"
+            or plan.get("profile_sha256") != sha256(profile_bytes).hexdigest()
+            or plan.get("parent_checkpoint_sha256") != expected["parent_checkpoint_sha256"]
+            or plan.get("training_authorized_by_owner_request_sha256") != expected["owner_request_sha256"]
+            or plan.get("track_ids") != expected["tracks"]
+            or plan.get("sampling_policy") != expected["sampling_policy"]
+            or plan.get("sampling_seed") != expected["sampling_seed"]
+            or plan.get("max_additional_timesteps") != expected["max_additional_timesteps"]
+            or plan.get("checkpoint_interval") != expected["checkpoint_interval"]
+            or plan.get("device") != "cpu" or plan.get("heldout_access") is not False
+            or plan.get("scientific_evidence") is not False):
+        raise ValueError("Cycle 2 source-bound plan/profile is invalid or exceeds owner scope")
+    plan_payload = {key: value for key, value in plan.items() if key != "sha256"}
+    if plan.get("sha256") != sha256(json.dumps(plan_payload, sort_keys=True,
+            separators=(",", ":"), allow_nan=False).encode()).hexdigest():
+        raise ValueError("Cycle 2 training plan self-hash mismatch")
+    commit, tree_sha256 = _source_identity(root)
+    branch = subprocess.run(["git", "branch", "--show-current"], cwd=root,
+                            check=True, capture_output=True, text=True).stdout.strip()
+    if (branch != "feat/m5-cycle2-c0-slalom-recovery-20261111"
+            or plan.get("source_commit") != commit
+            or plan.get("source_tree_sha256") != tree_sha256):
+        raise ValueError("Cycle 2 requires the frozen clean source-bound feature branch")
+    checkpoint = Path(plan["parent_checkpoint_path"]).resolve(strict=True)
+    if _hash_file(checkpoint) != expected["parent_checkpoint_sha256"]:
+        raise ValueError("Cycle 2 parent checkpoint is not the locked immutable C0 std050")
+    if len(plan.get("track_asset_sha256", {})) != len(expected["tracks"]):
+        raise ValueError("Cycle 2 plan must bind all five TRAIN/development track assets")
+
+    from scripts.m5_multicandidate_screening import _build_factory
+    scenarios = []
+    for track_id in expected["tracks"]:
+        factory, _ = _build_factory(track_id, 0)
+        if (factory.physics_config.sha256 != expected["physics_profile_sha256"]
+                or factory.action_contract.version != expected["action_contract"]
+                or len(factory.observation_encoder.feature_names) != expected["observation_dimension"]
+                or factory.episode_config.max_steps != expected["episode_step_limit"]
+                or factory.reset_config is not None):
+            raise ValueError(f"Cycle 2 track contract mismatch: {track_id}")
+        asset = root / "assets/tracks/training" / f"{track_id}.json"
+        if _hash_file(asset) != plan["track_asset_sha256"].get(track_id):
+            raise ValueError(f"Cycle 2 track asset changed: {track_id}")
+        scenarios.append(TrainingScenario(track_id, factory))
+    scenario_set = TrainingScenarioSet(tuple(scenarios))
+    if (scenario_set.action_space.shape != (3,)
+            or scenario_set.observation_space.shape != (16,)):
+        raise ValueError("Cycle 2 shared PPO input/output spaces differ from the lock")
+
+    if os.name != "nt":
+        raise ValueError("Cycle 2 LOCAL_DEMO training is supported on Windows only")
+    output.mkdir(parents=True, exist_ok=False)
+    configure_cpu_runtime(expected["torch_threads"], expected["torch_interop_threads"])
+    available_memory, _ = _windows_memory_snapshot()
+    if available_memory < expected["minimum_available_memory_bytes"]:
+        raise RuntimeError("Cycle 2 stopped: available memory is below the registered minimum")
+    vector = make_multi_track_vector_env(
+        scenario_set, VectorEnvConfig(n_envs=1, backend="dummy"), plan["sampling_seed"],
+        sampling_policy="balanced")
+    session = None
+    model = None
+    start = time.monotonic()
+    deadline = start + expected["max_wall_seconds"]
+    maximum = 65536 + expected["max_additional_timesteps"]
+    try:
+        session = _issue(root, vector, commit=commit, tree_sha256=tree_sha256,
+                         deadline=deadline, max_timesteps=maximum)
+        model = PPOModel.load(checkpoint, env=vector, device="cpu")
+        if (model.num_timesteps != 65536 or model._model.n_steps != expected["rollout_length"]
+                or model._model.batch_size != 64 or model._model.n_epochs != 10
+                or model._model.device.type != "cpu"):
+            raise ValueError("Cycle 2 parent PPO runtime/optimizer contract mismatch")
+        initial_weights_sha256 = model.weights_sha256()
+        initial_optimizer_sha256 = _optimizer_state_sha256(model)
+        log_std = model._model.policy.log_std.detach().cpu().numpy().astype(float).tolist()
+        log_std_step = float(model._model.policy.optimizer.state[
+            model._model.policy.log_std]["step"].item())
+        if (initial_optimizer_sha256 != expected["expected_optimizer_state_sha256"]
+                or log_std != expected["expected_log_std"]
+                or log_std_step != expected["expected_log_std_optimizer_step"]):
+            raise ValueError("Cycle 2 adjusted log_std or restored optimizer state differs from locked parent")
+        try:
+            from .admission import _source_identity as _admission_source_identity
+            if _admission_source_identity(root) != (commit, tree_sha256):
+                raise ValueError("Cycle 2 source identity changed after admission")
+        except ValueError:
+            raise
+        callback_outcomes = []
+        chunks = expected["max_additional_timesteps"] // expected["checkpoint_interval"]
+        for _ in range(chunks):
+            available_memory, _ = _windows_memory_snapshot()
+            if available_memory < expected["minimum_available_memory_bytes"]:
+                raise LocalDemoStopped("Cycle 2 stopped: available memory dropped below registered minimum")
+            telemetry_path = output / f"training-{model.num_timesteps + expected['checkpoint_interval']}.jsonl"
+            telemetry = M5Cycle2Telemetry(
+                telemetry_path, run_id=f"m5-cycle2-{commit[:12]}",
+                expected_steps=expected["checkpoint_interval"])
+
+            progress_checks = 0
+
+            def check_resources(timesteps: int) -> None:
+                nonlocal progress_checks
+                progress_checks += 1
+                session.check(timesteps)
+                if (progress_checks % 128 == 0
+                        and _windows_memory_snapshot()[1] > expected["max_process_rss_bytes"]):
+                    raise LocalDemoStopped("Cycle 2 stopped: process RSS exceeded registered limit")
+
+            model.learn(expected["checkpoint_interval"], progress_hook=check_resources,
+                        telemetry_observer=telemetry)
+            telemetry_summary = telemetry.close()
+            step = model.num_timesteps
+            target = output / f"checkpoint-{step}.zip"
+            pending = output / f"checkpoint-{step}.pending.zip"
+            _save_checkpoint(model, pending, target)
+            checkpoint_sha = _hash_file(target)
+            metadata = {"timestep": step, "checkpoint_path": str(target),
+                        "checkpoint_sha256": checkpoint_sha,
+                        "policy_weights_sha256": model.weights_sha256(),
+                        "optimizer_state_sha256": _optimizer_state_sha256(model),
+                        "telemetry": telemetry_summary}
+            stop = checkpoint_observer(target, metadata)
+            if type(stop) is not bool:
+                raise ValueError("Cycle 2 checkpoint observer must return a boolean continue flag")
+            callback_outcomes.append({**metadata, "continue_training": stop})
+            if not stop:
+                break
+        if model.weights_sha256() == initial_weights_sha256:
+            raise RuntimeError("Cycle 2 did not change PPO policy weights")
+        result = {"schema_version": "f1rl_m5_cycle2_training_result_v1",
+                  "status": "completed" if len(callback_outcomes) == chunks else "stopped_early",
+                  "source_commit": commit, "source_tree_sha256": tree_sha256,
+                  "profile_sha256": sha256(profile_bytes).hexdigest(),
+                  "parent_checkpoint_sha256": expected["parent_checkpoint_sha256"],
+                  "initial_policy_weights_sha256": initial_weights_sha256,
+                  "initial_optimizer_state_sha256": initial_optimizer_sha256,
+                  "initial_log_std": log_std, "initial_log_std_optimizer_step": log_std_step,
+                  "final_policy_weights_sha256": model.weights_sha256(),
+                  "final_optimizer_state_sha256": _optimizer_state_sha256(model),
+                  "final_num_timesteps": model.num_timesteps,
+                  "additional_timesteps": model.num_timesteps - 65536,
+                  "checkpoint_results": callback_outcomes,
+                  "elapsed_seconds": time.monotonic() - start,
+                  "runtime": {"python": platform.python_version(),
+                              "system": platform.platform(),
+                              "torch": __import__("torch").__version__,
+                              "stable_baselines3": __import__("stable_baselines3").__version__},
+                  "track_ids": expected["tracks"], "device": "cpu",
+                  "sampling_policy": expected["sampling_policy"],
+                  "heldout_access": False, "scientific_evidence": False}
+        _write_json(output / "training-result.json", result)
+        return result
+    finally:
+        try:
+            if model is not None:
+                model._model.get_env().close()
+            else:
+                vector.close()
+        finally:
+            if session is not None:
+                _revoke(vector)
+
+
+def _optimizer_state_sha256(model: PPOModel) -> str:
+    digest = sha256()
+    parameters = dict(model._model.policy.named_parameters())
+    for parameter, state in model._model.policy.optimizer.state.items():
+        name = next((key for key, value in parameters.items() if value is parameter), "unbound")
+        digest.update(name.encode("utf-8"))
+        for key, value in sorted(state.items()):
+            digest.update(str(key).encode("utf-8"))
+            if hasattr(value, "detach"):
+                digest.update(value.detach().cpu().numpy().tobytes())
+            else:
+                digest.update(str(value).encode("utf-8"))
+    return digest.hexdigest()
+
+
+def _windows_memory_snapshot() -> tuple[int, int]:
+    import ctypes
+    from ctypes import wintypes
+
+    class MemoryStatus(ctypes.Structure):
+        _fields_ = [("dwLength", wintypes.DWORD), ("dwMemoryLoad", wintypes.DWORD),
+                    ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
+                    ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
+                    ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong),
+                    ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
+
+    class ProcessMemoryCounters(ctypes.Structure):
+        _fields_ = [("cb", wintypes.DWORD), ("PageFaultCount", wintypes.DWORD),
+                    ("PeakWorkingSetSize", ctypes.c_size_t), ("WorkingSetSize", ctypes.c_size_t),
+                    ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                    ("PagefileUsage", ctypes.c_size_t), ("PeakPagefileUsage", ctypes.c_size_t)]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    psapi = ctypes.WinDLL("psapi", use_last_error=True)
+    kernel32.GlobalMemoryStatusEx.argtypes = [ctypes.POINTER(MemoryStatus)]
+    kernel32.GlobalMemoryStatusEx.restype = wintypes.BOOL
+    kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+    psapi.GetProcessMemoryInfo.argtypes = [wintypes.HANDLE,
+                                           ctypes.POINTER(ProcessMemoryCounters), wintypes.DWORD]
+    psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
+    status = MemoryStatus()
+    status.dwLength = ctypes.sizeof(MemoryStatus)
+    if not kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+        raise OSError("GlobalMemoryStatusEx failed")
+    counters = ProcessMemoryCounters()
+    counters.cb = ctypes.sizeof(ProcessMemoryCounters)
+    handle = kernel32.GetCurrentProcess()
+    if not psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb):
+        raise OSError("GetProcessMemoryInfo failed")
+    return int(status.ullAvailPhys), int(counters.WorkingSetSize)
