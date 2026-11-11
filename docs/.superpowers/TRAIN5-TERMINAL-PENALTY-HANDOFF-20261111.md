@@ -84,6 +84,7 @@ python -B -m scripts.wp7_penalty_trial_cli execute --packet <NEW_PACKET.json> --
 
 - Batch đã chạy xong: execute `EXIT=0`, 12 lượt, 7.200 bản ghi đánh giá. Source commit `5c7f832`. Plan: `D:\REL301m\F1RL-runs\penalty-v3-20261111-plan.json`. Output: `D:\REL301m\F1RL-runs\penalty-v3-20261111\` (không sửa sau khi chạy xong).
 - Phân tích chỉ đọc ngày 12/11. Số liệu và script nằm ngoài repo tại `D:\REL301m\F1RL-runs\penalty-v3-analysis-20261112\` (`analysis-report.md`, `analysis-summary.json`, `cells.csv`, `models.csv`, `model_pair_diffs.csv`, `analyze_v3.py`).
+- Bản sao phân tích trong repo: `docs/.superpowers/handoff/penalty-20261111/analysis-v3-20261112/` (`analyze_v3.py`, `analysis-summary.json`, `cells.csv`, `models.csv`, `model_pair_diffs.csv`), kiểm tra bằng `SHA256SUMS` của thư mục `penalty-20261111`. Không đưa journal thô, model hay báo cáo văn xuôi vào repo.
 - Đây là thống kê mô tả trên tập TRAIN. Không có kiểm định thống kê (D3). Không phải bằng chứng HELD-OUT.
 
 ### Kết luận theo ngưỡng plan
@@ -130,6 +131,7 @@ Plan không đo các mục dưới đây. Ghi lại để nhóm đánh giá. Kh�
 - `hard_route_violation` (không tính là finish, cũng không là crash): baseline 39, penalty 115, trên 3.600 episode mỗi intervention.
 - Theo track, penalty: straight-sprint 35 (baseline 0), ramp 26 (baseline 0), left-turn 18 (baseline 2), right-turn 11 (baseline 0), slalom 25 (baseline 37).
 - Theo model, 110 trên 115 lượt route violation của penalty nằm ở ba lượt: `train5_from_frozen_checkpoint` rep 0 (59), `train5_from_scratch` rep 1 (34), `train5_from_scratch` rep 0 (17). Ba lượt còn lại có 0, 2 và 3. Phân bố không đều.
+- Phân bố này là khác biệt giữa các lượt train, chưa quy được cho penalty. Baseline ở cùng các lượt đó cũng có route violation: frozen rep 0 = 34, scratch rep 0 = 1, scratch rep 1 = 0; tổng baseline là 39 trên 3.600 episode.
 - Penalty làm giảm finish trên bốn track không phải slalom: tổng 83 lượt (straight 35, right-turn 11, ramp 21, left-turn 16). Trên slalom penalty tăng 52 lượt finish. Tổng thể finish của penalty là 3.184, baseline là 3.215.
 
 ### Định nghĩa kết cục (đã đọc mã)
@@ -145,6 +147,7 @@ Plan không đo các mục dưới đây. Ghi lại để nhóm đánh giá. Kh�
 - Mỗi lượt `run-one` gọi `activate` (`scripts/wp7_penalty_trial_capability.py:43`), gọi `verify_trial_scope`, rồi `validate_proposal`. `validate_proposal` dựng lại toàn bộ proposal từ source và so sánh (`scripts/wp7_penalty_trial_protocol.py:140-142`). Vì vậy băm của các file ràng buộc được kiểm tra lại ở đầu mỗi lượt. Cả 12 lượt hoàn thành, nên không lượt nào thấy lệch.
 - Bằng chứng gián tiếp về cây sạch lúc chạy: `claim-batch` được ghi lúc 14:25:28, sau kiểm tra sạch ban đầu. Không có file nào trong `scripts/`, `f1rl/`, `tests/`, `configs/`, `docs/` có thời điểm sửa sau đó. HEAD không đổi từ 14:24:37 (reflog). Không có log riêng ghi kết quả kiểm tra sạch cho từng lượt.
 - Chưa xác minh trực tiếp: cây làm việc sạch hoàn toàn (kể cả file không ràng buộc) ở từng lượt. Mã không kiểm tra điều này cho từng lượt, dù quy tắc 5 của plan mô tả việc đó.
+- Lệch so với plan: quy tắc 5 (mục 0) viết kiểm tra cây sạch cho từng lượt. Code chỉ gọi `_require_clean_source` một lần, lúc bắt đầu execute. Kiểm tra cho từng lượt chỉ có băm ràng buộc qua `validate_proposal`. Lệch này được ghi nhận, chưa sửa code trong đợt này.
 
 ### Đã thực hiện trong đợt này
 
