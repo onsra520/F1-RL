@@ -106,25 +106,6 @@ def evaluate_after_checkpoint(checkpoint: Path, metadata: dict, plan: dict,
     if (report["checkpoint_sha256"] != metadata["checkpoint_sha256"]
             or report["complete_cases"] != 85):
         raise ValueError("checkpoint evaluation did not complete the exact paired roster")
-    deterministic_dir = evidence_root / "deterministic-slalom" / f"step-{metadata['timestep']}"
-    det_command = [sys.executable, str(ROOT / "scripts/m5_cycle2_evaluate.py"),
-                   "--deterministic-slalom", str(plan_path), str(checkpoint), str(deterministic_dir)]
-    try:
-        det_child = subprocess.run(det_command, cwd=ROOT, capture_output=True, text=True,
-                                   timeout=2 * 60 * 60, check=False)
-    except subprocess.TimeoutExpired as error:
-        deterministic_dir.mkdir(parents=True, exist_ok=True)
-        (deterministic_dir / "worker-timeout.txt").write_text(
-            f"timeout_seconds={error.timeout}\ncheckpoint_sha256={metadata['checkpoint_sha256']}\n",
-            encoding="utf-8")
-        raise RuntimeError("deterministic Slalom evaluation timed out; fine-tuning stopped") from error
-    if det_child.returncode != 0:
-        deterministic_dir.mkdir(parents=True, exist_ok=True)
-        (deterministic_dir / "worker-failure.txt").write_text(
-            f"returncode={det_child.returncode}\nstdout={det_child.stdout[-3000:]}\nstderr={det_child.stderr[-5000:]}\n",
-            encoding="utf-8")
-        raise RuntimeError("deterministic Slalom evaluation failed; fine-tuning stopped")
-    det = json.loads((deterministic_dir / "EVALUATION-REPORT.json").read_text(encoding="utf-8"))
     slalom = report["grouped"]["slalom-v1:stochastic"]
     slalom_fixed = sum(row["terminal"]["finished"] for row in report["cases"]
                        if row["track_id"] == "slalom-v1" and row["episode"] < 10)
@@ -132,7 +113,11 @@ def evaluate_after_checkpoint(checkpoint: Path, metadata: dict, plan: dict,
                        if row["track_id"] == "slalom-v1" and row["episode"] >= 10)
     others = {track: report["grouped"][f"{track}:stochastic"]["finishes"]
               for track in TRACKS if track != "slalom-v1"}
-    det_count = det["grouped"]["slalom-v1:deterministic"]["finishes"]
+    deterministic_rows = [row for row in report["cases"]
+                          if row["track_id"] == "slalom-v1" and row["mode"] == "deterministic"]
+    if len(deterministic_rows) != 10:
+        raise ValueError("paired selection report is missing deterministic Slalom cases")
+    det_count = sum(row["terminal"]["finished"] for row in deterministic_rows)
     eligible = (det_count >= 8 and slalom["finishes"] >= 12 and slalom_fixed >= 8
                 and slalom_fresh >= 4 and all(value == 15 for value in others.values()))
     result = {
@@ -141,7 +126,6 @@ def evaluate_after_checkpoint(checkpoint: Path, metadata: dict, plan: dict,
                               "fresh_development": slalom_fresh},
         "deterministic_slalom": det_count, "other_stochastic_tracks": others,
         "eligible": eligible, "evaluation_report_sha256": report["sha256"],
-        "deterministic_report_sha256": det["sha256"],
         "stop_for_material_regression": (slalom["finishes"] < 12 or slalom_fixed < 8
                                          or slalom_fresh < 4 or any(v < 15 for v in others.values())),
     }
