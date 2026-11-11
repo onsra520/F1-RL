@@ -111,6 +111,24 @@ def test_right_turn_guidance_is_not_reused_for_a_different_registered_track(prof
         manager.shutdown()
 
 
+@pytest.mark.resource_sensitive
+@pytest.mark.xdist_group("physics_timeout")
+def test_default_right_lane_finishes_right_turn_train_v2_without_collision():
+    manager = RuntimeSessionManager(RuntimeCatalog(ROOT))
+    try:
+        session = manager.create(model_id=None, track_id="right-turn-train-v2", seed=412, mode="auto")
+        session.start()
+        assert session.wait(120), "Right Turn V2 Auto Drive must terminate"
+        replay = session.replay()
+
+        assert replay["result"]["successful_finish"], replay["result"]
+        completed = set(replay["frames"][-1]["completed_checkpoint_ids"])
+        assert {"checkpoint-0", "checkpoint-1"} <= completed
+        assert all(frame["collision_count"] == 0 for frame in replay["frames"])
+    finally:
+        manager.shutdown()
+
+
 def test_right_hand_auto_drive_clears_a_two_cone_cluster():
     from f1rl.local_demo.runtime.custom_tracks import convert_custom_track
     from f1rl.sandbox.body_collision import obb_separation_lower_bound

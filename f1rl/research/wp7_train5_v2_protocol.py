@@ -21,8 +21,8 @@ from ..sandbox.independent_suspension_dynamics import SuspensionDynamicsState
 from ..track_assets import load_track_manifest
 from .wp3_eval_only_coordinator import apply_runtime_profile, FULL06_RUNTIME_PROFILE
 
-SCHEMA="wp7_train5_paired_v2_portable_source_revision_v1"
-REGISTRATION="configs/research/wp7-train5-paired-v2-portable-source-revision-v1.json"
+SCHEMA="wp7_train5_paired_v2_portable_source_revision_v2"
+REGISTRATION="configs/research/wp7-train5-paired-v2-portable-source-revision-v2.json"
 HISTORICAL_REGISTRATION="configs/research/wp7-train5-paired-v2-registration.json"
 MANIFEST="assets/tracks/manifest-five-track-paired-v2.json"
 CANDIDATE="configs/recovery/wp7-c2-five-track-paired-v2.yml"
