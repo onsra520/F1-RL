@@ -84,7 +84,7 @@ python -B -m scripts.wp7_penalty_trial_cli execute --packet <NEW_PACKET.json> --
 
 - Batch đã chạy xong: execute `EXIT=0`, 12 lượt, 7.200 bản ghi đánh giá. Source commit `5c7f832`. Plan: `D:\REL301m\F1RL-runs\penalty-v3-20261111-plan.json`. Output: `D:\REL301m\F1RL-runs\penalty-v3-20261111\` (không sửa sau khi chạy xong).
 - Phân tích chỉ đọc ngày 12/11. Số liệu và script nằm ngoài repo tại `D:\REL301m\F1RL-runs\penalty-v3-analysis-20261112\` (`analysis-report.md`, `analysis-summary.json`, `cells.csv`, `models.csv`, `model_pair_diffs.csv`, `analyze_v3.py`).
-- Bản sao phân tích trong repo: `docs/.superpowers/handoff/penalty-20261111/analysis-v3-20261112/` (`analyze_v3.py`, `analysis-summary.json`, `cells.csv`, `models.csv`, `model_pair_diffs.csv`), kiểm tra bằng `SHA256SUMS` của thư mục `penalty-20261111`. Không đưa journal thô, model hay báo cáo văn xuôi vào repo.
+- Bản sao phân tích trong repo: `docs/.superpowers/handoff/penalty-20261111/analysis-v3-20261112/` (`analyze_v3.py`, `analysis-summary.json`, `cells.csv`, `models.csv`, `model_pair_diffs.csv`), kiểm tra bằng `SHA256SUMS` của thư mục `penalty-20261111`. Ngày 13/11: 12 model v3 và `training-result.json` được đưa vào `docs/.superpowers/handoff/penalty-20261111/penalty-v3/` (hash ghi trong `SHA256SUMS`, khớp với `training-result.json`). Không đưa journal thô hay báo cáo văn xuôi vào repo.
 - Đây là thống kê mô tả trên tập TRAIN. Không có kiểm định thống kê (D3). Không phải bằng chứng HELD-OUT.
 
 ### Kết luận theo ngưỡng plan

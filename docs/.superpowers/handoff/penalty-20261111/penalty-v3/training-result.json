@@ -1,0 +1,106 @@
+{
+  "runs": [
+    {
+      "intervention": "baseline",
+      "cohort": "train5_from_scratch",
+      "replicate": 0,
+      "steps": 200704,
+      "model": "D:\\REL301m\\F1RL-runs\\penalty-v3-20261111\\baseline-train5_from_scratch-0\\final-model.zip",
+      "sha256": "4cfea8b12f61523f4570f86409c185de8c07f0b6993f7e641c35bb3507d7f8ea"
+    },
+    {
+      "intervention": "baseline",
+      "cohort": "train5_from_scratch",
+      "replicate": 1,
+      "steps": 200704,
+      "model": "D:\\REL301m\\F1RL-runs\\penalty-v3-20261111\\baseline-train5_from_scratch-1\\final-model.zip",
+      "sha256": "437c5d6eff11be2217237ab8a8e9706382629af9142b1ed147e1d128eea5c23c"
+    },
+    {
+      "intervention": "baseline",
+      "cohort": "train5_from_scratch",
+      "replicate": 2,
+      "steps": 200704,
+      "model": "D:\\REL301m\\F1RL-runs\\penalty-v3-20261111\\baseline-train5_from_scratch-2\\final-model.zip",
+      "sha256": "43ea775748ec8bff8a7633fc4b74e3153d57b94f566fb31f2ebb2702331e2db5"
+    },
+    {
+      "intervention": "baseline",
+      "cohort": "train5_from_frozen_checkpoint",
+      "replicate": 0,
+      "steps": 200704,
+      "model": "D:\\REL301m\\F1RL-runs\\penalty-v3-20261111\\baseline-train5_from_frozen_checkpoint-0\\final-model.zip",
+      "sha256": "5010a2a1168b50ff6ed8169e13df7b32d8fc496ab616f0683e8a450240bad11c"
+    },
+    {
+      "intervention": "baseline",
+      "cohort": "train5_from_frozen_checkpoint",
+      "replicate": 1,
+      "steps": 200704,
+      "model": "D:\\REL301m\\F1RL-runs\\penalty-v3-20261111\\baseline-train5_from_frozen_checkpoint-1\\final-model.zip",
+      "sha256": "a3796a22bd6fdb4f652bcb2d313eb8d5795849966271d5f61bdf69ab7ee619ec"
+    },
+    {
+      "intervention": "baseline",
+      "cohort": "train5_from_frozen_checkpoint",
+      "replicate": 2,
+      "steps": 200704,
+      "model": "D:\\REL301m\\F1RL-runs\\penalty-v3-20261111\\baseline-train5_from_frozen_checkpoint-2\\final-model.zip",
+      "sha256": "b431ad4ad6970b95326641d4ee4a05b6a01be360c6ee0639c2d66e978f8cab67"
+    },
+    {
+      "intervention": "terminal_crash_penalty",
+      "cohort": "train5_from_scratch",
+      "replicate": 0,
+      "steps": 200704,
+      "model": "D:\\REL301m\\F1RL-runs\\penalty-v3-20261111\\terminal_crash_penalty-train5_from_scratch-0\\final-model.zip",
+      "sha256": "b42837f710bf62474f2c1239362426843701be0a634699ae4b326b87fe44df71"
+    },
+    {
+      "intervention": "terminal_crash_penalty",
+      "cohort": "train5_from_scratch",
+      "replicate": 1,
+      "steps": 200704,
+      "model": "D:\\REL301m\\F1RL-runs\\penalty-v3-20261111\\terminal_crash_penalty-train5_from_scratch-1\\final-model.zip",
+      "sha256": "de0cb03be94e4985f8dd0bae7abe097c53a6d2bff912352dbb9d8b9b7e2f750c"
+    },
+    {
+      "intervention": "terminal_crash_penalty",
+      "cohort": "train5_from_scratch",
+      "replicate": 2,
+      "steps": 200704,
+      "model": "D:\\REL301m\\F1RL-runs\\penalty-v3-20261111\\terminal_crash_penalty-train5_from_scratch-2\\final-model.zip",
+      "sha256": "6f9475bc2a471e857daca6e453233a869a39e1f714c3d73d74e939d57a6b253d"
+    },
+    {
+      "intervention": "terminal_crash_penalty",
+      "cohort": "train5_from_frozen_checkpoint",
+      "replicate": 0,
+      "steps": 200704,
+      "model": "D:\\REL301m\\F1RL-runs\\penalty-v3-20261111\\terminal_crash_penalty-train5_from_frozen_checkpoint-0\\final-model.zip",
+      "sha256": "201e6b5b0b5b84eb658cc05d48c4d85c597f6b893c54286bf44d0ed1fdbeadea"
+    },
+    {
+      "intervention": "terminal_crash_penalty",
+      "cohort": "train5_from_frozen_checkpoint",
+      "replicate": 1,
+      "steps": 200704,
+      "model": "D:\\REL301m\\F1RL-runs\\penalty-v3-20261111\\terminal_crash_penalty-train5_from_frozen_checkpoint-1\\final-model.zip",
+      "sha256": "b8cf14b845c1c4199aa4ff973803356481ecc757047ec61ed51ecda8d8579b77"
+    },
+    {
+      "intervention": "terminal_crash_penalty",
+      "cohort": "train5_from_frozen_checkpoint",
+      "replicate": 2,
+      "steps": 200704,
+      "model": "D:\\REL301m\\F1RL-runs\\penalty-v3-20261111\\terminal_crash_penalty-train5_from_frozen_checkpoint-2\\final-model.zip",
+      "sha256": "5c80b4e1298e2d92877bc5e44a64d24c967276e76076e65332e537347a668b26"
+    }
+  ],
+  "frozen_checkpoint_sha256": {
+    "C-seed0": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+    "B-seed1": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021",
+    "A-seed2": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc"
+  },
+  "heldout_evaluated": false
+}
