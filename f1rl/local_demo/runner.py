@@ -866,7 +866,10 @@ def run_m5_cycle2(root: str | Path, *, plan_path: str | Path,
     root = Path(root).resolve(strict=True)
     output = Path(output_directory)
     plan_path = Path(plan_path)
-    if not output.is_absolute() or output.exists() or output.is_relative_to(root):
+    if not output.is_absolute():
+        raise ValueError("Cycle 2 output must be a new absolute external evidence directory")
+    output = output.resolve()
+    if output.exists() or output.is_relative_to(root):
         raise ValueError("Cycle 2 output must be a new absolute external evidence directory")
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     profile_path = root / "configs/research/m5-cycle2-c0-slalom-v1.json"

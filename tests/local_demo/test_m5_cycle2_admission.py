@@ -68,3 +68,10 @@ def test_cycle2_admission_rejects_non_cpu_profile(tmp_path):
     with pytest.raises(ValueError, match="source-bound plan/profile"):
         _invoke(tmp_path, plan)
     assert not (tmp_path / "run-output").exists()
+
+
+def test_cycle2_rejects_output_resolving_inside_repository(tmp_path):
+    output = ROOT.parent / 'elsewhere' / '..' / ROOT.name / 'cycle2-output'
+    with pytest.raises(ValueError, match='external evidence directory'):
+        run_m5_cycle2(ROOT, plan_path=tmp_path / 'missing.json', output_directory=output,
+                      checkpoint_observer=lambda *_: True)
