@@ -476,7 +476,23 @@ export default function App() {
     }
   };
 
+  const clearRuntimeResult = () => {
+    cancelRuntime();
+    latestRuntimeFrame.current = null;
+    setRuntimeStatus(null);
+    setRuntimeError('');
+  };
+
+  const changeDriveMode = (next: DriveMode) => {
+    if (next === driveMode) return;
+    autoStartPending.current = false;
+    clearRuntimeResult();
+    setDriveMode(next);
+    setPlaying(false);
+  };
+
   const useRegisteredTrack = () => {
+    clearRuntimeResult();
     trackValidationRevision.current += 1;
     setTrackValidationBusy(false);
     setRuntimeTrackSelection({ kind: 'train' });
@@ -661,11 +677,11 @@ export default function App() {
           </>}
           {mode === 'drive' && <div className="drive-overlay">
             <div className="drive-mode-switch">
-              <button className={driveMode === 'auto' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'auto'} onClick={() => {setDriveMode('auto'); setPlaying(false);}}>Auto Drive</button>
-              <button className={driveMode === 'manual' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'manual'} onClick={() => {autoStartPending.current = false; setDriveMode('manual'); setPlaying(false);}}>Manual</button>
-              <button className={driveMode === 'ppo' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'ppo'} onClick={() => {autoStartPending.current = false; setDriveMode('ppo'); setPlaying(false);}}>PPO · development</button>
-              <button className={driveMode === 'hybrid' ? 'selected' : ''} disabled={(runtimeBusy && driveMode !== 'hybrid') || !runtimeCatalog?.exploratoryModels.length} title={!runtimeCatalog?.exploratoryModels.length ? 'Archived exploratory checkpoints are unavailable on this runtime' : 'Hybrid output is development only'} onClick={() => {autoStartPending.current = false; setDriveMode('hybrid'); setPlaying(false);}}>Hybrid · development</button>
-              <button className={driveMode === 'replay' ? 'selected' : ''} disabled={!activeReplay || runtimeBusy} onClick={() => {autoStartPending.current = false; setDriveMode('replay'); setPlaying(false);}}>Replay</button>
+              <button className={driveMode === 'auto' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'auto'} onClick={() => changeDriveMode('auto')}>Auto Drive</button>
+              <button className={driveMode === 'manual' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'manual'} onClick={() => changeDriveMode('manual')}>Manual</button>
+              <button className={driveMode === 'ppo' ? 'selected' : ''} disabled={runtimeBusy && driveMode !== 'ppo'} onClick={() => changeDriveMode('ppo')}>PPO · development</button>
+              <button className={driveMode === 'hybrid' ? 'selected' : ''} disabled={(runtimeBusy && driveMode !== 'hybrid') || !runtimeCatalog?.exploratoryModels.length} title={!runtimeCatalog?.exploratoryModels.length ? 'Archived exploratory checkpoints are unavailable on this runtime' : 'Hybrid output is development only'} onClick={() => changeDriveMode('hybrid')}>Hybrid · development</button>
+              <button className={driveMode === 'replay' ? 'selected' : ''} disabled={!activeReplay || runtimeBusy} onClick={() => changeDriveMode('replay')}>Replay</button>
             </div>
             <div className="speed-readout"><span>SPEED</span><strong>{Math.round(activePose.speed * 3.6)}</strong><small>KM/H</small></div>
             {currentReplayFrame?.grounded !== undefined && <div className="replay-ground-state" aria-label="Replay Physics ground state">
@@ -698,10 +714,10 @@ export default function App() {
                 </select></label>
                   <small>Auto assists steering and controls braking. This is not pure PPO or scientific acceptance.</small>
                   {runtimeCatalog?.exploratoryWarnings.map((warning) => <p className="runtime-error" key={warning}>{warning}</p>)}</>}
-                {driveMode === 'ppo' && <><label>PPO MODEL<select aria-label="PPO model" value={modelId} onChange={(event) => setModelId(event.target.value)} disabled={!runtimeCatalog || runtimeBusy}>
+                {driveMode === 'ppo' && <><label>PPO MODEL<select aria-label="PPO model" value={modelId} onChange={(event) => { clearRuntimeResult(); setModelId(event.target.value); }} disabled={!runtimeCatalog || runtimeBusy}>
                     <optgroup label="Frozen WP3">{(runtimeCatalog?.models ?? []).map((model) => <option key={model.model_id} value={model.model_id}>{model.model_id}</option>)}</optgroup>
                   </select></label>
-                  {runtimeCatalog?.exploratoryWarnings.map((warning) => <p className="runtime-error" key={warning}>{warning}</p>)}</>}
+                  </>}
                 {runtimeTrackSelection.kind === 'custom' ? <div className="custom-track-selection">
                   {runtimeTrackSelection.validated ? <>
                     <span>PYTHON VALIDATED CUSTOM TRACK</span><strong>{runtimeTrackSelection.validated.preview.name}</strong>
@@ -723,7 +739,7 @@ export default function App() {
                   </>}
                   <button disabled={runtimeBusy} onClick={useRegisteredTrack}>Use registered TRAIN track</button>
                 </div> : <>
-                  <label>TRAIN TRACK<select aria-label="TRAIN track" value={runtimeTrackId} onChange={(event) => setRuntimeTrackId(event.target.value)} disabled={!runtimeCatalog || runtimeBusy}>
+                  <label>TRAIN TRACK<select aria-label="TRAIN track" value={runtimeTrackId} onChange={(event) => { clearRuntimeResult(); setRuntimeTrackId(event.target.value); }} disabled={!runtimeCatalog || runtimeBusy}>
                     {(runtimeCatalog?.tracks ?? []).map((item) => <option key={item.track_id} value={item.track_id}>{item.track_id}</option>)}
                   </select></label>
                   <button className="runtime-validate-track" disabled={!runtimeCatalog || trackValidationBusy || runtimeBusy} onClick={() => void validateCurrentTrack()}>

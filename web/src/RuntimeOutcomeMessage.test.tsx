@@ -84,7 +84,13 @@ describe('Backend-authoritative runtime result rendering', () => {
   it('does not show a terminal outcome for running/transport errors', () => {
     expect(view({ status: 'running', error: 'network unavailable', episode_result: null })).toBe('');
   });
-  it('fails closed on a contradictory registered PPO invalid sample', () => {
-    expect(runtimeOutcome({ ...base, episode_result: { valid_sample: false, successful_finish: true } })?.kind).toBe('invalid');
+  it('labels a finished but uncertified PPO episode without inventing a physics error', () => {
+    const result = runtimeOutcome({ ...base, episode_result: { valid_sample: false, successful_finish: true, reason: 'finish' } });
+    expect(result?.kind).toBe('uncertified');
+    expect(result?.label).toContain('Not Validated');
+  });
+  it('labels an uncertified PPO terminal non-finish without inventing a physics error', () => {
+    const result = runtimeOutcome({ ...base, episode_result: { valid_sample: false, successful_finish: false, reason: 'episode_terminal' } });
+    expect(result?.kind).toBe('uncertified');
   });
 });

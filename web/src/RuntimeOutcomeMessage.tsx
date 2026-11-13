@@ -32,10 +32,6 @@ export function runtimeOutcome(status: RuntimeSessionStatus): OutcomeView | null
     return { kind: 'invalid', label: 'Invalid · Physics/Simulator Error', detail: reason ?? status.error ?? 'simulation failed' };
   }
   if (status.status !== 'finished' || !terminal) return null;
-  // Custom/manual sessions do not carry the registered-PPO valid_sample certification.
-  if (status.mode === 'ppo' && terminal.valid_sample !== true && status.provenance === 'TRAIN-development') {
-    return { kind: 'invalid', label: 'Invalid · Physics/Simulator Error', detail: reason ?? 'uncertified PPO episode' };
-  }
   if (terminal.successful_finish === true) {
     if (terminal.valid_sample !== true || status.provenance !== 'TRAIN-development') {
       return { kind: 'uncertified', label: 'Development Finish · Not Validated', detail: reason ?? 'finish reached' };
