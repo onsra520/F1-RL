@@ -19,6 +19,7 @@ def _plan(**updates):
         "parent_checkpoint_sha256": profile["parent_checkpoint_sha256"],
         "training_authorized_by_owner_request_sha256": profile["owner_request_sha256"],
         "track_ids": profile["tracks"],
+        "sampling_policy": profile["sampling_policy"], "sampling_seed": profile["sampling_seed"],
         "max_additional_timesteps": profile["max_additional_timesteps"],
         "checkpoint_interval": profile["checkpoint_interval"],
         "device": "cpu", "heldout_access": False, "scientific_evidence": False,
@@ -75,3 +76,10 @@ def test_cycle2_rejects_output_resolving_inside_repository(tmp_path):
     with pytest.raises(ValueError, match='external evidence directory'):
         run_m5_cycle2(ROOT, plan_path=tmp_path / 'missing.json', output_directory=output,
                       checkpoint_observer=lambda *_: True)
+
+
+def test_valid_plan_reaches_source_binding_guard(tmp_path, monkeypatch):
+    monkeypatch.setattr('f1rl.local_demo.runner._source_identity', lambda _: ('test-commit', 'test-tree'))
+    with pytest.raises(ValueError, match='frozen clean source-bound feature branch'):
+        _invoke(tmp_path, _plan())
+    assert not (tmp_path / 'run-output').exists()
