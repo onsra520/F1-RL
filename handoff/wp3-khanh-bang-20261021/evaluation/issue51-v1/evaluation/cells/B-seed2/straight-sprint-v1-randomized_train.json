@@ -1,0 +1,33 @@
+{
+  "candidate_id": "B",
+  "collision_rate": 0.0,
+  "completed_at": "2026-10-23T05:05:29.902803+00:00",
+  "event_log_sha256": "122020690aecb0bfabfdb6601974e87ff81afb9e2b7624060821ef90bc340533",
+  "expected_episodes": 60,
+  "failure_reasons": {
+    "step_limit": 2,
+    "valid_finish": 58
+  },
+  "hard_route_violation_rate": 0.0,
+  "heldout_access": false,
+  "invalid_episode": null,
+  "invalid_episodes": 0,
+  "mean_collision_count": 0.0,
+  "mean_completed_checkpoints": 2.0,
+  "mean_episode_duration_seconds": 42.10166666666667,
+  "mean_route_progress": 0.9999310631723553,
+  "mean_steering_rate_rms_rad_per_s": 9.472996728198869,
+  "model_id": "B-seed2",
+  "model_sha256": "18f17c3f07d3e62b43364f3f4c6572b3e08b3307a4ae47137b80342188ad0dae",
+  "schema_version": "f1rl_wp3_train_eval_cell_v1",
+  "scientific_evidence": false,
+  "seed_index": 2,
+  "sha256": "5c286caa33e62ddd15a62a06adc2c0e43624638a5a565562cb18fead88dc2448",
+  "status": "completed",
+  "stratum": "randomized_train",
+  "success_count": 58,
+  "timeout_rate": 0.03333333333333333,
+  "track_id": "straight-sprint-v1",
+  "valid_autonomous_finish_rate": 0.9666666666666667,
+  "valid_episodes": 60
+}

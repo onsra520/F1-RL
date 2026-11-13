@@ -1,0 +1,11 @@
+{
+  "bytes": 270484809,
+  "complete": true,
+  "events": 65811,
+  "optimizer_steps": 10240,
+  "path": "training-telemetry.jsonl",
+  "schema_version": "f1rl_training_telemetry_v1",
+  "sha256": "9dd918a18cb21524cd7ef9d196e912062c59b16ce0827a0ce37a2a90c9c84ae2",
+  "step_rows": 65536,
+  "update_rows": 256
+}

@@ -1,0 +1,17 @@
+{
+  "final_model": {
+    "path": "model-final.zip",
+    "sha256": "156ee0f2194f3aedb36cce3917cc4121994b53fa0f0c942c2de548b9e2ea32b7"
+  },
+  "latest_checkpoint": {
+    "path": "checkpoints/checkpoint-65536.zip",
+    "sha256": "2f71b10cf7d463c72d9caf94480a8ffc7f2d21bb7a7405689950010769cd3d1e",
+    "timesteps": 65536
+  },
+  "learning_timesteps": 65536,
+  "optimizer_steps": 10240,
+  "phase": "complete",
+  "scientific_evidence": false,
+  "scientific_training_authorized": false,
+  "status": "learning_completed"
+}

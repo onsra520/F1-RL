@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="450.0" y="34" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" font-weight="bold">TRAIN Valid Autonomous Finish Rate by Candidate</text>
+<line x1="90" y1="430.0" x2="840" y2="430.0" stroke="#ddd"/>
+<text x="82.0" y="434.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#222">0%</text>
+<line x1="90" y1="358.0" x2="840" y2="358.0" stroke="#ddd"/>
+<text x="82.0" y="362.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#222">20%</text>
+<line x1="90" y1="286.0" x2="840" y2="286.0" stroke="#ddd"/>
+<text x="82.0" y="290.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#222">40%</text>
+<line x1="90" y1="214.0" x2="840" y2="214.0" stroke="#ddd"/>
+<text x="82.0" y="218.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#222">60%</text>
+<line x1="90" y1="142.0" x2="840" y2="142.0" stroke="#ddd"/>
+<text x="82.0" y="146.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#222">80%</text>
+<line x1="90" y1="70.0" x2="840" y2="70.0" stroke="#ddd"/>
+<text x="82.0" y="74.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#222">100%</text>
+<line x1="90" y1="430" x2="840" y2="430" stroke="#333"/>
+<text x="180.0" y="454.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#222">A</text>
+<text x="350.0" y="454.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#222">B</text>
+<text x="520.0" y="454.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#222">C</text>
+<text x="690.0" y="454.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#222">D</text>
+<text x="465.0" y="490.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#222">Mean across 3 PPO seed blocks; vertical whiskers show seed-block SD; dots show blocks</text>
+</svg>

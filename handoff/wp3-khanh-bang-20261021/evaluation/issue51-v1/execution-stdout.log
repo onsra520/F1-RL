@@ -1,0 +1,15 @@
+PRE-FLIGHT original campaign sha, source commits, 12 model roster, 4 tracks, 2 strata PASS
+VERIFIED C-seed0
+VERIFIED A-seed0
+VERIFIED B-seed0
+VERIFIED D-seed0
+VERIFIED A-seed1
+VERIFIED B-seed1
+VERIFIED C-seed1
+VERIFIED D-seed1
+VERIFIED A-seed2
+VERIFIED B-seed2
+VERIFIED C-seed2
+VERIFIED D-seed2
+START TRAIN EVAL: 96 cells, 5760 episodes; no heldout; no retrain
+EVALUATION RESULT PASS_WITH_INVALID_CELLS 31 valid_rows 2153 elapsed_seconds 54486.4
