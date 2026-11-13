@@ -46,7 +46,7 @@ class CreateSessionRequest(BaseModel):
     mode: Literal["ppo", "manual", "auto", "hybrid"] = "manual"
     custom_track: dict[str, object] | None = None
     auto_drive_config: AutoDriveConfig | None = None
-    physics_profile: Literal["experimental_v4"] | None = None
+    physics_profile: Literal["experimental_v4", "experimental_v5_layered"] | None = None
 
     @model_validator(mode="after")
     def controller_matches_mode(self):
@@ -60,9 +60,9 @@ class CreateSessionRequest(BaseModel):
             raise ValueError(f"{self.mode} mode cannot select model_id")
         if self.mode not in ("auto", "hybrid") and self.auto_drive_config is not None:
             raise ValueError("auto_drive_config is allowed only in Auto Drive or Hybrid")
-        if self.physics_profile == "experimental_v4" and (
+        if self.physics_profile in ("experimental_v4", "experimental_v5_layered") and (
                 self.mode != "auto" or self.custom_track is None):
-            raise ValueError("experimental Physics v4 is custom Auto Drive only")
+            raise ValueError("experimental Physics profiles are custom Auto Drive only")
         if self.custom_track is None and self.track_id is None:
             raise ValueError("registered sessions require track_id")
         if self.custom_track is not None and self.track_id is not None:
@@ -97,7 +97,14 @@ def _converted_track_document(converted: ConvertedTrack) -> dict[str, object]:
         "preview": converted.source_document,
         "road_samples": converted.road_samples,
         "auto_bridge_count": converted.auto_bridge_count,
+        "requires_layered_road_support": converted.requires_layered_road_support,
         "ppo_compatible": converted.ppo_compatible,
+        "compatibility": {
+            "observation_action": converted.observation_action_compatible,
+            "physics_profile": converted.physics_profile_compatible,
+            "pure_ppo_runtime": converted.ppo_compatible,
+            "required_physics_profile": converted.required_physics_profile,
+        },
         "surface_count": len(converted.factory.track.surfaces),
         "checkpoint_count": len(converted.factory.track.checkpoints),
         "obstacle_count": len(converted.factory.track.obstacles),
@@ -244,10 +251,24 @@ def create_app(
                     payload.custom_track,
                     request.app.state.catalog,
                 )
+                if payload.mode in ("ppo", "hybrid") and converted.requires_layered_road_support:
+                    raise RuntimeFault(
+                        "incompatible_physics",
+                        "layered Physics V5 is available only to custom Auto Drive; Pure PPO runtime compatibility is false",
+                        status_code=422,
+                    )
                 if (any(item["kind"] in ("gap", "jump") for item in converted.source_document["props"])
-                        and (payload.mode != "auto" or payload.physics_profile != "experimental_v4")):
+                        and (payload.mode != "auto" or payload.physics_profile not in (
+                            "experimental_v4", "experimental_v5_layered"))):
                     raise RuntimeFault(
                         "requires_v4", "jump-gap road requires custom Auto Drive with explicit Physics V4 development profile",
+                        status_code=422,
+                    )
+                if (converted.requires_layered_road_support
+                        and payload.physics_profile != "experimental_v5_layered"):
+                    raise RuntimeFault(
+                        "requires_layered_v5",
+                        "grade-separated road layers require custom Auto Drive with Layered Physics V5",
                         status_code=422,
                     )
                 if payload.mode in ("ppo", "hybrid") and not converted.ppo_compatible:

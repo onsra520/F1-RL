@@ -17,6 +17,7 @@ from f1rl.sandbox.vehicle import VehicleParameters
 from f1rl.track_assets.model import AuthoredNavigation
 
 MAX_STEERING_CHANGE_PER_SECOND = 2.5
+RIGHT_LANE_ROUTE_MARGIN_M = 0.5
 
 
 @dataclass(frozen=True, slots=True)
@@ -234,6 +235,8 @@ class AutoDriveController:
                 initial = min(desired, self.track_width * 0.10, 1.1)
                 desired = initial + (desired - initial) * entry
             desired *= 1.0 - gate
+            if self.route_limit_m is not None:
+                desired = min(desired, max(0.0, self.route_limit_m - RIGHT_LANE_ROUTE_MARGIN_M))
             return self._avoid_obstacles(distance, min(clearance, desired))
         anticipation = max(10.0, cfg.max_lookahead_m * 2)
         weighted_offset = 0.0

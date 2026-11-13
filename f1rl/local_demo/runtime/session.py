@@ -25,7 +25,9 @@ from f1rl.local_demo.runtime.frames import (
     build_runtime_frame,
 )
 from f1rl.local_demo.runtime.hybrid_drive import HybridDrive
-from f1rl.local_demo.runtime.v4_dev_profile import bind_custom_auto_v4
+from f1rl.local_demo.runtime.v4_dev_profile import (
+    bind_custom_auto_layered_v5, bind_custom_auto_v4,
+)
 
 MAX_ACTIVE_SESSIONS = 2
 MAX_RETAINED_SESSIONS = 8
@@ -678,12 +680,16 @@ class RuntimeSessionManager:
             raise ValueError("Auto Drive configuration is allowed only for Auto Drive or Hybrid mode")
         if mode in ("ppo", "hybrid") and custom_factory is not None and custom_ppo_compatible is not True:
             raise ValueError("custom track is not compatible with the registered PPO observation/action contract")
-        if physics_profile not in (None, "experimental_v4"):
+        if physics_profile not in (None, "experimental_v4", "experimental_v5_layered"):
             raise ValueError("unregistered Auto Drive Physics development profile")
         if physics_profile == "experimental_v4":
             if mode != "auto" or custom_factory is None:
-                raise ValueError("experimental Physics v4 requires custom Auto Drive")
+                raise ValueError("experimental Physics profiles require custom Auto Drive")
             custom_factory = bind_custom_auto_v4(custom_factory)
+        elif physics_profile == "experimental_v5_layered":
+            if mode != "auto" or custom_factory is None:
+                raise ValueError("layered Physics v5 requires custom Auto Drive")
+            custom_factory = bind_custom_auto_layered_v5(custom_factory)
         if custom_factory is None:
             self.catalog.track_factory(track_id)
         if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed <= 2**32 - 1:

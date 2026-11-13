@@ -421,6 +421,15 @@ def test_right_lane_reduces_offset_smoothly_near_a_turn():
     assert max(abs(b - a) for a, b in pairwise(offsets)) < 0.15
 
 
+def test_default_right_lane_leaves_margin_inside_hard_route_corridor():
+    drive = controller(
+        [(0, 0, 0), (0, 0, 80)], (0, 0.5, 20), road_width=16.0,
+        route_limit_m=4.0, config=AutoDriveConfig(driving_style="right"),
+    )
+
+    assert drive._offset_at(30.0) == pytest.approx(3.5)
+
+
 @pytest.mark.parametrize("lane_offset", [0.0, 2.5])
 def test_right_lane_targets_center_of_a_narrow_checkpoint(lane_offset):
     base = controller([(0, 0, 0), (0, 0, 50), (0, 0, 100)], (0, .5, 5), config=AutoDriveConfig())

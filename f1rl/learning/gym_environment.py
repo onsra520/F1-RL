@@ -9,6 +9,7 @@ import numpy as np
 
 from ..runtime.simulation import Simulation, SimulationConfig, SimulationSnapshot
 from ..runtime.physics import PhysicsConfig
+from ..sandbox.spatial_contact_dynamics import LAYERED_ROAD_EDGE_LIFECYCLE_V5
 from ..sandbox.body_collision import VehicleBodyGeometry
 from ..sandbox.ramp_support import PlanarRampPolicy
 from ..sandbox.geometry.vector import Vec3
@@ -114,7 +115,7 @@ class F1RLEnv(gym.Env[np.ndarray, np.ndarray]):
             raise ValueError('physics_config must be PhysicsConfig or None')
         research = body_geometry is not None or (physics_config is not None and physics_config.mode!='legacy_v1')
         if (research and self._action_contract.version=='steering-throttle-brake-v2'
-                and (physics_config is None or physics_config.ground_motion_version not in ('arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4'))):
+                and (physics_config is None or physics_config.ground_motion_version not in ('arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4',LAYERED_ROAD_EDGE_LIFECYCLE_V5))):
             raise ValueError('research braking requires distance ground integration')
         values = (
             (track, TrackWorld, "track"),

@@ -29,6 +29,7 @@ class FootprintWheel:
     contact:IndependentWheelContact|None
     coverage:float
     coverage_gradient:Vec3
+    surface_gradient:Vec3
 
 
 def _single_polygon_coverage(x:float,z:float,polygon,radius:float,*,edge_coefficients=None):
@@ -72,8 +73,14 @@ def sample_finite_wheel_coverage(
     vehicle:VehicleState, contact_policy, atlas, *,
     radius_m:float=FOOTPRINT_RADIUS_M,
     patch_index=None,
+    layered_clearance_m:float|None=None,
+    blend_surface_support:bool=False,
 )->tuple[FootprintWheel,...]:
-    if not isinstance(vehicle,VehicleState) or not 0.<radius_m<=.2:
+    if (not isinstance(vehicle,VehicleState) or not 0.<radius_m<=.2
+            or type(blend_surface_support) is not bool
+            or layered_clearance_m is not None and
+            (type(layered_clearance_m) not in (int,float)
+             or not isfinite(layered_clearance_m) or layered_clearance_m<=0.)):
         raise ValueError("finite spatial tire footprint inputs required")
     patches,polygons=atlas
     if patch_index is not None and getattr(patch_index,'source_patches',None) is not patches:
@@ -85,6 +92,7 @@ def sample_finite_wheel_coverage(
         alpha,gradient=0.,Vec3(0.,0.,0.)
         indices=(range(len(patches)) if patch_index is None else
                  patch_index.candidate_indices_near_xz(point.x,point.z,radius_m))
+        distant_layers=[]
         for patch_id in indices:
             patch,polygon=patches[patch_id],polygons[patch_id]
             edge_coefficients=(None if patch_index is None else
@@ -98,6 +106,9 @@ def sample_finite_wheel_coverage(
             deflection=height-point.y
             if not isfinite(deflection):raise SuspensionResolutionError("finite-tire wheel gap nonfinite")
             if deflection>contact_policy.max_bump_m+1e-9:
+                if layered_clearance_m is not None:
+                    distant_layers.append((patch,height))
+                    continue
                 fault=SuspensionResolutionError(
                     f"finite-tire wheel exceeds unchanged bump stop:"
                     f" {name} {patch.id} deflection={deflection:.9g}",
@@ -111,15 +122,52 @@ def sample_finite_wheel_coverage(
                 raise fault
             if deflection < -contact_policy.max_droop_m-1e-9:
                 continue
-            options.append((weight,-abs(deflection),patch.id,height,deflection))
+            options.append((weight,-abs(deflection),patch.id,height,deflection,patch,normal))
             alpha+=weight
             gradient=gradient+normal
+        if distant_layers:
+            if not options or any(
+                min(abs(height-support[3]) for support in options)
+                < layered_clearance_m-1e-6
+                for _,height in distant_layers
+            ):
+                patch,height=distant_layers[0]
+                fault=SuspensionResolutionError(
+                    f"finite-tire wheel exceeds unchanged bump stop: {name} {patch.id} "
+                    f"deflection={height-point.y:.9g}",
+                    failure_code="over_bump_travel",
+                )
+                fault.wheel_index=NAMES.index(name)
+                fault.wheel_local=local
+                fault.road_patch=patch
+                fault.rejected_vehicle=vehicle
+                raise fault
         if not options or alpha<=0.:
-            out.append(FootprintWheel(None,0.,Vec3(0.,0.,0.)))
+            out.append(FootprintWheel(
+                None,0.,Vec3(0.,0.,0.),Vec3(0.,1.,0.),
+            ))
             continue
-        _,_,pid,h,d=max(options)
+        raw_alpha=alpha
+        best=max(options)
+        pid=best[2]
+        if blend_surface_support:
+            height=sum(item[0]*item[3] for item in options)/raw_alpha
+            height_gradient=sum((
+                Vec3(-item[5].normal.x/item[5].normal.y,
+                     0.,
+                     -item[5].normal.z/item[5].normal.y)*item[0]
+                +item[6]*(item[3]-height)
+                for item in options
+            ),Vec3(0.,0.,0.))/raw_alpha
+            surface_gradient=Vec3(-height_gradient.x,1.,-height_gradient.z)
+        else:
+            height=best[3]
+            surface_gradient=best[5].normal/best[5].normal.y
+        d=height-point.y
         if alpha>=1.:
             alpha,gradient=1.,Vec3(0.,0.,0.)
-        out.append(FootprintWheel(IndependentWheelContact(name,pid,h,d),
-                                  alpha,gradient))
+        out.append(FootprintWheel(
+            IndependentWheelContact(name,pid,height,d),alpha,gradient,
+            surface_gradient,
+        ))
     return tuple(out)

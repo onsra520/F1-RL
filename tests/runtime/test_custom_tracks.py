@@ -63,15 +63,25 @@ def test_custom_track_converts_to_authoritative_world_and_manual_gym_environment
         env.close()
 
 
-def test_custom_track_adapts_ramps_and_rejects_stacked_overpass_decks(catalog):
+def test_custom_track_adapts_ramps_and_marks_layered_overpass_decks(catalog):
     ramped = convert_custom_track(draft([(0, 0), (0, 80)], [prop("ramp", 0.5)]), catalog)
     assert max(sample["y"] for sample in ramped.road_samples) >= 2.7
     assert any(abs(surface.normal.y - 1.0) > 1e-4 for surface in ramped.factory.track.surfaces)
 
     crossing = draft([(0, 0), (100, 100), (0, 100), (100, 0), (160, 0)])
-    with pytest.raises(TrackValidationError) as error:
-        convert_custom_track(crossing, catalog)
-    assert error.value.code == "unsupported_surface_intersection"
+    converted = convert_custom_track(crossing, catalog)
+    assert converted.requires_layered_road_support is True
+
+
+def test_custom_track_accepts_only_body_clearance_safe_grade_separated_crossings(catalog):
+    converted = convert_custom_track(
+        draft([(0, 0), (100, 100), (0, 100), (100, 0), (160, 0)], width=11),
+        catalog,
+    )
+
+    assert converted.development_only is True
+    assert converted.factory.track.surfaces
+    assert converted.factory.physics_config.ground_motion_version == "spatial_road_edge_partial_lifecycle_v4"
 
 
 def test_custom_track_rejects_stacked_elevated_turn_and_short_approach(catalog):

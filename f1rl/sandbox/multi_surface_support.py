@@ -11,6 +11,7 @@ discontinuous vertical steps are unsupported rather than silently linked.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import combinations
 from math import acos, hypot, isfinite
 
 from .body_collision import VehicleBodyGeometry, _slerp
@@ -99,8 +100,48 @@ def _intersection(a, b):
     return result
 
 
-def _atlas(patches: tuple[PlanarSurfacePatch, ...], tol: float):
+def minimum_layer_clearance_m(body: VehicleBodyGeometry, margin_m: float = 0.2) -> float:
+    if not isinstance(body, VehicleBodyGeometry):
+        raise ValueError("registered vehicle body geometry required")
+    if type(margin_m) not in (int, float) or not isfinite(margin_m) or margin_m <= 0.:
+        raise ValueError("layer clearance margin must be finite and positive")
+    half = body.half_extents
+    return 2. * hypot(hypot(half.x, half.y), half.z) + margin_m
+
+
+def has_separated_surface_layers(
+    patches: tuple[PlanarSurfacePatch, ...], minimum_clearance_m: float,
+    *, continuous_seam_tolerance_m: float = 0.01,
+) -> bool:
+    for p, q in combinations(patches, 2):
+        overlap = _intersection(_polygon(p), _polygon(q))
+        if not overlap:
+            continue
+        differences = tuple(_height(p, x, z) - _height(q, x, z)
+                            for x, z in overlap)
+        if all(abs(value) <= continuous_seam_tolerance_m for value in differences):
+            continue
+        if (all(value >= minimum_clearance_m for value in differences)
+                or all(value <= -minimum_clearance_m for value in differences)):
+            return True
+    return False
+
+
+def _atlas(
+    patches: tuple[PlanarSurfacePatch, ...], tol: float,
+    *, layered_clearance_m: float | None = None,
+    continuous_seam_tolerance_m: float | None = None,
+):
     if not isinstance(patches, tuple) or not patches:
+        return None
+    if (layered_clearance_m is not None and
+            (type(layered_clearance_m) not in (int, float)
+             or not isfinite(layered_clearance_m) or layered_clearance_m <= 0.)):
+        return None
+    if (continuous_seam_tolerance_m is not None and
+            (type(continuous_seam_tolerance_m) not in (int, float)
+             or not isfinite(continuous_seam_tolerance_m)
+             or continuous_seam_tolerance_m < tol)):
         return None
     if any(not isinstance(p, PlanarSurfacePatch) or p.normal.y <= 1e-6 for p in patches):
         return None
@@ -113,8 +154,23 @@ def _atlas(patches: tuple[PlanarSurfacePatch, ...], tol: float):
     for i, p in enumerate(ordered):
         for q, other in zip(ordered[i + 1:], shapes[i + 1:], strict=True):
             overlap = _intersection(shapes[i], other)
-            if any(abs(_height(p, x, z) - _height(q, x, z)) > tol
-                   for x, z in overlap):
+            if not overlap:
+                continue
+            differences = tuple(_height(p, x, z) - _height(q, x, z)
+                                for x, z in overlap)
+            if all(abs(value) <= tol for value in differences):
+                continue
+            first_sequence = p.id.removeprefix("surface-")
+            second_sequence = q.id.removeprefix("surface-")
+            if (continuous_seam_tolerance_m is not None
+                    and first_sequence.isdigit() and second_sequence.isdigit()
+                    and abs(int(first_sequence) - int(second_sequence)) == 1
+                    and all(abs(value) <= continuous_seam_tolerance_m for value in differences)):
+                continue
+            if layered_clearance_m is None:
+                return None
+            if not (all(value >= layered_clearance_m - tol for value in differences)
+                    or all(value <= -layered_clearance_m + tol for value in differences)):
                 return None
     return ordered, shapes
 

@@ -75,6 +75,7 @@ export default function App() {
   const [autoConfig, setAutoConfig] = useState<AutoDriveConfig>(loadAutoConfig);
   const [autoConfigValid, setAutoConfigValid] = useState(true);
   const [experimentalPhysicsV4, setExperimentalPhysicsV4] = useState(false);
+  const [experimentalLayeredPhysicsV5, setExperimentalLayeredPhysicsV5] = useState(false);
   const [pose, setPose] = useState<CarPose>(() => spawnPose(initialTrack()));
   const [replay, setReplay] = useState<Replay | null>(null);
   const [replayTime, setReplayTime] = useState(0);
@@ -306,7 +307,7 @@ export default function App() {
     let createdSessionId: string | null = null;
     try {
       const created = trackRequest.kind === 'custom'
-        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : driveMode === 'auto' ? 'auto' : driveMode === 'hybrid' ? 'hybrid' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : driveMode === 'hybrid' ? hybridModelId : undefined, traceId, driveMode === 'auto' || driveMode === 'hybrid' ? autoConfig : undefined, driveMode === 'auto' && experimentalPhysicsV4)
+        ? await runtimeClient.createCustomSession(track, driveMode === 'manual' ? 'manual' : driveMode === 'auto' ? 'auto' : driveMode === 'hybrid' ? 'hybrid' : 'ppo', runtimeSeed, driveMode === 'ppo' ? modelId : driveMode === 'hybrid' ? hybridModelId : undefined, traceId, driveMode === 'auto' || driveMode === 'hybrid' ? autoConfig : undefined, driveMode === 'auto' ? experimentalLayeredPhysicsV5 ? 'experimental_v5_layered' : experimentalPhysicsV4 ? 'experimental_v4' : undefined : undefined)
         : driveMode === 'manual'
           ? await runtimeClient.createManualSession(trackRequest.trackId, runtimeSeed)
           : driveMode === 'auto'
@@ -457,7 +458,13 @@ export default function App() {
       const converted = await runtimeClient.validateCustomTrack(track);
       if (!isCurrentCustomTrackValidation(requestRevision, trackValidationRevision.current)) return;
       setRuntimeTrackSelection({ kind: 'custom', validated: converted });
-      setToast(`Python validated ${converted.surface_count} road surfaces · development track`);
+      if (converted.requires_layered_road_support) {
+        setExperimentalPhysicsV4(false);
+        setExperimentalLayeredPhysicsV5(true);
+        setToast(`Python validated ${converted.surface_count} road surfaces · Layered Physics V5 selected`);
+      } else {
+        setToast(`Python validated ${converted.surface_count} road surfaces · development track`);
+      }
     } catch (error) {
       if (isCurrentCustomTrackValidation(requestRevision, trackValidationRevision.current)) {
         autoStartPending.current = false;
@@ -700,7 +707,13 @@ export default function App() {
                     <span>PYTHON VALIDATED CUSTOM TRACK</span><strong>{runtimeTrackSelection.validated.preview.name}</strong>
                     <small>{runtimeTrackSelection.validated.surface_count} road surfaces · {runtimeTrackSelection.validated.checkpoint_count} checkpoints · {runtimeTrackSelection.validated.auto_bridge_count} auto overpasses</small>
                     {runtimeTrackSelection.validated.warnings.map((warning) => <small key={warning}>{warning}</small>)}
-                    {(driveMode === 'ppo' || driveMode === 'hybrid') && !runtimeTrackSelection.validated.ppo_compatible && <small className="runtime-error">PPO observation/action contract is incompatible.</small>}
+                    {(driveMode === 'ppo' || driveMode === 'hybrid') && !runtimeTrackSelection.validated.compatibility.pure_ppo_runtime && <small className="runtime-error">
+                      {!runtimeTrackSelection.validated.compatibility.observation_action
+                        ? 'The track observation/action contract is incompatible with PPO.'
+                        : !runtimeTrackSelection.validated.compatibility.physics_profile
+                          ? `The track requires ${runtimeTrackSelection.validated.compatibility.required_physics_profile}; this profile is not admitted for Pure PPO.`
+                          : 'This track is not admitted for Pure PPO runtime.'}
+                    </small>}
                   </> : <>
                     <span>CUSTOM TRACK SELECTED</span>
                     <small className="runtime-error">{trackValidationBusy ? 'Validating current map…' : 'Validate the current map before running.'}</small>
@@ -722,9 +735,15 @@ export default function App() {
                     ? runtimeStatus.effective_max_speed_kmh : undefined}/>}
                 {driveMode === 'auto' && runtimeTrackSelection.kind === 'custom' && <label>
                   <input aria-label="Experimental Physics V4" type="checkbox"
-                    checked={experimentalPhysicsV4} disabled={runtimeBusy}
+                    checked={experimentalPhysicsV4} disabled={runtimeBusy || experimentalLayeredPhysicsV5}
                     onChange={(event) => setExperimentalPhysicsV4(event.target.checked)}/>
                   Experimental Physics V4 / Race V4 (development only; may fail closed)
+                </label>}
+                {driveMode === 'auto' && runtimeTrackSelection.kind === 'custom' && <label>
+                  <input aria-label="Experimental Layered Physics V5" type="checkbox"
+                    checked={experimentalLayeredPhysicsV5} disabled={runtimeBusy || experimentalPhysicsV4}
+                    onChange={(event) => setExperimentalLayeredPhysicsV5(event.target.checked)}/>
+                  Layered road Physics V5 / Race V4 (experimental; custom Auto Drive only)
                 </label>}
                 <label>SEED<input aria-label="Episode seed" type="number" min="0" max="4294967295" step="1" value={runtimeSeed} onChange={(event) => setRuntimeSeed(Number(event.target.value))} disabled={runtimeBusy}/></label>
                 {catalogError ? <p className="runtime-error"><TriangleAlert size={15}/><span>{catalogError}. Start the Python runtime to run episodes.</span><button onClick={() => setCatalogError('')}>Retry connection</button></p> : !runtimeCatalog ?

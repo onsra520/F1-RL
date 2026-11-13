@@ -257,6 +257,88 @@ def test_indexed_finite_wheel_coverage_matches_exhaustive_and_prunes_patches():
             assert len(index.candidate_indices_near_xz(point.x, point.z, 0.1)) < len(roads) // 4
 
 
+def test_layered_tire_support_ignores_clearance_separated_overhead_deck():
+    from f1rl.sandbox.finite_tire_footprint_v4 import sample_finite_wheel_coverage
+    from f1rl.sandbox.multi_surface_support import (
+        MultiSurfaceSuspensionPolicy, minimum_layer_clearance_m,
+    )
+    from f1rl.sandbox.ramp_support import WheelContactPoints
+
+    lower = PlanarSurfacePatch(
+        "lower", Vec3(0., 0., 0.), Vec3(0., 0., 1.), Vec3(0., 1., 0.), 40., 40.,
+    )
+    upper = PlanarSurfacePatch(
+        "upper", Vec3(0., 5.27, 0.), Vec3(1., 0., 0.), Vec3(0., 1., 0.), 8., 12.,
+    )
+    body = VehicleBodyGeometry(1.8, 1.2, 4., Vec3(0., 0., 0.))
+    clearance = minimum_layer_clearance_m(body)
+    atlas = _atlas(
+        (lower, upper), 1e-6, layered_clearance_m=clearance,
+        continuous_seam_tolerance_m=.01,
+    )
+    assert atlas is not None
+    contact = MultiSurfaceSuspensionPolicy(
+        WheelContactPoints(
+            Vec3(-.7, .2, 1.4), Vec3(.7, .2, 1.4),
+            Vec3(-.7, .2, -1.4), Vec3(.7, .2, -1.4),
+        ), .6, 1.5,
+    )
+    vehicle = VehicleState(
+        Vec3(0., .5, 0.), Vec3(0., 0., 0.), Quaternion.identity(),
+        Vec3(0., 0., 0.), True,
+    )
+
+    with pytest.raises(SuspensionResolutionError, match="finite-tire wheel exceeds unchanged bump stop"):
+        sample_finite_wheel_coverage(vehicle, contact, atlas)
+    coverage = sample_finite_wheel_coverage(
+        vehicle, contact, atlas, layered_clearance_m=clearance,
+        blend_surface_support=True,
+    )
+    assert tuple(item.contact.patch_id for item in coverage) == ("lower",) * 4
+    upper_vehicle = replace(vehicle, position=Vec3(0., 5.77, 0.))
+    upper_coverage = sample_finite_wheel_coverage(
+        upper_vehicle, contact, atlas, layered_clearance_m=clearance,
+        blend_surface_support=True,
+    )
+    assert tuple(item.contact.patch_id for item in upper_coverage) == ("upper",) * 4
+
+
+def test_tire_support_height_is_continuous_across_tolerated_generated_seam():
+    from f1rl.sandbox.finite_tire_footprint_v4 import sample_finite_wheel_coverage
+    from f1rl.sandbox.multi_surface_support import MultiSurfaceSuspensionPolicy
+    from f1rl.sandbox.ramp_support import WheelContactPoints
+
+    roads = (
+        PlanarSurfacePatch(
+            "surface-0000", Vec3(0., 0., 0.), Vec3(0., 0., 1.),
+            Vec3(0., 1., 0.), 40., 40.,
+        ),
+        PlanarSurfacePatch(
+            "surface-0001", Vec3(0., .005, 0.), Vec3(0., 0., 1.),
+            Vec3(0., 1., 0.), 10., 40.,
+        ),
+    )
+    atlas = _atlas(roads, 1e-6, continuous_seam_tolerance_m=.01)
+    assert atlas is not None
+    contact = MultiSurfaceSuspensionPolicy(
+        WheelContactPoints(
+            Vec3(-.7, .2, 1.4), Vec3(.7, .2, 1.4),
+            Vec3(-.7, .2, -1.4), Vec3(.7, .2, -1.4),
+        ), .6, 1.5,
+    )
+
+    def front_left_height(x):
+        vehicle = VehicleState(
+            Vec3(x, .5, 0.), Vec3(0., 0., 0.), Quaternion.identity(),
+            Vec3(0., 0., 0.), True,
+        )
+        return sample_finite_wheel_coverage(
+            vehicle, contact, atlas, blend_surface_support=True,
+        )[0].contact.ground_height_m
+
+    assert abs(front_left_height(5.6) - front_left_height(5.7)) < .001
+
+
 def test_precomputed_coverage_edges_match_polygon_reference_exactly():
     from f1rl.sandbox.finite_tire_footprint_v4 import _single_polygon_coverage
     from f1rl.sandbox.swept_surface_clearance import _build_bounded_patch_index

@@ -8,7 +8,7 @@ from f1rl.sandbox.body_collision import VehicleBodyGeometry
 from f1rl.sandbox.geometry.rotation import Quaternion
 from f1rl.sandbox.geometry.vector import Vec3
 from f1rl.sandbox.multi_surface_support import (
-    MultiSurfaceSuspensionPolicy, certify_multisurface_support,
+    MultiSurfaceSuspensionPolicy, _atlas, certify_multisurface_support,
 )
 from f1rl.sandbox.ramp_support import WheelContactPoints
 from f1rl.sandbox.track.patch import PlanarSurfacePatch
@@ -54,6 +54,35 @@ def test_patch_input_order_does_not_change_contact_selection():
     first = report(car(0.), car(0.), (a, b))
     second = report(car(0.), car(0.), (b, a))
     assert first == second
+
+
+def test_layered_atlas_requires_nonintersecting_planes_and_body_clearance():
+    lower = PlanarSurfacePatch(
+        "lower", Vec3(0., 0., 0.), FWD, UP, 10., 10.,
+    )
+    upper = PlanarSurfacePatch(
+        "upper", Vec3(0., 5., 0.), FWD, UP, 10., 10.,
+    )
+    clearance = 2. * (1.8**2 / 4. + 1.2**2 / 4. + 4.**2 / 4.) ** .5 + .2
+
+    assert _atlas((lower, upper), 1e-6) is None
+    assert _atlas((lower, upper), 1e-6, layered_clearance_m=clearance) is not None
+
+    near_upper = replace(upper, origin=Vec3(0., clearance - .01, 0.))
+    assert _atlas((lower, near_upper), 1e-6, layered_clearance_m=clearance) is None
+
+    crossing_ramp = patch("crossing-ramp", 0., angle=.4)
+    assert _atlas((lower, crossing_ramp), 1e-6, layered_clearance_m=clearance) is None
+
+    seam_first = replace(lower, id="surface-0001", origin=Vec3(0., 0., 0.))
+    seam_second = replace(lower, id="surface-0002", origin=Vec3(0., .005, 0.))
+    assert _atlas((seam_first, seam_second), 1e-6,
+                  layered_clearance_m=clearance,
+                  continuous_seam_tolerance_m=.01) is not None
+    separate_near_deck = replace(seam_second, id="surface-0003")
+    assert _atlas((seam_first, separate_near_deck), 1e-6,
+                  layered_clearance_m=clearance,
+                  continuous_seam_tolerance_m=.01) is None
 
 
 def test_front_tires_ramp_rear_tires_flat_with_explicit_travel():

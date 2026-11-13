@@ -22,8 +22,10 @@ const track = {
 
 const customTrack: RuntimeCustomTrack = {
   schema_version: 'f1rl_custom_track_conversion_v1', development_only: true,
+  requires_layered_road_support: false,
   track_id: 'sandbox-custom', track_sha256: 'c'.repeat(64), preview: track.preview,
   road_samples: track.road_samples, auto_bridge_count: 0, ppo_compatible: true,
+  compatibility: { observation_action: true, physics_profile: true, pure_ppo_runtime: true, required_physics_profile: null },
   surface_count: 10, checkpoint_count: 1, obstacle_count: 0, boost_pad_count: 0, warnings: [],
 };
 
@@ -155,6 +157,7 @@ describe('Python runtime HTTP client', () => {
       schema_version: 'f1rl_custom_track_conversion_v1', development_only: true,
       track_id: 'sandbox-123', track_sha256: 'c'.repeat(64), preview: track.preview,
       road_samples: track.road_samples, auto_bridge_count: 0, ppo_compatible: true,
+      compatibility: { observation_action: true, physics_profile: true, pure_ppo_runtime: true, required_physics_profile: null },
       surface_count: 10, checkpoint_count: 1, obstacle_count: 0, boost_pad_count: 0, warnings: [],
     };
     const fetchMock = vi.fn()
@@ -195,24 +198,27 @@ describe('Python runtime HTTP client', () => {
     });
   });
 
-  it('opts into Physics V4 only for a custom Auto Drive request', async () => {
+  it('keeps development Physics profiles scoped to custom Auto Drive requests', async () => {
     const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(
       JSON.stringify({ session_id: 'experimental-auto' }), { status: 201 },
     )));
     vi.stubGlobal('fetch', fetchMock);
     const client = new RuntimeClient();
-    await client.createCustomSession(track.preview, 'auto', 412, undefined, 'trace-412', undefined, true);
+    await client.createCustomSession(track.preview, 'auto', 412, undefined, 'trace-412', undefined, 'experimental_v4');
     const autoPayload = JSON.parse(String((fetchMock.mock.calls[0] as [URL, RequestInit])[1].body));
     expect(autoPayload.physics_profile).toBe('experimental_v4');
     expect(autoPayload.mode).toBe('auto');
     expect(autoPayload.custom_track).toEqual(track.preview);
     expect(autoPayload.track_id).toBeUndefined();
-    await client.createCustomSession(track.preview, 'manual', 412, undefined, undefined, undefined, true);
+    await client.createCustomSession(track.preview, 'manual', 412, undefined, undefined, undefined, 'experimental_v4');
     const manualPayload = JSON.parse(String((fetchMock.mock.calls[1] as [URL, RequestInit])[1].body));
     expect(manualPayload.physics_profile).toBeUndefined();
     await client.createCustomSession(track.preview, 'auto', 412);
     const defaultPayload = JSON.parse(String((fetchMock.mock.calls[2] as [URL, RequestInit])[1].body));
     expect(defaultPayload.physics_profile).toBeUndefined();
+    await client.createCustomSession(track.preview, 'auto', 412, undefined, undefined, undefined, 'experimental_v5_layered');
+    const layeredPayload = JSON.parse(String((fetchMock.mock.calls[3] as [URL, RequestInit])[1].body));
+    expect(layeredPayload.physics_profile).toBe('experimental_v5_layered');
   });
 
   it('validates versioned live events and rejects frames from another session', () => {

@@ -420,6 +420,72 @@ def test_custom_auto_reports_registered_v4_and_keeps_gap_opt_in():
             rejected=client.post("/api/v1/sessions", json=invalid)
             assert rejected.status_code == 422, rejected.text
 
+
+def test_custom_auto_layered_profile_is_explicit_and_source_bound():
+    from f1rl.sandbox.spatial_contact_dynamics import LAYERED_ROAD_EDGE_LIFECYCLE_V5
+
+    crossing = {
+        "schema": "f1rl_racing_sandbox_draft_v1", "id": "layered-v5-crossing",
+        "name": "Layered V5 crossing", "width": 11,
+        "points": [{"x": x, "z": z} for x, z in
+                   [(0, 0), (100, 100), (0, 100), (100, 0), (160, 0)]],
+        "props": [],
+    }
+    with TestClient(create_app(repository_root=ROOT)) as client:
+        validation = client.post("/api/v1/tracks/validate", json={"track": crossing})
+        assert validation.status_code == 200, validation.text
+        compatibility = validation.json()["compatibility"]
+        assert compatibility == {
+            "observation_action": True,
+            "physics_profile": False,
+            "pure_ppo_runtime": False,
+            "required_physics_profile": "experimental_v5_layered",
+        }
+        assert validation.json()["ppo_compatible"] is False
+        rejected_ppo = client.post("/api/v1/sessions", json={
+            "mode": "ppo", "model_id": "A-seed0", "seed": 412,
+            "custom_track": crossing,
+        })
+        assert rejected_ppo.status_code == 422
+        assert rejected_ppo.json()["error"]["code"] == "incompatible_physics"
+
+        rejected = client.post("/api/v1/sessions", json={
+            "mode": "auto", "seed": 412, "custom_track": crossing,
+        })
+        assert rejected.status_code == 422
+        created = client.post("/api/v1/sessions", json={
+            "mode": "auto", "seed": 412, "custom_track": crossing,
+            "physics_profile": "experimental_v5_layered",
+        })
+        assert created.status_code == 201, created.text
+        status = created.json()
+        assert status["physics"]["ground_motion_version"] == LAYERED_ROAD_EDGE_LIFECYCLE_V5
+        assert len(status["physics"]["sha256"]) == 64
+        assert status["provenance"] == "custom-development"
+        with client.websocket_connect(
+                f"/api/v1/sessions/{status['session_id']}/ws") as socket:
+            assert socket.receive_json()["type"] == "ready"
+            socket.send_json({"protocol_version": "f1rl_runtime_ws_v1", "type": "start"})
+            tick_zero = None
+            for _ in range(20):
+                event = socket.receive_json()
+                assert event["type"] != "terminal", event
+                if event["type"] == "frame" and event["data"]["tick"] == 0:
+                    tick_zero = event
+                    break
+            assert tick_zero is not None
+            socket.send_json({"protocol_version": "f1rl_runtime_ws_v1", "type": "action",
+                              "steering": 0.0, "throttle": 0.0, "brake": 0.0})
+            advanced = False
+            for _ in range(20):
+                event = socket.receive_json()
+                assert event["type"] != "terminal", event
+                if event["type"] == "frame" and event["data"]["tick"] > 0:
+                    advanced = True
+                    break
+            assert advanced
+            socket.send_json({"protocol_version": "f1rl_runtime_ws_v1", "type": "stop"})
+
 def test_gap_map_requires_the_explicit_development_profile():
     doc = {"schema": "f1rl_racing_sandbox_draft_v1",
            "id": "v4-road-void", "name": "T3 4m gap", "width": 12.,

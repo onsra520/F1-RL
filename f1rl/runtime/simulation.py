@@ -8,7 +8,8 @@ from ..sandbox.ballistic_flight import FlightStep
 from ..sandbox.center_trajectory import CenterSegment
 from ..sandbox.coupled_longitudinal_dynamics import CoupledGroundAudit
 from ..sandbox.spatial_contact_dynamics import (
-    SpatialContactGeometry, SpatialGroundAudit, prepare_spatial_contact_geometry,
+    LAYERED_ROAD_EDGE_LIFECYCLE_V5, SpatialContactGeometry, SpatialGroundAudit,
+    prepare_spatial_contact_geometry,
 )
 from ..sandbox.grounded_yaw_dynamics import GroundedYawAudit
 from ..sandbox.independent_suspension_dynamics import SuspensionDynamicsResult
@@ -199,7 +200,10 @@ class Simulation:
     def _spatial_geometry_context_for_step(self) -> SpatialContactGeometry | None:
         physics = self._physics_config
         if (physics is None
-                or physics.ground_motion_version != 'spatial_road_edge_partial_lifecycle_v4'):
+                or physics.ground_motion_version not in (
+                    'spatial_road_edge_partial_lifecycle_v4',
+                    LAYERED_ROAD_EDGE_LIFECYCLE_V5,
+                )):
             return None
         suspension = physics.independent_suspension_policy
         body = physics.body_geometry
@@ -207,8 +211,12 @@ class Simulation:
             raise ValueError('Physics v4 geometry context requires registered suspension and body')
         seam_tolerance = suspension.contact.seam_height_tolerance_m
         context = self._spatial_geometry_context
-        if context is None or not context.matches(self._track.surfaces,seam_tolerance,body):
-            context = prepare_spatial_contact_geometry(self._track.surfaces,seam_tolerance,body)
+        layered = physics.ground_motion_version == LAYERED_ROAD_EDGE_LIFECYCLE_V5
+        if context is None or not context.matches(self._track.surfaces,seam_tolerance,body,layered):
+            context = prepare_spatial_contact_geometry(
+                self._track.surfaces,seam_tolerance,body,
+                layered_road_support=layered,
+            )
             self._spatial_geometry_context = context
         return context
 

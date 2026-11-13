@@ -9,7 +9,11 @@ from .coupled_longitudinal_dynamics import (
     CoupledGroundAudit, LongitudinalContactPolicy, integrate_coupled_longitudinal,
 )
 from .geometry.vector import Vec3
-from .spatial_contact_dynamics import SpatialContactGeometry, SpatialGroundAudit, SpatialContactPolicy, integrate_spatial_contact, integrate_spatial_lifecycle, integrate_spatial_road_edge_lifecycle, _suspension_state, SpatialRoadCrash, SpatialRoadCrashSource
+from .spatial_contact_dynamics import (LAYERED_ROAD_EDGE_LIFECYCLE_V5,
+    SpatialContactGeometry, SpatialGroundAudit, SpatialContactPolicy,
+    integrate_spatial_contact, integrate_spatial_lifecycle,
+    integrate_spatial_road_edge_lifecycle, _suspension_state, SpatialRoadCrash,
+    SpatialRoadCrashSource)
 from .physical_crash import PhysicalCrash, first_applied_grounded_crash
 from .roll_envelope_terminal import RollEnvelopeStop,CertifiedRollEnvelopeExit
 from .rigid_body_impact_response import RigidBodyImpactMass
@@ -104,16 +108,19 @@ def step_world(
     spatial_contact_policy: SpatialContactPolicy | None = None,
     spatial_geometry_context: SpatialContactGeometry | None = None,
 ) -> WorldStepResult:
-    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4'):
+    road_edge_lifecycle = ground_motion_version in (
+        'spatial_road_edge_partial_lifecycle_v4', LAYERED_ROAD_EDGE_LIFECYCLE_V5,
+    )
+    if ground_motion_version not in ('legacy_euler_v1','arc_distance_v1','coupled_longitudinal_v1','spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4',LAYERED_ROAD_EDGE_LIFECYCLE_V5):
         raise ValueError('unregistered ground motion version')
     if spatial_geometry_context is not None and (
-        ground_motion_version != 'spatial_road_edge_partial_lifecycle_v4'
+        not road_edge_lifecycle
         or not isinstance(spatial_geometry_context, SpatialContactGeometry)
     ):
-        raise ValueError('spatial geometry context requires registered Physics v4')
+        raise ValueError('spatial geometry context requires registered road-edge physics')
     coupled = ground_motion_version == 'coupled_longitudinal_v1'
-    compliant = ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4')
-    spatial = ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4')
+    compliant = ground_motion_version in ('spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4',LAYERED_ROAD_EDGE_LIFECYCLE_V5)
+    spatial = ground_motion_version in ('spatial_contact_v1','spatial_compliant_lifecycle_v1','spatial_compliant_atlas_lifecycle_v2','spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4',LAYERED_ROAD_EDGE_LIFECYCLE_V5)
     if (spatial != (spatial_contact_policy is not None)
             or spatial and (not isinstance(spatial_contact_policy,SpatialContactPolicy)
                 or not isinstance(independent_suspension_policy,IndependentSuspensionDynamicsPolicy)
@@ -210,17 +217,20 @@ def step_world(
     if coupled or spatial:
         modifiers = resolve_motion_modifiers(current_query)
         if spatial:
-            integrate_spatial = (integrate_spatial_road_edge_lifecycle if ground_motion_version=='spatial_road_edge_partial_lifecycle_v4' else integrate_spatial_lifecycle if compliant else integrate_spatial_contact)
+            integrate_spatial = (integrate_spatial_road_edge_lifecycle if road_edge_lifecycle else integrate_spatial_lifecycle if compliant else integrate_spatial_contact)
             try:
                 result = integrate_spatial(state.vehicle,independent_suspension_policy,
                     body_geometry,track.surfaces,parameters,control,spatial_contact_policy,dt=dt,modifiers=modifiers,
                     **({'geometry_context':spatial_geometry_context}
-                       if ground_motion_version=='spatial_road_edge_partial_lifecycle_v4'
+                       if road_edge_lifecycle
                        else {}),
-                    **({} if ground_motion_version=='spatial_road_edge_partial_lifecycle_v4' else {'phase_domain':'atlas_rotating_v3'} if ground_motion_version=='spatial_rotating_compliant_lifecycle_v3'
+                    **({'layered_road_support': True}
+                       if ground_motion_version == LAYERED_ROAD_EDGE_LIFECYCLE_V5
+                       else {}),
+                    **({} if road_edge_lifecycle else {'phase_domain':'atlas_rotating_v3'} if ground_motion_version=='spatial_rotating_compliant_lifecycle_v3'
                        else {'phase_domain':'atlas_gradient_v2'} if ground_motion_version=='spatial_compliant_atlas_lifecycle_v2' else {}))
             except CertifiedRollEnvelopeExit as roll_event:
-                if ground_motion_version!='spatial_road_edge_partial_lifecycle_v4':
+                if not road_edge_lifecycle:
                     raise
                 stop=roll_event.stop
                 safe=stop.accepted
@@ -232,7 +242,7 @@ def step_world(
             except SpatialRoadCrash as road_event:
                 # Only an explicitly witnessed, independently replayable
                 # development road-contact event can absorb the tick.
-                if ground_motion_version!='spatial_road_edge_partial_lifecycle_v4':
+                if not road_edge_lifecycle:
                     raise
                 crash=road_event.crash
                 terminal=crash.contact.postimpact
@@ -388,7 +398,7 @@ def step_world(
             for segment,pose,last_pose in zip(center_segments,swept_poses,swept_poses[1:]):
                 if segment.initial_velocity is not None:
                     duration=segment.end_time_s-segment.start_time_s
-                    if ground_motion_version in ('spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4'):
+                    if ground_motion_version in ('spatial_rotating_compliant_lifecycle_v3','spatial_road_edge_partial_lifecycle_v4',LAYERED_ROAD_EDGE_LIFECYCLE_V5):
                         from .body_collision import sweep_ballistic_body_against_obstacle
                         for obstacle in track.obstacles:
                             verdict=sweep_ballistic_body_against_obstacle(pose,last_pose,body_geometry,obstacle.volume,
@@ -414,9 +424,10 @@ def step_world(
                 if verdict.contact:
                     body_hits.append(obstacle)
                     break
-        if body_hits and ground_motion_version=='spatial_road_edge_partial_lifecycle_v4':
-            # Absorbing crash is opt-in v4 only. Only certified grounded
-            # linear+SLERP face contacts qualify; all other contacts fail closed.
+        if body_hits and road_edge_lifecycle:
+            # Absorbing crash is opt-in for registered road-edge profiles.
+            # Only certified grounded linear+SLERP face contacts qualify;
+            # all other contacts fail closed.
             try:
                 mass=RigidBodyImpactMass(independent_suspension_policy.mass_kg,
                     Vec3(independent_suspension_policy.pitch_inertia_kg_m2,
@@ -432,7 +443,7 @@ def step_world(
                 body_hits=[]
                 candidate_query=replace(candidate_query,obstacles=())
         if (flight_active or auto_released) and body_hits:
-            if ground_motion_version=='spatial_road_edge_partial_lifecycle_v4':
+            if road_edge_lifecycle:
                 # A scratch-only diagnostic: prove the actual first collision
                 # bracket or retain INVALID. Does not create a terminal score.
                 from .ballistic_body_impact import first_ballistic_body_impact
