@@ -2,6 +2,10 @@
 
 Interactive reinforcement learning environment for autonomous racing and obstacle avoidance.
 
+## Demo
+
+[▶ Watch the demo video](video%20demo.mp4)
+
 ## Canonical source
 
 - `f1rl/` owns Physics v4, vehicle and track dynamics, collision and race contracts, learning, PPO, and the development runtime.
