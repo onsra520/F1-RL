@@ -1,0 +1,18 @@
+{
+  "invalid": 1,
+  "old_evidence_mutated": false,
+  "original_error_types": {
+    "PhysicsTransitionError": 1
+  },
+  "remaining_errors": {
+    "PhysicsTransitionError": 1
+  },
+  "replayed_cases": 1,
+  "results_jsonl_sha256": "9e7c9cba4d2e03d86af437082f10beebb4e02db9b0b00086ec02bfb94efbb7e5",
+  "scientific_evidence": false,
+  "source": {
+    "modified_source": [],
+    "source_head": "fc187879d96d95303308b3607a102049a56cd783"
+  },
+  "valid": 0
+}

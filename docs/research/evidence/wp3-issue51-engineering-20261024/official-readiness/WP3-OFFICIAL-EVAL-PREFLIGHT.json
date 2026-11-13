@@ -1,0 +1,836 @@
+{
+  "schema_version": "wp3_issue51_official_eval_readiness_v1",
+  "created_at_utc": "2026-10-24T15:54:02.722398+00:00",
+  "status": "PENDING_INDEPENDENT_REVIEW_NOT_REGISTERED_NOT_STARTED",
+  "user_authorization_to_proceed_requested": true,
+  "user_authorization_is_independent_scientific_signoff": false,
+  "independent_reviewer_identity": null,
+  "independent_physics_certification": null,
+  "scientific_owner_approval_record": null,
+  "source_branch": "fix/wp3-eval-physical-completion",
+  "current_source_head": "0886a68dd1a8e17c0592f2399380665fef3d6734",
+  "source_tree_sha": "60c17d2d9c9e2c9e95b88c1f803460078ba839c5",
+  "source_clean": true,
+  "source_frozen_training_commit": "fe83f517479f3b990028d6409304fae83b8199a9",
+  "physics_v4_profile": "spatial_road_edge_partial_lifecycle_v4",
+  "race_contract_version": "wp7_directed_lifecycle_crash_contract_v4",
+  "crash_terminal_contract": "wp3_physical_crash_terminal_v1",
+  "source_bound_engineering_status": "TECHNICAL_GATE_PASS_SCIENTIFIC_SIGNOFF_PENDING",
+  "current_physics_source_bundle_sha256": "72221a7904c2669ac70d0ceb345fc9c10a5eaffac4b66bae25b774b94e68ea03",
+  "historical_physics_receipt_bundle_sha256": "eb0c03e7f422d4a9cf5d4faccc988fb5831dfa4c8891aa3e7a2e0d8188e94856",
+  "historical_receipt_mismatch_files": [
+    "f1rl/learning/evaluation/evaluator.py",
+    "f1rl/learning/gym_environment.py",
+    "f1rl/learning/wp7_race.py"
+  ],
+  "historical_receipt_independent_review_valid": false,
+  "crash_terminal_scientific_approved": false,
+  "original_roster_file_sha256": "1530a54a636f80cacc096f2ed86d9e89fd5e7c7a7429873deb2fe366bcd859dc",
+  "original_roster_sha256": "f2f9d15954cea48345a8932773ed945f6ed250ad1435b4e675b97e4a6b94f319",
+  "original_training_provenance_sha256": "3b0b9c2bcdaf7614b7a1164b78a9ca0441bb8986488b8249c8614e1a63085349",
+  "original_final_models": {
+    "C-seed0": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+    "A-seed0": "8cfcde6d4c88bbcc01dbf9b67dee3829c991474b0a8883a4479370f665c01c79",
+    "B-seed0": "d76719fb04c5eee1a03e1b0885989f44faad6543d3a1fea9aa24fe6ac55867d6",
+    "D-seed0": "318f76813b69f8457dc169b6b3a89dd5f3aa2f2f765170075e0e48ab9f0e0109",
+    "A-seed1": "4334c44b3370c4f0adaa345ca280d190850fda9599736cc561ed6cbb71425831",
+    "B-seed1": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021",
+    "C-seed1": "1089a4ddb826d8a52a3960f2415fc920ee1b87cedda6d062d661e4f3244440e7",
+    "D-seed1": "70892fdb0e93ffdc67c36e18e92c1ba70f7ce9f6d6dc41916370781f6f18fc0c",
+    "A-seed2": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc",
+    "B-seed2": "18f17c3f07d3e62b43364f3f4c6572b3e08b3307a4ae47137b80342188ad0dae",
+    "C-seed2": "156ee0f2194f3aedb36cce3917cc4121994b53fa0f0c942c2de548b9e2ea32b7",
+    "D-seed2": "212cca532ed1411246687821002ef55f62329ddcab18af2ff08f8e5b9b154cdc"
+  },
+  "original_final_model_count": 12,
+  "official_plan_cells": 96,
+  "official_plan_slots": 5760,
+  "canonical_cells": [
+    {
+      "model_id": "C-seed0",
+      "track_id": "straight-sprint-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "5e5a62c9f8b267d45ad642dabc5867269a87fffa3c0cc666396de7e8d4f0e1e4"
+    },
+    {
+      "model_id": "C-seed0",
+      "track_id": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "68e72d7688410023f7ef99b83ff68ad985ef2249ae9143dbb1b0069a85d5b9ad"
+    },
+    {
+      "model_id": "C-seed0",
+      "track_id": "slalom-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "cea0972f62d7c5f362a14f6fa56c2be007f60ed55ff94b4c319ad1561c199ca2"
+    },
+    {
+      "model_id": "C-seed0",
+      "track_id": "slalom-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "f2297e4dcd9364ad9e352f56d181859e3d7c1b751d0410704aa54e0f1bdbe242"
+    },
+    {
+      "model_id": "C-seed0",
+      "track_id": "right-turn-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "018223b0277f68c01a5c3eee06d7851bfe8fa6897bac85a34c6f261b8f721f1d"
+    },
+    {
+      "model_id": "C-seed0",
+      "track_id": "right-turn-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "e1de3aa72b5e07d979b8c9488fa293aa8beca50d08f7925ff064d3efe62d2dd0"
+    },
+    {
+      "model_id": "C-seed0",
+      "track_id": "ramp-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "6763d62209227fb024593c4c0969da02feb95398482f31b8ce6967daefa5cdce"
+    },
+    {
+      "model_id": "C-seed0",
+      "track_id": "ramp-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "330c5c735709c57c9233292f1f9c310384c8fef4985ed47b1b937ca6920f1a82"
+    },
+    {
+      "model_id": "A-seed0",
+      "track_id": "straight-sprint-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "5e5a62c9f8b267d45ad642dabc5867269a87fffa3c0cc666396de7e8d4f0e1e4"
+    },
+    {
+      "model_id": "A-seed0",
+      "track_id": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "68e72d7688410023f7ef99b83ff68ad985ef2249ae9143dbb1b0069a85d5b9ad"
+    },
+    {
+      "model_id": "A-seed0",
+      "track_id": "slalom-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "cea0972f62d7c5f362a14f6fa56c2be007f60ed55ff94b4c319ad1561c199ca2"
+    },
+    {
+      "model_id": "A-seed0",
+      "track_id": "slalom-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "f2297e4dcd9364ad9e352f56d181859e3d7c1b751d0410704aa54e0f1bdbe242"
+    },
+    {
+      "model_id": "A-seed0",
+      "track_id": "right-turn-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "018223b0277f68c01a5c3eee06d7851bfe8fa6897bac85a34c6f261b8f721f1d"
+    },
+    {
+      "model_id": "A-seed0",
+      "track_id": "right-turn-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "e1de3aa72b5e07d979b8c9488fa293aa8beca50d08f7925ff064d3efe62d2dd0"
+    },
+    {
+      "model_id": "A-seed0",
+      "track_id": "ramp-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "6763d62209227fb024593c4c0969da02feb95398482f31b8ce6967daefa5cdce"
+    },
+    {
+      "model_id": "A-seed0",
+      "track_id": "ramp-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "330c5c735709c57c9233292f1f9c310384c8fef4985ed47b1b937ca6920f1a82"
+    },
+    {
+      "model_id": "B-seed0",
+      "track_id": "straight-sprint-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "5e5a62c9f8b267d45ad642dabc5867269a87fffa3c0cc666396de7e8d4f0e1e4"
+    },
+    {
+      "model_id": "B-seed0",
+      "track_id": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "68e72d7688410023f7ef99b83ff68ad985ef2249ae9143dbb1b0069a85d5b9ad"
+    },
+    {
+      "model_id": "B-seed0",
+      "track_id": "slalom-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "cea0972f62d7c5f362a14f6fa56c2be007f60ed55ff94b4c319ad1561c199ca2"
+    },
+    {
+      "model_id": "B-seed0",
+      "track_id": "slalom-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "f2297e4dcd9364ad9e352f56d181859e3d7c1b751d0410704aa54e0f1bdbe242"
+    },
+    {
+      "model_id": "B-seed0",
+      "track_id": "right-turn-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "018223b0277f68c01a5c3eee06d7851bfe8fa6897bac85a34c6f261b8f721f1d"
+    },
+    {
+      "model_id": "B-seed0",
+      "track_id": "right-turn-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "e1de3aa72b5e07d979b8c9488fa293aa8beca50d08f7925ff064d3efe62d2dd0"
+    },
+    {
+      "model_id": "B-seed0",
+      "track_id": "ramp-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "6763d62209227fb024593c4c0969da02feb95398482f31b8ce6967daefa5cdce"
+    },
+    {
+      "model_id": "B-seed0",
+      "track_id": "ramp-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "330c5c735709c57c9233292f1f9c310384c8fef4985ed47b1b937ca6920f1a82"
+    },
+    {
+      "model_id": "D-seed0",
+      "track_id": "straight-sprint-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "5e5a62c9f8b267d45ad642dabc5867269a87fffa3c0cc666396de7e8d4f0e1e4"
+    },
+    {
+      "model_id": "D-seed0",
+      "track_id": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "68e72d7688410023f7ef99b83ff68ad985ef2249ae9143dbb1b0069a85d5b9ad"
+    },
+    {
+      "model_id": "D-seed0",
+      "track_id": "slalom-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "cea0972f62d7c5f362a14f6fa56c2be007f60ed55ff94b4c319ad1561c199ca2"
+    },
+    {
+      "model_id": "D-seed0",
+      "track_id": "slalom-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "f2297e4dcd9364ad9e352f56d181859e3d7c1b751d0410704aa54e0f1bdbe242"
+    },
+    {
+      "model_id": "D-seed0",
+      "track_id": "right-turn-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "018223b0277f68c01a5c3eee06d7851bfe8fa6897bac85a34c6f261b8f721f1d"
+    },
+    {
+      "model_id": "D-seed0",
+      "track_id": "right-turn-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "e1de3aa72b5e07d979b8c9488fa293aa8beca50d08f7925ff064d3efe62d2dd0"
+    },
+    {
+      "model_id": "D-seed0",
+      "track_id": "ramp-v1",
+      "stratum": "nominal",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "6763d62209227fb024593c4c0969da02feb95398482f31b8ce6967daefa5cdce"
+    },
+    {
+      "model_id": "D-seed0",
+      "track_id": "ramp-v1",
+      "stratum": "randomized_train",
+      "seed_index": 0,
+      "episodes": 60,
+      "paired_seeds_sha256": "330c5c735709c57c9233292f1f9c310384c8fef4985ed47b1b937ca6920f1a82"
+    },
+    {
+      "model_id": "A-seed1",
+      "track_id": "straight-sprint-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "5e5a62c9f8b267d45ad642dabc5867269a87fffa3c0cc666396de7e8d4f0e1e4"
+    },
+    {
+      "model_id": "A-seed1",
+      "track_id": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "68e72d7688410023f7ef99b83ff68ad985ef2249ae9143dbb1b0069a85d5b9ad"
+    },
+    {
+      "model_id": "A-seed1",
+      "track_id": "slalom-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "cea0972f62d7c5f362a14f6fa56c2be007f60ed55ff94b4c319ad1561c199ca2"
+    },
+    {
+      "model_id": "A-seed1",
+      "track_id": "slalom-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "f2297e4dcd9364ad9e352f56d181859e3d7c1b751d0410704aa54e0f1bdbe242"
+    },
+    {
+      "model_id": "A-seed1",
+      "track_id": "right-turn-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "018223b0277f68c01a5c3eee06d7851bfe8fa6897bac85a34c6f261b8f721f1d"
+    },
+    {
+      "model_id": "A-seed1",
+      "track_id": "right-turn-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "e1de3aa72b5e07d979b8c9488fa293aa8beca50d08f7925ff064d3efe62d2dd0"
+    },
+    {
+      "model_id": "A-seed1",
+      "track_id": "ramp-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "6763d62209227fb024593c4c0969da02feb95398482f31b8ce6967daefa5cdce"
+    },
+    {
+      "model_id": "A-seed1",
+      "track_id": "ramp-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "330c5c735709c57c9233292f1f9c310384c8fef4985ed47b1b937ca6920f1a82"
+    },
+    {
+      "model_id": "B-seed1",
+      "track_id": "straight-sprint-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "5e5a62c9f8b267d45ad642dabc5867269a87fffa3c0cc666396de7e8d4f0e1e4"
+    },
+    {
+      "model_id": "B-seed1",
+      "track_id": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "68e72d7688410023f7ef99b83ff68ad985ef2249ae9143dbb1b0069a85d5b9ad"
+    },
+    {
+      "model_id": "B-seed1",
+      "track_id": "slalom-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "cea0972f62d7c5f362a14f6fa56c2be007f60ed55ff94b4c319ad1561c199ca2"
+    },
+    {
+      "model_id": "B-seed1",
+      "track_id": "slalom-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "f2297e4dcd9364ad9e352f56d181859e3d7c1b751d0410704aa54e0f1bdbe242"
+    },
+    {
+      "model_id": "B-seed1",
+      "track_id": "right-turn-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "018223b0277f68c01a5c3eee06d7851bfe8fa6897bac85a34c6f261b8f721f1d"
+    },
+    {
+      "model_id": "B-seed1",
+      "track_id": "right-turn-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "e1de3aa72b5e07d979b8c9488fa293aa8beca50d08f7925ff064d3efe62d2dd0"
+    },
+    {
+      "model_id": "B-seed1",
+      "track_id": "ramp-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "6763d62209227fb024593c4c0969da02feb95398482f31b8ce6967daefa5cdce"
+    },
+    {
+      "model_id": "B-seed1",
+      "track_id": "ramp-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "330c5c735709c57c9233292f1f9c310384c8fef4985ed47b1b937ca6920f1a82"
+    },
+    {
+      "model_id": "C-seed1",
+      "track_id": "straight-sprint-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "5e5a62c9f8b267d45ad642dabc5867269a87fffa3c0cc666396de7e8d4f0e1e4"
+    },
+    {
+      "model_id": "C-seed1",
+      "track_id": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "68e72d7688410023f7ef99b83ff68ad985ef2249ae9143dbb1b0069a85d5b9ad"
+    },
+    {
+      "model_id": "C-seed1",
+      "track_id": "slalom-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "cea0972f62d7c5f362a14f6fa56c2be007f60ed55ff94b4c319ad1561c199ca2"
+    },
+    {
+      "model_id": "C-seed1",
+      "track_id": "slalom-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "f2297e4dcd9364ad9e352f56d181859e3d7c1b751d0410704aa54e0f1bdbe242"
+    },
+    {
+      "model_id": "C-seed1",
+      "track_id": "right-turn-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "018223b0277f68c01a5c3eee06d7851bfe8fa6897bac85a34c6f261b8f721f1d"
+    },
+    {
+      "model_id": "C-seed1",
+      "track_id": "right-turn-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "e1de3aa72b5e07d979b8c9488fa293aa8beca50d08f7925ff064d3efe62d2dd0"
+    },
+    {
+      "model_id": "C-seed1",
+      "track_id": "ramp-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "6763d62209227fb024593c4c0969da02feb95398482f31b8ce6967daefa5cdce"
+    },
+    {
+      "model_id": "C-seed1",
+      "track_id": "ramp-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "330c5c735709c57c9233292f1f9c310384c8fef4985ed47b1b937ca6920f1a82"
+    },
+    {
+      "model_id": "D-seed1",
+      "track_id": "straight-sprint-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "5e5a62c9f8b267d45ad642dabc5867269a87fffa3c0cc666396de7e8d4f0e1e4"
+    },
+    {
+      "model_id": "D-seed1",
+      "track_id": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "68e72d7688410023f7ef99b83ff68ad985ef2249ae9143dbb1b0069a85d5b9ad"
+    },
+    {
+      "model_id": "D-seed1",
+      "track_id": "slalom-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "cea0972f62d7c5f362a14f6fa56c2be007f60ed55ff94b4c319ad1561c199ca2"
+    },
+    {
+      "model_id": "D-seed1",
+      "track_id": "slalom-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "f2297e4dcd9364ad9e352f56d181859e3d7c1b751d0410704aa54e0f1bdbe242"
+    },
+    {
+      "model_id": "D-seed1",
+      "track_id": "right-turn-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "018223b0277f68c01a5c3eee06d7851bfe8fa6897bac85a34c6f261b8f721f1d"
+    },
+    {
+      "model_id": "D-seed1",
+      "track_id": "right-turn-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "e1de3aa72b5e07d979b8c9488fa293aa8beca50d08f7925ff064d3efe62d2dd0"
+    },
+    {
+      "model_id": "D-seed1",
+      "track_id": "ramp-v1",
+      "stratum": "nominal",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "6763d62209227fb024593c4c0969da02feb95398482f31b8ce6967daefa5cdce"
+    },
+    {
+      "model_id": "D-seed1",
+      "track_id": "ramp-v1",
+      "stratum": "randomized_train",
+      "seed_index": 1,
+      "episodes": 60,
+      "paired_seeds_sha256": "330c5c735709c57c9233292f1f9c310384c8fef4985ed47b1b937ca6920f1a82"
+    },
+    {
+      "model_id": "A-seed2",
+      "track_id": "straight-sprint-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "5e5a62c9f8b267d45ad642dabc5867269a87fffa3c0cc666396de7e8d4f0e1e4"
+    },
+    {
+      "model_id": "A-seed2",
+      "track_id": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "68e72d7688410023f7ef99b83ff68ad985ef2249ae9143dbb1b0069a85d5b9ad"
+    },
+    {
+      "model_id": "A-seed2",
+      "track_id": "slalom-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "cea0972f62d7c5f362a14f6fa56c2be007f60ed55ff94b4c319ad1561c199ca2"
+    },
+    {
+      "model_id": "A-seed2",
+      "track_id": "slalom-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "f2297e4dcd9364ad9e352f56d181859e3d7c1b751d0410704aa54e0f1bdbe242"
+    },
+    {
+      "model_id": "A-seed2",
+      "track_id": "right-turn-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "018223b0277f68c01a5c3eee06d7851bfe8fa6897bac85a34c6f261b8f721f1d"
+    },
+    {
+      "model_id": "A-seed2",
+      "track_id": "right-turn-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "e1de3aa72b5e07d979b8c9488fa293aa8beca50d08f7925ff064d3efe62d2dd0"
+    },
+    {
+      "model_id": "A-seed2",
+      "track_id": "ramp-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "6763d62209227fb024593c4c0969da02feb95398482f31b8ce6967daefa5cdce"
+    },
+    {
+      "model_id": "A-seed2",
+      "track_id": "ramp-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "330c5c735709c57c9233292f1f9c310384c8fef4985ed47b1b937ca6920f1a82"
+    },
+    {
+      "model_id": "B-seed2",
+      "track_id": "straight-sprint-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "5e5a62c9f8b267d45ad642dabc5867269a87fffa3c0cc666396de7e8d4f0e1e4"
+    },
+    {
+      "model_id": "B-seed2",
+      "track_id": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "68e72d7688410023f7ef99b83ff68ad985ef2249ae9143dbb1b0069a85d5b9ad"
+    },
+    {
+      "model_id": "B-seed2",
+      "track_id": "slalom-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "cea0972f62d7c5f362a14f6fa56c2be007f60ed55ff94b4c319ad1561c199ca2"
+    },
+    {
+      "model_id": "B-seed2",
+      "track_id": "slalom-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "f2297e4dcd9364ad9e352f56d181859e3d7c1b751d0410704aa54e0f1bdbe242"
+    },
+    {
+      "model_id": "B-seed2",
+      "track_id": "right-turn-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "018223b0277f68c01a5c3eee06d7851bfe8fa6897bac85a34c6f261b8f721f1d"
+    },
+    {
+      "model_id": "B-seed2",
+      "track_id": "right-turn-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "e1de3aa72b5e07d979b8c9488fa293aa8beca50d08f7925ff064d3efe62d2dd0"
+    },
+    {
+      "model_id": "B-seed2",
+      "track_id": "ramp-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "6763d62209227fb024593c4c0969da02feb95398482f31b8ce6967daefa5cdce"
+    },
+    {
+      "model_id": "B-seed2",
+      "track_id": "ramp-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "330c5c735709c57c9233292f1f9c310384c8fef4985ed47b1b937ca6920f1a82"
+    },
+    {
+      "model_id": "C-seed2",
+      "track_id": "straight-sprint-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "5e5a62c9f8b267d45ad642dabc5867269a87fffa3c0cc666396de7e8d4f0e1e4"
+    },
+    {
+      "model_id": "C-seed2",
+      "track_id": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "68e72d7688410023f7ef99b83ff68ad985ef2249ae9143dbb1b0069a85d5b9ad"
+    },
+    {
+      "model_id": "C-seed2",
+      "track_id": "slalom-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "cea0972f62d7c5f362a14f6fa56c2be007f60ed55ff94b4c319ad1561c199ca2"
+    },
+    {
+      "model_id": "C-seed2",
+      "track_id": "slalom-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "f2297e4dcd9364ad9e352f56d181859e3d7c1b751d0410704aa54e0f1bdbe242"
+    },
+    {
+      "model_id": "C-seed2",
+      "track_id": "right-turn-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "018223b0277f68c01a5c3eee06d7851bfe8fa6897bac85a34c6f261b8f721f1d"
+    },
+    {
+      "model_id": "C-seed2",
+      "track_id": "right-turn-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "e1de3aa72b5e07d979b8c9488fa293aa8beca50d08f7925ff064d3efe62d2dd0"
+    },
+    {
+      "model_id": "C-seed2",
+      "track_id": "ramp-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "6763d62209227fb024593c4c0969da02feb95398482f31b8ce6967daefa5cdce"
+    },
+    {
+      "model_id": "C-seed2",
+      "track_id": "ramp-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "330c5c735709c57c9233292f1f9c310384c8fef4985ed47b1b937ca6920f1a82"
+    },
+    {
+      "model_id": "D-seed2",
+      "track_id": "straight-sprint-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "5e5a62c9f8b267d45ad642dabc5867269a87fffa3c0cc666396de7e8d4f0e1e4"
+    },
+    {
+      "model_id": "D-seed2",
+      "track_id": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "68e72d7688410023f7ef99b83ff68ad985ef2249ae9143dbb1b0069a85d5b9ad"
+    },
+    {
+      "model_id": "D-seed2",
+      "track_id": "slalom-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "cea0972f62d7c5f362a14f6fa56c2be007f60ed55ff94b4c319ad1561c199ca2"
+    },
+    {
+      "model_id": "D-seed2",
+      "track_id": "slalom-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "f2297e4dcd9364ad9e352f56d181859e3d7c1b751d0410704aa54e0f1bdbe242"
+    },
+    {
+      "model_id": "D-seed2",
+      "track_id": "right-turn-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "018223b0277f68c01a5c3eee06d7851bfe8fa6897bac85a34c6f261b8f721f1d"
+    },
+    {
+      "model_id": "D-seed2",
+      "track_id": "right-turn-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "e1de3aa72b5e07d979b8c9488fa293aa8beca50d08f7925ff064d3efe62d2dd0"
+    },
+    {
+      "model_id": "D-seed2",
+      "track_id": "ramp-v1",
+      "stratum": "nominal",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "6763d62209227fb024593c4c0969da02feb95398482f31b8ce6967daefa5cdce"
+    },
+    {
+      "model_id": "D-seed2",
+      "track_id": "ramp-v1",
+      "stratum": "randomized_train",
+      "seed_index": 2,
+      "episodes": 60,
+      "paired_seeds_sha256": "330c5c735709c57c9233292f1f9c310384c8fef4985ed47b1b937ca6920f1a82"
+    }
+  ],
+  "independent_paired_policy_rng": "cpu/stochastic/deterministic_false",
+  "original_hard_corridor_m": 4.0,
+  "full_eval_gate_exit_code": 3,
+  "full_eval_gate_output": "FULL_EVAL_BLOCKED: FULL_EVAL_BLOCKED: physics not completed; no registered new evaluation ID. Preserve all 5,760 original slots and old evidence.",
+  "official_run_id": null,
+  "registered_episode_records_created": 0,
+  "official_eval_started": false,
+  "full_evaluation_authorized": false,
+  "heldout_access": false,
+  "training_executed": false,
+  "original_evaluation_mutated": false,
+  "review_action_required": [
+    "A reviewer independent of the Physics v4 implementation reviews the current source-bound physics model and signs its acceptance with identity/source SHA.",
+    "Research owner explicitly registers the scoring semantics for valid crash failures and physics tolerance/energy regime.",
+    "Create separate approved evaluator/protocol registration with exact current commit+manifest digest and verify all canonical assets.",
+    "Run a new Eval-only evidence root; append-only exactly 96 cells x 60 original paired seed slots; never overwrite or redraw."
+  ],
+  "sha256": "a10b795e1241e3097c8c7bc68ca45e270e5903279b4ccee6539aa774b15b69b7"
+}

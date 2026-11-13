@@ -1,0 +1,16 @@
+{
+  "invalid": 0,
+  "old_evidence_mutated": false,
+  "original_error_types": {
+    "SuspensionResolutionError": 1
+  },
+  "remaining_errors": {},
+  "replayed_cases": 1,
+  "results_jsonl_sha256": "df40624adf60ab5feef9ccb7bff02cf960f7d52341b843d4387fdccf8bb6de14",
+  "scientific_evidence": false,
+  "source": {
+    "modified_source": [],
+    "source_head": "6c479540134d98d7d27331879c926c8ba82c2965"
+  },
+  "valid": 1
+}

@@ -1,0 +1,16 @@
+{
+    "source":  "13b1d8105d14e7492a140a850c43f22e578fd809",
+    "source_clean":  true,
+    "exit":  0,
+    "run_original":  "WP3-OWNER-TRAINDEV-20261026-FULL-04",
+    "model":  "C-seed1",
+    "track":  "right-turn-v1",
+    "stratum":  "randomized_train",
+    "episode":  10,
+    "env_seed":  3886169428,
+    "policy_seed":  1971191095,
+    "heldout_access":  false,
+    "new_full_eval_started":  false,
+    "log_sha256":  "7BF4864AAF502D7D68A58D6B8B0BF5E903C822D5D63ECED248FEA0332B964E44",
+    "finished":  "2026-10-26T15:39:18.0906523+07:00"
+}

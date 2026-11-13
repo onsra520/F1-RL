@@ -1,0 +1,65 @@
+{
+  "invalid": 10,
+  "old_evidence_mutated": false,
+  "original_error_types": {
+    "GroundedBodyCollisionUnscored": 1,
+    "PhysicsTransitionError": 18,
+    "SuspensionResolutionError": 10
+  },
+  "remaining_errors": {
+    "SuspensionResolutionError": 10
+  },
+  "replayed_cases": 29,
+  "results_jsonl_sha256": "3c91e4aa1dc295eeddeaa60d3c1de69124ec195a602614a23ee87848f2aa3b74",
+  "scientific_evidence": false,
+  "source": {
+    "modified_source": [
+      {
+        "path": "f1rl/learning/crash_terminal_registered.py",
+        "sha256": "5fe351c23072a4b043c63e244d4b380943817df1091267f6fc64ec65ccc4abee"
+      },
+      {
+        "path": "f1rl/learning/evaluation/crash_contract.py",
+        "sha256": "85fc6b475cc7ab8458e8457018d2f453335146636aa34b83bbd878d27481b4f4"
+      },
+      {
+        "path": "f1rl/research/wp3_owner_train_dev_eval.py",
+        "sha256": "dd3d0258c5e16d8a3b1db821a7edfc1d75f1e505a3922c3c69a3ef537e1a79de"
+      },
+      {
+        "path": "f1rl/runtime/physics.py",
+        "sha256": "4e68e14075f912b59e8adff76355f76e29cf020bf1a789b4a4817e3cf72fbc67"
+      },
+      {
+        "path": "f1rl/runtime/road_crash_validation.py",
+        "sha256": "ce45b67c053ad06d8654a1237351dd70ef579765e2239742c31a2331a7ba22f5"
+      },
+      {
+        "path": "f1rl/sandbox/certified_edge_impact.py",
+        "sha256": "1b6ca89f02508427a98786397d564bd613770e8c3c8fc43e54cbc21067e11892"
+      },
+      {
+        "path": "f1rl/sandbox/physical_crash.py",
+        "sha256": "c8d61af0568460cf3e487d7fdb34da04c65b77a19277af44d702935ea04d386d"
+      },
+      {
+        "path": "f1rl/sandbox/spatial_contact_dynamics.py",
+        "sha256": "36daffa3d23f4286a526c30f0af71efc8704ed4ddd724567b63ac62b404ecc49"
+      },
+      {
+        "path": "tests/research/test_wp3_crash_terminal_registry.py",
+        "sha256": "ac23c97499e581aca047067e7f9236b03a7fa7759133878c061b2ef78a6b7ad4"
+      },
+      {
+        "path": "tests/research/test_wp3_road_crash_prefix_roundoff.py",
+        "sha256": "f4679363e5292d0456f496ab31a103d43ec328f1a7db5f2fa0a4cb896e949b99"
+      },
+      {
+        "path": "tests/research/test_wp3_unique_edge_contact_v4.py",
+        "sha256": "b2dbe0a4996d789f3feac1121517cddcb367fc24e9889e19268191531919e0fb"
+      }
+    ],
+    "source_head": "bbefa1b2e0261b34cd826f896be3cfb838ecdc90"
+  },
+  "valid": 19
+}

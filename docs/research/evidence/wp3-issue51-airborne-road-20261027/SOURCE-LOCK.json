@@ -1,0 +1,19 @@
+﻿{
+    "source_commit":  "6c479540134d98d7d27331879c926c8ba82c2965",
+    "source_tree":  "edc0578e1f46ab636ec09590a6c073db15528569",
+    "source_branch":  "fix/wp3-road-impact-lifecycle-20261027",
+    "source_clean":  true,
+    "predecessor_commit":  "fc187879d96d95303308b3607a102049a56cd783",
+    "historical_r5_cell_sha256":  "b4e7a6058c1d5f9a2a718dc07f726ba8863bd6997f41213a5464cda83fed8665",
+    "original_r5_run_manifest_sha256":  "be6c1f59502e9c0f1362065d59f2715dcf052ebc955c78f2e5e52f8263772b36",
+    "replayed_original_invalid_count":  1,
+    "replayed_original_invalid_valid":  1,
+    "replayed_roll_valid":  1,
+    "replayed_historical_hardstop_valid":  7,
+    "focused_pytest_passed":  208,
+    "focused_pytest_exit":  0,
+    "full_regression_status":  "PASS_2947_PASSED_3_SKIPPED_0_FAILED_EXIT_0",
+    "full_eval_r6_started":  false,
+    "scientific_evidence":  false,
+    "independent_physics_signoff":  false
+}

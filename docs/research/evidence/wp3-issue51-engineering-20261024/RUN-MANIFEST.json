@@ -1,0 +1,185 @@
+{
+  "schema_version": "wp3_eval_only_engineering_coordinator_v1",
+  "run_id": "WP3-ENG-ISSUE51-20261024-REPLAY2",
+  "created_at_utc": "2026-10-24T15:36:38.964012+00:00",
+  "evaluation_source_commit": "0886a68dd1a8e17c0592f2399380665fef3d6734",
+  "original_training_source_commit": "fe83f517479f3b990028d6409304fae83b8199a9",
+  "physics_profile": "spatial_road_edge_partial_lifecycle_v4",
+  "crash_terminal_contract": "wp3_physical_crash_terminal_v1",
+  "race_version": "wp7_directed_lifecycle_crash_contract_v4",
+  "roster_sha256": "f2f9d15954cea48345a8932773ed945f6ed250ad1435b4e675b97e4a6b94f319",
+  "preflight_sha256": "70bebf4eeb2a95532a120d88ae4de45c908122406cdd028e5ed02964c17a5e26",
+  "original_expected_cells": 96,
+  "original_expected_episodes": 5760,
+  "diagnostic_planned_cases": 16,
+  "episode_index": 4,
+  "original_immutable_file_sha256": {
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\evaluation\\evaluation-roster.json": "1530a54a636f80cacc096f2ed86d9e89fd5e7c7a7429873deb2fe366bcd859dc",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\WP3-EVAL-SOURCE-PROVENANCE.json": "3b0b9c2bcdaf7614b7a1164b78a9ca0441bb8986488b8249c8614e1a63085349",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\runs\\C-seed0\\model-final.zip": "15373c0237e883fa2f980dfecbda4809aabc283c0d77a8b4d783e2ab5bf11492",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\runs\\A-seed0\\model-final.zip": "8cfcde6d4c88bbcc01dbf9b67dee3829c991474b0a8883a4479370f665c01c79",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\runs\\B-seed0\\model-final.zip": "d76719fb04c5eee1a03e1b0885989f44faad6543d3a1fea9aa24fe6ac55867d6",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\runs\\D-seed0\\model-final.zip": "318f76813b69f8457dc169b6b3a89dd5f3aa2f2f765170075e0e48ab9f0e0109",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\runs\\A-seed1\\model-final.zip": "4334c44b3370c4f0adaa345ca280d190850fda9599736cc561ed6cbb71425831",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\runs\\B-seed1\\model-final.zip": "695f1c649235775eb1446ac0718b69b5951a1242b389221a5318db540a716021",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\runs\\C-seed1\\model-final.zip": "1089a4ddb826d8a52a3960f2415fc920ee1b87cedda6d062d661e4f3244440e7",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\runs\\D-seed1\\model-final.zip": "70892fdb0e93ffdc67c36e18e92c1ba70f7ce9f6d6dc41916370781f6f18fc0c",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\runs\\A-seed2\\model-final.zip": "e2a0eb0deef34fad7bf2bf2322c0c13854869372263a4652d4c6f1c422d43adc",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\runs\\B-seed2\\model-final.zip": "18f17c3f07d3e62b43364f3f4c6572b3e08b3307a4ae47137b80342188ad0dae",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\runs\\C-seed2\\model-final.zip": "156ee0f2194f3aedb36cce3917cc4121994b53fa0f0c942c2de548b9e2ea32b7",
+    "D:\\F1-RL-WP3-EVIDENCE\\wp3-eval-issue51-v1\\runs\\D-seed2\\model-final.zip": "212cca532ed1411246687821002ef55f62329ddcab18af2ff08f8e5b9b154cdc"
+  },
+  "inference": "CPU/stochastic/deterministic=False",
+  "scientific_evidence": false,
+  "registered_evaluation": false,
+  "full_evaluation_admitted": false,
+  "heldout_access": false,
+  "no_retraining": true,
+  "cases": [
+    {
+      "model_id": "A-seed1",
+      "track": "straight-sprint-v1",
+      "stratum": "nominal",
+      "episode": 4,
+      "seed_index": 1,
+      "env_seed": 4002979594,
+      "policy_seed": 3918145716
+    },
+    {
+      "model_id": "C-seed0",
+      "track": "straight-sprint-v1",
+      "stratum": "nominal",
+      "episode": 4,
+      "seed_index": 0,
+      "env_seed": 4002979594,
+      "policy_seed": 3918145716
+    },
+    {
+      "model_id": "A-seed1",
+      "track": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "episode": 4,
+      "seed_index": 1,
+      "env_seed": 2358867466,
+      "policy_seed": 3045191861
+    },
+    {
+      "model_id": "C-seed0",
+      "track": "straight-sprint-v1",
+      "stratum": "randomized_train",
+      "episode": 4,
+      "seed_index": 0,
+      "env_seed": 2358867466,
+      "policy_seed": 3045191861
+    },
+    {
+      "model_id": "A-seed1",
+      "track": "slalom-v1",
+      "stratum": "nominal",
+      "episode": 4,
+      "seed_index": 1,
+      "env_seed": 561604340,
+      "policy_seed": 588081277
+    },
+    {
+      "model_id": "C-seed0",
+      "track": "slalom-v1",
+      "stratum": "nominal",
+      "episode": 4,
+      "seed_index": 0,
+      "env_seed": 561604340,
+      "policy_seed": 588081277
+    },
+    {
+      "model_id": "A-seed1",
+      "track": "slalom-v1",
+      "stratum": "randomized_train",
+      "episode": 4,
+      "seed_index": 1,
+      "env_seed": 2036979564,
+      "policy_seed": 1845274458
+    },
+    {
+      "model_id": "C-seed0",
+      "track": "slalom-v1",
+      "stratum": "randomized_train",
+      "episode": 4,
+      "seed_index": 0,
+      "env_seed": 2036979564,
+      "policy_seed": 1845274458
+    },
+    {
+      "model_id": "A-seed1",
+      "track": "right-turn-v1",
+      "stratum": "nominal",
+      "episode": 4,
+      "seed_index": 1,
+      "env_seed": 3241334731,
+      "policy_seed": 3363415443
+    },
+    {
+      "model_id": "C-seed0",
+      "track": "right-turn-v1",
+      "stratum": "nominal",
+      "episode": 4,
+      "seed_index": 0,
+      "env_seed": 3241334731,
+      "policy_seed": 3363415443
+    },
+    {
+      "model_id": "A-seed1",
+      "track": "right-turn-v1",
+      "stratum": "randomized_train",
+      "episode": 4,
+      "seed_index": 1,
+      "env_seed": 535077555,
+      "policy_seed": 2706193082
+    },
+    {
+      "model_id": "C-seed0",
+      "track": "right-turn-v1",
+      "stratum": "randomized_train",
+      "episode": 4,
+      "seed_index": 0,
+      "env_seed": 535077555,
+      "policy_seed": 2706193082
+    },
+    {
+      "model_id": "A-seed1",
+      "track": "ramp-v1",
+      "stratum": "nominal",
+      "episode": 4,
+      "seed_index": 1,
+      "env_seed": 3182664152,
+      "policy_seed": 2556343009
+    },
+    {
+      "model_id": "C-seed0",
+      "track": "ramp-v1",
+      "stratum": "nominal",
+      "episode": 4,
+      "seed_index": 0,
+      "env_seed": 3182664152,
+      "policy_seed": 2556343009
+    },
+    {
+      "model_id": "A-seed1",
+      "track": "ramp-v1",
+      "stratum": "randomized_train",
+      "episode": 4,
+      "seed_index": 1,
+      "env_seed": 2470978680,
+      "policy_seed": 3938084491
+    },
+    {
+      "model_id": "C-seed0",
+      "track": "ramp-v1",
+      "stratum": "randomized_train",
+      "episode": 4,
+      "seed_index": 0,
+      "env_seed": 2470978680,
+      "policy_seed": 3938084491
+    }
+  ],
+  "sha256": "306fa7c9a92d18a7d1e8b3827955a47f62b4c962aa81245e58739ba2f98454f6"
+}
